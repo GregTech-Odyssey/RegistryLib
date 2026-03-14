@@ -149,3 +149,8 @@ publishing {
         }
     }
 }
+
+tasks.withType(GenerateModuleMetadata).configureEach {
+    suppressedValidationErrors.add('dependencies-without-versions')
+}
+}
