@@ -3,7 +3,7 @@ name: Deploy Docs to GitHub Pages
 on:
   push:
     branches:
-      - main
+      - "26.1"
     paths:
       - "docs/**"
   workflow_dispatch:
