@@ -22,7 +22,11 @@ import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.data.models.model.TextureSlot;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
@@ -56,7 +60,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     T create(BaseFlowingFluid.Properties properties);
   }
 
+  private static final Identifier BUCKET_FLUID_TEXTURE =
+      Identifier.fromNamespaceAndPath("registrylib", "item/bucket_fluid");
+  private static final Identifier BUCKET_BASE_TEXTURE =
+      Identifier.fromNamespaceAndPath("registrylib", "item/bucket_base");
+
   @Nullable private Supplier<Supplier<IClientFluidTypeExtensions>> clientExtension;
+  private int tintColor = -1;
 
   @StandardAPI
   public FluidBuilder<T, P> clientExtension(
@@ -71,21 +81,16 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
   @StandardAPI
   public FluidBuilder<T, P> clientExtension(
       @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture) {
-    return clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture));
+    return clientExtension(
+        () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1));
   }
 
   @StandardAPI
   public FluidBuilder<T, P> clientExtension(
       @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture, int tintColor) {
+    this.tintColor = tintColor;
     return clientExtension(
-        () ->
-            () ->
-                new DefaultFluidTypeExtension(stillTexture, flowingTexture) {
-                  @Override
-                  public int getTintColor() {
-                    return tintColor;
-                  }
-                });
+        () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor));
   }
 
   protected void registerClientExtension() {
@@ -324,11 +329,30 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     if (source == null) {
       throw new IllegalStateException("Cannot create a bucket before creating a source block");
     }
+    final int bucketTintColor = this.tintColor;
     final var builder =
         getOwner()
             .<I, FluidBuilder<T, P>>item(this, bucketName, p -> factory.apply(source.get(), p))
             .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
-            .model(() -> (ctx, prov) -> prov.generateFlatItem(ctx.get(), ModelTemplates.FLAT_ITEM));
+            .model(
+                () ->
+                    (ctx, prov) -> {
+                      TextureMapping textures = new TextureMapping();
+                      textures.put(TextureSlot.LAYER0, new Material(BUCKET_FLUID_TEXTURE));
+                      textures.put(TextureSlot.LAYER1, new Material(BUCKET_BASE_TEXTURE));
+                      Identifier modelId =
+                          ModelTemplates.TWO_LAYERED_ITEM.create(
+                              ctx.get(), textures, prov.modelOutput);
+                      if (bucketTintColor != -1) {
+                        prov.itemModelOutput.accept(
+                            ctx.get(),
+                            ItemModelUtils.tintedModel(
+                                modelId, ItemModelUtils.constantTint(bucketTintColor)));
+                      } else {
+                        prov.itemModelOutput.accept(
+                            ctx.get(), ItemModelUtils.plainModel(modelId));
+                      }
+                    });
     this.fluidProperties(p -> p.bucket(builder.asSupplier()));
     config.accept(builder);
     builder.register();
@@ -446,10 +470,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
   public static class DefaultFluidTypeExtension implements IClientFluidTypeExtensions {
     private final Identifier stillTexture, flowingTexture;
+    private final int tintColor;
 
-    public DefaultFluidTypeExtension(Identifier stillTexture, Identifier flowingTexture) {
+    public DefaultFluidTypeExtension(
+        Identifier stillTexture, Identifier flowingTexture, int tintColor) {
       this.stillTexture = stillTexture;
       this.flowingTexture = flowingTexture;
+      this.tintColor = tintColor;
     }
 
     @Override
@@ -460,6 +487,27 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @Override
     public Identifier getFlowingTexture() {
       return flowingTexture;
+    }
+
+    @Override
+    public int getTintColor() {
+      return tintColor;
+    }
+
+    @Override
+    public void modifyFogColor(
+        net.minecraft.client.Camera camera,
+        float partialTick,
+        net.minecraft.client.multiplayer.ClientLevel level,
+        int renderDistance,
+        float darkenWorldAmount,
+        org.joml.Vector4f fluidFogColor) {
+      if (tintColor != -1) {
+        fluidFogColor.x = (tintColor >> 16 & 0xFF) / 255.0f;
+        fluidFogColor.y = (tintColor >> 8 & 0xFF) / 255.0f;
+        fluidFogColor.z = (tintColor & 0xFF) / 255.0f;
+        fluidFogColor.w = 1.0f;
+      }
     }
   }
 }
