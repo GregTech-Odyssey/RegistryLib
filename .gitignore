@@ -17,7 +17,7 @@ out/
 build/
 .gradle/
 gradle/wrapper/gradle-wrapper.jar
-docs/
+other/
 
 # other
 run/
