@@ -49,10 +49,10 @@ public class TimerBlockEntityRenderer
 
     // Render the number on all 4 side faces
     String number = String.valueOf(tier);
-    renderSideFaceText(poseStack, collector, number, light, 0); // South (Z+)
-    renderSideFaceText(poseStack, collector, number, light, 90); // West  (X-)
+    renderSideFaceText(poseStack, collector, number, light, 0);   // South (Z+)
+    renderSideFaceText(poseStack, collector, number, light, 90);  // East  (X+)
     renderSideFaceText(poseStack, collector, number, light, 180); // North (Z-)
-    renderSideFaceText(poseStack, collector, number, light, 270); // East  (X+)
+    renderSideFaceText(poseStack, collector, number, light, 270); // West  (X-)
   }
 
   private void renderTopText(
@@ -61,8 +61,8 @@ public class TimerBlockEntityRenderer
 
     // Move to top center of the block
     poseStack.translate(0.5f, 1.001f, 0.5f);
-    // Rotate to face up (lay flat on top)
-    poseStack.mulPose(Axis.XP.rotationDegrees(90));
+    // Rotate to face up: Rx(-90) maps local +Z -> world +Y, so text is visible from above
+    poseStack.mulPose(Axis.XP.rotationDegrees(-90));
     // Scale down - text is rendered at ~8px per character
     float scale = 1.0f / 96.0f;
     poseStack.scale(scale, -scale, scale);
@@ -79,7 +79,7 @@ public class TimerBlockEntityRenderer
         y,
         formattedText,
         false, // no drop shadow
-        Font.DisplayMode.NORMAL,
+        Font.DisplayMode.SEE_THROUGH,
         light,
         0xFFFFFFFF, // white
         0, // no background
@@ -95,12 +95,11 @@ public class TimerBlockEntityRenderer
 
     // Move to center of block
     poseStack.translate(0.5f, 0.5f, 0.5f);
-    // Rotate to face the correct side
+    // Rotate so that local +Z faces the target side
     poseStack.mulPose(Axis.YP.rotationDegrees(yRotation));
-    // Move to the face surface
+    // Move to just outside the face surface
     poseStack.translate(0.0f, 0.0f, 0.501f);
-    // Flip to face outward
-    poseStack.mulPose(Axis.YP.rotationDegrees(180));
+    // No extra flip needed: text in local XY is already visible from the local +Z side (outward)
     // Scale down
     float scale = 1.0f / 48.0f;
     poseStack.scale(scale, -scale, scale);
@@ -116,7 +115,7 @@ public class TimerBlockEntityRenderer
         y,
         formattedText,
         false,
-        Font.DisplayMode.NORMAL,
+        Font.DisplayMode.SEE_THROUGH,
         light,
         0xFFFFFF00, // yellow
         0,

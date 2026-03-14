@@ -19,3 +19,7 @@ A Minecraft mod built with NeoForge.
 - `./gradlew runServer` - Run the dedicated server
 - `./gradlew runData` - Run data generators
 - `./gradlew build` - Build the mod JAR
+
+## License
+
+This project is based on [Registrate](https://github.com/tterrag1098/Registrate) by tterrag, licensed under [MPL-2.0](LICENSE). Portions of the source code are derived from or constitute Modifications of Registrate and are therefore subject to the Mozilla Public License, v. 2.0.

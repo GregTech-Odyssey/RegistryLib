@@ -23,3 +23,30 @@ type="required"
 versionRange="${minecraft_version_range}"
 ordering="NONE"
 side="BOTH"
+
+[[mods]]
+modId="registrylibtest"
+version="${mod_version}"
+displayName="RegistryLib Test"
+description="Test mod for RegistryLib"
+
+[[dependencies.registrylibtest]]
+modId="neoforge"
+type="required"
+versionRange="${neo_version_range}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.registrylibtest]]
+modId="minecraft"
+type="required"
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.registrylibtest]]
+modId="${mod_id}"
+type="required"
+versionRange="[${mod_version},)"
+ordering="NONE"
+side="BOTH"
