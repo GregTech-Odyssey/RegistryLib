@@ -20,57 +20,56 @@ import org.jspecify.annotations.Nullable;
 
 public class TimerBlockEntity extends BlockEntity {
 
-  private int count = 0;
+    private int count = 0;
 
-  public TimerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-    super(type, pos, state);
-  }
-
-  public TimerBlockEntity(BlockPos pos, BlockState state) {
-    this(RegistryLibTest.TIMER_BLOCK_ENTITY.get(), pos, state);
-  }
-
-  public int getTier() {
-    if (getBlockState().getBlock() instanceof TimerBlock timerBlock) {
-      return timerBlock.getTier();
+    public TimerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
-    return 1;
-  }
 
-  public int getCount() {
-    return count;
-  }
-
-  public static void serverTick(
-      Level level, BlockPos pos, BlockState state, TimerBlockEntity be) {
-    if (!(level instanceof ServerLevel serverLevel)) return;
-    int offset = Math.floorMod(pos.hashCode(), 20);
-    if (level.getGameTime() % 20 == offset) {
-      be.count++;
-      be.setChanged();
-      serverLevel.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
+    public TimerBlockEntity(BlockPos pos, BlockState state) {
+        this(RegistryLibTest.TIMER_BLOCK_ENTITY.get(), pos, state);
     }
-  }
 
-  @Override
-  protected void saveAdditional(ValueOutput output) {
-    super.saveAdditional(output);
-    output.store("count", Codec.INT, count);
-  }
+    public int getTier() {
+        if (getBlockState().getBlock() instanceof TimerBlock timerBlock) {
+            return timerBlock.getTier();
+        }
+        return 1;
+    }
 
-  @Override
-  protected void loadAdditional(ValueInput input) {
-    super.loadAdditional(input);
-    count = input.read("count", Codec.INT).orElse(0);
-  }
+    public int getCount() {
+        return count;
+    }
 
-  @Override
-  public @NonNull CompoundTag getUpdateTag(HolderLookup.Provider registries) {
-    return saveCustomOnly(registries);
-  }
+    public static void serverTick(Level level, BlockPos pos, BlockState state, TimerBlockEntity be) {
+        if (!(level instanceof ServerLevel serverLevel)) return;
+        int offset = Math.floorMod(pos.hashCode(), 20);
+        if (level.getGameTime() % 20 == offset) {
+            be.count++;
+            be.setChanged();
+            serverLevel.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL);
+        }
+    }
 
-  @Override
-  public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
-    return ClientboundBlockEntityDataPacket.create(this);
-  }
+    @Override
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        output.store("count", Codec.INT, count);
+    }
+
+    @Override
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        count = input.read("count", Codec.INT).orElse(0);
+    }
+
+    @Override
+    public @NonNull CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+        return saveCustomOnly(registries);
+    }
+
+    @Override
+    public @Nullable Packet<ClientGamePacketListener> getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
 }

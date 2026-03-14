@@ -1,6 +1,7 @@
 plugins {
     id 'net.neoforged.moddev' version '2.0.140'
-    id 'com.diffplug.spotless' version '7.0.3'
+    id 'com.diffplug.spotless' version '8.3.0'
+    id 'io.freefair.lombok' version '9.2.0'
 }
 
 version = mod_version
@@ -60,9 +61,17 @@ sourceSets.main.resources {
 
 repositories {
     mavenLocal()
+    flatDir {
+        dir "libs"
+    }
+    mavenCentral()
 }
 
 dependencies {
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
+
+    implementation("dev:fastcollection-1.0")
 }
 
 spotless {
@@ -95,5 +104,28 @@ tasks.withType(ProcessResources).configureEach {
 
     filesMatching(['META-INF/neoforge.mods.toml']) {
         expand replaceProperties + [project: project]
+    }
+}
+
+spotless {
+    encoding 'UTF-8'
+
+    format 'misc', {
+        target '.gitignore'
+
+        trimTrailingWhitespace()
+        leadingTabsToSpaces()
+        endWithNewline()
+    }
+    java {
+        target 'src/main/java/**/*.java', 'src/test/java/**/*.java'
+
+        def orderFile = file("$rootDir/spotless/spotless.importorder")
+        def formatFile = file("$rootDir/spotless/spotless.eclipseformat.xml")
+
+        toggleOffOn()
+        importOrderFile(orderFile)
+        endWithNewline()
+        eclipse('4.31').configFile(formatFile)
     }
 }

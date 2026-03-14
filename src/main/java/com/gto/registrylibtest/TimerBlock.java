@@ -13,28 +13,29 @@ import org.jspecify.annotations.Nullable;
 
 public class TimerBlock extends Block implements EntityBlock {
 
-  private final int tier;
+    private final int tier;
 
-  public TimerBlock(BlockBehaviour.Properties properties, int tier) {
-    super(properties);
-    this.tier = tier;
-  }
+    public TimerBlock(BlockBehaviour.Properties properties, int tier) {
+        super(properties);
+        this.tier = tier;
+    }
 
-  public int getTier() {
-    return tier;
-  }
+    public int getTier() {
+        return tier;
+    }
 
-  @Override
-  public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-    return new TimerBlockEntity(pos, state);
-  }
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TimerBlockEntity(pos, state);
+    }
 
-  @Override
-  public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(
-      Level level, BlockState blockState, BlockEntityType<T> type) {
-    if (level.isClientSide()) return null;
-    @SuppressWarnings("unchecked")
-    BlockEntityTicker<T> ticker = (BlockEntityTicker<T>) (BlockEntityTicker<TimerBlockEntity>) TimerBlockEntity::serverTick;
-    return ticker;
-  }
+    @Override
+    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(
+            Level level, BlockState blockState, BlockEntityType<T> type) {
+        if (level.isClientSide()) return null;
+        @SuppressWarnings("unchecked")
+        BlockEntityTicker<T> ticker =
+                (BlockEntityTicker<T>) (BlockEntityTicker<TimerBlockEntity>) TimerBlockEntity::serverTick;
+        return ticker;
+    }
 }

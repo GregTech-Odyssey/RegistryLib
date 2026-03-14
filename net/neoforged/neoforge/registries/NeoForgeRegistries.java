@@ -6,7 +6,7 @@
 package net.neoforged.neoforge.registries;
 
 import com.mojang.serialization.MapCodec;
-import net.minecraft.core.Registry;
+import Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataSerializer;
