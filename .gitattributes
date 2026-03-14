@@ -1,0 +1,6 @@
+# Ensure shell scripts use LF line endings on all platforms
+gradlew text eol=lf
+*.sh text eol=lf
+
+# Ensure batch files use CRLF
+*.bat text eol=crlf
