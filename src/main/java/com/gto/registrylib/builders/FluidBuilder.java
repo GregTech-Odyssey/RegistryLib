@@ -65,10 +65,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         T create(BaseFlowingFluid.Properties properties);
     }
 
-    private static final Identifier BUCKET_FLUID_TEXTURE =
-            Identifier.fromNamespaceAndPath("registrylib", "item/bucket_fluid");
-    private static final Identifier BUCKET_BASE_TEXTURE =
-            Identifier.fromNamespaceAndPath("registrylib", "item/bucket_base");
+    private static final Identifier BUCKET_FLUID_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "item/bucket_fluid");
+    private static final Identifier BUCKET_BASE_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "item/bucket_base");
 
     private int tintColor = -1;
 
@@ -84,14 +82,16 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @StandardAPI
     public FluidBuilder<T, P> clientExtension(
                                               @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture) {
-        return clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1));
+        return clientExtension(
+                () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1));
     }
 
     @StandardAPI
     public FluidBuilder<T, P> clientExtension(
                                               @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture, int tintColor) {
         this.tintColor = tintColor;
-        return clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor));
+        return clientExtension(
+                () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor));
     }
 
     // --- Static factory methods ---
@@ -312,17 +312,15 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                             TextureMapping textures = new TextureMapping();
                             textures.put(TextureSlot.LAYER0, new Material(BUCKET_FLUID_TEXTURE));
                             textures.put(TextureSlot.LAYER1, new Material(BUCKET_BASE_TEXTURE));
-                            Identifier modelId =
-                                    ModelTemplates.TWO_LAYERED_ITEM.create(
-                                            ctx.get(), textures, prov.modelOutput);
+                            Identifier modelId = ModelTemplates.TWO_LAYERED_ITEM.create(
+                                    ctx.get(), textures, prov.modelOutput);
                             if (bucketTintColor != -1) {
                                 prov.itemModelOutput.accept(
                                         ctx.get(),
                                         ItemModelUtils.tintedModel(
                                                 modelId, ItemModelUtils.constantTint(bucketTintColor)));
                             } else {
-                                prov.itemModelOutput.accept(
-                                        ctx.get(), ItemModelUtils.plainModel(modelId));
+                                prov.itemModelOutput.accept(ctx.get(), ItemModelUtils.plainModel(modelId));
                             }
                         });
         this.fluidProperties(p -> p.bucket(builder.asSupplier()));
@@ -443,7 +441,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         private final Identifier stillTexture, flowingTexture;
         private final int tintColor;
 
-        public DefaultFluidTypeExtension(Identifier stillTexture, Identifier flowingTexture, int tintColor) {
+        public DefaultFluidTypeExtension(
+                                         Identifier stillTexture, Identifier flowingTexture, int tintColor) {
             this.stillTexture = stillTexture;
             this.flowingTexture = flowingTexture;
             this.tintColor = tintColor;
