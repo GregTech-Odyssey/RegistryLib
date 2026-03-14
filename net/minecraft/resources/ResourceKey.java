@@ -5,7 +5,7 @@ import com.mojang.serialization.Codec;
 import io.netty.buffer.ByteBuf;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
-import net.minecraft.core.Registry;
+import Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.codec.StreamCodec;
 

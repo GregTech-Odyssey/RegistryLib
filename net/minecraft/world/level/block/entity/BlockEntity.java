@@ -114,7 +114,7 @@ public abstract class BlockEntity extends net.neoforged.neoforge.attachment.Atta
 
     protected void saveAdditional(ValueOutput output) {
         if (this.customPersistentData != null) output.store("NeoForgeData", CompoundTag.CODEC, this.customPersistentData.copy());
-        HolderLookup.Provider registries = this.level != null ? this.level.registryAccess() : net.minecraft.core.RegistryAccess.EMPTY;
+        HolderLookup.Provider registries = this.level != null ? this.level.registryAccess() : RegistryAccess.EMPTY;
         var attachments = output.child(ATTACHMENTS_NBT_KEY);
         serializeAttachments(attachments);
         if (attachments.isEmpty()) output.discard(ATTACHMENTS_NBT_KEY);

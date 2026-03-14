@@ -6,6 +6,7 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.ValidationContextSource;
 
 public interface RegistryLibLootTables extends LootTableSubProvider {
-  default void validate(
-      WritableRegistry<LootTable> writableRegistry, ValidationContextSource validationContext) {}
+
+    default void validate(
+                          WritableRegistry<LootTable> writableRegistry, ValidationContextSource validationContext) {}
 }

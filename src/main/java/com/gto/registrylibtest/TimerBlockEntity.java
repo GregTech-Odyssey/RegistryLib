@@ -7,18 +7,18 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class TimerBlockEntity extends BlockEntity {
 
-  public TimerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
-    super(type, pos, state);
-  }
-
-  public TimerBlockEntity(BlockPos pos, BlockState state) {
-    this(RegistryLibTest.TIMER_BLOCK_ENTITY.get(), pos, state);
-  }
-
-  public int getTier() {
-    if (getBlockState().getBlock() instanceof TimerBlock timerBlock) {
-      return timerBlock.getTier();
+    public TimerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
+        super(type, pos, state);
     }
-    return 1;
-  }
+
+    public TimerBlockEntity(BlockPos pos, BlockState state) {
+        this(RegistryLibTest.TIMER_BLOCK_ENTITY.get(), pos, state);
+    }
+
+    public int getTier() {
+        if (getBlockState().getBlock() instanceof TimerBlock timerBlock) {
+            return timerBlock.getTier();
+        }
+        return 1;
+    }
 }

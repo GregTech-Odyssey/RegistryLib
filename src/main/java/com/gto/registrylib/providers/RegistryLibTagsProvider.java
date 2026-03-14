@@ -1,8 +1,7 @@
 package com.gto.registrylib.providers;
 
-import com.gto.registrylib.RegistryLib;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
+import com.gto.registrylib.RegistryCore;
+
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.data.PackOutput;
@@ -14,72 +13,77 @@ import net.minecraft.tags.TagBuilder;
 import net.minecraft.tags.TagKey;
 import net.neoforged.fml.LogicalSide;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+
 public interface RegistryLibTagsProvider<T> extends RegistryLibLookupFillerProvider {
 
-  CompletableFuture<TagsProvider.TagLookup<T>> contentsGetter();
+    CompletableFuture<TagsProvider.TagLookup<T>> contentsGetter();
 
-  ResourceKey<? extends Registry<T>> registry();
+    ResourceKey<? extends Registry<T>> registry();
 
-  TagBuilder rawBuilder(TagKey<T> key);
+    TagBuilder rawBuilder(TagKey<T> key);
 
-  interface Intrinsic<T> extends RegistryLibTagsProvider<T> {
-    TagAppender<T, T> tag(TagKey<T> key);
-  }
+    interface Intrinsic<T> extends RegistryLibTagsProvider<T> {
 
-  class IntrinsicImpl<T> extends IntrinsicHolderTagsProvider<T>
-      implements RegistryLibTagsProvider.Intrinsic<T> {
-    private final RegistryLib owner;
-    private final ProviderType<? extends IntrinsicImpl<T>> type;
-    private final String name;
-
-    public IntrinsicImpl(
-        RegistryLib owner,
-        ProviderType<? extends IntrinsicImpl<T>> type,
-        String name,
-        PackOutput packOutput,
-        ResourceKey<? extends Registry<T>> registryIn,
-        CompletableFuture<HolderLookup.Provider> registriesLookup,
-        Function<T, ResourceKey<T>> keyExtractor) {
-      super(packOutput, registryIn, registriesLookup, keyExtractor, owner.getModid());
-
-      this.owner = owner;
-      this.type = type;
-      this.name = name;
+        TagAppender<T, T> tag(TagKey<T> key);
     }
 
-    @Override
-    public String getName() {
-      return "Tags (%s)".formatted(name);
-    }
+    class IntrinsicImpl<T> extends IntrinsicHolderTagsProvider<T>
+                       implements RegistryLibTagsProvider.Intrinsic<T> {
 
-    @Override
-    protected void addTags(HolderLookup.Provider provider) {
-      owner.genData(type, this);
-    }
+        private final RegistryCore owner;
+        private final ProviderType<? extends IntrinsicImpl<T>> type;
+        private final String name;
 
-    @Override
-    public LogicalSide getSide() {
-      return LogicalSide.SERVER;
-    }
+        public IntrinsicImpl(
+                             RegistryCore owner,
+                             ProviderType<? extends IntrinsicImpl<T>> type,
+                             String name,
+                             PackOutput packOutput,
+                             ResourceKey<? extends Registry<T>> registryIn,
+                             CompletableFuture<HolderLookup.Provider> registriesLookup,
+                             Function<T, ResourceKey<T>> keyExtractor) {
+            super(packOutput, registryIn, registriesLookup, keyExtractor, owner.getModid());
 
-    @Override
-    public TagBuilder rawBuilder(TagKey<T> key) {
-      return super.getOrCreateRawBuilder(key);
-    }
+            this.owner = owner;
+            this.type = type;
+            this.name = name;
+        }
 
-    @Override
-    public TagAppender<T, T> tag(TagKey<T> key) {
-      return super.tag(key);
-    }
+        @Override
+        public String getName() {
+            return "Tags (%s)".formatted(name);
+        }
 
-    @Override
-    public CompletableFuture<HolderLookup.Provider> getFilledProvider() {
-      return createContentsProvider();
-    }
+        @Override
+        protected void addTags(HolderLookup.Provider provider) {
+            owner.genData(type, this);
+        }
 
-    @Override
-    public ResourceKey<? extends Registry<T>> registry() {
-      return registryKey;
+        @Override
+        public LogicalSide getSide() {
+            return LogicalSide.SERVER;
+        }
+
+        @Override
+        public TagBuilder rawBuilder(TagKey<T> key) {
+            return super.getOrCreateRawBuilder(key);
+        }
+
+        @Override
+        public TagAppender<T, T> tag(TagKey<T> key) {
+            return super.tag(key);
+        }
+
+        @Override
+        public CompletableFuture<HolderLookup.Provider> getFilledProvider() {
+            return createContentsProvider();
+        }
+
+        @Override
+        public ResourceKey<? extends Registry<T>> registry() {
+            return registryKey;
+        }
     }
-  }
 }

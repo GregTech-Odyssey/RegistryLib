@@ -7,10 +7,10 @@ import org.apache.logging.log4j.MarkerManager;
 @UtilityClass
 public class DebugMarkers {
 
-  private Marker marker(String name) {
-    return MarkerManager.getMarker("REGISTRYLIB." + name);
-  }
+    private Marker marker(String name) {
+        return MarkerManager.getMarker("REGISTRYLIB." + name);
+    }
 
-  public final Marker REGISTER = marker("REGISTER");
-  public final Marker DATA = marker("DATA");
+    public final Marker REGISTER = marker("REGISTER");
+    public final Marker DATA = marker("DATA");
 }

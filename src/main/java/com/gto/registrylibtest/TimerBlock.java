@@ -9,19 +9,19 @@ import net.minecraft.world.level.block.state.BlockState;
 
 public class TimerBlock extends Block implements EntityBlock {
 
-  private final int tier;
+    private final int tier;
 
-  public TimerBlock(BlockBehaviour.Properties properties, int tier) {
-    super(properties);
-    this.tier = tier;
-  }
+    public TimerBlock(BlockBehaviour.Properties properties, int tier) {
+        super(properties);
+        this.tier = tier;
+    }
 
-  public int getTier() {
-    return tier;
-  }
+    public int getTier() {
+        return tier;
+    }
 
-  @Override
-  public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-    return new TimerBlockEntity(pos, state);
-  }
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new TimerBlockEntity(pos, state);
+    }
 }
