@@ -6,7 +6,6 @@ import com.gto.registrylib.RegistryLib;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
-import com.gto.registrylib.providers.RegistryLibZhCnLangProvider;
 import com.gto.registrylib.providers.RegistryLibTagsProvider;
 import com.gto.registrylib.util.entry.LazyRegistryEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
@@ -150,7 +149,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
   private S langEn(
       @Nonnull Function<T, String> langKeyProvider,
       @Nonnull
-          BiFunction<RegistryLibLangProvider, Supplier<? extends T>, String>
+          BiFunction<RegistryLibLangProvider.EnUs, Supplier<? extends T>, String>
               localizedNameProvider) {
     return setData(
         ProviderType.LANG_EN_US,

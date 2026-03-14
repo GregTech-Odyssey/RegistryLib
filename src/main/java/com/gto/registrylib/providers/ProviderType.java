@@ -62,18 +62,18 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
   ProviderType<RegistryLibModelProvider> MODEL =
       registerClientProvider(
           "model", () -> c -> new RegistryLibModelProvider(c.parent(), c.output()));
-  ProviderType<RegistryLibLangProvider> LANG_EN_US =
+  ProviderType<RegistryLibLangProvider.EnUs> LANG_EN_US =
       registerClientProvider(
-          "lang_en_us", () -> c -> new RegistryLibLangProvider(c.parent(), c.output()));
-  ProviderType<RegistryLibZhCnLangProvider> LANG_ZH_CN =
+          "lang_en_us", () -> c -> new RegistryLibLangProvider.EnUs(c.parent(), c.output()));
+  ProviderType<RegistryLibLangProvider.ZhCn> LANG_ZH_CN =
       registerClientProvider(
-          "lang_zh_cn", () -> c -> new RegistryLibZhCnLangProvider(c.parent(), c.output()));
-  ProviderType<RegistryLibRuRuLangProvider> LANG_RU_RU =
+          "lang_zh_cn", () -> c -> new RegistryLibLangProvider.ZhCn(c.parent(), c.output()));
+  ProviderType<RegistryLibLangProvider.RuRu> LANG_RU_RU =
       registerClientProvider(
-          "lang_ru_ru", () -> c -> new RegistryLibRuRuLangProvider(c.parent(), c.output()));
-  ProviderType<RegistryLibJaJpLangProvider> LANG_JA_JP =
+          "lang_ru_ru", () -> c -> new RegistryLibLangProvider.RuRu(c.parent(), c.output()));
+  ProviderType<RegistryLibLangProvider.JaJp> LANG_JA_JP =
       registerClientProvider(
-          "lang_ja_jp", () -> c -> new RegistryLibJaJpLangProvider(c.parent(), c.output()));
+          "lang_ja_jp", () -> c -> new RegistryLibLangProvider.JaJp(c.parent(), c.output()));
 
   GeneratorType<RegistryLibRecipeProvider> RECIPE = RECIPE_RUNNER.createGenerator("recipe");
   GeneratorType<RegistryLibBlockModelGenerator> BLOCKSTATE = MODEL.createGenerator("blockstate");
