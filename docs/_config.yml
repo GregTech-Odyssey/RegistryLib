@@ -1,0 +1,32 @@
+title: RegistryLib
+description: A NeoForge library mod for fluent, boilerplate-free content registration.
+
+# Use the "Just the Docs" theme for clean documentation navigation.
+remote_theme: just-the-docs/just-the-docs
+
+# The docs/ folder is the Jekyll root, so the site root is the project root here.
+baseurl: "/RegistryLib"
+url: "https://gregtech-odyssey.github.io"
+
+# Default front-matter for every page that does not declare its own.
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: default
+
+# Navigation order: any .md file with a `nav_order` front-matter key will be
+# sorted accordingly; files without one appear after those that have one.
+nav_enabled: true
+
+# Markdown extras
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# Exclude files that should not become pages.
+exclude:
+  - "*.txt"
+  - "*.xml"
+  - "*.json"
