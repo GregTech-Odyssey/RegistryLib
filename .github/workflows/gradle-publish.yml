@@ -1,18 +1,17 @@
 # 构建并发布 NeoForge Mod 到 GitHub Packages
-# 当创建 Release 时自动触发
+# 手动触发，自动根据 gradle.properties 中的版本号生成 Release
 
 name: Gradle Package
 
 on:
-  release:
-    types: [created]
+  workflow_dispatch:
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -30,6 +29,20 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Determine release tag
+      id: tag
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
+        BUILD=1
+        while gh release view "v${VERSION}-build${BUILD}" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; do
+          BUILD=$((BUILD + 1))
+        done
+        TAG="v${VERSION}-build${BUILD}"
+        echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+        echo "Resolved release tag: ${TAG}"
+
     - name: Build with Gradle
       run: ./gradlew build
 
@@ -39,3 +52,14 @@ jobs:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
+
+    - name: Create GitHub Release
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        TAG="${{ steps.tag.outputs.tag }}"
+        gh release create "$TAG" \
+          --repo "$GITHUB_REPOSITORY" \
+          --title "$TAG" \
+          --notes "Automated release $TAG" \
+          build/libs/*.jar

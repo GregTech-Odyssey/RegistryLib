@@ -68,13 +68,17 @@ dependencies {
 
 ## 发布新版本（维护者）
 
-发布流程由 GitHub Actions 全自动完成，只需：
+发布流程由 GitHub Actions 全自动完成：
 
-1. 更新 `gradle.properties` 中的 `mod_version`
+1. 更新 `gradle.properties` 中的 `mod_version`（如 `1.0.0`）
 2. 提交并推送到仓库
-3. 在 GitHub 仓库页面创建一个新的 **Release**（填写 Tag 和说明后点击 Publish）
+3. 进入 GitHub 仓库页面 → **Actions → Gradle Package → Run workflow**，点击 **Run workflow** 按钮手动触发
 
-Actions 会自动执行 `./gradlew build` 和 `./gradlew publish`，将包发布到 GitHub Packages。
+Actions 会自动：
+- 读取当前 `mod_version`，生成形如 `v1.0.0-build1` 的 tag
+- 若该 tag 已存在，则自动递增为 `v1.0.0-build2`、`v1.0.0-build3`……
+- 执行 `./gradlew build` 和 `./gradlew publish` 将包发布到 GitHub Packages
+- 创建对应的 GitHub Release 并附上构建产物 JAR
 
 ---
 
