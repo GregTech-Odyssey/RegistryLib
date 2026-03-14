@@ -1,6 +1,6 @@
 package com.gto.registrylibtest.client;
 
-import com.gto.registrylibtest.TimerBlockEntity;
+import com.gto.registrylibtest.blockentity.TimerBlockEntity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;

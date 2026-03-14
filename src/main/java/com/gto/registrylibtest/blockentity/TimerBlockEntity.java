@@ -1,5 +1,7 @@
-package com.gto.registrylibtest;
+package com.gto.registrylibtest.blockentity;
 
+import com.gto.registrylibtest.RegistryLibTest;
+import com.gto.registrylibtest.block.TimerBlock;
 import com.mojang.serialization.Codec;
 
 import net.minecraft.core.BlockPos;
@@ -20,6 +22,8 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import static com.gto.registrylibtest.BlockEntityTest.TIMER_BLOCK_ENTITY;
+
 public class TimerBlockEntity extends BlockEntity {
 
     private int count = 0;
@@ -29,7 +33,7 @@ public class TimerBlockEntity extends BlockEntity {
     }
 
     public TimerBlockEntity(BlockPos pos, BlockState state) {
-        this(RegistryLibTest.TIMER_BLOCK_ENTITY.get(), pos, state);
+        this(TIMER_BLOCK_ENTITY.get(), pos, state);
     }
 
     public int getTier() {
