@@ -16,7 +16,7 @@ import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
-import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 
@@ -35,7 +35,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     private final BuilderCallback callback;
     private final ResourceKey<? extends Registry<R>> registryKey;
 
-    private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Object2BooleanOpenHashMap<TagKey<?>>> tagsByType = new Reference2ReferenceOpenHashMap<>();
     private final LazyRegistryEntry<R, T> safeSupplier = new LazyRegistryEntry<>(this);
 
     protected AbstractBuilder(
@@ -112,7 +112,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @StandardAPI
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
                                                                                  @Nonnull ProviderType<? extends TP> type, boolean isOptional, @Nonnull TagKey<R>... tags) {
-        var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
+        var map = tagsByType.computeIfAbsent(type, _ -> new Object2BooleanOpenHashMap<>());
         for (TagKey<R> tag : tags) {
             map.put(tag, isOptional);
         }
