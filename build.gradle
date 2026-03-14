@@ -39,6 +39,7 @@ neoForge {
         data {
             type = 'clientData'
             programArguments.addAll '--mod', project.mod_id,
+                    '--mod', 'registrylibtest',
                     '--all',
                     '--output', file('src/generated/resources/').getAbsolutePath(),
                     '--existing', file('src/main/resources/').getAbsolutePath()
@@ -54,6 +55,7 @@ neoForge {
 
 sourceSets.main.resources {
     srcDir 'src/generated/resources'
+    srcDir 'src/generated/resources/registrylibtest'
 }
 
 repositories {

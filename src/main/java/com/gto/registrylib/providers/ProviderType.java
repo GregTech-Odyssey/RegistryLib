@@ -62,9 +62,18 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
   ProviderType<RegistryLibModelProvider> MODEL =
       registerClientProvider(
           "model", () -> c -> new RegistryLibModelProvider(c.parent(), c.output()));
-  ProviderType<RegistryLibLangProvider> LANG =
+  ProviderType<RegistryLibLangProvider> LANG_EN_US =
       registerClientProvider(
-          "lang", () -> c -> new RegistryLibLangProvider(c.parent(), c.output()));
+          "lang_en_us", () -> c -> new RegistryLibLangProvider(c.parent(), c.output()));
+  ProviderType<RegistryLibZhCnLangProvider> LANG_ZH_CN =
+      registerClientProvider(
+          "lang_zh_cn", () -> c -> new RegistryLibZhCnLangProvider(c.parent(), c.output()));
+  ProviderType<RegistryLibRuRuLangProvider> LANG_RU_RU =
+      registerClientProvider(
+          "lang_ru_ru", () -> c -> new RegistryLibRuRuLangProvider(c.parent(), c.output()));
+  ProviderType<RegistryLibJaJpLangProvider> LANG_JA_JP =
+      registerClientProvider(
+          "lang_ja_jp", () -> c -> new RegistryLibJaJpLangProvider(c.parent(), c.output()));
 
   GeneratorType<RegistryLibRecipeProvider> RECIPE = RECIPE_RUNNER.createGenerator("recipe");
   GeneratorType<RegistryLibBlockModelGenerator> BLOCKSTATE = MODEL.createGenerator("blockstate");

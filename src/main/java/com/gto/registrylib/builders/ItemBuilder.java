@@ -87,9 +87,9 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx.get(), ModelTemplates.FLAT_ITEM));
   }
 
-  @SyntaxSugar("lang(Item::getDescriptionId)")
+  @SyntaxSugar("langEn(Item::getDescriptionId)")
   public ItemBuilder<T, P> defaultLang() {
-    return lang(Item::getDescriptionId);
+    return langEn(Item::getDescriptionId);
   }
 
   // === Configuration ===
@@ -128,8 +128,23 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
   }
 
   @StandardAPI
-  public ItemBuilder<T, P> lang(@Nonnull String name) {
-    return lang(Item::getDescriptionId, name);
+  public ItemBuilder<T, P> langEn(@Nonnull String name) {
+    return langEn(Item::getDescriptionId, name);
+  }
+
+  @StandardAPI
+  public ItemBuilder<T, P> langZh(@Nonnull String name) {
+    return langZh(Item::getDescriptionId, name);
+  }
+
+  @StandardAPI
+  public ItemBuilder<T, P> langRu(@Nonnull String name) {
+    return langRu(Item::getDescriptionId, name);
+  }
+
+  @StandardAPI
+  public ItemBuilder<T, P> langJa(@Nonnull String name) {
+    return langJa(Item::getDescriptionId, name);
   }
 
   @StandardAPI

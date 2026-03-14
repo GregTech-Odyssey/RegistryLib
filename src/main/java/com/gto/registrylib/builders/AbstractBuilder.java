@@ -6,6 +6,7 @@ import com.gto.registrylib.RegistryLib;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
+import com.gto.registrylib.providers.RegistryLibZhCnLangProvider;
 import com.gto.registrylib.providers.RegistryLibTagsProvider;
 import com.gto.registrylib.util.entry.LazyRegistryEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
@@ -137,26 +138,50 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
   }
 
   @StandardAPI
-  public S lang(@Nonnull Function<T, String> langKeyProvider) {
-    return lang(langKeyProvider, (p, t) -> p.<R>getAutomaticName(t, getRegistryKey()));
+  public S langEn(@Nonnull Function<T, String> langKeyProvider) {
+    return langEn(langKeyProvider, (p, t) -> p.<R>getAutomaticName(t, getRegistryKey()));
   }
 
   @StandardAPI
-  public S lang(@Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
-    return lang(langKeyProvider, (p, s) -> name);
+  public S langEn(@Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
+    return langEn(langKeyProvider, (p, s) -> name);
   }
 
-  private S lang(
+  private S langEn(
       @Nonnull Function<T, String> langKeyProvider,
       @Nonnull
           BiFunction<RegistryLibLangProvider, Supplier<? extends T>, String>
               localizedNameProvider) {
     return setData(
-        ProviderType.LANG,
+        ProviderType.LANG_EN_US,
         (ctx, prov) ->
             prov.add(
                 langKeyProvider.apply(ctx.getEntry()),
                 localizedNameProvider.apply(prov, ctx::getEntry)));
+  }
+
+  @StandardAPI
+  public S langZh(
+      @Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
+    return setData(
+        ProviderType.LANG_ZH_CN,
+        (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
+  }
+
+  @StandardAPI
+  public S langRu(
+      @Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
+    return setData(
+        ProviderType.LANG_RU_RU,
+        (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
+  }
+
+  @StandardAPI
+  public S langJa(
+      @Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
+    return setData(
+        ProviderType.LANG_JA_JP,
+        (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
   }
 
   public ResourceKey<R> getResourceKey() {

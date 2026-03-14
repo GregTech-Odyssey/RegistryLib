@@ -33,16 +33,17 @@ public class RegistryLibTest {
   public static final RegistryLib REGISTRYLIB = RegistryLib.create(MOD_ID);
 
   static {
-    REGISTRYLIB.defaultCreativeTab("main");
+    REGISTRYLIB.defaultCreativeTab("main").register();
+    REGISTRYLIB.addRawLang(ProviderType.LANG_ZH_CN, "itemGroup.registrylibtest.main", "主要");
   }
 
   // === Items ===
 
   public static final ItemEntry<Item> TEST_ITEM =
-      REGISTRYLIB.item("test_item", Item::new, item -> {});
+      REGISTRYLIB.item("test_item", Item::new, item -> item.langZh("测试物品"));
 
   public static final ItemEntry<Item> MAGIC_DUST =
-      REGISTRYLIB.item("magic_dust", Item::new, item -> item.lang("Magic Dust"));
+      REGISTRYLIB.item("magic_dust", Item::new, item -> item.langEn("Magic Dust").langZh("魔法粉末"));
 
   // === Blocks ===
 
@@ -51,7 +52,7 @@ public class RegistryLibTest {
           "test_block",
           Block::new,
           block -> {
-            block.initialProperties(() -> Blocks.STONE).simpleItem();
+            block.initialProperties(() -> Blocks.STONE).langZh("测试方块").simpleItem();
           });
 
   public static final BlockEntry<Block> MAGIC_ORE =
@@ -61,6 +62,7 @@ public class RegistryLibTest {
           block -> {
             block
                 .initialProperties(() -> Blocks.IRON_ORE)
+                .langZh("魔法矿石")
                 .loot((tables, b) -> tables.add(b, tables.createOreDrop(b, MAGIC_DUST.get())))
                 .simpleItem();
           });
@@ -73,7 +75,8 @@ public class RegistryLibTest {
           block -> {
             block
                 .initialProperties(() -> Blocks.IRON_BLOCK)
-                .lang("Advanced Timer")
+                .langEn("Advanced Timer")
+                .langZh("高级计时器")
                 .item(item -> {});
           });
 
@@ -92,7 +95,7 @@ public class RegistryLibTest {
           "tier_1",
           p -> new TimerBlock(p, 1),
           block -> {
-            block.initialProperties(() -> Blocks.IRON_BLOCK).simpleItem();
+            block.initialProperties(() -> Blocks.IRON_BLOCK).langZh("计时器 一阶").simpleItem();
           });
 
   public static final BlockEntry<TimerBlock> TIMER_TIER_2 =
@@ -100,7 +103,7 @@ public class RegistryLibTest {
           "tier_2",
           p -> new TimerBlock(p, 2),
           block -> {
-            block.initialProperties(() -> Blocks.IRON_BLOCK).simpleItem();
+            block.initialProperties(() -> Blocks.IRON_BLOCK).langZh("计时器 二阶").simpleItem();
           });
 
   public static final BlockEntry<TimerBlock> TIMER_TIER_3 =
@@ -108,7 +111,7 @@ public class RegistryLibTest {
           "tier_3",
           p -> new TimerBlock(p, 3),
           block -> {
-            block.initialProperties(() -> Blocks.IRON_BLOCK).simpleItem();
+            block.initialProperties(() -> Blocks.IRON_BLOCK).langZh("计时器 三阶").simpleItem();
           });
 
   public static final BlockEntityEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY =
@@ -122,38 +125,52 @@ public class RegistryLibTest {
 
   // === Fluids ===
 
+  // registrylib 默认流体纹理（灰色可着色）
+  private static final Identifier FLUID_STILL = Identifier.fromNamespaceAndPath("registrylib", "block/fluid/liquid_still");
+  private static final Identifier FLUID_FLOW = Identifier.fromNamespaceAndPath("registrylib", "block/fluid/liquid_flow");
+
   public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
       REGISTRYLIB.fluid(
           "molten_iron",
-          Identifier.withDefaultNamespace("block/water_still"),
-          Identifier.withDefaultNamespace("block/water_flow"),
+          FLUID_STILL,
+          FLUID_FLOW,
           fluid -> {
-            fluid
-                .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
-                .lang("Molten Iron");
+          fluid
+              .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
+              .langEn("Molten Iron")
+              .langZh("熔铁")
+              .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
+              .bucket(bucket -> bucket.langZh("熔铁桶"));
           });
 
   public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
       REGISTRYLIB.fluid(
           "acid",
-          Identifier.withDefaultNamespace("block/water_still"),
-          Identifier.withDefaultNamespace("block/water_flow"),
+          FLUID_STILL,
+          FLUID_FLOW,
           fluid -> {
-            fluid.properties(p -> p.density(1200).viscosity(800)).lang("Acid");
+          fluid
+              .properties(p -> p.density(1200).viscosity(800))
+              .langEn("Acid")
+              .langZh("酸液")
+              .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFF55DD00)
+              .bucket(bucket -> bucket.langZh("酸液桶"));
           });
 
   // Multi-layer Fluid: consumer-scoped block + bucket configuration
   public static final FluidEntry<BaseFlowingFluid.Flowing> LIQUID_MAGIC =
       REGISTRYLIB.fluid(
           "liquid_magic",
-          Identifier.withDefaultNamespace("block/water_still"),
-          Identifier.withDefaultNamespace("block/water_flow"),
+          FLUID_STILL,
+          FLUID_FLOW,
           fluid -> {
-            fluid
-                .properties(p -> p.lightLevel(15).density(500).viscosity(200))
-                .lang("Liquid Magic");
-            fluid.block(block -> block.properties(p -> p.lightLevel(s -> 15)));
-            fluid.bucket(bucket -> bucket.lang("Liquid Magic Bucket"));
+          fluid
+              .properties(p -> p.lightLevel(15).density(500).viscosity(200))
+              .langEn("Liquid Magic")
+              .langZh("魔法液体")
+              .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFAA00FF)
+              .bucket(bucket -> bucket.langZh("魔法液体桶"));
+          fluid.block(block -> block.properties(p -> p.lightLevel(s -> 15)));
           });
 
   // === Advancements ===

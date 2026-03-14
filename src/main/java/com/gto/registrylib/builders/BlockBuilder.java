@@ -77,7 +77,7 @@ public class BlockBuilder<T extends Block, P>
         getOwner()
             .<I, BlockBuilder<T, P>>item(
                 this, getName(), p -> factory.apply(getEntry(), p.useBlockDescriptionPrefix()))
-            .setData(ProviderType.LANG, (ctx, prov) -> {})
+            .setData(ProviderType.LANG_EN_US, (ctx, prov) -> {})
             .model(
                 () ->
                     (ctx, prov) -> {
@@ -125,9 +125,9 @@ public class BlockBuilder<T extends Block, P>
     return blockstate(() -> (ctx, prov) -> prov.createTrivialCube(ctx.getEntry()));
   }
 
-  @SyntaxSugar("lang(Block::getDescriptionId)")
+  @SyntaxSugar("langEn(Block::getDescriptionId)")
   public BlockBuilder<T, P> defaultLang() {
-    return lang(Block::getDescriptionId);
+    return langEn(Block::getDescriptionId);
   }
 
   @SyntaxSugar("loot(RegistryLibBlockLootTables::dropSelf)")
@@ -158,8 +158,23 @@ public class BlockBuilder<T extends Block, P>
   }
 
   @StandardAPI
-  public BlockBuilder<T, P> lang(@Nonnull String name) {
-    return lang(Block::getDescriptionId, name);
+  public BlockBuilder<T, P> langEn(@Nonnull String name) {
+    return langEn(Block::getDescriptionId, name);
+  }
+
+  @StandardAPI
+  public BlockBuilder<T, P> langZh(@Nonnull String name) {
+    return langZh(Block::getDescriptionId, name);
+  }
+
+  @StandardAPI
+  public BlockBuilder<T, P> langRu(@Nonnull String name) {
+    return langRu(Block::getDescriptionId, name);
+  }
+
+  @StandardAPI
+  public BlockBuilder<T, P> langJa(@Nonnull String name) {
+    return langJa(Block::getDescriptionId, name);
   }
 
   @StandardAPI

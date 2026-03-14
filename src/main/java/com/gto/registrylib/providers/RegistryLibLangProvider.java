@@ -19,7 +19,7 @@ import net.neoforged.fml.LogicalSide;
 import net.neoforged.neoforge.common.data.LanguageProvider;
 import org.apache.commons.lang3.StringUtils;
 
-public class RegistryLibLangProvider extends LanguageProvider implements RegistryLibProvider {
+public class RegistryLibLangProvider extends LanguageProvider implements RegistryLibLangEntryProvider {
 
   private static class AccessibleLanguageProvider extends LanguageProvider {
 
@@ -57,7 +57,7 @@ public class RegistryLibLangProvider extends LanguageProvider implements Registr
 
   @Override
   protected void addTranslations() {
-    owner.genData(ProviderType.LANG, this);
+    owner.genData(ProviderType.LANG_EN_US, this);
   }
 
   public static String toEnglishName(String internalName) {

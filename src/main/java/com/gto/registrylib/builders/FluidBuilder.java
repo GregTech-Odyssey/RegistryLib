@@ -74,6 +74,20 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     return clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture));
   }
 
+  @StandardAPI
+  public FluidBuilder<T, P> clientExtension(
+      @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture, int tintColor) {
+    return clientExtension(
+        () ->
+            () ->
+                new DefaultFluidTypeExtension(stillTexture, flowingTexture) {
+                  @Override
+                  public int getTintColor() {
+                    return tintColor;
+                  }
+                });
+  }
+
   protected void registerClientExtension() {
     OneTimeEventReceiver.addModListener(
         getOwner(),
@@ -179,16 +193,31 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
   }
 
   @SyntaxSugar(
-      "lang(f -> f.getFluidType().getDescriptionId(), RegistryLibLangProvider.toEnglishName(sourceName))")
+      "langEn(f -> f.getFluidType().getDescriptionId(), RegistryLibLangProvider.toEnglishName(sourceName))")
   public FluidBuilder<T, P> defaultLang() {
-    return lang(
+    return langEn(
         f -> f.getFluidType().getDescriptionId(),
         RegistryLibLangProvider.toEnglishName(sourceName));
   }
 
   @StandardAPI
-  public FluidBuilder<T, P> lang(@Nonnull String name) {
-    return lang(f -> f.getFluidType().getDescriptionId(), name);
+  public FluidBuilder<T, P> langEn(@Nonnull String name) {
+    return langEn(f -> f.getFluidType().getDescriptionId(), name);
+  }
+
+  @StandardAPI
+  public FluidBuilder<T, P> langZh(@Nonnull String name) {
+    return langZh(f -> f.getFluidType().getDescriptionId(), name);
+  }
+
+  @StandardAPI
+  public FluidBuilder<T, P> langRu(@Nonnull String name) {
+    return langRu(f -> f.getFluidType().getDescriptionId(), name);
+  }
+
+  @StandardAPI
+  public FluidBuilder<T, P> langJa(@Nonnull String name) {
+    return langJa(f -> f.getFluidType().getDescriptionId(), name);
   }
 
   // --- Source ---
@@ -365,7 +394,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     if (block.isPresent() && block.get().isBound()) {
       properties.descriptionId(block.get().get().getDescriptionId());
-      setData(ProviderType.LANG, (ctx, prov) -> {});
+      setData(ProviderType.LANG_EN_US, (ctx, prov) -> {});
     } else {
       properties.descriptionId(
           Identifier.fromNamespaceAndPath(getOwner().getModid(), sourceName)

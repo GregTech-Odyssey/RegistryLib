@@ -43,6 +43,7 @@ import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
+import com.gto.registrylib.providers.RegistryLibLangEntryProvider;
 import net.neoforged.neoforge.registries.*;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
@@ -395,9 +396,25 @@ public class RegistryLib {
           () -> {
             final List<Pair<String, String>> ret = new ArrayList<>();
             addDataGenerator(
-                ProviderType.LANG, prov -> ret.forEach(p -> prov.add(p.getKey(), p.getValue())));
+                ProviderType.LANG_EN_US, prov -> ret.forEach(p -> prov.add(p.getKey(), p.getValue())));
             return ret;
           });
+
+  private final java.util.Map<ProviderType<?>, Supplier<List<Pair<String, String>>>> extraLangByLocale =
+      new java.util.concurrent.ConcurrentHashMap<>();
+
+  @SuppressWarnings("unchecked")
+  private <P extends RegistryLibLangEntryProvider> Supplier<List<Pair<String, String>>> getExtraLangList(
+      ProviderType<P> type) {
+    return extraLangByLocale.computeIfAbsent(
+        type,
+        t -> {
+          final List<Pair<String, String>> ret = new ArrayList<>();
+          addDataGenerator(
+              (ProviderType<P>) t, prov -> ret.forEach(p -> prov.add(p.getKey(), p.getValue())));
+          return Lazy.of(() -> ret);
+        });
+  }
 
   public MutableComponent addLang(String type, Identifier id, String localizedName) {
     return addRawLang(id.toLanguageKey(type), localizedName);
@@ -412,6 +429,13 @@ public class RegistryLib {
       extraLang.get().add(Pair.of(key, value));
     }
     return Component.translatable(key);
+  }
+
+  public <P extends RegistryLibLangEntryProvider> void addRawLang(
+      ProviderType<P> type, String key, String value) {
+    if (doDatagen.get()) {
+      getExtraLangList(type).get().add(Pair.of(key, value));
+    }
   }
 
   // === Data Gen Execution ===

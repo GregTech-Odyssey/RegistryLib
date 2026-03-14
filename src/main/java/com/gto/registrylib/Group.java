@@ -134,7 +134,7 @@ public class Group {
       BlockBuilder<T, Group> builder) {
     var b = builder.properties(blockPropertiesModifier);
     if (langPrefix != null) {
-      b = b.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
+      b = b.langEn(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
     }
     return b;
   }
@@ -145,7 +145,7 @@ public class Group {
       b = b.tab(defaultTab);
     }
     if (langPrefix != null) {
-      b = b.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
+      b = b.langEn(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
     }
     return b;
   }
@@ -154,7 +154,7 @@ public class Group {
       FluidBuilder<T, Group> builder) {
     if (langPrefix != null) {
       builder =
-          builder.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
+          builder.langEn(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
     }
     return builder;
   }
