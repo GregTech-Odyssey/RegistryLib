@@ -647,7 +647,7 @@ public class RegistryCore {
 
     @StandardAPI
     public Group.Builder group(@Nonnull String name) {
-        return new Group.Builder(this);
+        return new Group.Builder(this, name);
     }
 
     // --- Creative Tab ---

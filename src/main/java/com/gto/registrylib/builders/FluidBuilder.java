@@ -20,8 +20,10 @@ import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -132,6 +134,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @Nullable
     private Boolean defaultSource, defaultBlock, defaultBucket;
+    @Nullable
+    private ResourceKey<CreativeModeTab> defaultBucketTab;
 
     private Consumer<FluidType.Properties> typeProperties = unusedProperties -> {};
     private Consumer<BaseFlowingFluid.Properties> fluidProperties = unusedProperties -> {};
@@ -281,6 +285,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
+    /** Sets a default creative tab that will be applied to any bucket item created via {@link #bucket}. */
+    @StandardAPI
+    public FluidBuilder<T, P> defaultBucketTab(@Nonnull ResourceKey<CreativeModeTab> tab) {
+        this.defaultBucketTab = tab;
+        return this;
+    }
+
     @StandardAPI("Configures a BucketItem sub-entry via consumer. Returns this FluidBuilder.")
     public FluidBuilder<T, P> bucket(
                                      @Nonnull Consumer<ItemBuilder<BucketItem, FluidBuilder<T, P>>> config) {
@@ -324,6 +335,9 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                             }
                         });
         this.fluidProperties(p -> p.bucket(builder.asSupplier()));
+        if (defaultBucketTab != null) {
+            builder.tab(defaultBucketTab);
+        }
         config.accept(builder);
         builder.register();
         return this;

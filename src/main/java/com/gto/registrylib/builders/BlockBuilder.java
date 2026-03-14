@@ -16,8 +16,10 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -32,6 +34,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class BlockBuilder<T extends Block, P>
                          extends AbstractBuilder<Block, T, P, BlockBuilder<T, P>> {
@@ -51,6 +54,8 @@ public class BlockBuilder<T extends Block, P>
     private final Function<BlockBehaviour.Properties, T> factory;
     private Supplier<BlockBehaviour.Properties> initialProperties;
     private Function<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = UnaryOperator.identity();
+    @Nullable
+    private ResourceKey<CreativeModeTab> defaultItemTab;
 
     protected BlockBuilder(
                            RegistryCore owner,
@@ -94,8 +99,18 @@ public class BlockBuilder<T extends Block, P>
                                             return null;
                                         })
                                 .ifPresent(model -> prov.createWithExistingModel(ctx.get(), model)));
+        if (defaultItemTab != null) {
+            builder.tab(defaultItemTab);
+        }
         config.accept(builder);
         builder.register();
+        return this;
+    }
+
+    /** Sets a default creative tab that will be applied to any BlockItem created via {@link #item}. */
+    @StandardAPI
+    public BlockBuilder<T, P> defaultItemTab(@Nonnull ResourceKey<CreativeModeTab> tab) {
+        this.defaultItemTab = tab;
         return this;
     }
 
