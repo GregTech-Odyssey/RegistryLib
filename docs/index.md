@@ -16,3 +16,4 @@ work inside a clean fluent builder workflow.
 
 - [CurseForge Description](curseforge-description)
 - [GitHub Repository](https://github.com/GregTech-Odyssey/RegistryLib)
+- [JavaDoc](https://gregtech-odyssey.github.io/RegistryLib/javadoc/)
