@@ -1,0 +1,29 @@
+# eclipse
+*.launch
+.settings/
+.metadata
+.classpath
+.project
+bin/
+
+# idea
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# gradle
+build/
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# other
+run/
+runs/
+logs/
+src/generated/
+
+gtoregistrylib/
+tterrag1098Registrate-1.21.8-dev/
+.1git/

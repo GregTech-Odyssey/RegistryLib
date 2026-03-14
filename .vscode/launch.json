@@ -1,0 +1,93 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Client",
+      "presentation": {
+        "group": "Mod Development - RegistryLib3",
+        "order": 0
+      },
+      "projectName": "RegistryLib3",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\clientRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\clientRunVmArgs.txt",
+        "-Dfml.modFolders\u003dregistrylib%%D:\\vscodeProject\\RegistryLib3\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Data",
+      "presentation": {
+        "group": "Mod Development - RegistryLib3",
+        "order": 1
+      },
+      "projectName": "RegistryLib3",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\dataRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\dataRunVmArgs.txt",
+        "-Dfml.modFolders\u003dregistrylib%%D:\\vscodeProject\\RegistryLib3\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "GameTestServer",
+      "presentation": {
+        "group": "Mod Development - RegistryLib3",
+        "order": 2
+      },
+      "projectName": "RegistryLib3",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\gameTestServerRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\gameTestServerRunVmArgs.txt",
+        "-Dfml.modFolders\u003dregistrylib%%D:\\vscodeProject\\RegistryLib3\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    },
+    {
+      "type": "java",
+      "request": "launch",
+      "name": "Server",
+      "presentation": {
+        "group": "Mod Development - RegistryLib3",
+        "order": 3
+      },
+      "projectName": "RegistryLib3",
+      "mainClass": "net.neoforged.devlaunch.Main",
+      "args": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\serverRunProgramArgs.txt"
+      ],
+      "vmArgs": [
+        "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\serverRunVmArgs.txt",
+        "-Dfml.modFolders\u003dregistrylib%%D:\\vscodeProject\\RegistryLib3\\bin\\main"
+      ],
+      "cwd": "${workspaceFolder}\\run",
+      "env": {},
+      "console": "internalConsole",
+      "shortenCommandLine": "none"
+    }
+  ]
+}
