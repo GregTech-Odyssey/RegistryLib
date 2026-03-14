@@ -18,8 +18,8 @@ import java.util.List;
 /**
  * 组合物品——通过 {@link CompositeItemAttachment} 挂载多个可插拔行为组件。
  *
- * <p>短路委托、首命中委托、累加委托三种模式自动分发到所有已挂载的附件。
- * 位掩码机制跳过未覆盖的方法，避免不必要的调用。
+ * <p>
+ * 短路委托、首命中委托、累加委托三种模式自动分发到所有已挂载的附件。 位掩码机制跳过未覆盖的方法，避免不必要的调用。
  */
 public class CompositeItem extends Item {
 
@@ -34,9 +34,7 @@ public class CompositeItem extends Item {
         return Collections.unmodifiableList(attachments);
     }
 
-    /**
-     * 挂载附件。自动检测该 attachment 类覆盖了哪些方法，更新位掩码。
-     */
+    /** 挂载附件。自动检测该 attachment 类覆盖了哪些方法，更新位掩码。 */
     @SuppressWarnings("unchecked")
     public void attachUnchecked(CompositeItemAttachment<?> attachment) {
         var typed = (CompositeItemAttachment<CompositeItem>) attachment;
@@ -74,7 +72,8 @@ public class CompositeItem extends Item {
 
     @Override
     public boolean isBarVisible(ItemStack stack) {
-        if ((combinedFlags & CompositeItemAttachment.IS_BAR_VISIBLE) == 0) return super.isBarVisible(stack);
+        if ((combinedFlags & CompositeItemAttachment.IS_BAR_VISIBLE) == 0)
+            return super.isBarVisible(stack);
         for (var att : attachments) {
             if ((att.overrideFlags & CompositeItemAttachment.IS_BAR_VISIBLE) == 0) continue;
             Boolean result = att.isBarVisible(this, stack);
@@ -85,7 +84,8 @@ public class CompositeItem extends Item {
 
     @Override
     public int getBarWidth(ItemStack stack) {
-        if ((combinedFlags & CompositeItemAttachment.GET_BAR_WIDTH) == 0) return super.getBarWidth(stack);
+        if ((combinedFlags & CompositeItemAttachment.GET_BAR_WIDTH) == 0)
+            return super.getBarWidth(stack);
         for (var att : attachments) {
             if ((att.overrideFlags & CompositeItemAttachment.GET_BAR_WIDTH) == 0) continue;
             Integer result = att.getBarWidth(this, stack);
@@ -96,7 +96,8 @@ public class CompositeItem extends Item {
 
     @Override
     public int getBarColor(ItemStack stack) {
-        if ((combinedFlags & CompositeItemAttachment.GET_BAR_COLOR) == 0) return super.getBarColor(stack);
+        if ((combinedFlags & CompositeItemAttachment.GET_BAR_COLOR) == 0)
+            return super.getBarColor(stack);
         for (var att : attachments) {
             if ((att.overrideFlags & CompositeItemAttachment.GET_BAR_COLOR) == 0) continue;
             Integer result = att.getBarColor(this, stack);

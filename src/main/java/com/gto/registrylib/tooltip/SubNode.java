@@ -7,11 +7,13 @@ import net.minecraft.network.chat.Component;
 /**
  * Tooltip 叶子节点——{@link RootNode} 内的渲染单元。
  *
- * <p>每个节点拥有 {@link #priority}（升序排列，值越小在所属 RootNode 中位置越靠上）。
- * 没有子节点列表——所有 SubNode 都是叶子，层级结构通过 {@link RootNode} 管理。
+ * <p>
+ * 每个节点拥有 {@link #priority}（升序排列，值越小在所属 RootNode 中位置越靠上）。 没有子节点列表——所有 SubNode 都是叶子，层级结构通过 {@link
+ * RootNode} 管理。
  *
- * <p>节点通过 {@link #getHeight} / {@link #getWidth} 提供自身尺寸，
- * 通过 {@link #renderImage} / {@link #renderText} 渲染自身内容。
+ * <p>
+ * 节点通过 {@link #getHeight} / {@link #getWidth} 提供自身尺寸， 通过 {@link #renderImage} / {@link
+ * #renderText} 渲染自身内容。
  */
 public abstract class SubNode {
 
@@ -37,10 +39,9 @@ public abstract class SubNode {
     /** 渲染此节点的文本内容。默认无操作。 */
     public void renderText(GuiGraphics graphics, Font font, int x, int y) {}
 
-    /**
-     * 自定义文本节点——包装任意 {@link Component}。默认 priority = 0。
-     */
+    /** 自定义文本节点——包装任意 {@link Component}。默认 priority = 0。 */
     public static class Basic extends SubNode {
+
         private final Component text;
 
         public Basic(Component text) {

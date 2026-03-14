@@ -12,9 +12,8 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
  * {@link RegistryLibTooltipComponent} 的客户端渲染实现。
  *
  * <ul>
- *   <li>内联 SubNode（来自 {@code separateBox=false} 的 RootNode）直接嵌入原版提示框
- *   <li>独立框 SubNode（来自 {@code separateBox=true} 的 RootNode）
- *       在原版提示框下方绘制独立背景框并渲染
+ * <li>内联 SubNode（来自 {@code separateBox=false} 的 RootNode）直接嵌入原版提示框
+ * <li>独立框 SubNode（来自 {@code separateBox=true} 的 RootNode） 在原版提示框下方绘制独立背景框并渲染
  * </ul>
  */
 public class RegistryLibClientTooltip implements ClientTooltipComponent {
@@ -49,10 +48,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
         return w;
     }
 
-    /**
-     * 渲染文字层——原版先调用此方法。
-     * 独立框的背景也在此处绘制，保证背景在文字之下。
-     */
+    /** 渲染文字层——原版先调用此方法。 独立框的背景也在此处绘制，保证背景在文字之下。 */
     @Override
     public void renderText(GuiGraphics graphics, Font font, int x, int y) {
         // 1) 内联 SubNodes
@@ -97,9 +93,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
         }
     }
 
-    /**
-     * 渲染图像层——原版在 {@link #renderText} 之后调用此方法。
-     */
+    /** 渲染图像层——原版在 {@link #renderText} 之后调用此方法。 */
     @Override
     public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics graphics) {
         // 1) 内联 SubNodes

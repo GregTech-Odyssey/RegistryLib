@@ -89,13 +89,17 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                         }
                         // 自动注册附件的 tooltip 收集
                         if (composite.getAttachments().stream()
-                                .anyMatch(att -> (att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) != 0)) {
-                            TooltipRegistry.register(item, (collector, stack) -> {
-                                for (var att : composite.getAttachments()) {
-                                    if ((att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) == 0) continue;
-                                    att.collectTooltipNodes(composite, stack, collector);
-                                }
-                            });
+                                .anyMatch(
+                                        att -> (att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) != 0)) {
+                            TooltipRegistry.register(
+                                    item,
+                                    (collector, stack) -> {
+                                        for (var att : composite.getAttachments()) {
+                                            if ((att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) == 0)
+                                                continue;
+                                            att.collectTooltipNodes(composite, stack, collector);
+                                        }
+                                    });
                         }
                     }
                     pendingAttachments.clear();
@@ -175,8 +179,8 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     /**
      * 为此物品注册 tooltip 子节点配置。
      *
-     * <p>配置在 tooltip 渲染阶段执行，接收当前 ItemStack，
-     * 可根据 ItemStack 数据动态生成节点。
+     * <p>
+     * 配置在 tooltip 渲染阶段执行，接收当前 ItemStack， 可根据 ItemStack 数据动态生成节点。
      */
     @StandardAPI
     public ItemBuilder<T, P> tooltip(@Nonnull TooltipNodeCollector.TooltipConfig config) {
@@ -184,18 +188,14 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         return this;
     }
 
-    /**
-     * 便捷添加一个 tooltip
-     */
+    /** 便捷添加一个 tooltip */
     @SyntaxSugar
     public ItemBuilder<T, P> tooltip(@Nonnull Component component) {
-        tooltip((collector, stack) -> collector.node(new SubNode.Basic(component,0)));
+        tooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)));
         return this;
     }
 
-    /**
-     * 为此物品添加一个组合附件（仅当 Item 为 {@link CompositeItem} 或其子类时有效）。
-     */
+    /** 为此物品添加一个组合附件（仅当 Item 为 {@link CompositeItem} 或其子类时有效）。 */
     @StandardAPI
     public ItemBuilder<T, P> attach(@Nonnull CompositeItemAttachment<?> attachment) {
         pendingAttachments.add(attachment);

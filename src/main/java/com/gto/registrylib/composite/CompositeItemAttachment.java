@@ -19,14 +19,16 @@ import java.util.Map;
 /**
  * 可附加到 {@link CompositeItem} 上的行为组件。
  *
- * <p>泛型 {@code T} 为宿主 Item 的类型，所有回调方法的 item 参数均为 {@code T}，
- * 编写时可直接访问自定义 Item 子类的成员。
+ * <p>
+ * 泛型 {@code T} 为宿主 Item 的类型，所有回调方法的 item 参数均为 {@code T}， 编写时可直接访问自定义 Item 子类的成员。
  *
- * <p>每个方法提供"不干预"的默认实现：
+ * <p>
+ * 每个方法提供"不干预"的默认实现：
+ *
  * <ul>
- *   <li><b>短路类</b>（交互）：返回 {@link InteractionResult#PASS}
- *   <li><b>首命中类</b>（显示）：返回 {@code null}
- *   <li><b>累加类</b>（tooltip / tick）：空方法体
+ * <li><b>短路类</b>（交互）：返回 {@link InteractionResult#PASS}
+ * <li><b>首命中类</b>（显示）：返回 {@code null}
+ * <li><b>累加类</b>（tooltip / tick）：空方法体
  * </ul>
  */
 public class CompositeItemAttachment<T extends CompositeItem> {
@@ -54,9 +56,7 @@ public class CompositeItemAttachment<T extends CompositeItem> {
 
     private static final Map<Class<?>, Integer> cache = new IdentityHashMap<>();
 
-    /**
-     * 检测子类实际覆盖了哪些方法，返回覆盖方法的位掩码并集。结果缓存。
-     */
+    /** 检测子类实际覆盖了哪些方法，返回覆盖方法的位掩码并集。结果缓存。 */
     public static int detectOverrides(Class<?> clazz) {
         Integer cached = cache.get(clazz);
         if (cached != null) return cached;
@@ -104,10 +104,9 @@ public class CompositeItemAttachment<T extends CompositeItem> {
 
     // ── 累加类：所有 attachment 均调用 ──
 
-    /**
-     * 为 tooltip 贡献节点。
-     */
+    /** 为 tooltip 贡献节点。 */
     public void collectTooltipNodes(T item, ItemStack stack, TooltipNodeCollector collector) {}
 
-    public void inventoryTick(T item, ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {}
+    public void inventoryTick(
+                              T item, ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {}
 }

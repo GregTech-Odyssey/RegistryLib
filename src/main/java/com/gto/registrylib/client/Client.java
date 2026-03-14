@@ -2,6 +2,7 @@ package com.gto.registrylib.client;
 
 import com.gto.registrylib.tooltip.RegistryLibTooltipComponent;
 import com.gto.registrylib.tooltip.TooltipRegistry;
+
 import com.mojang.datafixers.util.Either;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;

@@ -1,9 +1,5 @@
 package com.gto.registrylib.tooltip;
 
-import com.mojang.datafixers.util.Either;
-
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
@@ -15,8 +11,9 @@ import java.util.*;
 /**
  * RegistryLib Tooltip 全局注册表。
  *
- * <p>管理 {@link RootNode} 注册和按物品的 {@link SubNode} 配置回调。
- * 首次 {@link #resolve} 时延迟构建 {@link Item} → 配置列表的查找表。
+ * <p>
+ * 管理 {@link RootNode} 注册和按物品的 {@link SubNode} 配置回调。 首次 {@link #resolve} 时延迟构建 {@link Item} →
+ * 配置列表的查找表。
  */
 public final class TooltipRegistry {
 
@@ -52,11 +49,9 @@ public final class TooltipRegistry {
         rootNodes.put(ref, rootNode);
     }
 
-    /**
-     * 注册一个自定义 {@link RootNode} 并返回引用。
-     */
-    public static RootNodeRef rootNode(String id, int priority, boolean separateBox, int padding,
-                                       RootNode.BoxRenderer boxRenderer) {
+    /** 注册一个自定义 {@link RootNode} 并返回引用。 */
+    public static RootNodeRef rootNode(
+                                       String id, int priority, boolean separateBox, int padding, RootNode.BoxRenderer boxRenderer) {
         RootNodeRef ref = new RootNodeRef(id);
         rootNodes.put(ref, new RootNode(id, priority, separateBox, padding, boxRenderer));
         return ref;
@@ -86,8 +81,8 @@ public final class TooltipRegistry {
     /**
      * 查询指定 {@link ItemStack} 的 tooltip 组件。
      *
-     * <p>按 {@link RootNodeRef} 分组收集 {@link SubNode}，在每组内按 priority 排序，
-     * 根据节点的分隔线偏好插入分隔符。
+     * <p>
+     * 按 {@link RootNodeRef} 分组收集 {@link SubNode}，在每组内按 priority 排序， 根据节点的分隔线偏好插入分隔符。
      */
     public static RegistryLibTooltipComponent resolve(ItemStack itemStack) {
         var configs = ensureResolved().get(itemStack.getItem());

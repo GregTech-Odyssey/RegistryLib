@@ -5,8 +5,8 @@ import java.util.Objects;
 /**
  * {@link RootNode} 的惰性引用句柄。
  *
- * <p>在注册阶段可安全传递和引用。
- * 跨模块使用时直接引用声明方的静态字段即可。
+ * <p>
+ * 在注册阶段可安全传递和引用。 跨模块使用时直接引用声明方的静态字段即可。
  */
 public final class RootNodeRef {
 

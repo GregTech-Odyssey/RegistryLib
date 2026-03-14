@@ -6,10 +6,11 @@ import net.minecraft.client.gui.GuiGraphics;
 /**
  * 分隔线节点——在同一 {@link RootNode} 内的 {@link SubNode} 之间绘制全宽高光细线。
  *
- * <p>由 {@link TooltipRegistry} 在组装 {@link RegistryLibTooltipComponent} 时自动插入，无需手动创建。
+ * <p>
+ * 由 {@link TooltipRegistry} 在组装 {@link RegistryLibTooltipComponent} 时自动插入，无需手动创建。
  *
- * <p>全宽 1px 半透明白色高光线，在深色 tooltip 背景上呈现柔和分隔。
- * 总高度 7px（3px 上间距 + 1px 线条 + 3px 下间距）。
+ * <p>
+ * 全宽 1px 半透明白色高光线，在深色 tooltip 背景上呈现柔和分隔。 总高度 7px（3px 上间距 + 1px 线条 + 3px 下间距）。
  */
 public class SeparatorNode extends SubNode {
 
