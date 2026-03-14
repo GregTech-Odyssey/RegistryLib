@@ -40,18 +40,15 @@ jobs:
         echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
         echo "Resolved release tag: ${TAG}"
 
-    - name: Build with Gradle
-      run: ./gradlew build
-
-    - name: Publish to GitHub Packages
-      run: ./gradlew publish
+    - name: Build and Publish
+      run: ./gradlew assemble publish
       env:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
 
     - name: List build outputs
-      run: find build/libs -type f | sort
+      run: find . -name "*.jar" -path "*/build/libs/*" | sort
 
     - name: Create GitHub Release
       env:
