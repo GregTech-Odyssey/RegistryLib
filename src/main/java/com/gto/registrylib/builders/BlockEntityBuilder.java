@@ -2,18 +2,16 @@ package com.gto.registrylib.builders;
 
 import com.gto.registrylib.RegistryLib;
 import com.gto.registrylib.annotations.StandardAPI;
-import com.gto.registrylib.util.OneTimeEventReceiver;
-import com.gto.registrylib.util.RegistryLibDistExecutor;
+import com.gto.registrylib.client.Client;
+import com.gto.registrylib.util.DistExecutor;
 import com.gto.registrylib.util.entry.BlockEntityEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -22,7 +20,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class BlockEntityBuilder<BE extends BlockEntity, P>
@@ -43,8 +40,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
   }
 
   private final BlockEntityFactory<BE> factory;
-  private final Set<Supplier<? extends Block>> validBlocks = new HashSet<>();
-  @Nullable private Supplier<? extends BlockEntityRendererProvider<?, ?>> renderer;
+  private final Set<Supplier<? extends Block>> validBlocks = new ReferenceOpenHashSet<>();
 
   protected BlockEntityBuilder(
       RegistryLib owner,
@@ -71,28 +67,12 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     return this;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
   @StandardAPI
   public <BERS extends BlockEntityRenderState> BlockEntityBuilder<BE, P> renderer(
       @Nonnull Supplier<BlockEntityRendererProvider<? super BE, BERS>> renderer) {
-    if (this.renderer == null) {
-      RegistryLibDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> this::registerRenderer);
-    }
-    this.renderer = (Supplier) renderer;
+    DistExecutor.unsafeRunWhenOn(
+        Dist.CLIENT, () -> () -> Client.registerBER(getEntry(), renderer.get()));
     return this;
-  }
-
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  protected void registerRenderer() {
-    OneTimeEventReceiver.addModListener(
-        getOwner(),
-        FMLClientSetupEvent.class,
-        $ -> {
-          var r = this.renderer;
-          if (r != null) {
-            BlockEntityRenderers.register(getEntry(), (BlockEntityRendererProvider) r.get());
-          }
-        });
   }
 
   @Override

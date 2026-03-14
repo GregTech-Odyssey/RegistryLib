@@ -6,9 +6,9 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
+import com.gto.registrylib.util.DistExecutor;
 import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.OneTimeEventReceiver;
-import com.gto.registrylib.util.RegistryLibDistExecutor;
 import com.gto.registrylib.util.entry.FluidEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 import java.util.ArrayList;
@@ -62,7 +62,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
   public FluidBuilder<T, P> clientExtension(
       @Nonnull Supplier<Supplier<IClientFluidTypeExtensions>> clientExtension) {
     if (this.clientExtension == null) {
-      RegistryLibDistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> this::registerClientExtension);
+      DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> this::registerClientExtension);
     }
     this.clientExtension = clientExtension;
     return this;

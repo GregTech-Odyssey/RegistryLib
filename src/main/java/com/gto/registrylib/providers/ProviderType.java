@@ -22,6 +22,8 @@ import net.neoforged.neoforge.data.loading.DatagenModLoader;
 @FunctionalInterface
 public interface ProviderType<T extends RegistryLibProvider> extends GeneratorType<T> {
 
+  ProviderType NULL = _ -> null;
+
   // SERVER DATA
   ProviderType<RegistryLibDatapackProvider> DYNAMIC =
       registerServerData("dynamic", RegistryLibDatapackProvider::new);
@@ -125,7 +127,7 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
   @Nonnull
   static <T extends RegistryLibProvider> ProviderType<T> registerClientProvider(
       String name, Supplier<ProviderType<T>> supplier) {
-    if (!DatagenModLoader.isRunningDataGen()) return context -> null;
+    if (!DatagenModLoader.isRunningDataGen()) return NULL;
     var type = supplier.get();
     RegistryLibDataProvider.TYPES.put(name, type);
     return type;

@@ -22,7 +22,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 public @interface StandardAPI {
   /** Optional description of the API behavior represented by this method. */
   String value() default "";

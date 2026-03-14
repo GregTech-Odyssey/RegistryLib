@@ -11,7 +11,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.IModBusEvent;
 import net.neoforged.neoforge.common.NeoForge;
 
-public class OneTimeEventReceiver<T extends Event> implements Consumer<T> {
+public final class OneTimeEventReceiver<T extends Event> implements Consumer<T> {
 
   private static final List<Runnable> toUnregister = new ArrayList<>();
 

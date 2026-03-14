@@ -1,7 +1,5 @@
 package com.gto.registrylib.builders;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
 import com.gto.registrylib.RegistryLib;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.providers.ProviderType;
@@ -9,7 +7,9 @@ import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.RegistryLibTagsProvider;
 import com.gto.registrylib.util.entry.LazyRegistryEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
-import java.util.Arrays;
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -21,6 +21,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
 import net.neoforged.neoforge.registries.DeferredHolder;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 
 public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuilder<R, T, P, S>>
     implements Builder<R, T, P, S> {
@@ -31,10 +32,11 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
   private final BuilderCallback callback;
   private final ResourceKey<? extends Registry<R>> registryKey;
 
-  private final Multimap<ProviderType<? extends RegistryLibTagsProvider<?>>, TagKey<?>> tagsByType =
-      HashMultimap.create();
+  private final Map<
+          ProviderType<? extends RegistryLibTagsProvider<?>>,
+          Reference2BooleanOpenHashMap<TagKey<?>>>
+      tagsByType = new Reference2ReferenceOpenHashMap<>();
   private final LazyRegistryEntry<R, T> safeSupplier = new LazyRegistryEntry<>(this);
-  private boolean isOptional = false;
 
   protected AbstractBuilder(
       RegistryLib owner,
@@ -77,7 +79,16 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
   @Override
   @StandardAPI
+  @MustBeInvokedByOverriders
   public RegistryEntry<R, T> register() {
+    tagsByType.forEach(
+        (type, tags) ->
+            setData(
+                type,
+                (_, prov) ->
+                    tags.forEach(
+                        (tag, isOptional) ->
+                            prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
     return callback.accept(name, registryKey, this, this::createEntry, this::createEntryWrapper);
   }
 
@@ -92,32 +103,26 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
   // === Configuration ===
 
-  @SuppressWarnings("unchecked")
   @SafeVarargs
   @StandardAPI
   public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
       @Nonnull ProviderType<? extends TP> type, @Nonnull TagKey<R>... tags) {
-    if (!tagsByType.containsKey(type)) {
-      setData(
-          type,
-          (ctx, prov) ->
-              tagsByType.get(type).stream()
-                  .map(t -> (TagKey<R>) t)
-                  .map(prov::rawBuilder)
-                  .forEach(b -> b.add(asTag())));
-    }
-    tagsByType.putAll(type, Arrays.asList(tags));
-    return (S) this;
+    return tag(type, false, tags);
   }
 
   @SuppressWarnings("unchecked")
+  @SafeVarargs
   @StandardAPI
-  public S asOptional() {
-    isOptional = true;
+  public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
+      @Nonnull ProviderType<? extends TP> type, boolean isOptional, @Nonnull TagKey<R>... tags) {
+    var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
+    for (TagKey<R> tag : tags) {
+      map.put(tag, isOptional);
+    }
     return (S) this;
   }
 
-  protected TagEntry asTag() {
+  protected TagEntry asTag(boolean isOptional) {
     Identifier id = Identifier.fromNamespaceAndPath(getOwner().getModid(), getName());
     if (isOptional) return TagEntry.optionalElement(id);
     return TagEntry.element(id);
@@ -128,9 +133,10 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
   @StandardAPI
   public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S removeTag(
       @Nonnull ProviderType<TP> type, @Nonnull TagKey<R>... tags) {
-    if (tagsByType.containsKey(type)) {
+    var set = tagsByType.get(type);
+    if (set != null) {
       for (TagKey<R> tag : tags) {
-        tagsByType.remove(type, tag);
+        set.removeBoolean(tag);
       }
     }
     return (S) this;

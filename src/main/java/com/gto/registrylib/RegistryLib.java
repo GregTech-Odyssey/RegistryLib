@@ -16,6 +16,7 @@ import com.gto.registrylib.util.entry.FluidEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 import com.mojang.serialization.Codec;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.*;
@@ -51,6 +52,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
 
 public class RegistryLib {
+
+  public static final String MOD_ID = "registrylib";
 
   private static final Logger log = LogManager.getLogger();
 
@@ -107,7 +110,8 @@ public class RegistryLib {
       registerCallbacks = HashMultimap.create();
   private final Multimap<ResourceKey<? extends Registry<?>>, Runnable> afterRegisterCallbacks =
       HashMultimap.create();
-  private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = new HashSet<>();
+  private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations =
+      new ReferenceOpenHashSet<>();
 
   private final Table<
           Pair<String, ResourceKey<? extends Registry<?>>>, GeneratorType<?>, Consumer<?>>

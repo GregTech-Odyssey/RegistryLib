@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import com.gto.registrylib.RegistryLib;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibProvider;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
@@ -69,7 +70,7 @@ public class RegistryLibLootTableProvider extends LootTableProvider implements R
   private final Multimap<
           ContextKeySet, Consumer<BiConsumer<ResourceKey<LootTable>, LootTable.Builder>>>
       lootActions = HashMultimap.create();
-  private final Set<RegistryLibLootTables> currentLootCreators = new HashSet<>();
+  private final Set<RegistryLibLootTables> currentLootCreators = new ReferenceOpenHashSet<>();
 
   private final CompletableFuture<HolderLookup.Provider> providerFuture;
 

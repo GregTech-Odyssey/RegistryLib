@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Target(ElementType.METHOD)
-@Retention(RetentionPolicy.RUNTIME)
+@Retention(RetentionPolicy.CLASS)
 public @interface SyntaxSugar {
   /** Optional description of which standard API call(s) this shortcut wraps. */
   String value() default "";

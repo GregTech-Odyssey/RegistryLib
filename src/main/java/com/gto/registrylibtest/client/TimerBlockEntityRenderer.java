@@ -49,8 +49,8 @@ public class TimerBlockEntityRenderer
 
     // Render the number on all 4 side faces
     String number = String.valueOf(tier);
-    renderSideFaceText(poseStack, collector, number, light, 0);   // South (Z+)
-    renderSideFaceText(poseStack, collector, number, light, 90);  // East  (X+)
+    renderSideFaceText(poseStack, collector, number, light, 0); // South (Z+)
+    renderSideFaceText(poseStack, collector, number, light, 90); // East  (X+)
     renderSideFaceText(poseStack, collector, number, light, 180); // North (Z-)
     renderSideFaceText(poseStack, collector, number, light, 270); // West  (X-)
   }

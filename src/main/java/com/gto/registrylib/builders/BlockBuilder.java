@@ -18,6 +18,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import javax.annotation.Nonnull;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.block.dispatch.Variant;
 import net.minecraft.core.registries.Registries;
@@ -80,21 +81,20 @@ public class BlockBuilder<T extends Block, P>
             .setData(ProviderType.LANG, (ctx, prov) -> {})
             .model(
                 () ->
-                    (ctx, prov) -> {
-                      getOwner()
-                          .getDataProvider(ProviderType.BLOCKSTATE)
-                          .map(g -> g.seenBlockstates.get(getEntry()))
-                          .flatMap(b -> b.simpleModels())
-                          .map(b -> b.models().get(""))
-                          .map(
-                              unbaked -> {
-                                if (unbaked instanceof SingleVariant.Unbaked(Variant variant)) {
-                                  return variant.modelLocation();
-                                }
-                                return null;
-                              })
-                          .ifPresent(model -> prov.createWithExistingModel(ctx.get(), model));
-                    });
+                    (ctx, prov) ->
+                        getOwner()
+                            .getDataProvider(ProviderType.BLOCKSTATE)
+                            .map(g -> g.seenBlockstates.get(getEntry()))
+                            .flatMap(BlockStateModelDispatcher::simpleModels)
+                            .map(b -> b.models().get(""))
+                            .map(
+                                unbaked -> {
+                                  if (unbaked instanceof SingleVariant.Unbaked(Variant variant)) {
+                                    return variant.modelLocation();
+                                  }
+                                  return null;
+                                })
+                            .ifPresent(model -> prov.createWithExistingModel(ctx.get(), model)));
     config.accept(builder);
     builder.register();
     return this;
@@ -104,10 +104,7 @@ public class BlockBuilder<T extends Block, P>
   public <BE extends BlockEntity> BlockBuilder<T, P> blockEntity(
       @Nonnull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
       @Nonnull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> config) {
-    var builder =
-        getOwner()
-            .<BE, BlockBuilder<T, P>>blockEntity(this, getName(), beFactory)
-            .validBlock(this::getEntry);
+    var builder = getOwner().blockEntity(this, getName(), beFactory).validBlock(this::getEntry);
     config.accept(builder);
     builder.register();
     return this;

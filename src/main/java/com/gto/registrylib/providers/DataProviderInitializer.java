@@ -1,5 +1,6 @@
 package com.gto.registrylib.providers;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
@@ -24,7 +25,7 @@ public class DataProviderInitializer {
 
   protected List<Sorted> getSortedProviders() {
     List<Sorted> ans = new ArrayList<>();
-    Set<ProviderType<?>> added = new HashSet<>();
+    Set<ProviderType<?>> added = new ReferenceOpenHashSet<>();
     List<Map.Entry<String, ProviderType<?>>> remain =
         new ArrayList<>(RegistryLibDataProvider.TYPES.entrySet());
     while (!remain.isEmpty()) {
