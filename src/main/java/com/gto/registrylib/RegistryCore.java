@@ -632,6 +632,7 @@ public class RegistryCore {
         return builder.register();
     }
 
+    @StandardAPI
     public <T extends BaseFlowingFluid, P> FluidBuilder<T, P> fluid(
                                                                     @Nonnull P parent,
                                                                     @Nonnull String name,
