@@ -652,7 +652,7 @@ public class RegistryCore {
 
     // --- Creative Tab ---
 
-    @StandardAPI
+    @SyntaxSugar("defaultCreativeTab(name, tab -> {})")
     public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> defaultCreativeTab(
                                                                                               String name) {
         return defaultCreativeTab(name, tab -> {});

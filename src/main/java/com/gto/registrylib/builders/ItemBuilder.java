@@ -165,7 +165,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         return setData(ProviderType.ITEM_MODEL, cons.get());
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(Item::getDescriptionId, name)")
     public ItemBuilder<T, P> lang(@Nonnull String name) {
         return lang(Item::getDescriptionId, name);
     }
@@ -189,7 +189,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     /** 便捷添加一个 tooltip */
-    @SyntaxSugar
+    @SyntaxSugar("tooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)))")
     public ItemBuilder<T, P> tooltip(@Nonnull Component component) {
         tooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)));
         return this;
@@ -203,7 +203,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @SafeVarargs
-    @StandardAPI
+    @SyntaxSugar("tag(ProviderType.ITEM_TAGS, tags)")
     public final ItemBuilder<T, P> tag(@Nonnull TagKey<Item>... tags) {
         return tag(ProviderType.ITEM_TAGS, tags);
     }

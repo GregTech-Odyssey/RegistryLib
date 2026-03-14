@@ -81,7 +81,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
-    @StandardAPI
+    @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1))")
     public FluidBuilder<T, P> clientExtension(
                                               @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture) {
         return clientExtension(
@@ -199,14 +199,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                 RegistryLibLangProvider.toEnglishName(sourceName));
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(f -> f.getFluidType().getDescriptionId(), name)")
     public FluidBuilder<T, P> lang(@Nonnull String name) {
         return lang(f -> f.getFluidType().getDescriptionId(), name);
     }
 
     // --- Source ---
 
-    @SyntaxSugar
+    @SyntaxSugar("source(BaseFlowingFluid.Source::new)")
     public FluidBuilder<T, P> defaultSource() {
         if (this.defaultSource != null) {
             throw new IllegalStateException(
@@ -226,7 +226,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     // --- Block ---
 
-    @SyntaxSugar
+    @SyntaxSugar("block($ -> {})")
     public FluidBuilder<T, P> defaultBlock() {
         if (this.defaultBlock != null) {
             throw new IllegalStateException(
@@ -236,7 +236,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
-    @StandardAPI("Configures a LiquidBlock sub-entry via consumer. Returns this FluidBuilder.")
+    @SyntaxSugar("block(LiquidBlock::new, config)")
     public FluidBuilder<T, P> block(
                                     @Nonnull Consumer<BlockBuilder<LiquidBlock, FluidBuilder<T, P>>> config) {
         return block(LiquidBlock::new, config);
@@ -275,7 +275,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     // --- Bucket ---
 
-    @SyntaxSugar
+    @SyntaxSugar("bucket($ -> {})")
     public FluidBuilder<T, P> defaultBucket() {
         if (this.defaultBucket != null) {
             throw new IllegalStateException(
@@ -292,7 +292,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
-    @StandardAPI("Configures a BucketItem sub-entry via consumer. Returns this FluidBuilder.")
+    @SyntaxSugar("bucket(BucketItem::new, config)")
     public FluidBuilder<T, P> bucket(
                                      @Nonnull Consumer<ItemBuilder<BucketItem, FluidBuilder<T, P>>> config) {
         return bucket(BucketItem::new, config);

@@ -71,7 +71,7 @@ public class BlockBuilder<T extends Block, P>
 
     // === Sub-resource Configuration (Consumer-scoped, returns this BlockBuilder) ===
 
-    @StandardAPI("Configures a BlockItem sub-entry via consumer. Returns this BlockBuilder.")
+    @SyntaxSugar("item(BlockItem::new, config)")
     public BlockBuilder<T, P> item(
                                    @Nonnull Consumer<ItemBuilder<BlockItem, BlockBuilder<T, P>>> config) {
         return item(BlockItem::new, config);
@@ -167,7 +167,7 @@ public class BlockBuilder<T extends Block, P>
         return setData(ProviderType.BLOCKSTATE, cons.get());
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(Block::getDescriptionId, name)")
     public BlockBuilder<T, P> lang(@Nonnull String name) {
         return lang(Block::getDescriptionId, name);
     }
@@ -192,7 +192,7 @@ public class BlockBuilder<T extends Block, P>
     }
 
     @SafeVarargs
-    @StandardAPI
+    @SyntaxSugar("tag(ProviderType.BLOCK_TAGS, tags)")
     public final BlockBuilder<T, P> tag(@Nonnull TagKey<Block>... tags) {
         return tag(ProviderType.BLOCK_TAGS, tags);
     }

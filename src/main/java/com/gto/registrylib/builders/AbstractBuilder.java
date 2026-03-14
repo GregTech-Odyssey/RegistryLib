@@ -2,6 +2,7 @@ package com.gto.registrylib.builders;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
+import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.RegistryLibTagsProvider;
@@ -103,7 +104,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     // === Configuration ===
 
     @SafeVarargs
-    @StandardAPI
+    @SyntaxSugar("tag(type, false, tags)")
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
                                                                                  @Nonnull ProviderType<? extends TP> type, @Nonnull TagKey<R>... tags) {
         return tag(type, false, tags);
@@ -150,7 +151,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     public S lang(@Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
         return lang(langKeyProvider, (p, s) -> name);
     }
-
+    @StandardAPI
     private S lang(
                    @Nonnull Function<T, String> langKeyProvider,
                    @Nonnull BiFunction<RegistryLibLangProvider, Supplier<? extends T>, String> localizedNameProvider) {
