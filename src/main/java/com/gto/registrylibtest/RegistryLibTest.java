@@ -46,6 +46,11 @@ public class RegistryLibTest {
 
     public static final RegistryCore REGISTRYLIB = RegistryCore.create(MOD_ID);
 
+    // === Creative Tab ===
+    static {
+        REGISTRYLIB.defaultCreativeTab("test_tab").register();
+    }
+
     // === Items ===
 
     public static final ItemEntry<Item> TEST_ITEM = REGISTRYLIB.item("test_item", Item::new, item -> {
