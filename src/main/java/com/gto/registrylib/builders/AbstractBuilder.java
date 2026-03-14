@@ -86,7 +86,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         tagsByType.forEach(
                 (type, tags) -> setData(
                         type,
-                        (_, prov) -> tags.forEach(
+                (unusedContext, prov) -> tags.forEach(
                                 (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
         return callback.accept(name, registryKey, this, this::createEntry, this::createEntryWrapper);
     }
@@ -114,7 +114,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @StandardAPI
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
                                                                                  @Nonnull ProviderType<? extends TP> type, boolean isOptional, @Nonnull TagKey<R>... tags) {
-        var map = tagsByType.computeIfAbsent(type, _ -> new Object2BooleanOpenHashMap<>());
+        var map = tagsByType.computeIfAbsent(type, unusedType -> new Object2BooleanOpenHashMap<>());
         for (TagKey<R> tag : tags) {
             map.put(tag, isOptional);
         }

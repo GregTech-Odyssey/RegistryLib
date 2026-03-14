@@ -25,7 +25,7 @@ import javax.annotation.Nonnull;
 @FunctionalInterface
 public interface ProviderType<T extends RegistryLibProvider> extends GeneratorType<T> {
 
-    ProviderType NULL = _ -> null;
+    ProviderType NULL = unusedContext -> null;
 
     // SERVER DATA
     ProviderType<RegistryLibDatapackProvider> DYNAMIC = registerServerData("dynamic", RegistryLibDatapackProvider::new);

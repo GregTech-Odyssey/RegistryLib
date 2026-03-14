@@ -55,7 +55,7 @@ public interface NestedMap<K1, K2, V> {
 
         private NestedMapWrapper(Map<K1, Map<K2, V>> map, Supplier<Map<K2, V>> factory) {
             this.map = map;
-            this.factory = _ -> {
+            this.factory = unusedKey -> {
                 var innerRefMap = factory.get();
                 if (innerRefMap instanceof Reference2ReferenceMap) {
                     isInnerRefMap = true;

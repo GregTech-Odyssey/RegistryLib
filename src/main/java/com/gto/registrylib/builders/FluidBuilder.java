@@ -133,8 +133,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @Nullable
     private Boolean defaultSource, defaultBlock, defaultBucket;
 
-    private Consumer<FluidType.Properties> typeProperties = _ -> {};
-    private Consumer<BaseFlowingFluid.Properties> fluidProperties = _ -> {};
+    private Consumer<FluidType.Properties> typeProperties = unusedProperties -> {};
+    private Consumer<BaseFlowingFluid.Properties> fluidProperties = unusedProperties -> {};
 
     private final boolean registerType;
 

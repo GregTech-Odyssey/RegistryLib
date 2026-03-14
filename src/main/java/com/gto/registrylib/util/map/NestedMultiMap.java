@@ -64,8 +64,8 @@ public interface NestedMultiMap<K1, K2, V> {
                                      Supplier<Map<K2, Collection<V>>> mapFactory,
                                      Supplier<Collection<V>> collectionFactory) {
             this.map = map;
-            this.collectionFactory = _ -> collectionFactory.get();
-            this.mapFactory = _ -> {
+            this.collectionFactory = unusedKey -> collectionFactory.get();
+            this.mapFactory = unusedKey -> {
                 var innerRefMap = mapFactory.get();
                 if (innerRefMap instanceof Reference2ReferenceMap) {
                     isInnerRefMap = true;

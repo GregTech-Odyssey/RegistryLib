@@ -49,7 +49,7 @@ public interface MultiMap<K, V> {
 
         private MultiMapWrapper(Map<K, Collection<V>> map, Supplier<Collection<V>> factory) {
             this.map = map;
-            this.factory = _ -> factory.get();
+            this.factory = unusedKey -> factory.get();
             this.isRefMap = map instanceof Reference2ReferenceMap;
         }
 
