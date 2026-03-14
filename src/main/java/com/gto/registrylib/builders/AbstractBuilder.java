@@ -19,6 +19,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jspecify.annotations.NonNull;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -52,17 +53,17 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     }
 
     @Override
-    public RegistryCore getOwner() {
+    public @NonNull RegistryCore getOwner() {
         return owner;
     }
 
     @Override
-    public P getParent() {
+    public @NonNull P getParent() {
         return parent;
     }
 
     @Override
-    public String getName() {
+    public @NonNull String getName() {
         return name;
     }
 
@@ -71,7 +72,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     }
 
     @Override
-    public ResourceKey<? extends Registry<R>> getRegistryKey() {
+    public @NonNull ResourceKey<? extends Registry<R>> getRegistryKey() {
         return registryKey;
     }
 
@@ -80,6 +81,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @Override
     @StandardAPI
     @MustBeInvokedByOverriders
+    @SuppressWarnings("all")
     public RegistryEntry<R, T> register() {
         tagsByType.forEach(
                 (type, tags) -> setData(
@@ -94,7 +96,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     }
 
     @Override
-    public Supplier<T> asSupplier() {
+    public @NonNull Supplier<T> asSupplier() {
         return safeSupplier;
     }
 
