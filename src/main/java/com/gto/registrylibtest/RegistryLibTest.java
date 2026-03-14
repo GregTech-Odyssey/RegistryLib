@@ -2,7 +2,12 @@ package com.gto.registrylibtest;
 
 import com.gto.registrylib.Group;
 import com.gto.registrylib.RegistryCore;
+import com.gto.registrylib.composite.CompositeItem;
+import com.gto.registrylib.composite.CompositeItemAttachment;
 import com.gto.registrylib.providers.ProviderType;
+import com.gto.registrylib.tooltip.RootNodeRef;
+import com.gto.registrylib.tooltip.SubNode;
+import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.entry.BlockEntityEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.FluidEntry;
@@ -16,9 +21,14 @@ import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementType;
 import net.minecraft.advancements.criterion.InventoryChangeTrigger;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.bus.api.IEventBus;
@@ -38,9 +48,70 @@ public class RegistryLibTest {
 
     // === Items ===
 
-    public static final ItemEntry<Item> TEST_ITEM = REGISTRYLIB.item("test_item", Item::new, item -> {});
+    public static final ItemEntry<Item> TEST_ITEM = REGISTRYLIB.item("test_item", Item::new, item -> {
+        item.tooltip((collector, stack) -> {
+            collector.node(new SubNode.Basic(Component.literal("§7A simple test item")));
+        });
+    });
 
-    public static final ItemEntry<Item> MAGIC_DUST = REGISTRYLIB.item("magic_dust", Item::new, item -> item.lang("Magic Dust"));
+    public static final ItemEntry<Item> MAGIC_DUST = REGISTRYLIB.item("magic_dust", Item::new, item -> {
+        item.lang("Magic Dust")
+            .tooltip((collector, stack) -> {
+                collector.node(new SubNode.Basic(
+                        Component.literal("§dMagical Dust"), 0), true, false);
+                collector.node(new SubNode.Basic(
+                        Component.literal("§8Amount: §f" + stack.getCount()), 10));
+            });
+    });
+
+    // === Tooltip: 独立框根节点示例 ===
+
+    public static final RootNodeRef INFO_BOX = TooltipRegistry.rootNode(
+            MOD_ID + ":info_box", 10, true);
+
+    // === Composite Item: 组合物品示例 ===
+
+    /**
+     * 右键使用时发送消息的附件。
+     */
+    static class MessageAttachment extends CompositeItemAttachment<CompositeItem> {
+        private final String message;
+
+        MessageAttachment(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public InteractionResult use(CompositeItem item, Level level, Player player, InteractionHand hand) {
+            if (!level.isClientSide()) {
+                player.sendSystemMessage(Component.literal(message));
+            }
+            return InteractionResult.SUCCESS;
+        }
+
+        @Override
+        public void collectTooltipNodes(CompositeItem item, net.minecraft.world.item.ItemStack stack,
+                                        com.gto.registrylib.tooltip.TooltipNodeCollector collector) {
+            collector.node(new SubNode.Basic(Component.literal("§eRight-click: " + message), 100));
+        }
+    }
+
+    public static final ItemEntry<CompositeItem> COMPOSITE_ITEM = REGISTRYLIB.item(
+            "composite_item",
+            CompositeItem::new,
+            item -> {
+                item.lang("Composite Item")
+                    .attach(new MessageAttachment("Hello from CompositeItem!"))
+                    .tooltip((collector, stack) -> {
+                        collector.node(new SubNode.Basic(
+                                Component.literal("§6Composite Item"), 0), true, false);
+                        // 使用独立信息框
+                        collector.node(INFO_BOX, new SubNode.Basic(
+                                Component.literal("§bThis is a separate info box"), 0));
+                        collector.node(INFO_BOX, new SubNode.Basic(
+                                Component.literal("§7With multiple lines"), 10));
+                    });
+            });
 
     // === Blocks ===
 
@@ -48,7 +119,9 @@ public class RegistryLibTest {
             "test_block",
             Block::new,
             block -> {
-                block.initialProperties(() -> Blocks.STONE).simpleItem();
+                block.initialProperties(() -> Blocks.STONE)
+                        .item(itemBuilder ->
+                                itemBuilder.tooltip(Component.literal("§7A solid test block")));
             });
 
     public static final BlockEntry<Block> MAGIC_ORE = REGISTRYLIB.block(
@@ -58,7 +131,10 @@ public class RegistryLibTest {
                 block
                         .initialProperties(() -> Blocks.IRON_ORE)
                         .loot((tables, b) -> tables.add(b, tables.createOreDrop(b, MAGIC_DUST.get())))
-                        .simpleItem();
+                        .item(itemBuilder -> itemBuilder.tooltip((collector, stack) -> {
+                            collector.node(new SubNode.Basic(
+                                    Component.literal("§5Drops Magic Dust when mined")), true, false);
+                        }));
             });
 
     // Block with inline Item configuration
@@ -85,21 +161,38 @@ public class RegistryLibTest {
             "tier_1",
             p -> new TimerBlock(p, 1),
             block -> {
-                block.initialProperties(() -> Blocks.IRON_BLOCK).simpleItem();
+                block.initialProperties(() -> Blocks.IRON_BLOCK)
+                        .item(itemBuilder ->
+                                itemBuilder.tooltip((collector, stack) -> {
+                                    collector.node(new SubNode.Basic(Component.literal("§aTier 1 Timer"), 0), true, false);
+                                    collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 20"), 10));
+                        }));
             });
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_2 = TIMER_GROUP.block(
             "tier_2",
             p -> new TimerBlock(p, 2),
             block -> {
-                block.initialProperties(() -> Blocks.IRON_BLOCK).simpleItem();
+                block.initialProperties(() -> Blocks.IRON_BLOCK)
+                        .item(itemBuilder -> itemBuilder.tooltip((collector, stack) -> {
+                            collector.node(new SubNode.Basic(
+                                    Component.literal("§bTier 2 Timer"), 0), true, false);
+                            collector.node(new SubNode.Basic(
+                                    Component.literal("§7Tick interval: 10"), 10));
+                        }));
             });
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_3 = TIMER_GROUP.block(
             "tier_3",
             p -> new TimerBlock(p, 3),
             block -> {
-                block.initialProperties(() -> Blocks.IRON_BLOCK).simpleItem();
+                block.initialProperties(() -> Blocks.IRON_BLOCK)
+                        .item(itemBuilder -> itemBuilder.tooltip((collector, stack) -> {
+                            collector.node(new SubNode.Basic(
+                                    Component.literal("§6Tier 3 Timer"), 0), true, false);
+                            collector.node(new SubNode.Basic(
+                                    Component.literal("§7Tick interval: 5"), 10));
+                        }));
             });
 
     public static final BlockEntityEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY = REGISTRYLIB.blockEntity(

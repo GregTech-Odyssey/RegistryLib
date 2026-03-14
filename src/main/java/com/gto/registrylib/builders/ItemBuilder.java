@@ -3,10 +3,15 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
+import com.gto.registrylib.composite.CompositeItem;
+import com.gto.registrylib.composite.CompositeItemAttachment;
 import com.gto.registrylib.providers.DataGenContext;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.generators.RegistryLibItemModelGenerator;
 import com.gto.registrylib.providers.generators.RegistryLibRecipeProvider;
+import com.gto.registrylib.tooltip.SubNode;
+import com.gto.registrylib.tooltip.TooltipNodeCollector;
+import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
@@ -15,12 +20,15 @@ import com.google.common.collect.Maps;
 
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -48,6 +56,9 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     private final Map<ResourceKey<CreativeModeTab>, BiConsumer<DataGenContext<Item, T>, CreativeModeTabModifier>> creativeModeTabs = Maps.newLinkedHashMap();
 
+    private final List<TooltipNodeCollector.TooltipConfig> tooltipConfigs = new ArrayList<>();
+    private final List<CompositeItemAttachment<?>> pendingAttachments = new ArrayList<>();
+
     protected ItemBuilder(
                           RegistryCore owner,
                           P parent,
@@ -64,6 +75,30 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                                     creativeModeTab,
                                     modifier -> consumer.accept(DataGenContext.from(this), modifier)));
                     creativeModeTabs.clear();
+
+                    // 注册 tooltip 配置
+                    for (var config : tooltipConfigs) {
+                        TooltipRegistry.register(item, config);
+                    }
+                    tooltipConfigs.clear();
+
+                    // 挂载组合附件
+                    if (item instanceof CompositeItem composite) {
+                        for (var attachment : pendingAttachments) {
+                            composite.attachUnchecked(attachment);
+                        }
+                        // 自动注册附件的 tooltip 收集
+                        if (composite.getAttachments().stream()
+                                .anyMatch(att -> (att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) != 0)) {
+                            TooltipRegistry.register(item, (collector, stack) -> {
+                                for (var att : composite.getAttachments()) {
+                                    if ((att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) == 0) continue;
+                                    att.collectTooltipNodes(composite, stack, collector);
+                                }
+                            });
+                        }
+                    }
+                    pendingAttachments.clear();
                 });
     }
 
@@ -135,6 +170,36 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     public ItemBuilder<T, P> recipe(
                                     @Nonnull BiConsumer<DataGenContext<Item, T>, RegistryLibRecipeProvider> cons) {
         return setData(ProviderType.RECIPE, cons);
+    }
+
+    /**
+     * 为此物品注册 tooltip 子节点配置。
+     *
+     * <p>配置在 tooltip 渲染阶段执行，接收当前 ItemStack，
+     * 可根据 ItemStack 数据动态生成节点。
+     */
+    @StandardAPI
+    public ItemBuilder<T, P> tooltip(@Nonnull TooltipNodeCollector.TooltipConfig config) {
+        tooltipConfigs.add(config);
+        return this;
+    }
+
+    /**
+     * 便捷添加一个 tooltip
+     */
+    @SyntaxSugar
+    public ItemBuilder<T, P> tooltip(@Nonnull Component component) {
+        tooltip((collector, stack) -> collector.node(new SubNode.Basic(component,0)));
+        return this;
+    }
+
+    /**
+     * 为此物品添加一个组合附件（仅当 Item 为 {@link CompositeItem} 或其子类时有效）。
+     */
+    @StandardAPI
+    public ItemBuilder<T, P> attach(@Nonnull CompositeItemAttachment<?> attachment) {
+        pendingAttachments.add(attachment);
+        return this;
     }
 
     @SafeVarargs
