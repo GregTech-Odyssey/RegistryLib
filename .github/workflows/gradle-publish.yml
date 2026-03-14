@@ -1,4 +1,4 @@
-﻿name: Gradle Package
+name: Gradle Package
 
 on:
   workflow_dispatch:
@@ -40,25 +40,31 @@ jobs:
         echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
         echo "Resolved release tag: ${TAG}"
 
-    - name: Build and Publish
-      run: ./gradlew assemble publish
+    - name: Build JAR
+      run: ./gradlew assemble --stacktrace
+
+    - name: List build outputs
+      run: |
+        echo "=== build/libs ==="
+        ls -la build/libs/ 2>/dev/null || echo "build/libs does not exist"
+        echo "=== all jars ==="
+        find . -name "*.jar" -not -path "./.gradle/*" | sort
+
+    - name: Publish to GitHub Packages
+      run: ./gradlew publish --stacktrace
       env:
         USERNAME: ${{ github.actor }}
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
-
-    - name: List build outputs
-      run: find . -name "*.jar" -path "*/build/libs/*" | sort
 
     - name: Create GitHub Release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
-        JARS=$(find build/libs -name "*.jar" -not -name "*-dev.jar" -not -name "*-sources.jar" | tr '\n' ' ')
+        JARS=$(find build/libs -name "*.jar" -not -name "*-dev.jar" -not -name "*-sources.jar" 2>/dev/null | tr '\n' ' ')
         if [ -z "$JARS" ]; then
           echo "ERROR: No JAR files found in build/libs/"
-          find build -name "*.jar" | sort
           exit 1
         fi
         gh release create "$TAG" \
