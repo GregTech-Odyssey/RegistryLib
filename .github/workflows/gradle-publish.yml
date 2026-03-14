@@ -1,7 +1,4 @@
-# 构建并发布 NeoForge Mod 到 GitHub Packages
-# 手动触发，自动根据 gradle.properties 中的版本号生成 Release
-
-name: Gradle Package
+﻿name: Gradle Package
 
 on:
   workflow_dispatch:
