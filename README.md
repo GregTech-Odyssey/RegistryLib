@@ -22,16 +22,22 @@ RegistryLib 发布在 GitHub Packages（Maven），需要配置 GitHub Personal 
 
 ### 第二步：在本机配置 Token
 
-**推荐方式：写入 Gradle 用户全局配置文件**
+**推荐方式：设置 Windows 系统环境变量**
 
-找到（或创建）`~/.gradle/gradle.properties` 文件（Windows 路径：`C:\Users\你的用户名\.gradle\gradle.properties`），添加：
+在 CMD（命令提示符）中运行（替换为你的实际值）：
 
-```properties
-gpr.user=你的GitHub用户名
-gpr.key=你生成的token
+```cmd
+setx GITHUB_ACTOR 你的GitHub用户名
+setx GITHUB_TOKEN 你生成的token
 ```
 
-> **安全提示**：不要将 token 写入项目内的 `gradle.properties`，也不要提交到版本控制。
+运行后**重启终端**使环境变量生效。
+
+> **风险说明**：
+> - `setx` 写入的是**用户级**环境变量，当前电脑上所有应用均可读取，存在 token 泄露风险（如果本机运行了恶意程序）。
+> - token 以明文存储在 Windows 注册表中（`HKEY_CURRENT_USER\Environment`）。
+> - **如果是共享电脑或生产环境，不推荐此方式**，改用专用密钥管理工具。
+> - 仅勾选 `read:packages` 权限，可将泄露影响降到最低。
 
 ### 第三步：在你的项目中添加仓库和依赖
 
@@ -44,10 +50,10 @@ dependencyResolutionManagement {
             name = 'GitHubPackages-RegistryLib'
             url = uri('https://maven.pkg.github.com/GregTech-Odyssey/RegistryLib')
             credentials {
-                username = settings.providers.gradleProperty('gpr.user').orNull
-                        ?: System.getenv('USERNAME')
-                password = settings.providers.gradleProperty('gpr.key').orNull
-                        ?: System.getenv('TOKEN')
+                username = System.getenv('GITHUB_ACTOR')
+                        ?: settings.providers.gradleProperty('gpr.user').orNull
+                password = System.getenv('GITHUB_TOKEN')
+                        ?: settings.providers.gradleProperty('gpr.key').orNull
             }
         }
     }
