@@ -6,7 +6,7 @@ public final class Lazy<T> implements Supplier<T> {
 
     private static final Object UNINITIALIZED = new Object();
     private Supplier<? extends T> delegate;
-    private Object value = UNINITIALIZED;
+    private volatile Object value = UNINITIALIZED;
 
     private Lazy(Supplier<? extends T> delegate) {
         this.delegate = delegate;
