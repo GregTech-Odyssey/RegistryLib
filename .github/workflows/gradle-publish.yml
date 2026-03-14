@@ -50,13 +50,22 @@ jobs:
         TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
 
+    - name: List build outputs
+      run: find build/libs -type f | sort
+
     - name: Create GitHub Release
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         TAG="${{ steps.tag.outputs.tag }}"
+        JARS=$(find build/libs -name "*.jar" -not -name "*-dev.jar" -not -name "*-sources.jar" | tr '\n' ' ')
+        if [ -z "$JARS" ]; then
+          echo "ERROR: No JAR files found in build/libs/"
+          find build -name "*.jar" | sort
+          exit 1
+        fi
         gh release create "$TAG" \
           --repo "$GITHUB_REPOSITORY" \
           --title "$TAG" \
           --notes "Automated release $TAG" \
-          build/libs/*.jar
+          $JARS
