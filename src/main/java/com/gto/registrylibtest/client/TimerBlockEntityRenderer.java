@@ -33,6 +33,7 @@ public class TimerBlockEntityRenderer
     BlockEntityRenderer.super.extractRenderState(
         blockEntity, state, partialTicks, cameraPosition, breakProgress);
     state.tier = blockEntity.getTier();
+    state.count = blockEntity.getCount();
   }
 
   @Override
@@ -47,8 +48,8 @@ public class TimerBlockEntityRenderer
     // Render "Tier N" on top face
     renderTopText(poseStack, collector, "Tier " + tier, light);
 
-    // Render the number on all 4 side faces
-    String number = String.valueOf(tier);
+    // Render the elapsed seconds on all 4 side faces
+    String number = String.valueOf(state.count);
     renderSideFaceText(poseStack, collector, number, light, 0);   // South (Z+)
     renderSideFaceText(poseStack, collector, number, light, 90);  // East  (X+)
     renderSideFaceText(poseStack, collector, number, light, 180); // North (Z-)

@@ -32,6 +32,10 @@ public class RegistryLibTest {
 
   public static final RegistryLib REGISTRYLIB = RegistryLib.create(MOD_ID);
 
+  static {
+    REGISTRYLIB.defaultCreativeTab("main");
+  }
+
   // === Items ===
 
   public static final ItemEntry<Item> TEST_ITEM =
