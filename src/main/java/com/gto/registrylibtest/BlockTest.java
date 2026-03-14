@@ -1,18 +1,11 @@
 package com.gto.registrylibtest;
 
 import com.gto.registrylib.Group;
-import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.util.entry.BlockEntry;
 
 import com.gto.registrylibtest.block.TimerBlock;
-import net.minecraft.advancements.Advancement;
-import net.minecraft.advancements.AdvancementHolder;
-import net.minecraft.advancements.AdvancementType;
-import net.minecraft.advancements.criterion.InventoryChangeTrigger;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
@@ -166,68 +159,4 @@ public class BlockTest {
                                                     new SubNode.Basic(Component.literal("§7Tick interval: 5"), 10));
                                         }));
             });
-
-    // === Advancements ===
-
-    /**
-     * 为本文件中的方块注册成就进度（高级分支）。
-     *
-     * <p>在 {@link RegistryLibTest} 的 {@code static} 块中调用此方法以接入数据生成。
-     * 进度树以铁锭为触发根节点，分支为"挖掘魔法矿石"和"合成 Tier 3 计时器"两个挑战。
-     */
-    static void registerAdvancements() {
-        RegistryLibTest.REGISTRYLIB.addDataGenerator(
-                ProviderType.ADVANCEMENT,
-                adv -> {
-                    String cat = RegistryLibTest.MOD_ID;
-
-                    AdvancementHolder advRoot = Advancement.Builder.advancement()
-                            .display(
-                                    MAGIC_ORE.get().asItem(),
-                                    adv.title(cat, "advanced/root", "Advanced Crafting"),
-                                    adv.desc(cat, "advanced/root", "Explore advanced features of RegistryCore"),
-                                    Identifier.withDefaultNamespace(
-                                            "textures/gui/advancements/backgrounds/nether.png"),
-                                    AdvancementType.TASK,
-                                    false,
-                                    false,
-                                    false)
-                            .addCriterion(
-                                    "has_iron",
-                                    InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
-                            .save(adv, Identifier.fromNamespaceAndPath(cat, "advanced/root"));
-
-                    Advancement.Builder.advancement()
-                            .parent(advRoot)
-                            .display(
-                                    MAGIC_ORE.get().asItem(),
-                                    adv.title(cat, "advanced/mine_magic_ore", "Magical Mining"),
-                                    adv.desc(cat, "advanced/mine_magic_ore", "Mine a block of Magic Ore"),
-                                    null,
-                                    AdvancementType.GOAL,
-                                    true,
-                                    true,
-                                    false)
-                            .addCriterion(
-                                    "has_magic_ore",
-                                    InventoryChangeTrigger.TriggerInstance.hasItems(MAGIC_ORE.get().asItem()))
-                            .save(adv, Identifier.fromNamespaceAndPath(cat, "advanced/mine_magic_ore"));
-
-                    Advancement.Builder.advancement()
-                            .parent(advRoot)
-                            .display(
-                                    TIMER_TIER_3.get().asItem(),
-                                    adv.title(cat, "advanced/build_timer", "Time Lord"),
-                                    adv.desc(cat, "advanced/build_timer", "Craft a Tier 3 Timer"),
-                                    null,
-                                    AdvancementType.CHALLENGE,
-                                    true,
-                                    true,
-                                    true)
-                            .addCriterion(
-                                    "has_timer_3",
-                                    InventoryChangeTrigger.TriggerInstance.hasItems(TIMER_TIER_3.get().asItem()))
-                            .save(adv, Identifier.fromNamespaceAndPath(cat, "advanced/build_timer"));
-                });
-    }
 }

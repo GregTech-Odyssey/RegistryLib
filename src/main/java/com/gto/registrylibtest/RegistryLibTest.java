@@ -25,6 +25,7 @@ import org.slf4j.Logger;
  *   <li>{@link BlockTest} — 方块注册（战利品表、Group 系统、自定义子类）
  *   <li>{@link BlockEntityTest} — BlockEntity 注册与客户端渲染器绑定
  *   <li>{@link FluidTest} — 流体注册（着色、多层配置、bucket/block 定制）
+ *   <li>{@link AdvancementTest} — 所有成就进度树
  * </ul>
  */
 @Mod(RegistryLibTest.MOD_ID)
@@ -45,19 +46,20 @@ public class RegistryLibTest {
     // Java 的类静态字段在首次访问时才初始化；通过在此引用各类的任意字段，
     // 强制其 static 块在 RegistryLibTest 加载时同步执行。
     static {
-        // 物品示例（含成就）
+        // 物品示例
         var _items = ItemTest.TEST_ITEM;
-        ItemTest.registerAdvancements();
 
-        // 方块示例（含成就）
+        // 方块示例
         var _blocks = BlockTest.TEST_BLOCK;
-        BlockTest.registerAdvancements();
 
         // BlockEntity 示例
         var _be = BlockEntityTest.TIMER_BLOCK_ENTITY;
 
         // 流体示例
         var _fluids = FluidTest.MOLTEN_IRON;
+
+        // 成就进度
+        AdvancementTest.register();
     }
 
     public RegistryLibTest(IEventBus modEventBus, ModContainer modContainer) {
