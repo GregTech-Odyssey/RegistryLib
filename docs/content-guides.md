@@ -1,26 +1,26 @@
 ---
-title: 内容指南
+title: Content Guides
 nav_order: 3
 has_children: true
 permalink: /content-guides/
 ---
 
-# 内容指南
+# Content Guides
 
-这一组页面按“你要注册什么内容”来组织。它们优先解决可复制、可跑通、可扩展的问题，而不是把所有 API 平铺成参考手册。
+This section is organized around a simple question: what are you trying to register? The focus is on workflows that are reproducible, runnable, and extensible rather than flattening every API into a reference manual.
 
-如果你还没跑通过第一个示例，先回到 [学习中心]({{ '/start-here/' | relative_url }})。如果你已经开始写注册链，直接按内容类型进入对应页面即可。
+If you have not completed your first working example yet, go back to [Getting Started]({{ '/start-here/' | relative_url }}). If you are already writing registration chains, jump directly to the page for the content type you need.
 
-## 学习顺序建议
+## Suggested Learning Order
 
-1. [注册 Items]({{ '/register-items/' | relative_url }})
-2. [注册 Blocks]({{ '/register-blocks/' | relative_url }})
-3. [注册 Block Entities 和 Renderers]({{ '/register-block-entities-and-renderers/' | relative_url }})
-4. [注册 Fluids 和 Buckets]({{ '/register-fluids-and-buckets/' | relative_url }})
-5. [注册 Advancements]({{ '/register-advancements/' | relative_url }})
+1. [Registering Items]({{ '/register-items/' | relative_url }})
+2. [Registering Blocks]({{ '/register-blocks/' | relative_url }})
+3. [Registering Block Entities and Renderers]({{ '/register-block-entities-and-renderers/' | relative_url }})
+4. [Registering Fluids and Buckets]({{ '/register-fluids-and-buckets/' | relative_url }})
+5. [Registering Advancements]({{ '/register-advancements/' | relative_url }})
 
-## 什么时候离开本组页面
+## When to Leave This Section
 
-- 你要复用 lang 前缀、creative tab 或属性默认值时，跳到 [Group System]({{ '/group-system/' | relative_url }})。
-- 你要组织多段 tooltip、独立 tooltip box 或自定义节点时，跳到 [Tooltip System]({{ '/tooltip-system/' | relative_url }})。
-- 你要扩展多语言或自定义 Builder 类型时，跳到 [Lang System]({{ '/lang-system/' | relative_url }}) 与 [Override Builders]({{ '/override-builders/' | relative_url }})。
+- If you want to reuse lang prefixes, creative tabs, or property defaults, move to [Group System]({{ '/group-system/' | relative_url }}).
+- If you want to organize multi-part tooltips, separate tooltip boxes, or custom nodes, move to [Tooltip System]({{ '/tooltip-system/' | relative_url }}).
+- If you want to extend multilingual output or define custom Builder types, move to [Lang System]({{ '/lang-system/' | relative_url }}) and [Override Builders]({{ '/override-builders/' | relative_url }}).

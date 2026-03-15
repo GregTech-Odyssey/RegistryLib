@@ -1,21 +1,21 @@
 ---
-title: 5 分钟快速开始
-parent: 学习中心
+title: 5-Minute Quickstart
+parent: Getting Started
 nav_order: 1
 permalink: /quickstart/
 ---
 
-# 5 分钟快速开始
+# 5-Minute Quickstart
 
-本页的目标只有一个：让你在最短路径内看到 RegistryLib 的基本注册链已经工作。
+This page has one goal: show you the shortest path to a working basic registration chain in RegistryLib.
 
-## 适用场景 / 前置条件
+## When This Page Applies / Prerequisites
 
-- 你已经把 RegistryLib 作为依赖接入工程。
-- 你有一个可用的 `RegistryCore` 实例，例如 `RegistryLibTest.REGISTRYLIB`。
-- 你只想先跑通一个最小 Item，而不是一次理解全部系统。
+- You have already added RegistryLib as a dependency to your project.
+- You have a usable `RegistryCore` instance, for example `RegistryLibTest.REGISTRYLIB`.
+- You only want to get a minimal Item working first rather than understanding every system at once.
 
-## 最小示例
+## Minimal Example
 
 ```java
 public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
@@ -24,19 +24,19 @@ public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
         .register();
 ```
 
-这条链同时完成三件事：声明注册名、提供工厂方法、生成英文显示名。
+This chain does three things at once: it declares the registry name, provides the factory method, and generates the English display name.
 
-## 你应该如何验证
+## How You Should Verify It
 
-1. 确保这个字段位于会被类加载的注册类中。
-2. 运行工程的常规构建或客户端启动流程。
-3. 在游戏内或生成资源中确认 `copper_coin` 已出现，并且显示名为 `Copper Coin`。
+1. Make sure the field is declared in a registration class that is actually loaded.
+2. Run your normal project build or client startup flow.
+3. In game or in generated resources, confirm that `copper_coin` exists and that its display name is `Copper Coin`.
 
 {: .important }
-> 只写字段定义但没有让所在类参与初始化，注册不会生效。这通常不是 RegistryLib 的问题，而是类加载路径没有被触发。
+> Defining the field alone is not enough. If the containing class never participates in initialization, the registration will not take effect. In most cases this is not a RegistryLib problem but a class-loading path that was never triggered.
 
-## 下一步怎么走
+## Where to Go Next
 
-- 继续看 [注册 Items]({{ '/register-items/' | relative_url }})，把模型、tooltip、recipe 和 attachment 加进来。
-- 如果你在接入依赖时就卡住了，回看 [工程与维护]({{ '/development-and-maintenance/' | relative_url }})。
-- 如果你已经遇到“为什么没生成 / 为什么没显示”的问题，直接看 [故障排查]({{ '/troubleshooting/' | relative_url }})。
+- Continue with [Registering Items]({{ '/register-items/' | relative_url }}) to add models, tooltips, recipes, and attachments.
+- If you are blocked while adding the dependency, go back to [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }}).
+- If you are already seeing problems such as “why was nothing generated?” or “why is nothing visible?”, go straight to [Troubleshooting]({{ '/troubleshooting/' | relative_url }}).

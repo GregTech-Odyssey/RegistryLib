@@ -1,20 +1,20 @@
 ---
-title: 高级主题
+title: Advanced Topics
 nav_order: 6
 has_children: true
 permalink: /advanced-topics/
 ---
 
-# 高级主题
+# Advanced Topics
 
-这一组页面面向已经能稳定使用 RegistryLib 的开发者，讨论项目级语法糖、扩展点和实现层面的取舍。
+This section is for developers who can already use RegistryLib reliably and now want to think about project-level syntax sugar, extension points, and implementation tradeoffs.
 
-## 包含内容
+## Included Pages
 
 - [Override Builders]({{ '/override-builders/' | relative_url }})
-- [性能与实现优化]({{ '/special-optimizations/' | relative_url }})
+- [Performance and Implementation Optimizations]({{ '/special-optimizations/' | relative_url }})
 
-## 什么时候再来看这里
+## When to Come Back Here
 
-- 你已经完成了基本内容注册，但想把项目内公共规则封装成自己的 Builder。
-- 你开始关心大批量注册、惰性加载和 datagen 生命周期上的实现成本。
+- You already have the basic content registration flow working, but now want to wrap shared project rules into your own Builders.
+- You are starting to care about large registration batches, lazy loading, and the lifecycle cost of datagen.

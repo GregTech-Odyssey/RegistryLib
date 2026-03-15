@@ -1,36 +1,36 @@
 ---
-title: 术语表
-parent: 学习中心
+title: Glossary
+parent: Getting Started
 nav_order: 4
 permalink: /glossary/
 ---
 
-# 术语表
+# Glossary
 
 ## RegistryCore
 
-RegistryLib 的主入口，负责创建 `item(...)`、`block(...)`、`fluid(...)`、`blockEntity(...)` 等注册链。
+The main entry point in RegistryLib. It creates registration chains such as `item(...)`, `block(...)`, `fluid(...)`, and `blockEntity(...)`.
 
 ## Builder
 
-链式配置对象，例如 `ItemBuilder`、`BlockBuilder`、`FluidBuilder`。它负责累积配置，并在 `.register()` 时提交。
+A chained configuration object such as `ItemBuilder`, `BlockBuilder`, or `FluidBuilder`. It accumulates configuration and submits it during `.register()`.
 
 ## Entry
 
-注册结果的包装类型，例如 `ItemEntry`、`BlockEntry`、`FluidEntry`。它是你在后续代码里引用已注册对象的常见入口。
+A wrapper type around the registered result, such as `ItemEntry`, `BlockEntry`, or `FluidEntry`. It is the most common way to reference a registered object later in code.
 
 ## Group
 
-包裹在 `RegistryCore` 外层的一组共享默认值。适用于一批条目共同继承 lang 前缀、creative tab 或属性修饰器的场景。
+A set of shared defaults wrapped around `RegistryCore`. It is appropriate when a batch of entries should inherit the same lang prefix, creative tab, or property modifiers.
 
 ## datagen
 
-数据生成流程，包括语言、模型、配方、掉落、Advancement 等资源输出。
+The data generation pipeline, including language files, models, recipes, loot tables, and Advancements.
 
 ## CompositeItem / attachment
 
-`CompositeItem` 是支持可复用 attachment 的 Item 类型。attachment 用于封装右键行为、tooltip 贡献、tick 行为等扩展逻辑。
+`CompositeItem` is an Item type that supports reusable attachments. An attachment encapsulates extended behavior such as right-click logic, tooltip contributions, or tick behavior.
 
 ## RootNode / SubNode
 
-Tooltip System 中的两个核心概念。`RootNode` 决定内容渲染到哪个区域，`SubNode` 表示实际渲染的文字或自定义元素。
+Two core concepts in the Tooltip System. `RootNode` decides where content is rendered, and `SubNode` represents the actual rendered text or custom visual element.

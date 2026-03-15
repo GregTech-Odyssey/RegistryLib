@@ -1,95 +1,89 @@
 ---
-title: 注册 Blocks
+title: Registering Blocks
+parent: Content Guides
 nav_order: 2
-parent: 内容指南
 permalink: /register-blocks/
 ---
 
-# 注册 Blocks
+# Registering Blocks
 
-本页解决“如何把 Block 本体、BlockItem、掉落、配方和 tag 放进同一条注册链里”的问题。
+## What This Page Solves
 
-## 适用场景 / 前置条件
+Block registration usually involves more than the Block itself. It commonly includes the block item, drops, recipes, tags, and property initialization. This page shows how to keep those concerns inside a single `BlockBuilder` chain.
 
-- 你已经有可用的 `RegistryCore` 或 `Group`。
-- 你要注册普通方块，或带自定义 `BlockItem` 的方块。
-- 你希望 Block 的 datagen 与运行时配置放在同一处维护。
+## When This Applies
 
-## 快速开始
+- You want to register a regular Block.
+- You want the Block to generate a matching BlockItem.
+- You want to configure initial properties, drops, tags, or base resources in the same place.
+
+## Quick Start
 
 ```java
 public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
         .block("decorative_stone", Block::new)
         .initialProperties(() -> Blocks.STONE)
-        .lang("Decorative Stone")
         .simpleItem()
         .register();
 ```
 
-这个例子已经完成属性复制、显示名写入和默认 `BlockItem` 生成。
+This chain registers a Block that starts from stone-like properties and also generates the simplest matching BlockItem.
 
-## 完整示例
+## Full Example
 
 ```java
-public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.block(
-        "magic_ore",
-        Block::new)
-        .initialProperties(() -> Blocks.IRON_ORE)
-        .properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops())
-        .lang("Magic Ore")
-        .loot((tables, b) ->
-                tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))
-        .tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
-        .recipe((ctx, prov) -> { /* recipe generation */ })
-        .item(item -> item
-            .tooltip((collector, stack) -> {
-                collector.node(
-                        new SubNode.Basic(Component.literal("§5Drops coins when mined")),
-                        true, false);
-            })
-        )
-        .register();
-
-public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB
-        .block("standalone_timer", p -> new TimerBlock(p, 4))
+public static final BlockEntry<Block> MACHINE_CASING = RegistryLibTest.REGISTRYLIB
+        .block("machine_casing", Block::new)
         .initialProperties(() -> Blocks.IRON_BLOCK)
-        .lang("Standalone Timer")
-        .defaultLoot()
-        .defaultBlockstate()
+        .lang("Machine Casing")
         .simpleItem()
+        .defaultLoot()
+        .tag(BlockTags.MINEABLE_WITH_PICKAXE)
+        .tag(ItemTags.STONE_TOOL_MATERIALS)
         .register();
 ```
 
-## 分步骤解释
+## Step-by-Step Explanation
 
-1. `block("id", factory)` 开始注册链，`initialProperties(...)` 用于复制现有方块的基线属性。
-2. `properties(...)` 追加真正和当前内容相关的差异，例如强度、爆炸抗性或掉落要求。
-3. `lang(...)`、`defaultBlockstate()`、`defaultLoot()` 适合标准全方块内容的快速落地。
-4. 需要方块物品时，选择 `simpleItem()` 或 `item(...)`。前者生成默认 `BlockItem`，后者允许追加 tooltip 或自定义工厂。
-5. `loot(...)`、`recipe(...)`、`tag(...)` 负责掉落、配方和分类；矿石等特殊掉落通常直接写在 `loot(...)` 里。
+1. `block("machine_casing", Block::new)` creates the `BlockBuilder`.
+2. `.initialProperties(() -> Blocks.IRON_BLOCK)` copies an existing Block as the starting property source.
+3. `.lang(...)` provides the display name for the Block and related generated resources.
+4. `.simpleItem()` generates the standard default BlockItem.
+5. `.defaultLoot()` generates the basic drop behavior.
+6. `.tag(...)` can target either Block tags or Item tags depending on the tag type you pass in.
+7. `.register()` returns `BlockEntry<Block>`.
 
-{: .note }
-> `.simpleItem()` 只生成默认 BlockItem。只要你需要 tooltip、改名或自定义工厂，就切换到 `.item(...)`。
+{: .important }
+> Registering a Block does not automatically mean a BlockItem exists. Whether it is generated, and how it is generated, depends on an explicit `.simpleItem()` or `.item(...)` call.
 
-## 常见模式 / 常见坑
+## Common Patterns
 
-- `initialProperties(() -> Blocks.X)` 表示复制属性基线，而不是复用原方块实例。
-- 没有调用 `.simpleItem()` 或 `.item(...)` 时，注册出来的只有 Block 本体。
-- `defaultLoot()` 适合“挖掉自己掉自己”；矿石、条件掉落或特殊产物请直接使用 `.loot(...)`。
+### I Only Need a Simple Block Item
 
-## 常用 API 速览
+If the default BlockItem is enough, use `.simpleItem()`. Switch to `.item(...)` only when you need a custom Item type or custom Item properties.
 
-| 方法 | 什么时候用 |
+### Multiple Blocks Share the Same Property Defaults
+
+If a whole set of machine casings or similar Blocks inherit the same defaults, centralize those defaults with [Group System]({{ '/group-system/' | relative_url }}) through `blockProperties(...)` or `itemProperties(...)` rather than repeating them.
+
+### When Does BlockEntity Registration Enter the Picture?
+
+If the Block needs tile or BlockEntity behavior, keep the Block registration independent first. Then continue with [Registering Block Entities and Renderers]({{ '/register-block-entities-and-renderers/' | relative_url }}) for host binding and renderer registration.
+
+## Common API Lookup
+
+| Method | Purpose |
 | --- | --- |
-| `.block("id", factory)` | 开始一个 Block 注册链。 |
-| `.initialProperties(...)` | 复制现有方块的属性基线。 |
-| `.simpleItem()` | 生成默认 BlockItem。 |
-| `.item(...)` | 自定义 BlockItem 行为或展示。 |
-| `.defaultLoot()` / `.loot(...)` | 使用默认掉落，或覆写掉落逻辑。 |
+| `block(name, factory)` | Create a `BlockBuilder` |
+| `initialProperties(supplier)` | Set the source of initial properties |
+| `simpleItem()` | Create the default BlockItem |
+| `item(...)` | Customize the BlockItem |
+| `defaultLoot()` | Generate basic drops |
+| `tag(...)` | Add a tag |
+| `register()` | Complete registration |
 
-## 相关链接
+## Related Links
 
-- [内容指南]({{ '/content-guides/' | relative_url }})
+- [Registering Block Entities and Renderers]({{ '/register-block-entities-and-renderers/' | relative_url }})
 - [Group System]({{ '/group-system/' | relative_url }})
-- [注册 Block Entities 和 Renderers]({{ '/register-block-entities-and-renderers/' | relative_url }})
-- [注册 Items]({{ '/register-items/' | relative_url }})
+- [API Reference]({{ '/api-reference/' | relative_url }})

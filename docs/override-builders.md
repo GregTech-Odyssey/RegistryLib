@@ -1,21 +1,21 @@
 ---
 title: Override Builders
-parent: 高级主题
+parent: Advanced Topics
 nav_order: 1
 permalink: /override-builders/
 ---
 
 # Override Builders
 
-这一页解释如何通过覆写 `RegistryCore` 的 Builder 工厂钩子，把项目内的语法糖或默认规则做成自己的 Builder 类型。
+This page explains how to turn project-specific syntax sugar or default rules into your own Builder types by overriding the Builder factory hooks in `RegistryCore`.
 
-## 何时使用
+## When to Use It
 
-- 你在多个注册链里反复写同一套项目级规则。
-- Group 只能解决默认值复用，但你的需求更像“新增方法”或“改变默认建链体验”。
-- 你愿意为更原生的调用方式维护一层项目自定义 Builder。
+- You keep repeating the same project-level rules across multiple registration chains.
+- Group can only solve shared defaults, but your requirement is closer to “add new methods” or “change the default chaining experience”.
+- You are willing to maintain a project-specific Builder layer for a more native call style.
 
-## 快速例子
+## Quick Example
 
 ```java
 public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
@@ -27,44 +27,44 @@ public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
 }
 ```
 
-这个例子展示了最常见的目标：把额外 locale 封装成项目内部的 Builder 语法糖。
+This shows the most common goal: wrapping an extra locale into Builder syntax sugar that feels native inside the project.
 
-## 核心概念
+## Core Concepts
 
-### 三个工厂钩子
+### Three Factory Hooks
 
-`RegistryCore` 的公开注册入口最终都会经过三个可覆写工厂方法：
+The public registration entry points of `RegistryCore` eventually pass through three overridable factory methods:
 
 - `newBlockBuilder(...)`
 - `newItemBuilder(...)`
 - `newFluidBuilder(...)`
 
-你覆写这些方法后，就可以把默认 Builder 替换成自己的子类。
+After you override them, you can replace the default Builders with your own subclasses.
 
-### 推荐实现顺序
+### Recommended Implementation Order
 
-1. 先写语言或其他 datagen 侧的支持类型。
-2. 创建 `ModRegistryCore`，覆写 Builder 工厂方法。
-3. 创建 `ModBlockBuilder`、`ModItemBuilder`、`ModFluidBuilder`。
-4. 在项目入口里把 `RegistryCore.create(...)` 切换成 `ModRegistryCore.create(...)`。
+1. Implement the language-side or other datagen-side support types first.
+2. Create `ModRegistryCore` and override the Builder factory methods.
+3. Create `ModBlockBuilder`, `ModItemBuilder`, and `ModFluidBuilder`.
+4. Switch the project entry point from `RegistryCore.create(...)` to `ModRegistryCore.create(...)`.
 
 {: .important }
-> 单参数简写入口通常返回基础 Builder 类型。想在编译期拿到你自己的 Builder 子类型，通常需要使用带显式 `parent` 的重载形式。
+> The single-argument shorthand entry points usually return the base Builder type. If you want your custom Builder subtype at compile time, you typically need an overload that keeps the explicit `parent` type.
 
-## 常见组合
+## Common Combinations
 
-- 多语言语法糖：例如 `langCn(...)`、`langTw(...)`。
-- 项目内固定 tag 或 tooltip：例如每个机器类方块自动追加统一标签或提示。
-- 项目级默认模型 / 默认 tab：适合确实跨越多个模块都稳定存在的规则。
+- Multilingual syntax sugar such as `langCn(...)` and `langTw(...)`.
+- Project-level fixed tags or tooltip rules, such as machine-family Blocks automatically receiving a shared label or hint.
+- Project-level default models or default tabs when the rule is genuinely stable across modules.
 
-## 边界与坑
+## Boundaries and Pitfalls
 
-- 自定义 Builder 不是为了替代 Group。Group 擅长共享默认值，自定义 Builder 擅长新增语法糖和改变编译期返回类型。
-- 自定义 `create()` 工厂时，要确认自己没有丢掉基础 Builder 原本会应用的默认行为。
-- 这类扩展会提高项目内部抽象层级，只在规则足够稳定、重复度足够高时才值得做。
+- Custom Builders are not meant to replace Group. Group is good at shared defaults, while custom Builders are good at new syntax sugar and custom compile-time return types.
+- When creating a custom `create()` factory, verify that you did not drop important default behavior from the base Builder path.
+- This kind of extension raises the abstraction level inside the project, so it is only worth doing when the rule is stable and heavily repeated.
 
-## 相关链接
+## Related Links
 
-- [高级主题]({{ '/advanced-topics/' | relative_url }})
+- [Advanced Topics]({{ '/advanced-topics/' | relative_url }})
 - [Lang System]({{ '/lang-system/' | relative_url }})
-- [API 参考]({{ '/api-reference/' | relative_url }})
+- [API Reference]({{ '/api-reference/' | relative_url }})

@@ -1,90 +1,178 @@
 ---
-title: 注册 Items
+title: Registering Items
+parent: Content Guides
 nav_order: 1
-parent: 内容指南
 permalink: /register-items/
 ---
 
-# 注册 Items
+# Registering Items
 
-本页解决“如何把一个 Item 的注册、显示名、模型、tooltip、tag、recipe 和可复用行为写在同一条链里”的问题。
+## What This Page Solves
 
-## 适用场景 / 前置条件
+When you need to register a normal Item, or you want to keep language, model, tooltip, recipe, tag, attachment, and related configuration in a single chain, this page is the most common and complete starting point in RegistryLib.
 
-- 你已经有可用的 `RegistryCore` 或 `Group`。
-- 你要注册普通 `Item`，或带 attachment 的 `CompositeItem`。
-- 你希望 datagen 相关配置和运行时配置留在同一个入口里。
+## When This Applies
 
-## 快速开始
+- You want to register a normal `Item` or a `CompositeItem`.
+- You want display name, model, creative tab, tooltip, recipe, and related behavior to live in one chain.
+- You want later code to reference the result through `ItemEntry<T>`.
+
+## Quick Start
 
 ```java
 public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
         .item("copper_coin", Item::new)
         .lang("Copper Coin")
+        .defaultModel()
         .register();
 ```
 
-这是最小的 Item 注册链：注册名、工厂方法、英文显示名，然后提交注册。
+This chain declares an Item named `copper_coin`, provides its English display name, and generates the default item model resource.
 
-## 完整示例
+## Full Example
 
 ```java
-public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB
-        .item("magic_wand", CompositeItem::new)
-        .initialProperties(() -> new Item.Properties().stacksTo(1))
-        .properties(p -> p.fireResistant())
-        .lang("Magic Wand")
+public static final ItemEntry<CompositeItem> WRENCH = RegistryLibTest.REGISTRYLIB
+        .item("wrench", CompositeItem::create)
+        .lang("Wrench")
         .defaultModel()
         .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-        .recipe((ctx, prov) -> { /* ShapedRecipeBuilder, etc. */ })
-        .tag(ItemTags.DURABILITY_ENCHANTABLE)
-        .tooltip(Component.literal("§5A powerful magical artifact"))
-        .tooltip((collector, stack) -> {
-            collector.node(
-                    new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);
-            collector.node(
-                    new SubNode.Basic(
-                            Component.literal("§7Durability: §f"
-                                    + (stack.getMaxDamage() - stack.getDamageValue())), 10));
-            collector.node(
-                    DETAIL_BOX,
-                    new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
-        })
-        .attach(new InspectAttachment())
+        .tooltip(item -> TooltipNode.root()
+                .text("Used to configure machines"))
+        .attach(new DurabilityBarAttachment())
         .register();
 ```
 
-## 分步骤解释
+## Step-by-Step Explanation
 
-1. `item("id", factory)` 决定注册名和对象类型。
-2. `initialProperties(...)` 负责初始 `Item.Properties`，适合 `stacksTo(1)` 这类必须在一开始确定的设置。
-3. `properties(...)` 在基础属性上叠加修改，适合追加防火等增量配置。
-4. `lang(...)`、`defaultModel()`、`tab(...)` 把最常见的显示层设置集中写完。
-5. `recipe(...)`、`tag(...)`、`tooltip(...)` 负责资源生成和玩家可见信息。
-6. 如果对象类型是 `CompositeItem`，再用 `attach(...)` 追加可复用行为模块。
+1. `item("wrench", CompositeItem::create)` starts an `ItemBuilder` chain and determines the base type that will be registered.
+2. `.lang("Wrench")` provides the display name for datagen.
+3. `.defaultModel()` requests the most common default item model generation.
+4. `.tab(...)` controls which creative inventory tab the Item belongs to.
+5. `.tooltip(...)` supplies a root node or tooltip node construction logic to the Tooltip System.
+6. `.attach(...)` only applies to Item types that support attachments, such as `CompositeItem`.
+7. `.register()` submits the registration and returns `ItemEntry<CompositeItem>`.
 
 {: .important }
-> `attach(...)` 只适用于 `CompositeItem`。如果工厂返回的是普通 `Item`，不要把 attachment 相关调用原样搬过去。
+> If you call `.attach(...)` on a normal `Item`, the problem is usually the selected type rather than the attachment itself. Attachments are designed for extensible Item types such as `CompositeItem`, not for every Item uniformly.
 
-## 常见模式 / 常见坑
+## Common Patterns
 
-- 需要一句固定描述时，用 `tooltip(Component)`；需要读取 `ItemStack`、排序或额外面板时，再切换到回调形式。
-- `defaultModel()` 适合平面 Item。只要你已经准备了自定义 model 生成逻辑，就不要同时保留默认模型调用。
-- `removeTab(...)` 一般只在你先继承了 Group 默认 tab、后面又要显式改写时才有意义。
+### I Only Want the Shortest Possible Item Registration
 
-## 常用 API 速览
+Keep only `item(...)`, `lang(...)`, and `register()`. Add `defaultModel()` only if your project wants the default generated model.
 
-| 方法 | 什么时候用 |
+### I Want Multiple Items to Share Defaults
+
+When multiple Items share a creative tab, lang prefix, or property modifiers, do not repeat the same setup on every Item. Move the shared defaults into [Group System]({{ '/group-system/' | relative_url }}).
+
+### I Need More Complex Tooltips
+
+When tooltips start to include multiple sections, conditional visibility, or separate rendering areas, do not keep forcing all of the logic into one lambda. Move to [Tooltip System]({{ '/tooltip-system/' | relative_url }}) and structure it explicitly.
+
+## Common API Lookup
+
+| Method | Purpose |
 | --- | --- |
-| `.item("id", factory)` | 开始一个 Item 注册链。 |
-| `.initialProperties(...)` | 先定义基础 `Item.Properties`。 |
-| `.defaultModel()` | 生成默认平面模型。 |
-| `.tooltip(...)` | 添加静态或动态 tooltip。 |
-| `.attach(...)` | 给 `CompositeItem` 绑定 attachment。 |
+| `item(name, factory)` | Create an `ItemBuilder` |
+| `lang(text)` | Set the display name |
+| `defaultModel()` | Generate the default item model |
+| `tab(tab)` | Set the creative tab |
+| `tooltip(...)` | Add tooltip nodes |
+| `attach(...)` | Add an attachment |
+| `register()` | Complete registration |
 
-## 相关链接
+## Related Links
 
-- [内容指南]({{ '/content-guides/' | relative_url }})
+- [5-Minute Quickstart]({{ '/quickstart/' | relative_url }})
 - [Tooltip System]({{ '/tooltip-system/' | relative_url }})
-- [Lang System]({{ '/lang-system/' | relative_url }})
-- [注册 Blocks]({{ '/register-blocks/' | relative_url }})
+- [Group System]({{ '/group-system/' | relative_url }})---
+---
+title: Registering Items
+parent: Content Guides
+nav_order: 1
+permalink: /register-items/
+---
+
+# Registering Items
+
+## What This Page Solves
+
+When you need to register a normal Item, or you want to keep language, model, tooltip, recipe, tag, attachment, and related configuration in a single chain, this page is the most common and complete starting point in RegistryLib.
+
+## When This Applies
+
+- You want to register a normal `Item` or a `CompositeItem`.
+- You want display name, model, creative tab, tooltip, recipe, and related behavior to live in one chain.
+- You want later code to reference the result through `ItemEntry<T>`.
+
+## Quick Start
+
+```java
+public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
+        .item("copper_coin", Item::new)
+        .lang("Copper Coin")
+        .defaultModel()
+        .register();
+```
+
+This chain declares an Item named `copper_coin`, provides its English display name, and generates the default item model resource.
+
+## Full Example
+
+```java
+public static final ItemEntry<CompositeItem> WRENCH = RegistryLibTest.REGISTRYLIB
+        .item("wrench", CompositeItem::create)
+        .lang("Wrench")
+        .defaultModel()
+        .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .tooltip(item -> TooltipNode.root()
+                .text("Used to configure machines"))
+        .attach(new DurabilityBarAttachment())
+        .register();
+```
+
+## Step-by-Step Explanation
+
+1. `item("wrench", CompositeItem::create)` starts an `ItemBuilder` chain and determines the base type that will be registered.
+2. `.lang("Wrench")` provides the display name for datagen.
+3. `.defaultModel()` requests the most common default item model generation.
+4. `.tab(...)` controls which creative inventory tab the Item belongs to.
+5. `.tooltip(...)` supplies a root node or tooltip node construction logic to the Tooltip System.
+6. `.attach(...)` only applies to Item types that support attachments, such as `CompositeItem`.
+7. `.register()` submits the registration and returns `ItemEntry<CompositeItem>`.
+
+{: .important }
+> If you call `.attach(...)` on a normal `Item`, the problem is usually the selected type rather than the attachment itself. Attachments are designed for extensible Item types such as `CompositeItem`, not for every Item uniformly.
+
+## Common Patterns
+
+### I Only Want the Shortest Possible Item Registration
+
+Keep only `item(...)`, `lang(...)`, and `register()`. Add `defaultModel()` only if your project wants the default generated model.
+
+### I Want Multiple Items to Share Defaults
+
+When multiple Items share a creative tab, lang prefix, or property modifiers, do not repeat the same setup on every Item. Move the shared defaults into [Group System]({{ '/group-system/' | relative_url }}).
+
+### I Need More Complex Tooltips
+
+When tooltips start to include multiple sections, conditional visibility, or separate rendering areas, do not keep forcing all of the logic into one lambda. Move to [Tooltip System]({{ '/tooltip-system/' | relative_url }}) and structure it explicitly.
+
+## Common API Lookup
+
+| Method | Purpose |
+| --- | --- |
+| `item(name, factory)` | Create an `ItemBuilder` |
+| `lang(text)` | Set the display name |
+| `defaultModel()` | Generate the default item model |
+| `tab(tab)` | Set the creative tab |
+| `tooltip(...)` | Add tooltip nodes |
+| `attach(...)` | Add an attachment |
+| `register()` | Complete registration |
+
+## Related Links
+
+- [5-Minute Quickstart]({{ '/quickstart/' | relative_url }})
+- [Tooltip System]({{ '/tooltip-system/' | relative_url }})
+- [Group System]({{ '/group-system/' | relative_url }})

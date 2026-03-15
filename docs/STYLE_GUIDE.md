@@ -6,94 +6,94 @@ search_exclude: true
 
 # RegistryLib Docs Style Guide
 
-## 目标
+## Goal
 
-文档同时服务四类任务：最快上手、照着实现、快速查阅、长期维护。教程页负责教学，系统页负责解释，API 参考负责速查，元文档负责约束。
+The documentation serves four jobs at the same time: fastest onboarding, implementation guidance, quick lookup, and long-term maintenance. Tutorial pages teach, system pages explain, API Reference supports lookup, and meta documents enforce the rules.
 
-## 信息架构
+## Information Architecture
 
-- 首页：项目定位与阅读入口。
-- 学习中心：quickstart、FAQ、troubleshooting、glossary。
-- 内容指南：按注册对象组织教程。
-- 核心系统：按横切系统组织说明。
-- API 参考：方法族、职责边界与速查，不承载完整教学。
-- 高级主题：扩展点与实现策略。
-- 工程与维护：依赖、开发、发布与贡献边界。
+- Homepage: project positioning and reading entry points.
+- Getting Started: quickstart, FAQ, troubleshooting, and glossary.
+- Content Guides: tutorials organized by registered object type.
+- Core Systems: explanations organized by cross-cutting system.
+- API Reference: method families, responsibility boundaries, and quick lookup without full teaching.
+- Advanced Topics: extension points and implementation strategy.
+- Development and Maintenance: dependency, development, release, and contribution boundaries.
 
-## 页面模板
+## Page Templates
 
-### 教程页模板
+### Tutorial Page Template
 
-1. 本页解决什么
-2. 适用场景 / 前置条件
-3. 快速开始
-4. 完整示例
-5. 分步骤解释
-6. 常见模式 / 常见坑
-7. 常用 API 速览
-8. 相关链接
+1. What this page solves
+2. When this applies or prerequisites
+3. Quick start
+4. Full example
+5. Step-by-step explanation
+6. Common patterns or common pitfalls
+7. Common API lookup
+8. Related links
 
-### 系统页模板
+### System Page Template
 
-1. 核心作用
-2. 何时使用
-3. 快速例子
-4. 核心概念
-5. 常见组合
-6. 边界与坑
-7. 相关链接
+1. Core purpose
+2. When to use it
+3. Quick example
+4. Core concepts
+5. Common combinations
+6. Boundaries and pitfalls
+7. Related links
 
-### API 参考页模板
+### API Reference Template
 
-1. 入口选择
-2. 类型 / Builder 对照
-3. 常见链路速查
-4. 指向教程与系统页的链接
+1. Entry-point selection
+2. Type and Builder mapping
+3. Common chain lookup
+4. Links to tutorials and system pages
 
-## 语言与术语
+## Language and Terminology
 
-- 讲解统一使用中文。
-- 类名、方法名、类型名、注解名保留英文。
-- 首次出现的关键术语优先在正文中给出一句解释；复杂术语统一收录到 glossary。
-- 不在同一页混用两套中文译名。比如 Builder 统一写 Builder，不再交替写“构建器链”“建造器链”。
+- Explanations are written in English.
+- Class names, method names, type names, and annotation names stay in English exactly as they appear in code.
+- When an important term first appears, prefer giving it a one-sentence explanation in the text. Complex terms should be centralized in the glossary.
+- Do not alternate between multiple translated names for the same concept inside one page.
 
-## 示例规范
+## Example Rules
 
-- 每页保留一个最小示例和一个完整示例。
-- 最小示例优先控制在 5-12 行。
-- 完整示例只覆盖当前页面主题，不把跨主题能力全部塞进一个代码块。
-- 示例必须能在当前仓库已有概念下自洽；不编造运行结果，不虚构不存在的 API。
+- Keep one minimal example and one fuller example on each page.
+- Minimal examples should usually stay within 5 to 12 lines.
+- Full examples should only cover the theme of the current page instead of forcing every cross-topic feature into one block.
+- Examples must remain internally consistent with concepts that already exist in the repository. Do not invent runtime results or nonexistent APIs.
 
-## 常用 API 速览与 API 参考的边界
+## Boundary Between Tutorial API Lookup and API Reference
 
-- 教程页中的“常用 API 速览”只列 3-5 个最常用方法，并用一句话说明什么时候用。
-- API 参考页列 Builder 族、Entry 类型、入口选择和常见链路。
-- 详细示例、场景化解释和分步骤讲解只留在教程页与系统页，不在 API 参考页重复。
+- A tutorial page's Common API Lookup section should list only 3 to 5 frequently used methods and explain when each is used in one sentence.
+- API Reference should list Builder families, Entry types, entry-point selection, and common chains.
+- Full examples, scenario-driven explanation, and step-by-step teaching should stay only on tutorial and system pages, not be duplicated in API Reference.
 
-## Callout 规则
+## Callout Rules
 
-- 只允许 `.note`、`.important`、`.warning`。
-- 每条 callout 只写 1-3 行。
-- 单页通常不超过 3 条。
-- 能写成普通段落的内容，不要强行写成 callout。
-- `.important` 只用于关键约束或高频误用；`.warning` 用于可能导致失败或错误加载的情形；`.note` 用于补充理解。
+- Only `.note`, `.important`, and `.warning` are allowed.
+- Each callout should stay within 1 to 3 lines.
+- A single page should usually not exceed 3 callouts.
+- If a point works as a normal paragraph, do not force it into a callout.
+- `.important` is for critical constraints or frequent misuse, `.warning` is for situations that can cause failure or invalid loading, and `.note` is for supporting context.
 
-## 内链规则
+## Internal Linking Rules
 
-- 每页结尾必须有“相关链接”。
-- 教程页至少链接一个上级聚合页、一个相邻教程页、一个相关系统页。
-- 系统页至少链接一个上级聚合页和两个会使用该系统的教程页。
-- FAQ 与 Troubleshooting 优先回链到对应教程页，而不是复制正文。
+- Every page must end with a Related Links section.
+- A tutorial page should link to at least one parent hub page, one neighboring tutorial page, and one related system page.
+- A system page should link to at least one parent hub page and two tutorial pages that use the system.
+- FAQ and Troubleshooting should link back to the relevant tutorial pages instead of duplicating their core content.
 
-## special-optimizations 保留标准
+## Retention Standard for special-optimizations
 
-保留：同时与 RegistryLib 的 Builder / Entry / datagen / 事件或资源生命周期相关的优化策略。
+Keep content only if it relates directly to RegistryLib's Builder, Entry, datagen, event, or resource lifecycle.
 
-删除：纯通用 Java 性能教材内容，例如脱离 RegistryLib 语境的并发、泛型、集合或 JVM 小技巧。
+Remove content if it is only general Java performance teaching, such as concurrency, generics, collection, or JVM tricks that are detached from RegistryLib context.
 
-判断法：如果一段内容不能回答“它为什么会影响 RegistryLib 的注册、生成或运行生命周期”，就不应保留在该页。
+Decision rule: if a section cannot answer “why does this affect RegistryLib's registration, generation, or runtime lifecycle?”, it should not remain on that page.
 
-## 元文档规则
+## Meta Document Rules
 
-- AGENTS_SUMMARY.md 与 STYLE_GUIDE.md 放在 docs/ 下，作为仓库交付物保留。
-- 两者默认不进入主导航，不承担对外用户文档职责。
+- AGENTS_SUMMARY.md and STYLE_GUIDE.md stay under docs/ as repository deliverables.
+- Neither should appear in the main navigation by default, and neither is part of the external end-user documentation path.

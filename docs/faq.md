@@ -1,50 +1,50 @@
 ---
-title: 常见问题 FAQ
-parent: 学习中心
+title: FAQ
+parent: Getting Started
 nav_order: 2
 permalink: /faq/
 ---
 
-# 常见问题 FAQ
+# FAQ
 
-这一页收集最常见的“为什么没有发生”类问题，优先给出最短判断路径。
+This page collects the most common “why did nothing happen?” questions and prioritizes the shortest path to an answer.
 
-## 注册链相关
+## Registration Chains
 
-### 为什么我的条目没有出现？
+### Why does my entry not appear?
 
-先检查注册类是否真的被加载，其次确认链尾是否调用了 `.register()`。
+First check whether the registration class is actually loaded. Then confirm that the chain ends with `.register()`.
 
-### 为什么 `.attach(...)` 不能用于普通 `Item`？
+### Why can `.attach(...)` not be used on a normal `Item`?
 
-因为 attachment 是 `CompositeItem` 的扩展点。普通 `Item` 没有对应的 attachment 生命周期。
+Because attachments are an extension point for `CompositeItem`. A normal `Item` does not have the corresponding attachment lifecycle.
 
-### 为什么我写了 Block 但游戏里没有对应 BlockItem？
+### Why did I register a Block, but there is no matching BlockItem in game?
 
-因为 Block 和 BlockItem 是两个独立注册对象。需要显式调用 `.simpleItem()` 或 `.item(...)`。
+Because Block and BlockItem are two separate registered objects. You need to call `.simpleItem()` or `.item(...)` explicitly.
 
-## datagen 与语言相关
+## Datagen and Language
 
-### 为什么 `.lang(...)` 没有出现在我预期的语言文件里？
+### Why did `.lang(...)` not appear in the language file I expected?
 
-先确认你走的是 RegistryLib 的 datagen 管线，再确认对应页面中的 ProviderType 或默认语言配置是否正确。
+First confirm that you are using RegistryLib's datagen pipeline. Then confirm that the relevant page's `ProviderType` setup or default language configuration is correct.
 
-### `.defaultLang()` 和 `.lang(...)` 应该选哪个？
+### How should I choose between `.defaultLang()` and `.lang(...)`?
 
-当 registry name 足以推导出显示名时，用 `.defaultLang()`；当你需要特定展示文案时，用 `.lang(...)`。
+Use `.defaultLang()` when the registry name is enough to derive the display name. Use `.lang(...)` when you need a specific display string.
 
-## 结构与设计相关
+## Structure and Design
 
-### 什么时候应该用 Group？
+### When should I use Group?
 
-当多个条目共享 lang 前缀、creative tab、block/item 属性默认值时，用 Group；单个孤立条目通常直接走 `RegistryCore`。
+Use Group when multiple entries share a lang prefix, a creative tab, or default Block or Item property modifiers. For a single isolated entry, going directly through `RegistryCore` is usually enough.
 
-### 什么时候应该自定义 Builder？
+### When should I define a custom Builder?
 
-当你反复需要同一套项目内语法糖或默认规则，并且这些规则无法只靠 Group 或普通链式调用表达时，再看 [Override Builders]({{ '/override-builders/' | relative_url }}).
+Look at [Override Builders]({{ '/override-builders/' | relative_url }}) when you repeatedly need the same project-specific syntax sugar or default rules, and those rules cannot be expressed cleanly with only Group or ordinary chained calls.
 
-## 继续阅读
+## Continue Reading
 
-- [故障排查]({{ '/troubleshooting/' | relative_url }})
-- [术语表]({{ '/glossary/' | relative_url }})
-- [API 参考]({{ '/api-reference/' | relative_url }})
+- [Troubleshooting]({{ '/troubleshooting/' | relative_url }})
+- [Glossary]({{ '/glossary/' | relative_url }})
+- [API Reference]({{ '/api-reference/' | relative_url }})

@@ -1,20 +1,20 @@
 ---
-title: 学习中心
+title: Getting Started
 nav_order: 2
 has_children: true
 permalink: /start-here/
 ---
 
-# 学习中心
+# Getting Started
 
-这一组页面服务于第一次接触 RegistryLib 的开发者：先跑通、再定位问题、最后补术语和背景概念。
+This section is for developers using RegistryLib for the first time: get something working first, diagnose problems second, and fill in terminology and background concepts last.
 
-## 从这里开始
+## Start Here
 
-1. [5 分钟快速开始]({{ '/quickstart/' | relative_url }})
-2. [常见问题 FAQ]({{ '/faq/' | relative_url }})
-3. [故障排查]({{ '/troubleshooting/' | relative_url }})
-4. [术语表]({{ '/glossary/' | relative_url }})
+1. [5-Minute Quickstart]({{ '/quickstart/' | relative_url }})
+2. [FAQ]({{ '/faq/' | relative_url }})
+3. [Troubleshooting]({{ '/troubleshooting/' | relative_url }})
+4. [Glossary]({{ '/glossary/' | relative_url }})
 
 {: .note }
-> 如果你已经明确要注册哪种内容，可以跳过本组页面，直接进入 [内容指南]({{ '/content-guides/' | relative_url }})。
+> If you already know what kind of content you want to register, you can skip this section and go straight to [Content Guides]({{ '/content-guides/' | relative_url }}).

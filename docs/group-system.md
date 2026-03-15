@@ -1,24 +1,24 @@
 ---
 title: Group System
-parent: 核心系统
+parent: Core Systems
 nav_order: 1
 permalink: /group-system/
 ---
 
 # Group System
 
-`Group` 是包裹在 `RegistryCore` 外层的一组共享默认值。它解决的问题不是“能不能注册”，而是“同一内容家族里要不要重复写相同配置”。
+`Group` is a layer of shared defaults wrapped around `RegistryCore`. The question it solves is not “can this be registered?” but “should this content family keep repeating the same configuration?”
 
-## 何时使用
+## When to Use It
 
-- 你有一批条目共享 lang 前缀。
-- 你想让多个方块或物品默认进入同一个 creative tab。
-- 你希望 block/item 的属性修饰器能被一整组条目继承。
+- You have a set of entries that share a lang prefix.
+- You want multiple Blocks or Items to default into the same creative tab.
+- You want Block or Item property modifiers to be inherited by a whole series of entries.
 
 {: .note }
-> 如果你只注册一个孤立条目，通常直接使用 `RegistryCore` 更简单。Group 的价值在于复用，不在于替代所有入口。
+> If you are only registering one isolated entry, using `RegistryCore` directly is usually simpler. Group adds value through reuse, not by replacing every entry point.
 
-## 快速例子
+## Quick Example
 
 ```java
 public static final Group TIMER_GROUP = REGISTRYLIB.group("timers")
@@ -33,37 +33,37 @@ public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP
         .register();
 ```
 
-这个例子里，`tier_1` 会自动继承 lang 前缀和 block 属性修饰器。
+In this example, `tier_1` automatically inherits the lang prefix and the Block property modifier.
 
-## 核心概念
+## Core Concepts
 
-### Group 会自动应用什么
+### What Group Applies Automatically
 
-| 默认值 | 作用范围 |
+| Default | Applies to |
 | --- | --- |
-| `langPrefix` | 所有通过该 Group 注册的条目 |
-| `tab` | BlockItem、普通 Item、流体桶 |
-| `blockProperties` | 所有通过该 Group 注册的 Block |
-| `itemProperties` | 所有通过该 Group 注册的普通 Item |
+| `langPrefix` | All entries registered through that Group |
+| `tab` | BlockItems, regular Items, and fluid buckets |
+| `blockProperties` | All Blocks registered through that Group |
+| `itemProperties` | All regular Items registered through that Group |
 
-### 覆写顺序
+### Override Order
 
-Group 的默认值会在 Builder 创建时先应用。你在 `.block(...)`、`.item(...)`、`.fluid(...)` 之后继续链式调用的内容，优先级更高。
+Group defaults are applied when the Builder is created. Anything you continue to chain after `.block(...)`, `.item(...)`, or `.fluid(...)` has higher priority.
 
-## 常见组合
+## Common Combinations
 
-- 内容分层：先用 Group 统一 lang 前缀和 tab，再在单个条目上覆写少数特殊值。
-- 机器分级：用 Group 统一硬度和掉落要求，再在高阶条目上补特殊 tooltip 或更强属性。
-- 大批量矿石：用 Group 统一挖掘要求和 creative tab，再在每个矿石上单独配置掉落逻辑。
+- Content families: use Group for a shared lang prefix and tab, then override only the few exceptional values on individual entries.
+- Machine tiers: use Group for hardness and drop requirements, then add special tooltips or stronger properties on higher-tier entries.
+- Large ore batches: use Group for mining requirements and creative tab, then configure each ore's drop logic separately.
 
-## 边界与坑
+## Boundaries and Pitfalls
 
-- Group 不是命名空间替代品，它只负责共享默认值，不负责改变注册提交时机。
-- Group 的 tab 不会影响没有对应物品形态的裸 BlockEntity 条目。
-- 如果某个条目本身就是明显的例外项，不要为了“整齐”硬塞进同一个 Group。
+- Group is not a namespace replacement. It only owns shared defaults and does not change when registration is submitted.
+- A Group tab does not affect bare BlockEntity entries that do not have an Item form.
+- If one entry is clearly an exception, do not force it into the same Group just for visual consistency.
 
-## 相关链接
+## Related Links
 
-- [核心系统]({{ '/systems-overview/' | relative_url }})
-- [注册 Blocks]({{ '/register-blocks/' | relative_url }})
-- [注册 Fluids 和 Buckets]({{ '/register-fluids-and-buckets/' | relative_url }})
+- [Core Systems]({{ '/systems-overview/' | relative_url }})
+- [Registering Blocks]({{ '/register-blocks/' | relative_url }})
+- [Registering Fluids and Buckets]({{ '/register-fluids-and-buckets/' | relative_url }})

@@ -1,72 +1,72 @@
 ---
-title: 性能与实现优化
-parent: 高级主题
+title: Performance and Implementation Optimizations
+parent: Advanced Topics
 nav_order: 2
 permalink: /special-optimizations/
 ---
 
-# 性能与实现优化
+# Performance and Implementation Optimizations
 
-这一页只保留与 RegistryLib 直接相关的优化思路：它们为什么存在、适用于什么阶段、错误实现时会出现什么代价。这里不是通用 Java 性能教材。
+This page keeps only optimization ideas that directly relate to RegistryLib: why they exist, when they apply, and what they cost when implemented poorly. It is not a general Java performance guide.
 
-## Builder 与注册生命周期
+## Builder and Registration Lifecycle
 
-### 把副作用延迟到终点
+### Delay Side Effects Until the Endpoint
 
-Builder 会在多次链式调用中收集配置，因此很多副作用适合延迟到 `.register()` 或 `.build()` 时统一提交。这样做的价值是：
+Builders collect configuration across multiple chained calls, so many side effects are best delayed until `.register()` or `.build()`. The value of doing so is:
 
-- 保持调用顺序更稳定
-- 允许后续链式调用覆写前面的默认值
-- 减少配置阶段的重复注册或重复 datagen 注入
+- more stable call ordering
+- later chained calls can override earlier defaults
+- fewer duplicate registrations or duplicate datagen injections during configuration
 
 {: .warning }
-> 延迟提交的前提是终点方法一定会被调用。遗漏 `.register()` 或 `.build()` 时，前面的所有配置都可能静默失效。
+> Delayed submission only works if the endpoint method is definitely called. If `.register()` or `.build()` is omitted, all previous configuration may fail silently.
 
-### 一次性资源在消费后释放引用
+### Release One-Time References After Consumption
 
-对只会用一次的工厂、回调列表或延迟委托，在消费后尽早断开引用，可以减少无意义的对象存活时间。这类优化最适合发生在注册完成后、生命周期清晰的内部字段上。
+For factories, callback lists, or deferred delegates that are only needed once, clearing references after use reduces unnecessary object lifetime. This kind of optimization fits best on internal fields whose lifecycle clearly ends when registration finishes.
 
-## 大批量注册时的结构选择
+## Structural Choices for Large Registration Batches
 
-### 共享默认值优先用 Group
+### Prefer Group for Shared Defaults
 
-当多个条目共享 lang 前缀、tab 或属性修饰器时，优先使用 Group，而不是在每个条目上重复同一组链式调用。这样能同时降低样板代码和变更成本。
+When multiple entries share a lang prefix, a tab, or property modifiers, prefer Group over repeating the same chained setup on every entry. This lowers both boilerplate and future change cost.
 
-### 只在确实需要时引入自定义 Builder
+### Only Introduce Custom Builders When They Are Truly Needed
 
-如果你只是想复用默认值，Group 通常已经足够；只有当你需要新的项目级方法或稳定的编译期子类型时，自定义 Builder 才真正有价值。
+If you only want shared defaults, Group is usually enough. Custom Builders only become valuable when you need new project-level methods or stable custom compile-time return types.
 
-## datagen 与类型选择
+## Datagen and Type Selection
 
-### 语言、模型、配方逻辑尽量贴近注册链
+### Keep Language, Model, and Recipe Logic Close to the Registration Chain
 
-RegistryLib 的优势之一是让 datagen 回调和注册对象保持就近。把这些逻辑放回 Builder 链附近，通常比在外部维护分散表更容易追踪和覆写。
+One of RegistryLib's strengths is that datagen callbacks and registered objects stay near each other. Keeping that logic near the Builder chain is usually easier to trace and override than maintaining scattered external tables.
 
-### 选择与语义匹配的容器类型
+### Choose Container Types That Match the Semantics
 
-当内部结构天然依赖对象身份而不是值相等时，使用基于 identity 的集合通常更符合 RegistryLib 的实现语义。但前提是键确实具备稳定的单例语义。
+When an internal structure depends on object identity rather than value equality, identity-based collections often match RegistryLib semantics better. This only makes sense when the keys truly have stable singleton-like identity.
 
 {: .note }
-> 如果一段优化不能清楚解释“它为什么会影响 RegistryLib 的注册、生成或运行生命周期”，它就不应该留在本页。
+> If an optimization cannot clearly explain why it affects RegistryLib's registration, generation, or runtime lifecycle, it does not belong on this page.
 
-## 生命周期与环境边界
+## Lifecycle and Environment Boundaries
 
-### client-only 类型必须保持惰性加载
+### Client-Only Types Must Stay Lazily Loaded
 
-renderer、tooltip 渲染节点或其他 client class 一旦进入公共初始化路径，就会把环境边界打穿。保持 `Supplier` 包裹，是兼顾可读性与安全性的必要成本。
+Once a renderer, tooltip rendering node, or another client class enters a shared initialization path, the environment boundary is broken. Keeping it wrapped in a `Supplier` is a necessary cost for both readability and safety.
 
-### 事件与缓存结构要有明确的单次或多次语义
+### Events and Cache Structures Need Explicit Single-Use or Multi-Use Semantics
 
-如果某个内部结构只打算在某个事件阶段消费一次，就要把“单次消费”写成清晰的实现语义，而不是依赖约定。这样才能避免重复注册、迟到写入或空引用访问。
+If an internal structure is meant to be consumed only once during one event phase, make that single-use behavior explicit in the implementation rather than relying on convention. That is how you avoid duplicate registration, late writes, or null access.
 
-## 什么时候不该优化
+## When You Should Not Optimize
 
-- 你还没有识别出当前瓶颈到底来自样板重复、datagen 结构，还是环境边界错误。
-- 你只是为了“更高级的写法”而增加抽象层级。
-- 你打算把通用 Java 微优化直接搬进 RegistryLib 文档，却无法说明它和 Builder 生命周期的关系。
+- You still have not identified whether the real bottleneck is boilerplate duplication, datagen structure, or an environment-boundary mistake.
+- You are only adding abstraction because it looks more advanced.
+- You want to copy generic Java micro-optimizations into RegistryLib documentation without explaining how they relate to the Builder lifecycle.
 
-## 相关链接
+## Related Links
 
-- [高级主题]({{ '/advanced-topics/' | relative_url }})
+- [Advanced Topics]({{ '/advanced-topics/' | relative_url }})
 - [Override Builders]({{ '/override-builders/' | relative_url }})
-- [工程与维护]({{ '/development-and-maintenance/' | relative_url }})
+- [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }})

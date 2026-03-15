@@ -1,102 +1,86 @@
 ---
-title: 注册 Fluids 和 Buckets
+title: Registering Fluids and Buckets
+parent: Content Guides
 nav_order: 4
-parent: 内容指南
 permalink: /register-fluids-and-buckets/
 ---
 
-# 注册 Fluids 和 Buckets
+# Registering Fluids and Buckets
 
-本页解决“如何用一条 FluidBuilder 链同时管理流体类型、客户端渲染、fluid block 和 bucket item”的问题。
+## What This Page Solves
 
-## 适用场景 / 前置条件
+In RegistryLib, a Fluid is usually not a single object. It is a connected family that can include the source fluid, flowing fluid, fluid type, optional block, optional bucket, and client-side rendering extensions. This page shows how to keep that family inside one maintainable chain.
 
-- 你已经准备好了 still / flow 纹理的 `Identifier`。
-- 你希望 fluid、bucket、block 在一个注册链里完成联动配置。
-- 你需要调整 tint、物理参数或 bucket 的显示名。
+## When This Applies
 
-## 快速开始
+- You want to register a full fluid family.
+- You want to generate a bucket or fluid block at the same time.
+- You need to configure still and flow textures together with client rendering behavior.
 
-```java
-private static final Identifier FLUID_STILL =
-        Identifier.fromNamespaceAndPath("registrylib", "block/fluid/liquid_still");
-private static final Identifier FLUID_FLOW =
-        Identifier.fromNamespaceAndPath("registrylib", "block/fluid/liquid_flow");
-
-public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
-        RegistryLibTest.REGISTRYLIB
-                .fluid("acid", FLUID_STILL, FLUID_FLOW)
-                .lang("Acid")
-                .clientExtension(FLUID_STILL, FLUID_FLOW)
-                .register();
-```
-
-这条链已经把显示名和客户端纹理表现接上，适合先确认最基础的流体注册是否生效。
-
-## 完整示例
+## Quick Start
 
 ```java
-public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
-        RegistryLibTest.REGISTRYLIB
-                .fluid("molten_iron", FLUID_STILL, FLUID_FLOW)
-                .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
-                .lang("Molten Iron")
-                .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
-                .tag(FluidTags.LAVA)
-                .block(block -> block
-                    .properties(p -> p.lightLevel(s -> 12))
-                )
-                .bucket(bucket -> bucket
-                    .lang("Molten Iron Bucket")
-                )
-                .register();
-
-public static final FluidEntry<BaseFlowingFluid.Flowing> LIQUID_MAGIC =
-        RegistryLibTest.REGISTRYLIB
-                .fluid(
-                        "liquid_magic",
-                        Identifier.withDefaultNamespace("block/water_still"),
-                        Identifier.withDefaultNamespace("block/water_flow"))
-                .properties(p -> p.lightLevel(15).density(500).viscosity(200))
-                .lang("Liquid Magic")
-                .block(block -> block
-                    .properties(p -> p.lightLevel(s -> 15))
-                )
-                .bucket(bucket -> bucket
-                    .lang("Liquid Magic Bucket")
-                )
-                .register();
+public static final FluidEntry<BaseFlowingFluid> OIL = RegistryLibTest.REGISTRYLIB
+        .fluid("oil", rl("block/oil_still"), rl("block/oil_flow"))
+        .lang("Oil")
+        .bucket()
+        .register();
 ```
 
-## 分步骤解释
+## Full Example
 
-1. `fluid("id", still, flow)` 决定 registry name 和基础纹理路径。
-2. `lang(...)` 设置显示名；如果你使用灰度纹理，再用三参数 `clientExtension(...)` 在客户端施加运行时着色。
-3. `properties(...)` 调整 `FluidType.Properties`，把密度、粘度、温度和光照集中在同一处维护。
-4. `block(...)` 和 `bucket(...)` 用于配置流体方块与桶物品。多数常见联动都在这里完成。
-5. `tag(...)` 会同时作用于 source fluid 与 flowing fluid，最后统一 `.register()`。
+```java
+public static final FluidEntry<BaseFlowingFluid> STEAM = RegistryLibTest.REGISTRYLIB
+        .fluid("steam", rl("block/steam_still"), rl("block/steam_flow"))
+        .lang("Steam")
+        .properties(props -> props.density(-500).viscosity(100))
+        .clientExtension(0xCCFFFFFF, rl("block/steam_still"), rl("block/steam_flow"))
+        .block()
+        .bucket()
+        .register();
+```
 
-{: .note }
-> 三参数 `clientExtension(still, flow, color)` 的 `color` 使用 ARGB，例如 `0xFFFF4400`。它最适合灰度流体纹理的运行时着色。
+## Step-by-Step Explanation
 
-## 常见模式 / 常见坑
+1. `fluid("steam", still, flow)` creates the `FluidBuilder` and fixes the still and flow texture resources.
+2. `.lang(...)` sets the display name.
+3. `.properties(...)` customizes the fluid type or fluid properties.
+4. `.clientExtension(...)` defines client rendering parameters, commonly for tinting or texture strategy.
+5. `.block()` generates the fluid block.
+6. `.bucket()` generates the bucket item.
+7. `.register()` returns `FluidEntry<T>` so the related fluid objects can be accessed together.
 
-- 如果你用的是 RegistryLib 自带灰度纹理，优先选择带颜色参数的 `clientExtension(...)`。
-- 如果你复用的是本来就带颜色信息的纹理，例如 vanilla 水纹理，通常用两参数版本即可。
-- `block(...)` 和 `bucket(...)` 已经覆盖大多数联动场景；除非你确实要干预底层 `BaseFlowingFluid.Properties`，否则一般不需要额外写 `fluidProperties(...)`。
+{: .important }
+> When choosing a `clientExtension(...)` overload, decide first whether your texture already contains color information. Grayscale textures usually need an explicit tint, while colored textures usually do not.
 
-## 常用 API 速览
+## Common Patterns
 
-| 方法 | 什么时候用 |
+### I Only Want the Fluid and the Bucket
+
+Keep `.bucket()` and omit `.block()`.
+
+### I Want the Fluid to Exist as a World Block
+
+Add `.block()` and then extend it with tags or interaction logic if needed.
+
+### What Should I Check First When Fluid Rendering Looks Wrong?
+
+Check the still and flow texture paths first. Then check whether the `clientExtension(...)` parameters match the texture strategy. Only after that should you investigate whether the resource generation path ran correctly.
+
+## Common API Lookup
+
+| Method | Purpose |
 | --- | --- |
-| `.fluid("id", still, flow)` | 开始一个流体注册链。 |
-| `.clientExtension(...)` | 指定客户端纹理与可选 tint。 |
-| `.properties(...)` | 配置 `FluidType.Properties`。 |
-| `.block(...)` | 定义 fluid block 的子配置。 |
-| `.bucket(...)` | 定义 bucket item 的子配置。 |
+| `fluid(name, still, flow)` | Create a `FluidBuilder` |
+| `lang(text)` | Set the display name |
+| `properties(...)` | Modify fluid properties |
+| `clientExtension(...)` | Configure client rendering |
+| `block()` | Generate the fluid block |
+| `bucket()` | Generate the bucket |
+| `register()` | Complete registration |
 
-## 相关链接
+## Related Links
 
-- [内容指南]({{ '/content-guides/' | relative_url }})
-- [注册 Blocks]({{ '/register-blocks/' | relative_url }})
-- [Lang System]({{ '/lang-system/' | relative_url }})
+- [Troubleshooting]({{ '/troubleshooting/' | relative_url }})
+- [API Reference]({{ '/api-reference/' | relative_url }})
+- [Advanced Topics]({{ '/advanced-topics/' | relative_url }})

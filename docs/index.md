@@ -6,31 +6,31 @@ permalink: /
 
 # RegistryLib
 
-RegistryLib 是一个面向 NeoForge 的 fluent registration 库，目标是把常见内容注册从分散的样板代码收拢成一条可组合、可生成资源、可维护的构建链。
+RegistryLib is a fluent registration library for NeoForge. Its goal is to consolidate common content registration work from scattered boilerplate into a single builder chain that is composable, resource-generation friendly, and maintainable.
 
-如果你第一次接触这个项目，先走“学习中心”；如果你已经知道自己要注册什么内容，直接进入“内容指南”或“API 参考”。
+If this is your first time working with the project, start with Getting Started. If you already know what you want to register, go straight to Content Guides or API Reference.
 
-## 你会在这里找到什么
+## What You Will Find Here
 
-| 入口 | 适合谁 | 你会得到什么 |
+| Entry Point | Best For | What You Will Get |
 | --- | --- | --- |
-| [学习中心]({{ '/start-here/' | relative_url }}) | 第一次使用 RegistryLib 的开发者 | 5 分钟跑通、FAQ、排错、术语表 |
-| [内容指南]({{ '/content-guides/' | relative_url }}) | 已经知道要注册 Item、Block、Fluid 等内容的人 | 按内容类型组织的教程页 |
-| [核心系统]({{ '/systems-overview/' | relative_url }}) | 想理解 Group、Tooltip、Lang 等横切能力的人 | 决策思路、组合方式与边界 |
-| [API 参考]({{ '/api-reference/' | relative_url }}) | 需要快速查入口、Builder 族和常用链路的人 | 速查表与职责对照 |
-| [高级主题]({{ '/advanced-topics/' | relative_url }}) | 需要自定义 Builder 或理解内部实现策略的人 | 扩展与优化指南 |
+| [Getting Started]({{ '/start-here/' | relative_url }}) | Developers using RegistryLib for the first time | A 5-minute quickstart, FAQ, troubleshooting, and a glossary |
+| [Content Guides]({{ '/content-guides/' | relative_url }}) | Developers who already know they want to register Items, Blocks, Fluids, and similar content | Tutorials organized by content type |
+| [Core Systems]({{ '/systems-overview/' | relative_url }}) | Developers who want to understand cross-cutting features such as Group, Tooltip, and Lang | Design guidance, composition patterns, and system boundaries |
+| [API Reference]({{ '/api-reference/' | relative_url }}) | Developers who need a quick lookup for entry points, builder families, and common chains | A concise reference and responsibility map |
+| [Advanced Topics]({{ '/advanced-topics/' | relative_url }}) | Developers who need custom Builders or want to understand implementation strategies | Extension and optimization guidance |
 
 {: .note }
-> 文档统一使用中文讲解，类型名、方法名、类名保留英文，以便直接对应源码和 IDE 提示。
+> The documentation is written in English, while type names, method names, and class names remain unchanged so they continue to match the source code and IDE hints directly.
 
-## 推荐阅读路径
+## Recommended Reading Path
 
-1. 先看 [5 分钟快速开始]({{ '/quickstart/' | relative_url }}) 跑通一个最小 Item。
-2. 再根据内容类型进入 [注册 Items]({{ '/register-items/' | relative_url }})、[注册 Blocks]({{ '/register-blocks/' | relative_url }}) 或 [注册 Fluids 和 Buckets]({{ '/register-fluids-and-buckets/' | relative_url }})。
-3. 当你开始复用默认值或组织复杂 tooltip 时，再补 [Group System]({{ '/group-system/' | relative_url }})、[Tooltip System]({{ '/tooltip-system/' | relative_url }})、[Lang System]({{ '/lang-system/' | relative_url }})。
-4. 需要定制 Builder 时，继续看 [Override Builders]({{ '/override-builders/' | relative_url }})。
+1. Start with [5-Minute Quickstart]({{ '/quickstart/' | relative_url }}) to get a minimal Item working.
+2. Then move to [Registering Items]({{ '/register-items/' | relative_url }}), [Registering Blocks]({{ '/register-blocks/' | relative_url }}), or [Registering Fluids and Buckets]({{ '/register-fluids-and-buckets/' | relative_url }}) based on the content type you need.
+3. When you begin reusing defaults or organizing more complex tooltips, continue with [Group System]({{ '/group-system/' | relative_url }}), [Tooltip System]({{ '/tooltip-system/' | relative_url }}), and [Lang System]({{ '/lang-system/' | relative_url }}).
+4. If you need to customize Builders, continue with [Override Builders]({{ '/override-builders/' | relative_url }}).
 
-## 仓库与工程信息
+## Repository and Project Information
 
-- [工程与维护]({{ '/development-and-maintenance/' | relative_url }})：依赖接入、本地开发、发布流程与 API 约定。
+- [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }}): dependency integration, local development, release workflow, and API conventions.
 - [GitHub Repository](https://github.com/GregTech-Odyssey/RegistryLib)

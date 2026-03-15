@@ -1,74 +1,77 @@
 ---
-title: 注册 Block Entities 和 Renderers
+title: Registering Block Entities and Renderers
+parent: Content Guides
 nav_order: 3
-parent: 内容指南
 permalink: /register-block-entities-and-renderers/
 ---
 
-# 注册 Block Entities 和 Renderers
+# Registering Block Entities and Renderers
 
-本页解决“如何把 `BlockEntityType`、可承载它的 Block，以及客户端 renderer 放进同一条注册链里”的问题。
+## What This Page Solves
 
-## 适用场景 / 前置条件
+When a Block needs persistent state, ticking logic, or a custom renderer, you usually need to manage the `BlockEntityType`, the allowed host Blocks, and the client-side renderer together. This page breaks that chain into the smallest reliable structure.
 
-- 你已经有至少一个已注册的 Block 可作为宿主。
-- 你要把一个 `BlockEntityType` 绑定到一个或多个 Block。
-- 你可能还需要在 client 侧绑定 renderer。
+## When This Applies
 
-## 快速开始
+- You already have a Block and need to attach a BlockEntity.
+- You need to bind one or more host Blocks.
+- You need to register a client renderer without forcing client classes to load too early on the server.
 
-```java
-public static final BlockEntityEntry<TimerBlockEntity> SIMPLE_TIMER_BE =
-        RegistryLibTest.REGISTRYLIB
-                .blockEntity("simple_timer", TimerBlockEntity::new)
-                .validBlock(FullBlockExample.STANDALONE_TIMER)
-                .register();
-```
-
-只要 `validBlock(...)` 已声明，RegistryLib 就知道这个 `BlockEntityType` 可以附着在哪些 Block 上。
-
-## 完整示例
+## Quick Start
 
 ```java
-public static final BlockEntityEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY =
-        RegistryLibTest.REGISTRYLIB
-                .blockEntity("timer", TimerBlockEntity::new)
-                .validBlocks(
-                        FullBlockExample.TIMER_TIER_1,
-                        FullBlockExample.TIMER_TIER_2,
-                        FullBlockExample.TIMER_TIER_3)
-                .renderer(() -> TimerBlockEntityRenderer::new)
-                .register();
+public static final BlockEntityEntry<MachineBlockEntity> MACHINE_BE = RegistryLibTest.REGISTRYLIB
+        .blockEntity("machine", MachineBlockEntity::new)
+        .validBlock(MACHINE_CASING)
+        .register();
 ```
 
-## 分步骤解释
+## Example with a Renderer
 
-1. `blockEntity("id", factory)` 开始注册链，工厂创建具体的 `BlockEntity`。
-2. `validBlock(...)` 或 `validBlocks(...)` 指定宿主方块；没有这一步，`BlockEntityType` 不知道自己能附着到哪里。
-3. 只需要服务端逻辑时，可以直接 `.register()`；需要渲染时，再追加 `.renderer(...)`。
-4. `renderer(() -> TimerBlockEntityRenderer::new)` 的外层 `Supplier` 用于延迟加载 client class。
+```java
+public static final BlockEntityEntry<MachineBlockEntity> MACHINE_BE = RegistryLibTest.REGISTRYLIB
+        .blockEntity("machine", MachineBlockEntity::new)
+        .validBlock(MACHINE_CASING)
+        .renderer(() -> MachineBlockEntityRenderer::new)
+        .register();
+```
 
-{: .important }
-> renderer 相关类型必须继续保持在 `Supplier` 后面。不要把 client class 提前实例化，也不要把它放进会在服务端执行的初始化路径里。
+## Step-by-Step Explanation
 
-## 常见模式 / 常见坑
+1. `blockEntity("machine", MachineBlockEntity::new)` creates the `BlockEntityBuilder`.
+2. `.validBlock(...)` or `.validBlocks(...)` defines which Blocks this `BlockEntityType` can attach to.
+3. `.renderer(...)` provides the renderer factory and keeps client loading lazy through a `Supplier`.
+4. `.register()` submits the registration and returns `BlockEntityEntry<T>`.
 
-- 一个实现只服务一个 Block 时，优先用 `validBlock(...)`；多个 tier 或多个外观共用一套实现时，再用 `validBlocks(...)`。
-- 如果宿主 Block 自己都还没理顺，不要先急着绑定 BlockEntity；先把 Block 的注册链稳定下来。
-- renderer 是可选的，但只要你写了 renderer，就必须保持 client-only 的惰性加载方式。
+{: .warning }
+> Renderer-related types must stay on client-only paths. If you reference a renderer class directly without lazy wrapping, the server environment can fail during class loading.
 
-## 常用 API 速览
+## Common Patterns
 
-| 方法 | 什么时候用 |
+### One BlockEntity Bound to Multiple Blocks
+
+Use `.validBlocks(blockA, blockB, blockC)` or an equivalent collection-based form to attach the same logic to multiple host Blocks.
+
+### BlockEntity Without a Renderer
+
+If the object does not need dedicated visual behavior, keep only `validBlock(...)` and `.register()`.
+
+### Register the Block First, Then the BlockEntity
+
+This is the most stable order both to read and to implement. First make the Block and its item, loot, and related resources stand on their own. Then attach BlockEntity behavior afterward.
+
+## Common API Lookup
+
+| Method | Purpose |
 | --- | --- |
-| `.blockEntity("id", factory)` | 开始一个 BlockEntity 注册链。 |
-| `.validBlock(...)` | 绑定单个宿主 Block。 |
-| `.validBlocks(...)` | 绑定多个共享宿主。 |
-| `.renderer(...)` | 懒加载 client renderer。 |
-| `.register()` | 完成注册。 |
+| `blockEntity(name, factory)` | Create a `BlockEntityBuilder` |
+| `validBlock(entry)` | Bind a single host Block |
+| `validBlocks(...)` | Bind multiple host Blocks |
+| `renderer(supplier)` | Register the renderer factory |
+| `register()` | Complete registration |
 
-## 相关链接
+## Related Links
 
-- [内容指南]({{ '/content-guides/' | relative_url }})
-- [注册 Blocks]({{ '/register-blocks/' | relative_url }})
-- [故障排查]({{ '/troubleshooting/' | relative_url }})
+- [Registering Blocks]({{ '/register-blocks/' | relative_url }})
+- [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }})
+- [Troubleshooting]({{ '/troubleshooting/' | relative_url }})

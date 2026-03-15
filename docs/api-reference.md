@@ -1,47 +1,47 @@
 ---
-title: API 参考
+title: API Reference
 nav_order: 5
 permalink: /api-reference/
 ---
 
-# API 参考
+# API Reference
 
-这一页只做速查，不承担完整教学。详细示例留在教程页；这里负责回答“我该从哪个入口开始”和“常见链路通常长什么样”。
+This page is for quick lookup only, not full teaching. Full examples stay in the tutorial pages; this page answers “which entry point should I start from?” and “what do common chains usually look like?”
 
 {: .note }
-> 去重规则：本页只提供方法族、职责边界和常见链路速查，不重复整页教程中的完整示例。
+> Deduplication rule: this page only provides method families, responsibility boundaries, and common chain lookup. It does not repeat full tutorial examples.
 
-## 从哪个入口开始
+## Which Entry Point Should I Start From?
 
-| 你要做什么 | 入口 | 后续通常会接什么 |
+| What you want to do | Entry point | What usually comes next |
 | --- | --- | --- |
-| 注册普通或复合 Item | `item("id", factory)` | `lang`、`defaultModel`、`tab`、`tooltip`、`attach` |
-| 注册 Block | `block("id", factory)` | `initialProperties`、`simpleItem` 或 `item`、`loot`、`tag` |
-| 注册 Fluid | `fluid("id", still, flow)` | `lang`、`clientExtension`、`properties`、`block`、`bucket` |
-| 注册 BlockEntity | `blockEntity("id", factory)` | `validBlock` 或 `validBlocks`、`renderer` |
-| 批量共享默认值 | `group("name")` | `langPrefix`、`tab`、`blockProperties`、`itemProperties` |
+| Register a regular or composite Item | `item("id", factory)` | `lang`, `defaultModel`, `tab`, `tooltip`, `attach` |
+| Register a Block | `block("id", factory)` | `initialProperties`, `simpleItem` or `item`, `loot`, `tag` |
+| Register a Fluid | `fluid("id", still, flow)` | `lang`, `clientExtension`, `properties`, `block`, `bucket` |
+| Register a BlockEntity | `blockEntity("id", factory)` | `validBlock` or `validBlocks`, `renderer` |
+| Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `blockProperties`, `itemProperties` |
 
-## Builder 族速查
+## Builder Family Quick Lookup
 
-| Builder | 负责什么 | 典型终点 |
+| Builder | What it is responsible for | Typical endpoint |
 | --- | --- | --- |
-| `ItemBuilder` | Item 属性、模型、tooltip、tab、recipe、tag | `ItemEntry` |
-| `BlockBuilder` | Block 属性、掉落、方块物品、配方、tag | `BlockEntry` |
-| `FluidBuilder` | 流体类型、渲染、block、bucket、tag | `FluidEntry` |
-| `BlockEntityBuilder` | 宿主方块绑定与 renderer | `BlockEntityEntry` |
+| `ItemBuilder` | Item properties, model, tooltip, tab, recipe, tag | `ItemEntry` |
+| `BlockBuilder` | Block properties, drops, block item, recipe, tag | `BlockEntry` |
+| `FluidBuilder` | Fluid type, rendering, block, bucket, tag | `FluidEntry` |
+| `BlockEntityBuilder` | Host block binding and renderer | `BlockEntityEntry` |
 
-## Entry 类型速查
+## Entry Type Quick Lookup
 
-| 类型 | 典型用途 |
+| Type | Typical use |
 | --- | --- |
-| `ItemEntry<T>` | 在其他注册链、配方或逻辑中引用 Item |
-| `BlockEntry<T>` | 引用 Block，并可进一步关联默认状态或方块物品 |
-| `FluidEntry<T>` | 同时访问 source、type、block、bucket 等流体相关对象 |
-| `BlockEntityEntry<T>` | 引用 `BlockEntityType` 并完成宿主绑定 |
+| `ItemEntry<T>` | Reference an Item from another registration chain, recipe, or gameplay logic |
+| `BlockEntry<T>` | Reference a Block and, where relevant, its default state or block item |
+| `FluidEntry<T>` | Access source, type, block, bucket, and other fluid-related objects together |
+| `BlockEntityEntry<T>` | Reference a `BlockEntityType` and complete host binding |
 
-## 常见链路速查
+## Common Chain Lookup
 
-### 最小 Item
+### Minimal Item
 
 ```java
 REGISTRYLIB.item("copper_coin", Item::new)
@@ -49,7 +49,7 @@ REGISTRYLIB.item("copper_coin", Item::new)
         .register();
 ```
 
-### 最小 Block
+### Minimal Block
 
 ```java
 REGISTRYLIB.block("decorative_stone", Block::new)
@@ -58,7 +58,7 @@ REGISTRYLIB.block("decorative_stone", Block::new)
         .register();
 ```
 
-### Group 里的 Block
+### Block Inside a Group
 
 ```java
 MACHINES.block("crusher", Block::new)
@@ -68,8 +68,8 @@ MACHINES.block("crusher", Block::new)
         .register();
 ```
 
-## 相关链接
+## Related Links
 
-- [内容指南]({{ '/content-guides/' | relative_url }})
-- [核心系统]({{ '/systems-overview/' | relative_url }})
-- [高级主题]({{ '/advanced-topics/' | relative_url }})
+- [Content Guides]({{ '/content-guides/' | relative_url }})
+- [Core Systems]({{ '/systems-overview/' | relative_url }})
+- [Advanced Topics]({{ '/advanced-topics/' | relative_url }})
