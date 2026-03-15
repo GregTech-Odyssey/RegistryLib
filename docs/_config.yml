@@ -5,8 +5,8 @@ description: A NeoForge library mod for fluent, boilerplate-free content registr
 remote_theme: just-the-docs/just-the-docs
 
 # The docs/ folder is the Jekyll root, so the site root is the project root here.
-baseurl: "/RegistryLib"
-url: "https://gregtech-odyssey.github.io"
+baseurl: ""
+url: "https://registrylib.gtodyssey.com"
 
 # Default front-matter for every page that does not declare its own.
 defaults:
