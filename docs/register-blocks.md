@@ -41,13 +41,13 @@ public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.bl
                 tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))
         .tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
         .recipe((ctx, prov) -> { /* recipe generation */ })
-        .item()
+        .item(item -> item
             .tooltip((collector, stack) -> {
                 collector.node(
                         new SubNode.Basic(Component.literal("§5Drops coins when mined")),
                         true, false);
             })
-            .build()
+        )
         .register();
 
 // ── custom block subclass ──
@@ -119,38 +119,38 @@ Suitable for decorative or simple material blocks that don't need a customised B
 
 ---
 
-### `item()`
+### `item(Consumer)`
 
-Creates a BlockItem sub-entry and returns its ItemBuilder for chain configuration. Call `.build()` to return to the parent BlockBuilder.
+Creates a BlockItem sub-entry and accepts a lambda to configure its ItemBuilder.
 
 ```java
-block.item()
+block.item(item -> item
     .tooltip(Component.literal("§5Drops coins when mined"))
-    .build();
+);
 ```
 
 ---
 
-### `item(BiFunction)`
+### `item(BiFunction, Consumer)`
 
-Uses a custom BlockItem factory and returns its ItemBuilder for chain configuration.
+Uses a custom BlockItem factory and accepts a lambda to configure its ItemBuilder.
 
 ```java
-block.item(MyBlockItem::new)
+block.item(MyBlockItem::new, item -> item
     .lang("Custom Block Item")
-    .build();
+);
 ```
 
 ---
 
-### `blockEntity(BlockEntityFactory)`
+### `blockEntity(BlockEntityFactory, Consumer)`
 
-Creates a BlockEntity sub-entry inline and returns its builder. Call `.build()` to return to the parent BlockBuilder.
+Creates a BlockEntity sub-entry inline and accepts a lambda to configure its builder.
 
 ```java
-block.blockEntity(MyBlockEntity::new)
+block.blockEntity(MyBlockEntity::new, be -> be
     .renderer(() -> MyRenderer::new)
-    .build();
+);
 ```
 
 ---

@@ -40,13 +40,13 @@ public class FullBlockExample {
                 // 此处可添加 ShapedRecipeBuilder 等配方生成逻辑
             })
             // --- item: 自定义 BlockItem 配置，含 Tooltip ---
-            .item()
+            .item(item -> item
                 .tooltip((collector, stack) -> {
                     collector.node(
                             new SubNode.Basic(Component.literal("§5Drops coins when mined")),
                             true, false);
                 })
-                .build()
+            )
             .register();
 
     // ── 使用自定义方块子类 ──────────────────────────────────────────────────
@@ -71,33 +71,33 @@ public class FullBlockExample {
     public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP
             .block("tier_1", p -> new TimerBlock(p, 1))
             .initialProperties(() -> Blocks.IRON_BLOCK)
-            .item()
+            .item(item -> item
                 .tooltip((collector, stack) -> {
                     collector.node(new SubNode.Basic(Component.literal("§aTier 1"), 0), true, false);
                     collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 20"), 10));
                 })
-                .build()
+            )
             .register();
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_2 = TIMER_GROUP
             .block("tier_2", p -> new TimerBlock(p, 2))
             .initialProperties(() -> Blocks.IRON_BLOCK)
-            .item()
+            .item(item -> item
                 .tooltip((collector, stack) -> {
                     collector.node(new SubNode.Basic(Component.literal("§bTier 2"), 0), true, false);
                     collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 10"), 10));
                 })
-                .build()
+            )
             .register();
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_3 = TIMER_GROUP
             .block("tier_3", p -> new TimerBlock(p, 3))
             .initialProperties(() -> Blocks.IRON_BLOCK)
-            .item()
+            .item(item -> item
                 .tooltip((collector, stack) -> {
                     collector.node(new SubNode.Basic(Component.literal("§6Tier 3"), 0), true, false);
                     collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 5"), 10));
                 })
-                .build()
+            )
             .register();
 }

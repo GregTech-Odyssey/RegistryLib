@@ -42,12 +42,12 @@ public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
                 .lang("Molten Iron")
                 .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
                 .tag(FluidTags.LAVA)
-                .block()
+                .block(block -> block
                     .properties(p -> p.lightLevel(s -> 12))
-                    .build()
-                .bucket()
+                )
+                .bucket(bucket -> bucket
                     .lang("Molten Iron Bucket")
-                    .build()
+                )
                 .register();
 
 public static final FluidEntry<BaseFlowingFluid.Flowing> LIQUID_MAGIC =
@@ -58,12 +58,12 @@ public static final FluidEntry<BaseFlowingFluid.Flowing> LIQUID_MAGIC =
                         Identifier.withDefaultNamespace("block/water_flow"))
                 .properties(p -> p.lightLevel(15).density(500).viscosity(200))
                 .lang("Liquid Magic")
-                .block()
+                .block(block -> block
                     .properties(p -> p.lightLevel(s -> 15))
-                    .build()
-                .bucket()
+                )
+                .bucket(bucket -> bucket
                     .lang("Liquid Magic Bucket")
-                    .build()
+                )
                 .register();
 ```
 
@@ -173,27 +173,28 @@ fluid.defaultSource();
 
 ---
 
-### `block()`
+### `block(Consumer)`
 
-Returns a BlockBuilder for the fluid block sub-entry. Call `.build()` to return to the parent FluidBuilder.
+Accepts a lambda to configure the BlockBuilder for the fluid block sub-entry.
 
 ```java
-fluid.block()
+fluid.block(block -> block
     .properties(p -> p.lightLevel(s -> 15))
-    .build();
+);
 ```
 
 Use this to set block-specific properties such as light emission and explosion resistance.
 
 ---
 
-### `block(BiFunction)`
+### `block(BiFunction, Consumer)`
 
-Uses a custom `LiquidBlock` subclass factory and returns a BlockBuilder for chain configuration.
+Uses a custom `LiquidBlock` subclass factory and accepts a lambda to configure the BlockBuilder.
 
 ```java
-fluid.block(MyLiquidBlock::new)
-    .build();
+fluid.block(MyLiquidBlock::new, block -> block
+    .properties(p -> p.lightLevel(s -> 10))
+);
 ```
 
 ---
@@ -218,25 +219,26 @@ fluid.defaultBlock();
 
 ---
 
-### `bucket()`
+### `bucket(Consumer)`
 
-Returns an ItemBuilder for the bucket item sub-entry. Call `.build()` to return to the parent FluidBuilder.
+Accepts a lambda to configure the ItemBuilder for the bucket item sub-entry.
 
 ```java
-fluid.bucket()
+fluid.bucket(bucket -> bucket
     .lang("Molten Iron Bucket")
-    .build();
+);
 ```
 
 ---
 
-### `bucket(BiFunction)`
+### `bucket(BiFunction, Consumer)`
 
-Uses a custom `BucketItem` subclass factory and returns an ItemBuilder for chain configuration.
+Uses a custom `BucketItem` subclass factory and accepts a lambda to configure the ItemBuilder.
 
 ```java
-fluid.bucket(MyBucket::new)
-    .build();
+fluid.bucket(MyBucket::new, bucket -> bucket
+    .lang("Custom Bucket")
+);
 ```
 
 ---

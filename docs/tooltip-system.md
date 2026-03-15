@@ -209,16 +209,16 @@ Good candidates for separate boxes:
 
 ### 4. Add Tooltips to Blocks
 
-Blocks expose item tooltips through their `BlockItem`, so you configure the tooltip via `.item().build()`.
+Blocks expose item tooltips through their `BlockItem`, so you configure the tooltip via `.item(item -> ...)`.
 
 ```java
-block.item()
+block.item(item -> item
     .tooltip((collector, stack) -> {
         collector.node(
                 new SubNode.Basic(Component.literal("§5Drops coins when mined")),
                 true, false);
     })
-    .build();
+);
 ```
 
 All tooltip features available to items also work here, because the block item uses the same item builder pipeline.

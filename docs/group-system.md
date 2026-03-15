@@ -151,10 +151,10 @@ public static final BlockEntry<Block> PROTOTYPE = MACHINES
         .initialProperties(() -> Blocks.GOLD_BLOCK)
         .properties(p -> p.strength(1.0F))       // overrides group strength
         .lang("Prototype Machine")                // overrides group lang prefix
-        .item()
-            .removeTab(MY_MACHINE_TAB)             // removes group tab
+        .item(item -> item
+            .removeTab(MY_MACHINE_TAB)
             .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-            .build()
+        )
         .register();
 ```
 
@@ -221,20 +221,20 @@ public static final Group MACHINES = REGISTRYLIB.group("machines")
 public static final BlockEntry<Block> TIER_1 = MACHINES
         .block("tier_1", Block::new)
         .initialProperties(() -> Blocks.IRON_BLOCK)
-        .item()
+        .item(item -> item
             .tooltip((collector, stack) ->
                     collector.node(new SubNode.Basic(Component.literal("§aBasic"), 0), true, false))
-            .build()
+        )
         .defaultLoot()
         .register();
 
 public static final BlockEntry<Block> TIER_2 = MACHINES
         .block("tier_2", Block::new)
         .initialProperties(() -> Blocks.DIAMOND_BLOCK)
-        .item()
+        .item(item -> item
             .tooltip((collector, stack) ->
                     collector.node(new SubNode.Basic(Component.literal("§bAdvanced"), 0), true, false))
-            .build()
+        )
         .defaultLoot()
         .register();
 ```
@@ -295,10 +295,10 @@ public class MachinesExample {
             .initialProperties(() -> Blocks.GOLD_BLOCK)
             .properties(p -> p.strength(1.0F))
             .lang("Prototype Machine")
-            .item()
+            .item(item -> item
                 .removeTab(CreativeModeTabs.BUILDING_BLOCKS)
                 .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-                .build()
+            )
             .register();
 }
 ```

@@ -226,7 +226,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     // --- Block ---
 
-    @SyntaxSugar("block().build()")
+    @SyntaxSugar("block($ -> {})")
     public FluidBuilder<T, P> defaultBlock() {
         if (this.defaultBlock != null) {
             throw new IllegalStateException(
@@ -236,14 +236,15 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
-    @StandardAPI("Opens a BlockBuilder for the fluid block sub-entry. Call .build() to return to this FluidBuilder.")
-    public BlockBuilder<LiquidBlock, FluidBuilder<T, P>> block() {
-        return block(LiquidBlock::new);
+    @StandardAPI("Configures a BlockBuilder for the fluid block sub-entry via lambda.")
+    public FluidBuilder<T, P> block(@Nonnull Consumer<BlockBuilder<LiquidBlock, FluidBuilder<T, P>>> consumer) {
+        return block(LiquidBlock::new, consumer);
     }
 
-    @StandardAPI("Opens a BlockBuilder with a custom block factory. Call .build() to return to this FluidBuilder.")
-    public <B extends LiquidBlock> BlockBuilder<B, FluidBuilder<T, P>> block(
-                                                            @Nonnull BiFunction<T, BlockBehaviour.Properties, ? extends B> factory) {
+    @StandardAPI("Configures a BlockBuilder with a custom block factory via lambda.")
+    public <B extends LiquidBlock> FluidBuilder<T, P> block(
+                                                            @Nonnull BiFunction<T, BlockBehaviour.Properties, ? extends B> factory,
+                                                            @Nonnull Consumer<BlockBuilder<B, FluidBuilder<T, P>>> consumer) {
         if (this.defaultBlock == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
@@ -257,7 +258,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                 .properties(p -> p.lightLevel(lightLevelInt))
                 .blockstate(() -> (ctx, prov) -> prov.createNonTemplateModelBlock(ctx.get()));
         this.fluidProperties(p -> p.block(builder.asSupplier()));
-        return builder;
+        consumer.accept(builder);
+        return builder.build();
     }
 
     @StandardAPI
@@ -271,7 +273,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     // --- Bucket ---
 
-    @SyntaxSugar("bucket().build()")
+    @SyntaxSugar("bucket($ -> {})")
     public FluidBuilder<T, P> defaultBucket() {
         if (this.defaultBucket != null) {
             throw new IllegalStateException(
@@ -288,14 +290,15 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
-    @StandardAPI("Opens an ItemBuilder for the bucket sub-entry. Call .build() to return to this FluidBuilder.")
-    public ItemBuilder<BucketItem, FluidBuilder<T, P>> bucket() {
-        return bucket(BucketItem::new);
+    @StandardAPI("Configures an ItemBuilder for the bucket sub-entry via lambda.")
+    public FluidBuilder<T, P> bucket(@Nonnull Consumer<ItemBuilder<BucketItem, FluidBuilder<T, P>>> consumer) {
+        return bucket(BucketItem::new, consumer);
     }
 
-    @StandardAPI("Opens an ItemBuilder with a custom bucket factory. Call .build() to return to this FluidBuilder.")
-    public <I extends BucketItem> ItemBuilder<I, FluidBuilder<T, P>> bucket(
-                                                            @Nonnull BiFunction<BaseFlowingFluid, Item.Properties, ? extends I> factory) {
+    @StandardAPI("Configures an ItemBuilder with a custom bucket factory via lambda.")
+    public <I extends BucketItem> FluidBuilder<T, P> bucket(
+                                                            @Nonnull BiFunction<BaseFlowingFluid, Item.Properties, ? extends I> factory,
+                                                            @Nonnull Consumer<ItemBuilder<I, FluidBuilder<T, P>>> consumer) {
         if (this.defaultBucket == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }
@@ -332,7 +335,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         if (defaultBucketTab != null) {
             builder.tab(defaultBucketTab);
         }
-        return builder;
+        consumer.accept(builder);
+        return builder.build();
     }
 
     @StandardAPI
@@ -419,10 +423,10 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
             source(BaseFlowingFluid.Source::new);
         }
         if (defaultBlock == Boolean.TRUE) {
-            block().build();
+            block($ -> {});
         }
         if (defaultBucket == Boolean.TRUE) {
-            bucket().build();
+            bucket($ -> {});
         }
 
         Supplier<? extends BaseFlowingFluid> source = this.source;

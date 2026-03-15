@@ -38,13 +38,13 @@ public class FullFluidExample {
                     // --- tag: 给流体添加标签 ---
                     .tag(FluidTags.LAVA)
                     // --- block: 自定义流体方块属性（自发光） ---
-                    .block()
+                    .block(block -> block
                         .properties(p -> p.lightLevel(s -> 12))
-                        .build()
+                    )
                     // --- bucket: 自定义桶物品显示名 ---
-                    .bucket()
+                    .bucket(bucket -> bucket
                         .lang("Molten Iron Bucket")
-                        .build()
+                    )
                     .register();
 
     // ── 使用原版纹理 + 多层配置 ────────────────────────────────────────────
@@ -63,12 +63,12 @@ public class FullFluidExample {
                     // --- lang ---
                     .lang("Liquid Magic")
                     // --- block: 方块子对象配置 ---
-                    .block()
+                    .block(block -> block
                         .properties(p -> p.lightLevel(s -> 15))
-                        .build()
+                    )
                     // --- bucket: 桶物品子对象配置 ---
-                    .bucket()
+                    .bucket(bucket -> bucket
                         .lang("Liquid Magic Bucket")
-                        .build()
+                    )
                     .register();
 }
