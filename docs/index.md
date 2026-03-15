@@ -47,9 +47,9 @@ focus on gameplay.
 | --- |
 | [Register Advancements](register-advancements) |
 
-| Systems |
-| --- |
-| [Tooltip System](tooltip-system) |
+| Systems | |
+| --- | --- |
+| [Group System](group-system) | [Tooltip System](tooltip-system) |
 
 ## Repository
 

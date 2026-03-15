@@ -65,23 +65,7 @@ public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.RE
                     .simpleItem();
         });
 
-// ── Group system: batch shared configuration ──
-public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
-        .group("timers")
-        .langPrefix("Timer")
-        .blockProperties(p -> p.strength(5.0F, 6.0F))
-        .build();
 
-public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP.block(
-        "tier_1",
-        p -> new TimerBlock(p, 1),
-        block -> {
-            block.initialProperties(() -> Blocks.IRON_BLOCK)
-                    .item(itemBuilder -> itemBuilder.tooltip((collector, stack) -> {
-                        collector.node(new SubNode.Basic(Component.literal("§aTier 1"), 0), true, false);
-                        collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 20"), 10));
-                    }));
-        });
 ```
 
 ---
@@ -245,27 +229,4 @@ block.tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL);
 
 ---
 
-## Group System
-
-Groups allow multiple blocks to share a set of default configuration (properties, language prefix, etc.), reducing boilerplate.
-
-### Create a Group
-
-```java
-public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
-        .group("timers")
-        .langPrefix("Timer")
-        .blockProperties(p -> p.strength(5.0F, 6.0F))
-        .build();
-```
-
-### Register blocks with a Group
-
-```java
-public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP.block(
-        "tier_1",
-        p -> new TimerBlock(p, 1),
-        block -> { /* per-block overrides */ });
-```
-
-Groups also provide `item()`, `blockEntity()`, and `fluid()` entry points, making them ideal when your mod contains large families of related content.
+For batch-shared configuration across a content family — shared creative tabs, property modifiers, and lang prefixes — see [Group System]({{ '/group-system/' | relative_url }}).
