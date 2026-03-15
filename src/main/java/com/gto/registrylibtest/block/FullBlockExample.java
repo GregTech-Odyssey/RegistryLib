@@ -3,6 +3,7 @@ package com.gto.registrylibtest.block;
 import com.gto.registrylib.Group;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.util.entry.BlockEntry;
+import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 import com.gto.registrylibtest.item.SimpleItemExample;
 
@@ -31,7 +32,7 @@ public class FullBlockExample {
             // --- lang: 设置英文显示名称 ---
             .lang("Magic Ore")
             // --- lang (zh_cn): 设置简体中文显示名称 ---
-            .lang(RegistryLibTest.LANG_ZH_CN, "魔法矿石")
+            .lang(ModRegistryCore.LANG_ZH_CN, "魔法矿石")
             // --- loot: 自定义战利品表（矿石掉落逻辑） ---
             .loot((tables, b) ->
                     tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))
@@ -57,7 +58,7 @@ public class FullBlockExample {
             .block("standalone_timer", p -> new TimerBlock(p, 4))
             .initialProperties(() -> Blocks.IRON_BLOCK)
             .lang("Standalone Timer")
-            .lang(RegistryLibTest.LANG_ZH_CN, "独立计时器")
+            .lang(ModRegistryCore.LANG_ZH_CN, "独立计时器")
             .defaultLoot()
             .defaultBlockstate()
             .simpleItem()

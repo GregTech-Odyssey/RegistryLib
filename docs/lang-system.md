@@ -11,6 +11,8 @@ for every registered entry that calls `.lang(...)`. The same mechanism is fully 
 you can register **additional lang providers** for any locale — such as `zh_cn` — and attach
 translations in the same fluent builder chain.
 
+There are two ways to add extra locales. Choose the one that fits your project best.
+
 ---
 
 ## Built-in English Lang
@@ -36,32 +38,36 @@ REGISTRYLIB.block("magic_ore", Block::new)
 
 ---
 
-## Adding Extra Locales
+## Approach 1 — ProviderType (Minimal Setup)
 
-Any locale can be added by:
-
-1. **Creating a provider subclass** that extends `RegistryLibLangProvider` with your locale code.
-2. **Registering a `ProviderType`** via `ProviderType.registerClientProvider`.
-3. **Calling `.lang(type, "text")`** on any builder.
+The fastest way: declare one `ProviderType` constant and call `.lang(type, text)` on any builder.
+No changes to `RegistryCore` or builder classes are needed.
 
 ### Step 1 — Provider Subclass
+
+Create a class that extends `RegistryLibLangProvider`, passing your locale to the protected
+constructor:
 
 ```java
 public class ZhCnLangProvider extends RegistryLibLangProvider {
 
     public ZhCnLangProvider(RegistryCore owner, PackOutput packOutput) {
-        super(owner, packOutput, "zh_cn"); // locale passed to parent
+        super(owner, packOutput, "zh_cn");
+    }
+
+    @Override
+    protected ProviderType<? extends RegistryLibLangProvider> getProviderType() {
+        return MyMod.LANG_ZH_CN;   // points back to the ProviderType below
     }
 }
 ```
 
-The protected constructor `RegistryLibLangProvider(owner, packOutput, locale)` writes directly to
-the given locale file. No upside-down companion is generated for non-English locales.
+The protected constructor targets the given locale file.  
+No upside-down companion is generated for non-English locales.
 
 ### Step 2 — Register a ProviderType
 
-Declare a `public static final` field in your mod's entry class so every registration file can
-access it:
+Declare a `public static final` constant in your mod's entry class:
 
 ```java
 public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
@@ -70,8 +76,8 @@ public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
                 () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
 ```
 
-> `registerClientProvider` is a no-op when the game is **not** running datagen, so this field
-> is safe to declare unconditionally. The factory lambda is only invoked during `runData`.
+> `registerClientProvider` is a no-op when the game is **not** running datagen, so this
+> constant is safe to declare unconditionally.
 
 ### Step 3 — Attach Translations
 
@@ -81,32 +87,109 @@ Pass your `ProviderType` as the first argument to `.lang(...)`:
 // Item
 REGISTRYLIB.item("copper_coin", Item::new)
     .lang("Copper Coin")
-    .lang(RegistryLibTest.LANG_ZH_CN, "铜币")
+    .lang(MyMod.LANG_ZH_CN, "铜币")
     .register();
 
 // Block
 REGISTRYLIB.block("magic_ore", Block::new)
     .lang("Magic Ore")
-    .lang(RegistryLibTest.LANG_ZH_CN, "魔法矿石")
+    .lang(MyMod.LANG_ZH_CN, "魔法矿石")
     .register();
 
 // Fluid — outer fluid and nested bucket both support the overload
 REGISTRYLIB.fluid("molten_iron", STILL, FLOW)
     .lang("Molten Iron")
-    .lang(RegistryLibTest.LANG_ZH_CN, "熔融铁")
+    .lang(MyMod.LANG_ZH_CN, "熔融铁")
     .bucket(bucket -> bucket
         .lang("Molten Iron Bucket")
-        .lang(RegistryLibTest.LANG_ZH_CN, "熔融铁桶"))
+        .lang(MyMod.LANG_ZH_CN, "熔融铁桶"))
     .register();
 ```
+
+This approach works with a plain `RegistryCore` instance and requires no additional infrastructure.
+
+---
+
+## Approach 2 — Subclass RegistryCore (Native Builder Methods)
+
+If you want locale methods that feel native — e.g. `.langCn("铜币")` instead of
+`.lang(MyMod.LANG_ZH_CN, "铜币")` — you can subclass `RegistryCore` and add custom builder
+subclasses. This is more code upfront but yields a cleaner API for the rest of your mod.
+
+The short version:
+
+```java
+// With ModRegistryCore + ModBlockBuilder from the tutorial:
+REGISTRYLIB.block(REGISTRYLIB, "magic_ore", Block::new)
+    .langCn("魔法矿石")
+    .lang("Magic Ore")
+    .register();
+```
+
+> The two-argument `block(parent, name, factory)` form is used here because Java's generic
+> invariance prevents covariant return-type overriding of the one-argument convenience methods.
+> See [Override Builders]({{ site.baseurl }}/override-builders/) for the full explanation and
+> step-by-step guide.
 
 ---
 
 ## Full Example (Test Mod)
 
-The test mod ships `ZhCnLangProvider` and demonstrates the pattern across all entry types.
+The bundled test mod demonstrates **both** approaches.
 
-**`RegistryLibTest.java`** — one-time setup:
+### Approach 2 — Simple* files (langCn)
+
+The Simple* example files use the two-argument `(parent, name, factory)` form to obtain a
+`Mod*Builder` and call `.langCn()` directly.
+
+> `langCn()` must be the **first** call after the builder is obtained — before any method
+> inherited from `BlockBuilder` / `ItemBuilder` / `FluidBuilder`, since those methods return
+> the parent builder type and do not carry `langCn()`.
+
+**`SimpleItemExample.java`**:
+
+```java
+public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
+        .item(RegistryLibTest.REGISTRYLIB, "copper_coin", Item::new) // two-arg → ModItemBuilder
+        .langCn("铜币")              // Approach 2: ModItemBuilder.langCn()
+        .lang("Copper Coin")
+        .register();
+```
+
+**`SimpleBlockExample.java`**:
+
+```java
+public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
+        .block(RegistryLibTest.REGISTRYLIB, "decorative_stone", Block::new) // → ModBlockBuilder
+        .langCn("装饰石")            // Approach 2: must come before initialProperties / lang
+        .initialProperties(() -> Blocks.STONE)
+        .lang("Decorative Stone")
+        .simpleItem()
+        .register();
+```
+
+**`SimpleFluidExample.java`**:
+
+```java
+// Five-arg fluid(parent, name, still, flow, factory) returns ModFluidBuilder.
+// clientExtension is already registered internally; no explicit call needed.
+public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
+        RegistryLibTest.REGISTRYLIB
+                .fluid(RegistryLibTest.REGISTRYLIB, "acid",
+                        FLUID_STILL, FLUID_FLOW, BaseFlowingFluid.Flowing::new)
+                .langCn("酸液")      // Approach 2: ModFluidBuilder.langCn()
+                .lang("Acid")
+                .register();
+```
+
+---
+
+### Approach 1 — Full* files (lang with ProviderType)
+
+The Full* example files use the standard one-argument form and pass `ModRegistryCore.LANG_ZH_CN`
+explicitly. This works with any builder regardless of call ordering.
+
+**`ModRegistryCore.java`** — declares the ProviderType:
 
 ```java
 public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
@@ -115,39 +198,34 @@ public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
                 () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
 ```
 
-**`SimpleItemExample.java`**:
+**`FullBlockExample.java`** (excerpt):
 
 ```java
-public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
-        .item("copper_coin", Item::new)
-        .lang("Copper Coin")
-        .lang(RegistryLibTest.LANG_ZH_CN, "铜币")
+public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB
+        .block("magic_ore", Block::new)
+        .initialProperties(() -> Blocks.IRON_ORE)
+        .lang("Magic Ore")
+        .lang(ModRegistryCore.LANG_ZH_CN, "魔法矿石")   // Approach 1
+        .loot(...)
         .register();
 ```
 
-**`SimpleBlockExample.java`**:
+**`FullFluidExample.java`** (excerpt, showing bucket nesting):
 
 ```java
-public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
-        .block("decorative_stone", Block::new)
-        .initialProperties(() -> Blocks.STONE)
-        .lang("Decorative Stone")
-        .lang(RegistryLibTest.LANG_ZH_CN, "装饰石")
-        .simpleItem()
-        .register();
-```
-
-**`SimpleFluidExample.java`**:
-
-```java
-public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
+public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
         RegistryLibTest.REGISTRYLIB
-                .fluid("acid", FLUID_STILL, FLUID_FLOW)
-                .lang("Acid")
-                .lang(RegistryLibTest.LANG_ZH_CN, "酸液")
-                .clientExtension(FLUID_STILL, FLUID_FLOW)
+                .fluid("molten_iron", FLUID_STILL, FLUID_FLOW)
+                .lang("Molten Iron")
+                .lang(ModRegistryCore.LANG_ZH_CN, "熔融铁")   // Approach 1
+                .bucket(bucket -> bucket
+                    .lang("Molten Iron Bucket")
+                    .lang(ModRegistryCore.LANG_ZH_CN, "熔融铁桶"))   // Approach 1 in bucket
                 .register();
 ```
+
+Bucket sub-builders (`ItemBuilder`) are not replaced by `ModItemBuilder`, so Approach 1
+remains the correct choice inside `.bucket(...)` callbacks.
 
 ---
 
@@ -176,9 +254,19 @@ public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
 | `defaultLang()` | Derives name from `sourceName` → `en_us`. |
 | `lang(ProviderType<...> type, String name)` | Sugar for fluid type description id → any locale. |
 
+### `ModBlockBuilder` / `ModItemBuilder` / `ModFluidBuilder` *(test mod)*
+
+| Method | Description |
+|--------|-------------|
+| `langCn(String name)` | Sugar for `lang(ModRegistryCore.LANG_ZH_CN, name)`. Available when the builder was obtained via the two-argument `block(parent, name, factory)` / `item(parent, name, factory)` / `fluid(parent, name, ...)` form on a `ModRegistryCore` instance. |
+
 ### `RegistryLibLangProvider`
 
 | Constructor | Description |
 |-------------|-------------|
 | `(RegistryCore, PackOutput)` | Built-in constructor; targets `en_us` + `en_ud`. |
 | `protected (RegistryCore, PackOutput, String locale)` | Subclass entrypoint; targets the given locale, no upside-down companion. |
+
+---
+
+*See also: [Override Builders]({{ site.baseurl }}/override-builders/) for step-by-step instructions on adding native locale methods to your builders.*

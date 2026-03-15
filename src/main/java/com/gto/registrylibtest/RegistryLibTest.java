@@ -1,8 +1,5 @@
 package com.gto.registrylibtest;
 
-import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.providers.ProviderType;
-import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylibtest.advancement.FullAdvancementExample;
 import com.gto.registrylibtest.advancement.SimpleAdvancementExample;
 import com.gto.registrylibtest.block.FullBlockExample;
@@ -26,10 +23,14 @@ import org.slf4j.Logger;
 /**
  * Mod 入口类，仅负责：
  * <ol>
- *   <li>创建共享的 {@link RegistryCore} 实例 {@link #REGISTRYLIB}；
+ *   <li>创建共享的 {@link ModRegistryCore} 实例 {@link #REGISTRYLIB}；
  *   <li>注册默认创造标签页；
  *   <li>按顺序触发各示例类的静态初始化，使其注册调用在模组加载期间执行。
  * </ol>
+ *
+ * <p>{@link ModRegistryCore} 继承 {@link com.gto.registrylib.RegistryCore}，
+ * 重写了三个 builder 工厂钩子，使 {@code .block()} / {@code .item()} / {@code .fluid()}
+ * 返回带有 {@code .langCn(String)} 方法的子类 builder。
  *
  * <p><b>示例文件索引：</b>
  * <ul>
@@ -46,19 +47,12 @@ public class RegistryLibTest {
     public static final String MOD_ID = "registrylibtest";
     private static final Logger LOGGER = LogUtils.getLogger();
 
-    /** 共享的注册核心，所有示例类均通过此实例发起注册调用。 */
-    public static final RegistryCore REGISTRYLIB = RegistryCore.create(MOD_ID);
-
     /**
-     * 简体中文 lang provider，用于生成 {@code zh_cn.json}。
-     *
-     * <p>注册方式：调用 {@link ProviderType#registerClientProvider} 并传入
-     * {@link ZhCnLangProvider} 工厂。任何 builder 均可通过
-     * {@code .lang(LANG_ZH_CN, "中文名")} 追加中文翻译。
+     * 共享的注册核心。
+     * 使用 {@link ModRegistryCore} 而非普通 {@link com.gto.registrylib.RegistryCore}，
+     * 使得每个 builder 链上可直接调用 {@code .langCn("中文名")}。
      */
-    public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
-            ProviderType.registerClientProvider(
-                    "lang_zh_cn", () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
+    public static final ModRegistryCore REGISTRYLIB = ModRegistryCore.create(MOD_ID);
 
     // === Creative Tab ===
     static {

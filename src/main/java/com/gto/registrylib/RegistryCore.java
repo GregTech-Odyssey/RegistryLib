@@ -560,9 +560,15 @@ public class RegistryCore {
     public <T extends Item, P> ItemBuilder<T, P> item(
                                                       @Nonnull P parent, @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
         return entry(
-                callback -> ItemBuilder.create(this, parent, name, callback, factory)
+                callback -> newItemBuilder(parent, name, callback, factory)
                         .transform(
                                 builder -> this.defaultCreativeModeTab == null ? builder : builder.tab(this.defaultCreativeModeTab)));
+    }
+
+    protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
+                                                                   @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
+                                                                   @Nonnull Function<Item.Properties, T> factory) {
+        return ItemBuilder.create(this, parent, name, callback, factory);
     }
 
     // --- Blocks ---
@@ -578,7 +584,13 @@ public class RegistryCore {
                                                          @Nonnull P parent,
                                                          @Nonnull String name,
                                                          @Nonnull Function<BlockBehaviour.Properties, T> factory) {
-        return entry(callback -> BlockBuilder.create(this, parent, name, callback, factory));
+        return entry(callback -> newBlockBuilder(parent, name, callback, factory));
+    }
+
+    protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
+                                                                      @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
+                                                                      @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+        return BlockBuilder.create(this, parent, name, callback, factory);
     }
 
     // --- Block Entities ---
@@ -594,7 +606,13 @@ public class RegistryCore {
                                                                            @Nonnull P parent,
                                                                            @Nonnull String name,
                                                                            @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
-        return entry(callback -> BlockEntityBuilder.create(this, parent, name, callback, factory));
+        return entry(callback -> newBlockEntityBuilder(parent, name, callback, factory));
+    }
+
+    protected <T extends BlockEntity, P> BlockEntityBuilder<T, P> newBlockEntityBuilder(
+                                                                                        @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
+                                                                                        @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
+        return BlockEntityBuilder.create(this, parent, name, callback, factory);
     }
 
     // --- Fluids ---
@@ -624,8 +642,14 @@ public class RegistryCore {
                                                                     @Nonnull Identifier flowingTexture,
                                                                     @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
         return entry(
-                callback -> FluidBuilder.create(this, parent, name, callback, FluidType::new, fluidFactory))
+                callback -> newFluidBuilder(parent, name, callback, fluidFactory))
                 .clientExtension(stillTexture, flowingTexture);
+    }
+
+    protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
+                                                                                  @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
+                                                                                  @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+        return FluidBuilder.create(this, parent, name, callback, FluidType::new, fluidFactory);
     }
 
     // --- Group ---

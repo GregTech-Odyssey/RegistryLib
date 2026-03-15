@@ -7,6 +7,7 @@ import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.entry.ItemEntry;
+import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 
 import net.minecraft.network.chat.Component;
@@ -64,7 +65,7 @@ public class FullItemExample {
             // --- lang: 设置英文显示名称 ---
             .lang("Magic Wand")
             // --- lang (zh_cn): 简体中文显示名称 ---
-            .lang(RegistryLibTest.LANG_ZH_CN, "魔法杆")
+            .lang(ModRegistryCore.LANG_ZH_CN, "魔法杆")
             // --- defaultModel: 使用默认扁平物品模型 ---
             .defaultModel()
             // --- tab: 额外加入原版工具标签页 ---

@@ -1,6 +1,7 @@
 package com.gto.registrylibtest.fluid;
 
 import com.gto.registrylib.util.entry.FluidEntry;
+import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 
 import net.minecraft.resources.Identifier;
@@ -34,7 +35,7 @@ public class FullFluidExample {
                     // --- lang: 自定义流体显示名称 ---
                     .lang("Molten Iron")
                     // --- lang (zh_cn): 简体中文显示名称 ---
-                    .lang(RegistryLibTest.LANG_ZH_CN, "熔融铁")
+                    .lang(ModRegistryCore.LANG_ZH_CN, "熔融铁")
                     // --- clientExtension（3 参数）: 灰度纹理 + ARGB 颜色着色 ---
                     .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
                     // --- tag: 给流体添加标签 ---
@@ -46,7 +47,7 @@ public class FullFluidExample {
                     // --- bucket: 自定义桶物品显示名 ---
                     .bucket(bucket -> bucket
                         .lang("Molten Iron Bucket")
-                        .lang(RegistryLibTest.LANG_ZH_CN, "熔融铁桶")
+                        .lang(ModRegistryCore.LANG_ZH_CN, "熔融铁桶")
                     )
                     .register();
 
@@ -66,7 +67,7 @@ public class FullFluidExample {
                     // --- lang ---
                     .lang("Liquid Magic")
                     // --- lang (zh_cn): 简体中文显示名称 ---
-                    .lang(RegistryLibTest.LANG_ZH_CN, "魔法液体")
+                    .lang(ModRegistryCore.LANG_ZH_CN, "魔法液体")
                     // --- block: 方块子对象配置 ---
                     .block(block -> block
                         .properties(p -> p.lightLevel(s -> 15))
@@ -74,7 +75,7 @@ public class FullFluidExample {
                     // --- bucket: 桶物品子对象配置 ---
                     .bucket(bucket -> bucket
                         .lang("Liquid Magic Bucket")
-                        .lang(RegistryLibTest.LANG_ZH_CN, "魔法液体桶")
+                        .lang(ModRegistryCore.LANG_ZH_CN, "魔法液体桶")
                     )
                     .register();
 }
