@@ -90,16 +90,6 @@ Register a single static handler on the event bus and maintain a lookup map (e.g
 
 ---
 
-## Annotation & Metadata Hygiene
-
-### Downgrade Retention to `CLASS` for Documentation-Only Annotations
-
-**When to use:** An annotation exists purely as developer documentation or as a compile-time marker (e.g., "this method is a standard API entry point"). It is never read via reflection at runtime, but `@Retention(RUNTIME)` keeps its descriptor in the class file's runtime-visible annotation table.
-
-Change retention to `RetentionPolicy.CLASS`. The annotation remains visible to the compiler, annotation processors, and bytecode analysis tools, but is stripped from the class data at load time, reducing annotation metadata held in the JVM's method area.
-
----
-
 ## Minor Idioms
 
 ### Prefer `.toList()` over `Collectors.toList()`
