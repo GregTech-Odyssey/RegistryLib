@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
@@ -27,18 +26,16 @@ import java.util.function.Supplier;
 @UtilityClass
 public class Client {
 
-    public void init(IEventBus modEventBus, ModContainer container) {
+    private final AtomicReference<ConcurrentHashMap<Supplier<BlockEntityType<?>>, BlockEntityRendererProvider>> BER = new AtomicReference<>(new ConcurrentHashMap<>());
+
+    private final AtomicReference<ConcurrentHashMap<Supplier<FluidType>, IClientFluidTypeExtensions>> FLUID_TYPE_EXTENSIONS = new AtomicReference<>(new ConcurrentHashMap<>());
+
+    public void init(IEventBus modEventBus) {
         modEventBus.addListener(Client::onClientSetup);
         modEventBus.addListener(Client::onRegisterClientExtensions);
         modEventBus.addListener(Client::onRegisterTooltipFactories);
         NeoForge.EVENT_BUS.addListener(Client::onGatherTooltipComponents);
     }
-
-    private final AtomicReference<ConcurrentHashMap<Supplier<BlockEntityType<?>>, BlockEntityRendererProvider>> BER =
-            new AtomicReference<>(new ConcurrentHashMap<>());
-
-    private final AtomicReference<ConcurrentHashMap<Supplier<FluidType>, IClientFluidTypeExtensions>> FLUID_TYPE_EXTENSIONS =
-            new AtomicReference<>(new ConcurrentHashMap<>());
 
     public void registerBER(Supplier<BlockEntityType<?>> type, BlockEntityRendererProvider provider) {
         var map = BER.get();
@@ -53,12 +50,14 @@ public class Client {
 
     private void onClientSetup(FMLClientSetupEvent event) {
         var map = BER.getAndSet(null);
-        if (map != null) map.forEach((type, provider) -> BlockEntityRenderers.register(type.get(), provider));
+        if (map != null)
+            map.forEach((type, provider) -> BlockEntityRenderers.register(type.get(), provider));
     }
 
     private void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
         var map = FLUID_TYPE_EXTENSIONS.getAndSet(null);
-        if (map != null) map.forEach((type, extensions) -> event.registerFluidType(extensions, type.get()));
+        if (map != null)
+            map.forEach((type, extensions) -> event.registerFluidType(extensions, type.get()));
     }
 
     private void onRegisterTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {

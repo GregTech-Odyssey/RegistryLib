@@ -26,9 +26,9 @@ import javax.annotation.Nullable;
  * tab, property modifiers, lang prefix) to all entries created through it.
  *
  * <p>
- * The group name is used to automatically derive a {@code langPrefix}: {@code "machines"} becomes
- * {@code "Machines"}, which is prepended to every entry's display name. You can override this with
- * an explicit {@link Builder#langPrefix(String)} call.
+ * The group name is used to automatically derive a {@code langPrefix}: {@code "machines"}
+ * becomes {@code "Machines"}, which is prepended to every entry's display name. You can override
+ * this with an explicit {@link Builder#langPrefix(String)} call.
  *
  * <p>
  * {@link Builder#tab(ResourceKey)} applies to <em>all</em> item-like sub-resources: standalone
@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
  * Construct via {@link RegistryCore#group(String)}:
  *
  * <pre>{@code
- *
+ * 
  * Group MACHINES = REGISTRYLIB.group("machines")  // langPrefix "Machines" auto-derived
  *         .tab(MACHINE_TAB)                       // applied to Item, BlockItem, and Bucket
  *         .blockProperties(p -> p.strength(3.5F))
@@ -77,29 +77,25 @@ public class Group {
 
     @StandardAPI("Returns a BlockBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends Block> BlockBuilder<T, Group> block(
-                                                 String name,
-                                                 Function<BlockBehaviour.Properties, T> factory) {
+                                                          String name, Function<BlockBehaviour.Properties, T> factory) {
         return registryCore.<T, Group>block(this, name, factory).transform(this::applyBlockDefaults);
     }
 
     @StandardAPI("Returns an ItemBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends Item> ItemBuilder<T, Group> item(
-                                              String name, Function<Item.Properties, T> factory) {
+                                                       String name, Function<Item.Properties, T> factory) {
         return registryCore.<T, Group>item(this, name, factory).transform(this::applyItemDefaults);
     }
 
     @StandardAPI("Returns a BlockEntityBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends BlockEntity> BlockEntityBuilder<T, Group> blockEntity(
-                                                                   String name,
-                                                                   BlockEntityBuilder.BlockEntityFactory<T> factory) {
+                                                                            String name, BlockEntityBuilder.BlockEntityFactory<T> factory) {
         return registryCore.<T, Group>blockEntity(this, name, factory);
     }
 
     @StandardAPI("Returns a FluidBuilder with group defaults applied. Call .register() to finalise.")
     public FluidBuilder<BaseFlowingFluid.Flowing, Group> fluid(
-                                                      String name,
-                                                      Identifier stillTexture,
-                                                      Identifier flowingTexture) {
+                                                               String name, Identifier stillTexture, Identifier flowingTexture) {
         return registryCore.<BaseFlowingFluid.Flowing, Group>fluid(
                 this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new)
                 .transform(this::applyFluidDefaults);
@@ -107,10 +103,10 @@ public class Group {
 
     @StandardAPI("Returns a FluidBuilder with custom FluidFactory and group defaults applied. Call .register() to finalise.")
     public <T extends BaseFlowingFluid> FluidBuilder<T, Group> fluid(
-                                                            String name,
-                                                            Identifier stillTexture,
-                                                            Identifier flowingTexture,
-                                                            FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                     String name,
+                                                                     Identifier stillTexture,
+                                                                     Identifier flowingTexture,
+                                                                     FluidBuilder.FluidFactory<T> fluidFactory) {
         return registryCore
                 .<T, Group>fluid(this, name, stillTexture, flowingTexture, fluidFactory)
                 .transform(this::applyFluidDefaults);
@@ -169,7 +165,9 @@ public class Group {
             this.langPrefix = RegistryLibLangProvider.toEnglishName(name);
         }
 
-        /** Sets the creative tab for all item-like entries in this group (items, block items, buckets). */
+        /**
+         * Sets the creative tab for all item-like entries in this group (items, block items, buckets).
+         */
         @StandardAPI
         public Builder tab(ResourceKey<CreativeModeTab> tab) {
             this.tab = tab;
@@ -178,7 +176,8 @@ public class Group {
 
         /**
          * Overrides the lang prefix auto-derived from the group name. By default, the group name is
-         * converted to title case and used as the prefix (e.g. {@code "machines"} → {@code "Machines"}).
+         * converted to title case and used as the prefix (e.g. {@code "machines"} → {@code
+         * "Machines"}).
          */
         @StandardAPI
         public Builder langPrefix(String prefix) {

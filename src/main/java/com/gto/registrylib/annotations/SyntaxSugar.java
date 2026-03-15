@@ -7,13 +7,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Marks a method as a convenience shortcut that delegates to one or more {@link StandardAPI}
- * calls.
+ * Marks a method as a convenience shortcut that delegates to one or more {@link StandardAPI} calls.
  *
  * <p>
  * A {@code @SyntaxSugar} method collapses a fixed, commonly-used {@code @StandardAPI} invocation
- * into a single no-argument (or minimal-argument) call. The exact expansion is always documented
- * in {@link #value()}.
+ * into a single no-argument (or minimal-argument) call. The exact expansion is always documented in
+ * {@link #value()}.
  *
  * <pre>{@code
  * block.simpleItem();   // @SyntaxSugar("item($ -> {})")
@@ -22,6 +21,7 @@ import java.lang.annotation.Target;
  *
  * <p>
  * {@code @SyntaxSugar} methods are <b>not</b> part of the API contract:
+ *
  * <ul>
  * <li>They may be added or removed without being considered a breaking change.
  * <li>They offer no additional behaviour over the underlying {@code @StandardAPI} call.

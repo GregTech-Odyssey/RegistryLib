@@ -10,6 +10,7 @@ import com.gto.registrylib.providers.generators.RegistryLibBlockModelGenerator;
 import com.gto.registrylib.providers.generators.RegistryLibRecipeProvider;
 import com.gto.registrylib.providers.loot.RegistryLibBlockLootTables;
 import com.gto.registrylib.providers.loot.RegistryLibLootTableProvider.LootType;
+import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
@@ -25,14 +26,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -70,10 +67,10 @@ public class BlockBuilder<T extends Block, P>
         this.initialProperties = initialProperties;
     }
 
-    // === Sub-resource Configuration (accepts Consumer lambda for configuration) ===
-
+    // === Sub-resource Configuration (Consumer-scoped, returns this BlockBuilder) ===
     @StandardAPI("Configures an ItemBuilder for the BlockItem sub-entry via lambda.")
-    public BlockBuilder<T, P> item(@Nonnull Consumer<ItemBuilder<BlockItem, BlockBuilder<T, P>>> consumer) {
+    public BlockBuilder<T, P> item(
+                                   @Nonnull Consumer<ItemBuilder<BlockItem, BlockBuilder<T, P>>> consumer) {
         return item(BlockItem::new, consumer);
     }
 
@@ -106,7 +103,9 @@ public class BlockBuilder<T extends Block, P>
         return builder.build();
     }
 
-    /** Sets a default creative tab that will be applied to any BlockItem created via {@link #item}. */
+    /**
+     * Sets a default creative tab that will be applied to any BlockItem created via {@link #item}.
+     */
     @StandardAPI
     public BlockBuilder<T, P> defaultItemTab(@Nonnull ResourceKey<CreativeModeTab> tab) {
         this.defaultItemTab = tab;
@@ -117,16 +116,16 @@ public class BlockBuilder<T extends Block, P>
     public <BE extends BlockEntity> BlockBuilder<T, P> blockEntity(
                                                                    @Nonnull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
                                                                    @Nonnull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> consumer) {
-        var builder = getOwner().<BE, BlockBuilder<T, P>>blockEntity(this, getName(), beFactory).validBlock(this::getEntry);
+        var builder = getOwner().blockEntity(this, getName(), beFactory).validBlock(this::getEntry);
         consumer.accept(builder);
         return builder.build();
     }
 
     // === Syntax Sugar ===
 
-    @SyntaxSugar("item($ -> {})")
+    @SyntaxSugar("item(FunctionUtil.noOpConsumer())")
     public BlockBuilder<T, P> simpleItem() {
-        return item($ -> {});
+        return item(FunctionUtil.noOpConsumer());
     }
 
     @SyntaxSugar("blockstate(() -> (ctx, prov) -> prov.createTrivialCube(ctx.getEntry()))")
@@ -147,37 +146,37 @@ public class BlockBuilder<T extends Block, P>
     // === Configuration ===
 
     @StandardAPI
-    public BlockBuilder<T, P> properties(@Nonnull UnaryOperator<BlockBehaviour.Properties> func) {
+    public BlockBuilder<T, P> properties(@NotNull UnaryOperator<BlockBehaviour.Properties> func) {
         propertiesCallback = propertiesCallback.andThen(func);
         return this;
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> initialProperties(@Nonnull Supplier<? extends Block> block) {
+    public BlockBuilder<T, P> initialProperties(@NotNull Supplier<? extends Block> block) {
         initialProperties = () -> BlockBehaviour.Properties.ofFullCopy(block.get());
         return this;
     }
 
     @StandardAPI
     public BlockBuilder<T, P> blockstate(
-                                         @Nonnull Supplier<BiConsumer<DataGenContext<Block, T>, RegistryLibBlockModelGenerator>> cons) {
-        if (!getOwner().doDatagen().get()) return this;
+                                         @NotNull Supplier<BiConsumer<DataGenContext<Block, T>, RegistryLibBlockModelGenerator>> cons) {
+        if (!getOwner().doDatagen()) return this;
         return setData(ProviderType.BLOCKSTATE, cons.get());
     }
 
-    @SyntaxSugar("lang(Block::getDescriptionId, name)")
-    public BlockBuilder<T, P> lang(@Nonnull String name) {
+    @StandardAPI
+    public BlockBuilder<T, P> lang(@NotNull String name) {
         return lang(Block::getDescriptionId, name);
     }
 
     @SyntaxSugar("lang(type, Block::getDescriptionId, name)")
     public BlockBuilder<T, P> lang(
-            @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+                                   @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
         return lang(type, Block::getDescriptionId, name);
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> loot(@Nonnull BiConsumer<RegistryLibBlockLootTables, T> cons) {
+    public BlockBuilder<T, P> loot(@NotNull BiConsumer<RegistryLibBlockLootTables, T> cons) {
         return setData(
                 ProviderType.LOOT,
                 (ctx, prov) -> prov.addLootAction(
@@ -191,26 +190,26 @@ public class BlockBuilder<T extends Block, P>
 
     @StandardAPI
     public BlockBuilder<T, P> recipe(
-                                     @Nonnull BiConsumer<DataGenContext<Block, T>, RegistryLibRecipeProvider> cons) {
+                                     @NotNull BiConsumer<DataGenContext<Block, T>, RegistryLibRecipeProvider> cons) {
         return setData(ProviderType.RECIPE, cons);
     }
 
     @SafeVarargs
-    @SyntaxSugar("tag(ProviderType.BLOCK_TAGS, tags)")
-    public final BlockBuilder<T, P> tag(@Nonnull TagKey<Block>... tags) {
+    @StandardAPI
+    public final BlockBuilder<T, P> tag(@NotNull TagKey<Block>... tags) {
         return tag(ProviderType.BLOCK_TAGS, tags);
     }
 
     @Override
-    protected T createEntry() {
+    protected T createEntry(ResourceKey<Block> key) {
         BlockBehaviour.Properties properties = this.initialProperties.get();
         properties = propertiesCallback.apply(properties);
-        return factory.apply(properties.setId(getResourceKey()));
+        return factory.apply(properties.setId(key));
     }
 
     @Override
-    protected RegistryEntry<Block, T> createEntryWrapper(DeferredHolder<Block, T> delegate) {
-        return new BlockEntry<>(getOwner(), delegate);
+    protected RegistryEntry<Block, T> createEntryWrapper(ResourceKey<Block> key) {
+        return new BlockEntry<>(key);
     }
 
     @Override

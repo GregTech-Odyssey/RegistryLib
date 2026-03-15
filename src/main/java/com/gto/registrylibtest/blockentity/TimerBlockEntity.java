@@ -1,7 +1,7 @@
 package com.gto.registrylibtest.blockentity;
 
-import com.gto.registrylibtest.RegistryLibTest;
 import com.gto.registrylibtest.block.TimerBlock;
+
 import com.mojang.serialization.Codec;
 
 import net.minecraft.core.BlockPos;

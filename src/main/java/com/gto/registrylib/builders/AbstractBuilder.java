@@ -2,7 +2,6 @@ package com.gto.registrylib.builders;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
-import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.RegistryLibTagsProvider;
@@ -15,12 +14,12 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
-import it.unimi.dsi.fastutil.objects.Object2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import lombok.Getter;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -31,14 +30,20 @@ import javax.annotation.Nonnull;
 public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuilder<R, T, P, S>>
                                      implements Builder<R, T, P, S> {
 
+    @Getter
     private final RegistryCore owner;
+    @Getter
     private final P parent;
+    @Getter
     private final String name;
+    @Getter
     private final BuilderCallback callback;
+    @Getter
     private final ResourceKey<? extends Registry<R>> registryKey;
 
-    private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Object2BooleanOpenHashMap<TagKey<?>>> tagsByType = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType = new Reference2ReferenceOpenHashMap<>();
     private final LazyRegistryEntry<R, T> safeSupplier = new LazyRegistryEntry<>(this);
+    private RegistryEntry<R, T> entry;
 
     protected AbstractBuilder(
                               RegistryCore owner,
@@ -53,60 +58,41 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         this.registryKey = registryKey;
     }
 
-    @Override
-    public @NonNull RegistryCore getOwner() {
-        return owner;
-    }
-
-    @Override
-    public @NonNull P getParent() {
-        return parent;
-    }
-
-    @Override
-    public @NonNull String getName() {
-        return name;
-    }
-
-    protected BuilderCallback getCallback() {
-        return callback;
-    }
-
-    @Override
-    public @NonNull ResourceKey<? extends Registry<R>> getRegistryKey() {
-        return registryKey;
-    }
-
-    protected abstract T createEntry();
+    protected abstract T createEntry(ResourceKey<R> key);
 
     @Override
     @StandardAPI
     @MustBeInvokedByOverriders
-    @SuppressWarnings("all")
     public RegistryEntry<R, T> register() {
         tagsByType.forEach(
                 (type, tags) -> setData(
                         type,
-                (unusedContext, prov) -> tags.forEach(
+                        (_, prov) -> tags.forEach(
                                 (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
         return callback.accept(name, registryKey, this, this::createEntry, this::createEntryWrapper);
     }
 
-    protected RegistryEntry<R, T> createEntryWrapper(DeferredHolder<R, T> delegate) {
-        return new RegistryEntry<>(getOwner(), delegate);
+    protected RegistryEntry<R, T> createEntryWrapper(ResourceKey<R> key) {
+        return new RegistryEntry<>(key);
+    }
+
+    @NotNull
+    public RegistryEntry<R, T> get() {
+        if (entry != null) return entry;
+        return entry = owner.get(name, registryKey);
     }
 
     @Override
-    public @NonNull Supplier<T> asSupplier() {
+    public @NotNull Supplier<T> asSupplier() {
         return safeSupplier;
     }
 
     // === Configuration ===
 
     @SafeVarargs
-    @SyntaxSugar("tag(type, false, tags)")
+    @StandardAPI
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
-                                                                                 @Nonnull ProviderType<? extends TP> type, @Nonnull TagKey<R>... tags) {
+                                                                                 @NotNull ProviderType<? extends TP> type, @NotNull TagKey<R>... tags) {
         return tag(type, false, tags);
     }
 
@@ -114,10 +100,12 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @SafeVarargs
     @StandardAPI
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
-                                                                                 @Nonnull ProviderType<? extends TP> type, boolean isOptional, @Nonnull TagKey<R>... tags) {
-        var map = tagsByType.computeIfAbsent(type, unusedType -> new Object2BooleanOpenHashMap<>());
-        for (TagKey<R> tag : tags) {
-            map.put(tag, isOptional);
+                                                                                 @NotNull ProviderType<? extends TP> type, boolean isOptional, @NotNull TagKey<R>... tags) {
+        if (owner.doDatagen()) {
+            var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
+            for (TagKey<R> tag : tags) {
+                map.put(tag, isOptional);
+            }
         }
         return (S) this;
     }
@@ -132,7 +120,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @SafeVarargs
     @StandardAPI
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S removeTag(
-                                                                                       @Nonnull ProviderType<TP> type, @Nonnull TagKey<R>... tags) {
+                                                                                       @NotNull ProviderType<TP> type, @NotNull TagKey<R>... tags) {
         var set = tagsByType.get(type);
         if (set != null) {
             for (TagKey<R> tag : tags) {
@@ -142,14 +130,14 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return (S) this;
     }
 
-    @SyntaxSugar("lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, getRegistryKey()))")
-    public S lang(@Nonnull Function<T, String> langKeyProvider) {
-        return lang(langKeyProvider, (p, t) -> p.<R>getAutomaticName(t, getRegistryKey()));
+    @StandardAPI
+    public S lang(@NotNull Function<T, String> langKeyProvider) {
+        return lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, getRegistryKey()));
     }
 
-    @SyntaxSugar("lang(langKeyProvider, (p, s) -> name)")
-    public S lang(@Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
-        return lang(langKeyProvider, (p, s) -> name);
+    @StandardAPI
+    public S lang(@NotNull Function<T, String> langKeyProvider, @NotNull String name) {
+        return lang(langKeyProvider, (_, _) -> name);
     }
 
     @StandardAPI
@@ -161,17 +149,12 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     }
 
     private S lang(
-                   @Nonnull Function<T, String> langKeyProvider,
-                   @Nonnull BiFunction<RegistryLibLangProvider, Supplier<? extends T>, String> localizedNameProvider) {
+                   @NotNull Function<T, String> langKeyProvider,
+                   @NotNull BiFunction<RegistryLibLangProvider, Supplier<? extends T>, String> localizedNameProvider) {
         return setData(
                 ProviderType.LANG,
                 (ctx, prov) -> prov.add(
                         langKeyProvider.apply(ctx.getEntry()),
                         localizedNameProvider.apply(prov, ctx::getEntry)));
-    }
-
-    public ResourceKey<R> getResourceKey() {
-        return ResourceKey.create(
-                getRegistryKey(), Identifier.fromNamespaceAndPath(getOwner().getModid(), getName()));
     }
 }

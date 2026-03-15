@@ -9,7 +9,6 @@ import com.gto.registrylib.providers.DataGenContext;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.generators.RegistryLibItemModelGenerator;
-import com.gto.registrylib.providers.generators.RegistryLibRecipeProvider;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
@@ -26,16 +25,13 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.neoforged.neoforge.registries.DeferredHolder;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import java.util.function.*;
 
 import javax.annotation.Nonnull;
 
@@ -55,7 +51,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     private Supplier<Item.Properties> initialProperties = Item.Properties::new;
     private Function<Item.Properties, Item.Properties> propertiesCallback = UnaryOperator.identity();
 
-    private final Map<ResourceKey<CreativeModeTab>, BiConsumer<DataGenContext<Item, T>, CreativeModeTabModifier>> creativeModeTabs = Maps.newLinkedHashMap();
+    private final Map<ResourceKey<CreativeModeTab>, BiConsumer<Item, CreativeModeTabModifier>> creativeModeTabs = Maps.newLinkedHashMap();
 
     private final List<TooltipNodeCollector.TooltipConfig> tooltipConfigs = new ArrayList<>();
     private final List<CompositeItemAttachment<?>> pendingAttachments = new ArrayList<>();
@@ -73,8 +69,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                 item -> {
                     creativeModeTabs.forEach(
                             (creativeModeTab, consumer) -> owner.modifyCreativeModeTab(
-                                    creativeModeTab,
-                                    modifier -> consumer.accept(DataGenContext.from(this), modifier)));
+                                    creativeModeTab, modifier -> consumer.accept(item, modifier)));
                     creativeModeTabs.clear();
 
                     // 注册 tooltip 配置
@@ -108,13 +103,13 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> properties(@Nonnull UnaryOperator<Item.Properties> func) {
+    public ItemBuilder<T, P> properties(@NotNull UnaryOperator<Item.Properties> func) {
         propertiesCallback = propertiesCallback.andThen(func);
         return this;
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> initialProperties(@Nonnull Supplier<Item.Properties> properties) {
+    public ItemBuilder<T, P> initialProperties(@NotNull Supplier<Item.Properties> properties) {
         initialProperties = properties;
         return this;
     }
@@ -135,34 +130,34 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     @StandardAPI
     public ItemBuilder<T, P> tab(
-                                 @Nonnull ResourceKey<CreativeModeTab> tab,
-                                 @Nonnull BiConsumer<DataGenContext<Item, T>, CreativeModeTabModifier> modifier) {
+                                 @NotNull ResourceKey<CreativeModeTab> tab,
+                                 @NotNull BiConsumer<Item, CreativeModeTabModifier> modifier) {
         creativeModeTabs.put(tab, modifier);
         return this;
     }
 
     @StandardAPI
     public ItemBuilder<T, P> tab(
-                                 @Nonnull ResourceKey<CreativeModeTab> tab,
-                                 @Nonnull Consumer<CreativeModeTabModifier> modifier) {
+                                 @NotNull ResourceKey<CreativeModeTab> tab,
+                                 @NotNull Consumer<CreativeModeTabModifier> modifier) {
         return tab(tab, ($, m) -> modifier.accept(m));
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> tab(@Nonnull ResourceKey<CreativeModeTab> tab) {
+    public ItemBuilder<T, P> tab(@NotNull ResourceKey<CreativeModeTab> tab) {
         return tab(tab, (item, modifier) -> modifier.accept(item));
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> removeTab(@Nonnull ResourceKey<CreativeModeTab> tab) {
+    public ItemBuilder<T, P> removeTab(@NotNull ResourceKey<CreativeModeTab> tab) {
         creativeModeTabs.remove(tab);
         return this;
     }
 
     @StandardAPI
     public ItemBuilder<T, P> model(
-                                   @Nonnull Supplier<BiConsumer<DataGenContext<Item, T>, RegistryLibItemModelGenerator>> cons) {
-        if (!getOwner().doDatagen().get()) return this;
+                                   @NotNull Supplier<BiConsumer<DataGenContext<Item, T>, RegistryLibItemModelGenerator>> cons) {
+        if (!getOwner().doDatagen()) return this;
         return setData(ProviderType.ITEM_MODEL, cons.get());
     }
 
@@ -173,14 +168,8 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     @SyntaxSugar("lang(type, Item::getDescriptionId, name)")
     public ItemBuilder<T, P> lang(
-            @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+                                  @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
         return lang(type, Item::getDescriptionId, name);
-    }
-
-    @StandardAPI
-    public ItemBuilder<T, P> recipe(
-                                    @Nonnull BiConsumer<DataGenContext<Item, T>, RegistryLibRecipeProvider> cons) {
-        return setData(ProviderType.RECIPE, cons);
     }
 
     /**
@@ -210,21 +199,21 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @SafeVarargs
-    @SyntaxSugar("tag(ProviderType.ITEM_TAGS, tags)")
-    public final ItemBuilder<T, P> tag(@Nonnull TagKey<Item>... tags) {
+    @StandardAPI
+    public final ItemBuilder<T, P> tag(@NotNull TagKey<Item>... tags) {
         return tag(ProviderType.ITEM_TAGS, tags);
     }
 
     @Override
-    protected T createEntry() {
+    protected T createEntry(ResourceKey<Item> key) {
         Item.Properties properties = this.initialProperties.get();
         properties = propertiesCallback.apply(properties);
-        return factory.apply(properties.setId(getResourceKey()));
+        return factory.apply(properties.setId(key));
     }
 
     @Override
-    protected RegistryEntry<Item, T> createEntryWrapper(DeferredHolder<Item, T> delegate) {
-        return new ItemEntry<>(getOwner(), delegate);
+    protected RegistryEntry<Item, T> createEntryWrapper(ResourceKey<Item> key) {
+        return new ItemEntry<>(key);
     }
 
     @Override

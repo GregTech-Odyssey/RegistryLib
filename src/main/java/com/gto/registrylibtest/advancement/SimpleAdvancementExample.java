@@ -11,9 +11,7 @@ import net.minecraft.advancements.criterion.InventoryChangeTrigger;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Items;
 
-/**
- * 最简单的成就进度注册：一个根成就 + 一个子成就。
- */
+/** 最简单的成就进度注册：一个根成就 + 一个子成就。 */
 public class SimpleAdvancementExample {
 
     public static void register() {
@@ -31,7 +29,9 @@ public class SimpleAdvancementExample {
                                     Identifier.withDefaultNamespace(
                                             "textures/gui/advancements/backgrounds/stone.png"),
                                     AdvancementType.TASK,
-                                    false, false, false)
+                                    false,
+                                    false,
+                                    false)
                             .addCriterion(
                                     "has_crafting_table",
                                     InventoryChangeTrigger.TriggerInstance.hasItems(Items.CRAFTING_TABLE))
@@ -46,7 +46,9 @@ public class SimpleAdvancementExample {
                                     adv.desc(cat, "simple/get_coin", "Pick up a Copper Coin"),
                                     null,
                                     AdvancementType.TASK,
-                                    true, true, false)
+                                    true,
+                                    true,
+                                    false)
                             .addCriterion(
                                     "has_coin",
                                     InventoryChangeTrigger.TriggerInstance.hasItems(

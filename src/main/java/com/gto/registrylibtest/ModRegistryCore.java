@@ -15,8 +15,8 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
+
 import java.util.function.Function;
 
 import javax.annotation.Nonnull;
@@ -24,18 +24,21 @@ import javax.annotation.Nonnull;
 /**
  * A subclass of {@link RegistryCore} that adds first-class Simplified-Chinese lang support.
  *
- * <p>Key differences from {@link RegistryCore}:
+ * <p>
+ * Key differences from {@link RegistryCore}:
+ *
  * <ul>
- *   <li>Declares the shared {@link #LANG_ZH_CN} {@link ProviderType} and the
- *       {@link ZhCnLangProvider} that backs it.
- *   <li>Overrides {@link #newBlockBuilder}, {@link #newItemBuilder}, and
- *       {@link #newFluidBuilder} to return {@link ModBlockBuilder}, {@link ModItemBuilder},
- *       and {@link ModFluidBuilder} respectively — each of which carries a
- *       {@code .langCn(String)} convenience method.
+ * <li>Declares the shared {@link #LANG_ZH_CN} {@link ProviderType} and the {@link
+ * ZhCnLangProvider} that backs it.
+ * <li>Overrides {@link #newBlockBuilder}, {@link #newItemBuilder}, and {@link #newFluidBuilder}
+ * to return {@link ModBlockBuilder}, {@link ModItemBuilder}, and {@link ModFluidBuilder}
+ * respectively — each of which carries a {@code .langCn(String)} convenience method.
  * </ul>
  *
  * <h3>Usage</h3>
+ *
  * <pre>{@code
+ * 
  * public static final ModRegistryCore REGISTRYLIB = ModRegistryCore.create(MOD_ID);
  *
  * public static final BlockEntry<Block> MAGIC_ORE = REGISTRYLIB
@@ -48,12 +51,11 @@ import javax.annotation.Nonnull;
 public class ModRegistryCore extends RegistryCore {
 
     /**
-     * Shared Simplified-Chinese lang {@link ProviderType}.
-     * Registered once per JVM; drives the generation of {@code zh_cn.json}.
+     * Shared Simplified-Chinese lang {@link ProviderType}. Registered once per JVM; drives the
+     * generation of {@code zh_cn.json}.
      */
-    public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
-            ProviderType.registerClientProvider(
-                    "lang_zh_cn", () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
+    public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN = ProviderType.registerClientProvider(
+            "lang_zh_cn", () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
 
     // ── Construction ────────────────────────────────────────────────────────
 
@@ -62,15 +64,11 @@ public class ModRegistryCore extends RegistryCore {
     }
 
     /**
-     * Creates a {@code ModRegistryCore} instance for the given mod id, registers
-     * all event listeners, and returns it.  Drop-in replacement for
-     * {@link RegistryCore#create(String)}.
+     * Creates a {@code ModRegistryCore} instance for the given mod id, registers all event listeners,
+     * and returns it. Drop-in replacement for {@link RegistryCore#create(String)}.
      */
     public static ModRegistryCore create(String modid) {
-        var ret = new ModRegistryCore(modid);
-        ModList.get().getModContainerById(modid)
-                .ifPresent(c -> ret.registerEventListeners(c.getEventBus()));
-        return ret;
+        return new ModRegistryCore(modid);
     }
 
     // ── Covariant public API overrides ──────────────────────────────────────
@@ -86,47 +84,54 @@ public class ModRegistryCore extends RegistryCore {
 
     @Override
     public <T extends Block, P> ModBlockBuilder<T, P> block(
-            @Nonnull P parent, @Nonnull String name,
-            @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+                                                            @Nonnull P parent,
+                                                            @Nonnull String name,
+                                                            @Nonnull Function<BlockBehaviour.Properties, T> factory) {
         return (ModBlockBuilder<T, P>) super.block(parent, name, factory);
     }
 
     @Override
     public <T extends Item, P> ModItemBuilder<T, P> item(
-            @Nonnull P parent, @Nonnull String name,
-            @Nonnull Function<Item.Properties, T> factory) {
+                                                         @Nonnull P parent, @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
         return (ModItemBuilder<T, P>) super.item(parent, name, factory);
     }
 
     @Override
     public <T extends BaseFlowingFluid, P> ModFluidBuilder<T, P> fluid(
-            @Nonnull P parent, @Nonnull String name,
-            @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture,
-            @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
-        return (ModFluidBuilder<T, P>)
-                super.fluid(parent, name, stillTexture, flowingTexture, fluidFactory);
+                                                                       @Nonnull P parent,
+                                                                       @Nonnull String name,
+                                                                       @Nonnull Identifier stillTexture,
+                                                                       @Nonnull Identifier flowingTexture,
+                                                                       @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+        return (ModFluidBuilder<T, P>) super.fluid(parent, name, stillTexture, flowingTexture, fluidFactory);
     }
 
     // ── Builder hooks ────────────────────────────────────────────────────────
 
     @Override
     protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
-            @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
-            @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+                                                                      @Nonnull P parent,
+                                                                      @Nonnull String name,
+                                                                      @Nonnull BuilderCallback callback,
+                                                                      @Nonnull Function<BlockBehaviour.Properties, T> factory) {
         return ModBlockBuilder.create(this, parent, name, callback, factory);
     }
 
     @Override
     protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
-            @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
-            @Nonnull Function<Item.Properties, T> factory) {
+                                                                   @Nonnull P parent,
+                                                                   @Nonnull String name,
+                                                                   @Nonnull BuilderCallback callback,
+                                                                   @Nonnull Function<Item.Properties, T> factory) {
         return ModItemBuilder.create(this, parent, name, callback, factory);
     }
 
     @Override
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
-            @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
-            @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                                 @Nonnull P parent,
+                                                                                 @Nonnull String name,
+                                                                                 @Nonnull BuilderCallback callback,
+                                                                                 @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
         return ModFluidBuilder.create(this, parent, name, callback, fluidFactory);
     }
 }

@@ -22,23 +22,26 @@ import org.slf4j.Logger;
 
 /**
  * Mod 入口类，仅负责：
+ *
  * <ol>
- *   <li>创建共享的 {@link ModRegistryCore} 实例 {@link #REGISTRYLIB}；
- *   <li>注册默认创造标签页；
- *   <li>按顺序触发各示例类的静态初始化，使其注册调用在模组加载期间执行。
+ * <li>创建共享的 {@link ModRegistryCore} 实例 {@link #REGISTRYLIB}；
+ * <li>注册默认创造标签页；
+ * <li>按顺序触发各示例类的静态初始化，使其注册调用在模组加载期间执行。
  * </ol>
  *
- * <p>{@link ModRegistryCore} 继承 {@link com.gto.registrylib.RegistryCore}，
- * 重写了三个 builder 工厂钩子，使 {@code .block()} / {@code .item()} / {@code .fluid()}
- * 返回带有 {@code .langCn(String)} 方法的子类 builder。
+ * <p>
+ * {@link ModRegistryCore} 继承 {@link com.gto.registrylib.RegistryCore}， 重写了三个 builder 工厂钩子，使
+ * {@code .block()} / {@code .item()} / {@code .fluid()} 返回带有 {@code .langCn(String)} 方法的子类 builder。
  *
- * <p><b>示例文件索引：</b>
+ * <p>
+ * <b>示例文件索引：</b>
+ *
  * <ul>
- *   <li>{@link SimpleItemExample} / {@link FullItemExample} — 物品注册
- *   <li>{@link SimpleBlockExample} / {@link FullBlockExample} — 方块注册
- *   <li>{@link SimpleBlockEntityExample} / {@link FullBlockEntityExample} — BlockEntity 注册
- *   <li>{@link SimpleFluidExample} / {@link FullFluidExample} — 流体注册
- *   <li>{@link SimpleAdvancementExample} / {@link FullAdvancementExample} — 成就进度
+ * <li>{@link SimpleItemExample} / {@link FullItemExample} — 物品注册
+ * <li>{@link SimpleBlockExample} / {@link FullBlockExample} — 方块注册
+ * <li>{@link SimpleBlockEntityExample} / {@link FullBlockEntityExample} — BlockEntity 注册
+ * <li>{@link SimpleFluidExample} / {@link FullFluidExample} — 流体注册
+ * <li>{@link SimpleAdvancementExample} / {@link FullAdvancementExample} — 成就进度
  * </ul>
  */
 @Mod(RegistryLibTest.MOD_ID)
@@ -48,9 +51,8 @@ public class RegistryLibTest {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     /**
-     * 共享的注册核心。
-     * 使用 {@link ModRegistryCore} 而非普通 {@link com.gto.registrylib.RegistryCore}，
-     * 使得每个 builder 链上可直接调用 {@code .langCn("中文名")}。
+     * 共享的注册核心。 使用 {@link ModRegistryCore} 而非普通 {@link com.gto.registrylib.RegistryCore}， 使得每个 builder
+     * 链上可直接调用 {@code .langCn("中文名")}。
      */
     public static final ModRegistryCore REGISTRYLIB = ModRegistryCore.create(MOD_ID);
 

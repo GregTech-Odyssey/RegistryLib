@@ -1,19 +1,17 @@
 package com.gto.registrylib.util.entry;
 
-import com.gto.registrylib.RegistryCore;
-
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
 public class BlockEntry<T extends Block> extends ItemProviderEntry<Block, T> {
 
-    public BlockEntry(RegistryCore owner, DeferredHolder<Block, T> delegate) {
-        super(owner, delegate);
+    public BlockEntry(ResourceKey<Block> key) {
+        super(key);
     }
 
     public BlockState getDefaultState() {
-        return get().defaultBlockState();
+        return value.defaultBlockState();
     }
 
     public boolean has(BlockState state) {

@@ -10,14 +10,15 @@ import com.gto.registrylib.util.entry.RegistryEntry;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -59,30 +60,29 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     // === Configuration ===
 
     @StandardAPI
-    public BlockEntityBuilder<BE, P> validBlock(@Nonnull Supplier<? extends Block> block) {
+    public BlockEntityBuilder<BE, P> validBlock(@NotNull Supplier<? extends Block> block) {
         validBlocks.add(block);
         return this;
     }
 
     @SafeVarargs
     @StandardAPI
-    public final BlockEntityBuilder<BE, P> validBlocks(@Nonnull Supplier<? extends Block>... blocks) {
+    public final BlockEntityBuilder<BE, P> validBlocks(@NotNull Supplier<? extends Block>... blocks) {
         Arrays.stream(blocks).forEach(this::validBlock);
         return this;
     }
 
     @StandardAPI
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings("rawtypes")
     public BlockEntityBuilder<BE, P> renderer(
                                               @Nonnull Supplier<? extends BlockEntityRendererProvider> renderer) {
         DistExecutor.unsafeRunWhenOn(
-                Dist.CLIENT,
-                () -> () -> Client.registerBER(this::getEntry, renderer.get()));
+                Dist.CLIENT, () -> () -> Client.registerBER(this::getEntry, renderer.get()));
         return this;
     }
 
     @Override
-    protected BlockEntityType<BE> createEntry() {
+    protected BlockEntityType<BE> createEntry(ResourceKey<BlockEntityType<?>> key) {
         Block[] blocks = validBlocks.stream().map(Supplier::get).toArray(Block[]::new);
         Supplier<BlockEntityType<BE>> supplier = asSupplier();
         return new BlockEntityType<>(
@@ -91,11 +91,10 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
 
     @Override
     protected RegistryEntry<BlockEntityType<?>, BlockEntityType<BE>> createEntryWrapper(
-                                                                                        DeferredHolder<BlockEntityType<?>, BlockEntityType<BE>> delegate) {
-        return new BlockEntityEntry<>(getOwner(), delegate);
+                                                                                        ResourceKey<BlockEntityType<?>> key) {
+        return new BlockEntityEntry<>(key);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public BlockEntityEntry<BE> register() {
         return (BlockEntityEntry<BE>) super.register();

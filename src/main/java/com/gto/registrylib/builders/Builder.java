@@ -12,47 +12,38 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
 
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
+import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
+import java.util.function.*;
 
-public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>>
-                        extends Supplier<RegistryEntry<R, T>> {
+public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>> {
 
     // === Core ===
 
     @StandardAPI
     RegistryEntry<R, T> register();
 
-    @Nonnull
+    @NotNull
     RegistryCore getOwner();
 
-    @Nonnull
+    @NotNull
     P getParent();
 
-    @Nonnull
+    @NotNull
     String getName();
 
-    @Nonnull
+    @NotNull
     ResourceKey<? extends Registry<R>> getRegistryKey();
 
-    @Override
-    @Nonnull
-    default RegistryEntry<R, T> get() {
-        return getOwner().get(getName(), getRegistryKey());
-    }
+    @NotNull
+    RegistryEntry<R, T> get();
 
-    @Nonnull
+    @NotNull
     default T getEntry() {
         return get().get();
     }
 
-    @Nonnull
+    @NotNull
     Supplier<T> asSupplier();
 
     // === Configuration ===
@@ -60,22 +51,24 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>>
     @SuppressWarnings("unchecked")
     @StandardAPI
     default <D> S setData(
-                          @Nonnull GeneratorType<? extends D> type, @Nonnull BiConsumer<DataGenContext<R, T>, D> cons) {
-        getOwner().setDataGenerator(this, type, prov -> cons.accept(DataGenContext.from(this), prov));
+                          @NotNull GeneratorType<? extends D> type, @NotNull BiConsumer<DataGenContext<R, T>, D> cons) {
+        if (getOwner().doDatagen()) {
+            getOwner().setDataGenerator(this, type, prov -> cons.accept(DataGenContext.from(this), prov));
+        }
         return (S) this;
     }
 
     @SuppressWarnings("unchecked")
     @StandardAPI
     default <D> S addMiscData(
-                              @Nonnull GeneratorType<? extends D> type, @Nonnull Consumer<? extends D> cons) {
+                              @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
         getOwner().addDataGenerator(type, cons);
         return (S) this;
     }
 
     @SuppressWarnings("unchecked")
     @StandardAPI
-    default <D> S dataMap(@Nonnull DataMapType<R, D> type, @Nonnull D val) {
+    default <D> S dataMap(@NotNull DataMapType<R, D> type, @NotNull D val) {
         getOwner()
                 .addDataGenerator(
                         ProviderType.DATA_MAP,
@@ -86,7 +79,7 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>>
     @SuppressWarnings("unchecked")
     @StandardAPI
     default <D> S dataMap(
-                          @Nonnull DataMapType<R, D> type, @Nonnull Function<DataGenContext<R, T>, D> factory) {
+                          @NotNull DataMapType<R, D> type, @NotNull Function<DataGenContext<R, T>, D> factory) {
         getOwner()
                 .addDataGenerator(
                         ProviderType.DATA_MAP,
@@ -100,8 +93,8 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>>
     @SuppressWarnings("unchecked")
     @StandardAPI
     default <D> S dataMap(
-                          @Nonnull DataMapType<R, D> type,
-                          @Nonnull BiFunction<DataGenContext<R, T>, HolderLookup.Provider, D> factory) {
+                          @NotNull DataMapType<R, D> type,
+                          @NotNull BiFunction<DataGenContext<R, T>, HolderLookup.Provider, D> factory) {
         getOwner()
                 .addDataGenerator(
                         ProviderType.DATA_MAP,
@@ -114,15 +107,15 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>>
 
     @SuppressWarnings("unchecked")
     @StandardAPI
-    default S onRegister(@Nonnull Consumer<? super T> callback) {
+    default S onRegister(@NotNull Consumer<? super T> callback) {
         getOwner().<R, T>addRegisterCallback(getName(), getRegistryKey(), callback);
         return (S) this;
     }
 
     @StandardAPI
     default <OR> S onRegisterAfter(
-                                   @Nonnull ResourceKey<? extends Registry<OR>> dependencyType,
-                                   @Nonnull Consumer<? super T> callback) {
+                                   @NotNull ResourceKey<? extends Registry<OR>> dependencyType,
+                                   @NotNull Consumer<? super T> callback) {
         return onRegister(
                 e -> {
                     if (getOwner().isRegistered(dependencyType)) {
@@ -135,14 +128,14 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>>
 
     @SuppressWarnings("unchecked")
     @StandardAPI
-    default S transform(@Nonnull UnaryOperator<S> func) {
+    default S transform(@NotNull UnaryOperator<S> func) {
         return func.apply((S) this);
     }
 
     /**
-     * Registers this entry and returns the parent object, allowing the caller to continue
-     * configuring the parent builder. Typically used to close a sub-entry chain:
-     * {@code .item().tooltip(...).build()  // returns the parent BlockBuilder}.
+     * Registers this entry and returns the parent object, allowing the caller to continue configuring
+     * the parent builder. Typically used to close a sub-entry chain: {@code
+     * .item().tooltip(...).build() // returns the parent BlockBuilder}.
      */
     @StandardAPI
     default P build() {

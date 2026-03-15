@@ -4,17 +4,15 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.*;
 import com.gto.registrylib.providers.*;
-import com.gto.registrylib.util.*;
-import com.gto.registrylib.util.entry.BlockEntityEntry;
-import com.gto.registrylib.util.entry.BlockEntry;
-import com.gto.registrylib.util.entry.FluidEntry;
-import com.gto.registrylib.util.entry.ItemEntry;
-import com.gto.registrylib.util.entry.RegistryEntry;
+import com.gto.registrylib.util.CreativeModeTabModifier;
+import com.gto.registrylib.util.DebugMarkers;
+import com.gto.registrylib.util.Lazy;
+import com.gto.registrylib.util.OneTimeEventReceiver;
+import com.gto.registrylib.util.entry.*;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylib.util.map.NestedMultiMap;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.mojang.serialization.Codec;
@@ -29,18 +27,18 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.registries.*;
+import net.neoforged.neoforge.registries.DataPackRegistryEvent;
+import net.neoforged.neoforge.registries.NewRegistryEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
+import net.neoforged.neoforge.registries.RegistryBuilder;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import lombok.Getter;
@@ -48,20 +46,22 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.message.Message;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.Map.Entry;
-import java.util.function.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class RegistryCore {
 
+    private static final ConcurrentHashMap<String, RegistryCore> REGISTRY_CORES = new ConcurrentHashMap<>();
     private static final Logger log = RegistryLib.LOGGER;
 
-    // === Fields ===
     private final NestedMap<ResourceKey<? extends Registry<?>>, String, Registration<?, ?>> registrations = NestedMap.createIdentity(HashMap::new);
     private final NestedMultiMap<ResourceKey<? extends Registry<?>>, String, Consumer<?>> registerCallbacks = NestedMultiMap.createIdentity(HashMap::new, ArrayList::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Runnable> afterRegisterCallbacks = MultiMap.createIdentity(ArrayList::new);
@@ -73,34 +73,27 @@ public class RegistryCore {
     private final Table<Pair<String, ResourceKey<? extends Registry<?>>>, GeneratorType<?>, Consumer<?>> datagensByEntry = HashBasedTable.create();
     private final MultiMap<GeneratorType<?>, Consumer<?>> datagens = MultiMap.createIdentity(ArrayList::new);
 
-    private final Supplier<Boolean> doDatagen = Lazy.of(DatagenModLoader::isRunningDataGen);
-
     @Getter
     private final String modid;
 
     @Nullable
     private IEventBus modEventBus;
     private boolean skipErrors;
-    private boolean upsideDownLang = false;
 
     // === Constructor + Factory ===
 
     protected RegistryCore(String modid) {
         this.modid = modid;
+        REGISTRY_CORES.put(modid, this);
+        if (doDatagen()) {
+            ModList.get()
+                    .getModContainerById(modid)
+                    .ifPresent(c -> c.getEventBus().addListener(this::onGatherData));
+        }
     }
 
     public static RegistryCore create(String modid) {
-        var ret = new RegistryCore(modid);
-        Optional<IEventBus> modEventBus = ModList.get().getModContainerById(modid).map(ModContainer::getEventBus);
-        modEventBus.ifPresentOrElse(
-                ret::registerEventListeners,
-                () -> {
-                    String message = "# [RegistryCore] Failed to register eventListeners for mod " + modid + " #";
-                    log.fatal("#".repeat(message.length()));
-                    log.fatal(message);
-                    log.fatal("#".repeat(message.length()));
-                });
-        return ret;
+        return new RegistryCore(modid);
     }
 
     // === Accessors ===
@@ -109,8 +102,8 @@ public class RegistryCore {
         return !FMLEnvironment.isProduction();
     }
 
-    public Supplier<Boolean> doDatagen() {
-        return doDatagen;
+    public boolean doDatagen() {
+        return DatagenModLoader.isRunningDataGen();
     }
 
     @Nullable
@@ -122,123 +115,20 @@ public class RegistryCore {
         this.modEventBus = bus;
     }
 
-    public boolean isUpsideDownLangEnabled() {
-        return upsideDownLang;
-    }
-
-    // === Event Registration ===
-
-    public RegistryCore registerEventListeners(IEventBus bus) {
-        if (this.modEventBus == null) {
-            this.modEventBus = bus;
-        }
-
-        Consumer<RegisterEvent> onRegister = this::onRegister;
-        Consumer<RegisterEvent> onRegisterLate = this::onRegisterLate;
-        bus.addListener(onRegister);
-        bus.addListener(EventPriority.LOWEST, onRegisterLate);
-        bus.addListener(this::onBuildCreativeModeTabContents);
-
-        OneTimeEventReceiver.addModListener(
-                this,
-                FMLCommonSetupEvent.class,
-                $ -> {
-                    OneTimeEventReceiver.unregister(this, onRegister, RegisterEvent.class);
-                    OneTimeEventReceiver.unregister(this, onRegisterLate, RegisterEvent.class);
-                });
-
-        if (doDatagen.get()) {
-            OneTimeEventReceiver.addModListener(this, GatherDataEvent.Client.class, this::onData);
-        }
-
-        return this;
-    }
-
-    // === Event Handlers ===
-
-    protected void onRegister(RegisterEvent event) {
-        ResourceKey<? extends Registry<?>> type = event.getRegistryKey();
-        if (type == null) {
-            log.debug(
-                    DebugMarkers.REGISTER,
-                    "Skipping invalid registry with no supertype: " + event.getRegistryKey().identifier());
-            return;
-        }
-        if (!registerCallbacks.isEmpty()) {
-            registerCallbacks
-                    .getMap()
-                    .forEach(
-                            (k, v) -> log.warn(
-                                    "Found {} unused register callback(s) for entry {} [{}]. Was the entry ever registered?",
-                                    v.size(),
-                                    k,
-                                    k.identifier()));
-            registerCallbacks.clear();
-            if (isDevEnvironment()) {
-                throw new IllegalStateException("Found unused register callbacks, see logs");
-            }
-        }
-        Map<String, Registration<?, ?>> registrationsForType = registrations.get(type);
-        if (!registrationsForType.isEmpty()) {
-            log.trace(
-                    DebugMarkers.REGISTER,
-                    "({}) Registering {} known objects of type {}",
-                    getModid(),
-                    registrationsForType.size(),
-                    type.identifier());
-            for (Entry<String, Registration<?, ?>> e : registrationsForType.entrySet()) {
-                try {
-                    e.getValue().register(event);
-                    log.trace(
-                            DebugMarkers.REGISTER,
-                            "Registered {} to registry {}",
-                            e.getValue().getName(),
-                            event.getRegistryKey().identifier());
-                } catch (Exception ex) {
-                    String err = "Unexpected error while registering entry " + e.getValue().getName() + " to registry " + event.getRegistryKey().identifier();
-                    if (skipErrors) {
-                        log.error(DebugMarkers.REGISTER, err);
-                    } else {
-                        throw new RuntimeException(err, ex);
-                    }
-                }
-            }
-        }
-    }
-
-    protected void onRegisterLate(RegisterEvent event) {
-        ResourceKey<? extends Registry<?>> type = event.getRegistryKey();
-        afterRegisterCallbacks.remove(type).forEach(Runnable::run);
-        completedRegistrations.add(type);
-    }
-
-    protected void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
-        var modifier = new CreativeModeTabModifier(
-                event::getFlags, event::hasPermissions, event::accept, event::getParameters);
-        creativeModeTabModifiers.get(event.getTabKey()).forEach(value -> value.accept(modifier));
-    }
-
     @Nullable
     private RegistryLibDataProvider provider;
-
-    protected void onData(GatherDataEvent event) {
-        extraLang.get();
-        event
-                .getGenerator()
-                .addProvider(true, provider = new RegistryLibDataProvider(this, modid, event));
-    }
 
     // === Entry Access ===
 
     public <R, T extends R> RegistryEntry<R, T> get(
                                                     String name, ResourceKey<? extends Registry<R>> type) {
-        return this.<R, T>getRegistration(name, type).getDelegate();
+        return this.<R, T>getRegistration(name, type).entry;
     }
 
     public <R, T extends R> Optional<RegistryEntry<R, T>> getOptional(
                                                                       String name, ResourceKey<? extends Registry<R>> type) {
-        Registration<R, T> reg = this.<R, T>getRegistrationUnchecked(name, type);
-        return reg == null ? Optional.empty() : Optional.of(reg.getDelegate());
+        Registration<R, T> reg = this.getRegistrationUnchecked(name, type);
+        return reg == null ? Optional.empty() : Optional.of(reg.entry);
     }
 
     @SuppressWarnings("unchecked")
@@ -260,16 +150,15 @@ public class RegistryCore {
     public <R, T extends R> Collection<RegistryEntry<R, T>> getAll(
                                                                    ResourceKey<? extends Registry<R>> type) {
         return registrations.get(type).values().stream()
-                .map(r -> (RegistryEntry<R, T>) r.getDelegate())
-                .collect(Collectors.toList());
+                .map(r -> (RegistryEntry<R, T>) r.entry)
+                .toList();
     }
 
     // === Callback Management ===
 
-    @SuppressWarnings("unchecked")
     public <R, T extends R> RegistryCore addRegisterCallback(
                                                              String name, ResourceKey<? extends Registry<R>> registryType, Consumer<? super T> callback) {
-        Registration<R, T> reg = this.<R, T>getRegistrationUnchecked(name, registryType);
+        Registration<R, T> reg = this.getRegistrationUnchecked(name, registryType);
         if (reg == null) {
             registerCallbacks.put(registryType, name, callback);
         } else {
@@ -306,7 +195,7 @@ public class RegistryCore {
                                                 ResourceKey<? extends Registry<R>> registryType,
                                                 GeneratorType<? extends P> type,
                                                 Consumer<? extends P> cons) {
-        if (!doDatagen.get()) return this;
+        if (!doDatagen()) return this;
         @SuppressWarnings("null")
         Consumer<?> existing = datagensByEntry.put(Pair.of(entry, registryType), type, cons);
         if (existing != null) {
@@ -317,7 +206,7 @@ public class RegistryCore {
 
     public <T> RegistryCore addDataGenerator(
                                              GeneratorType<? extends T> type, Consumer<? extends T> cons) {
-        if (doDatagen.get()) {
+        if (doDatagen()) {
             if (provider != null)
                 throw new IllegalStateException(
                         "Cannot add data generator after construction of root generator");
@@ -355,7 +244,7 @@ public class RegistryCore {
     }
 
     public MutableComponent addRawLang(String key, String value) {
-        if (doDatagen.get()) {
+        if (doDatagen()) {
             extraLang.get().add(Pair.of(key, value));
         }
         return Component.translatable(key);
@@ -376,7 +265,7 @@ public class RegistryCore {
 
     @SuppressWarnings("unchecked")
     public <T> void genData(GeneratorType<? extends T> type, T gen) {
-        if (!doDatagen.get()) return;
+        if (!doDatagen()) return;
         if (provider != null) {
             provider.putSubProvider(type, gen);
         }
@@ -384,7 +273,7 @@ public class RegistryCore {
                 .get(type)
                 .forEach(
                         cons -> {
-                            Optional<Pair<String, ResourceKey<? extends Registry<?>>>> entry = null;
+                            Optional<Pair<String, ResourceKey<? extends Registry<?>>>> entry = Optional.empty();
                             if (log.isEnabled(Level.DEBUG, DebugMarkers.DATA)) {
                                 entry = getEntryForGenerator(type, cons);
                                 if (entry.isPresent()) {
@@ -405,7 +294,7 @@ public class RegistryCore {
                             try {
                                 ((Consumer<T>) cons).accept(gen);
                             } catch (Exception e) {
-                                if (entry == null) {
+                                if (entry.isEmpty()) {
                                     entry = getEntryForGenerator(type, cons);
                                 }
                                 Message err;
@@ -443,11 +332,6 @@ public class RegistryCore {
         return this;
     }
 
-    public RegistryCore upsideDownLang(boolean upsideDownLang) {
-        this.upsideDownLang = upsideDownLang;
-        return this;
-    }
-
     public RegistryCore defaultCreativeTab(ResourceKey<CreativeModeTab> creativeModeTab) {
         defaultCreativeModeTab = creativeModeTab;
         return this;
@@ -472,16 +356,10 @@ public class RegistryCore {
                                                           String name,
                                                           ResourceKey<? extends Registry<R>> type,
                                                           Builder<R, T, ?, ?> builder,
-                                                          Supplier<? extends T> creator,
-                                                          Function<DeferredHolder<R, T>, ? extends RegistryEntry<R, T>> entryFactory) {
+                                                          Function<ResourceKey<R>, ? extends T> factory,
+                                                          Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
         Registration<R, T> reg = new Registration<>(
-                Identifier.fromNamespaceAndPath(modid, name), type, creator, entryFactory);
-        log.trace(
-                DebugMarkers.REGISTER,
-                "Captured registration for entry {}:{} of type {}",
-                getModid(),
-                name,
-                type.identifier());
+                type, Identifier.fromNamespaceAndPath(modid, name), factory, entryFactory);
         registerCallbacks
                 .remove(type, name)
                 .forEach(
@@ -491,7 +369,7 @@ public class RegistryCore {
                             reg.addRegisterCallback(unsafeCallback);
                         });
         registrations.put(type, name, reg);
-        return reg.getDelegate();
+        return reg.entry;
     }
 
     // === RegistryCore Creation ===
@@ -524,36 +402,36 @@ public class RegistryCore {
 
     @SyntaxSugar("generic(...).register()")
     public <R, T extends R> RegistryEntry<R, T> simple(
-                                                       @Nonnull String name,
-                                                       @Nonnull ResourceKey<Registry<R>> registryType,
-                                                       @Nonnull Supplier<T> factory) {
+                                                       @NotNull String name,
+                                                       @NotNull ResourceKey<Registry<R>> registryType,
+                                                       @NotNull Function<ResourceKey<R>, T> factory) {
         return generic(name, registryType, factory).register();
     }
 
     @StandardAPI
     public <R, T extends R> NoConfigBuilder<R, T, RegistryCore> generic(
-                                                                        @Nonnull String name,
-                                                                        @Nonnull ResourceKey<Registry<R>> registryType,
-                                                                        @Nonnull Supplier<T> factory) {
+                                                                        @NotNull String name,
+                                                                        @NotNull ResourceKey<Registry<R>> registryType,
+                                                                        @NotNull Function<ResourceKey<R>, T> factory) {
         return entry(
                 callback -> new NoConfigBuilder<>(this, this, name, callback, registryType, factory));
     }
 
     @SyntaxSugar("generic(...).register()")
     public <R, T extends R, P> RegistryEntry<R, T> simple(
-                                                          @Nonnull P parent,
-                                                          @Nonnull String name,
-                                                          @Nonnull ResourceKey<Registry<R>> registryType,
-                                                          @Nonnull Supplier<T> factory) {
+                                                          @NotNull P parent,
+                                                          @NotNull String name,
+                                                          @NotNull ResourceKey<Registry<R>> registryType,
+                                                          @NotNull Function<ResourceKey<R>, T> factory) {
         return generic(parent, name, registryType, factory).register();
     }
 
     @StandardAPI
     public <R, T extends R, P> NoConfigBuilder<R, T, P> generic(
-                                                                @Nonnull P parent,
-                                                                @Nonnull String name,
-                                                                @Nonnull ResourceKey<Registry<R>> registryType,
-                                                                @Nonnull Supplier<T> factory) {
+                                                                @NotNull P parent,
+                                                                @NotNull String name,
+                                                                @NotNull ResourceKey<Registry<R>> registryType,
+                                                                @NotNull Function<ResourceKey<R>, T> factory) {
         return entry(
                 callback -> new NoConfigBuilder<>(this, parent, name, callback, registryType, factory));
     }
@@ -562,8 +440,7 @@ public class RegistryCore {
 
     @StandardAPI("Returns an ItemBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Item> ItemBuilder<T, RegistryCore> item(
-                                              @Nonnull String name,
-                                              @Nonnull Function<Item.Properties, T> factory) {
+                                                              @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
         return item(this, name, factory);
     }
 
@@ -576,7 +453,9 @@ public class RegistryCore {
     }
 
     protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
-                                                                   @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
+                                                                   @Nonnull P parent,
+                                                                   @Nonnull String name,
+                                                                   @Nonnull BuilderCallback callback,
                                                                    @Nonnull Function<Item.Properties, T> factory) {
         return ItemBuilder.create(this, parent, name, callback, factory);
     }
@@ -585,8 +464,7 @@ public class RegistryCore {
 
     @StandardAPI("Returns a BlockBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Block> BlockBuilder<T, RegistryCore> block(
-                                                 @Nonnull String name,
-                                                 @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+                                                                 @Nonnull String name, @Nonnull Function<BlockBehaviour.Properties, T> factory) {
         return block(this, name, factory);
     }
 
@@ -598,7 +476,9 @@ public class RegistryCore {
     }
 
     protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
-                                                                      @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
+                                                                      @Nonnull P parent,
+                                                                      @Nonnull String name,
+                                                                      @Nonnull BuilderCallback callback,
                                                                       @Nonnull Function<BlockBehaviour.Properties, T> factory) {
         return BlockBuilder.create(this, parent, name, callback, factory);
     }
@@ -607,8 +487,7 @@ public class RegistryCore {
 
     @StandardAPI("Returns a BlockEntityBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends BlockEntity> BlockEntityBuilder<T, RegistryCore> blockEntity(
-                                                                   @Nonnull String name,
-                                                                   @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
+                                                                                   @Nonnull String name, @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
         return blockEntity(this, name, factory);
     }
 
@@ -620,7 +499,9 @@ public class RegistryCore {
     }
 
     protected <T extends BlockEntity, P> BlockEntityBuilder<T, P> newBlockEntityBuilder(
-                                                                                        @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
+                                                                                        @Nonnull P parent,
+                                                                                        @Nonnull String name,
+                                                                                        @Nonnull BuilderCallback callback,
                                                                                         @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
         return BlockEntityBuilder.create(this, parent, name, callback, factory);
     }
@@ -629,18 +510,16 @@ public class RegistryCore {
 
     @StandardAPI("Returns a FluidBuilder for fluent chain configuration. Call .register() to finalise.")
     public FluidBuilder<BaseFlowingFluid.Flowing, RegistryCore> fluid(
-                                                      @Nonnull String name,
-                                                      @Nonnull Identifier stillTexture,
-                                                      @Nonnull Identifier flowingTexture) {
+                                                                      @Nonnull String name, @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture) {
         return fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new);
     }
 
     @StandardAPI("Returns a FluidBuilder with custom FluidFactory for fluent chain configuration. Call .register() to finalise.")
     public <T extends BaseFlowingFluid> FluidBuilder<T, RegistryCore> fluid(
-                                                            @Nonnull String name,
-                                                            @Nonnull Identifier stillTexture,
-                                                            @Nonnull Identifier flowingTexture,
-                                                            @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                            @Nonnull String name,
+                                                                            @Nonnull Identifier stillTexture,
+                                                                            @Nonnull Identifier flowingTexture,
+                                                                            @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
         return fluid(this, name, stillTexture, flowingTexture, fluidFactory);
     }
 
@@ -651,27 +530,28 @@ public class RegistryCore {
                                                                     @Nonnull Identifier stillTexture,
                                                                     @Nonnull Identifier flowingTexture,
                                                                     @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
-        return entry(
-                callback -> newFluidBuilder(parent, name, callback, fluidFactory))
+        return entry(callback -> newFluidBuilder(parent, name, callback, fluidFactory))
                 .clientExtension(stillTexture, flowingTexture);
     }
 
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
-                                                                                  @Nonnull P parent, @Nonnull String name, @Nonnull BuilderCallback callback,
-                                                                                  @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                                 @Nonnull P parent,
+                                                                                 @Nonnull String name,
+                                                                                 @Nonnull BuilderCallback callback,
+                                                                                 @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
         return FluidBuilder.create(this, parent, name, callback, FluidType::new, fluidFactory);
     }
 
     // --- Group ---
 
     @StandardAPI
-    public Group.Builder group(@Nonnull String name) {
+    public Group.Builder group(@NotNull String name) {
         return new Group.Builder(this, name);
     }
 
     // --- Creative Tab ---
 
-    @SyntaxSugar("defaultCreativeTab(name, tab -> {})")
+    @StandardAPI
     public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> defaultCreativeTab(
                                                                                               String name) {
         return defaultCreativeTab(name, tab -> {});
@@ -680,12 +560,10 @@ public class RegistryCore {
     @StandardAPI
     public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> defaultCreativeTab(
                                                                                               String name, Consumer<CreativeModeTab.Builder> config) {
-        this.defaultCreativeModeTab = ResourceKey.create(
-                Registries.CREATIVE_MODE_TAB, Identifier.fromNamespaceAndPath(this.modid, name));
         return this.generic(
                 name,
                 Registries.CREATIVE_MODE_TAB,
-                () -> {
+                k -> {
                     var builder = CreativeModeTab.builder()
                             .icon(
                                     () -> getAll(Registries.ITEM).stream()
@@ -696,53 +574,116 @@ public class RegistryCore {
                             .title(
                                     this.addLang(
                                             "itemGroup",
-                                            this.defaultCreativeModeTab.identifier(),
+                                            k.identifier(),
                                             RegistryLibLangProvider.toEnglishName(name)));
                     config.accept(builder);
                     return builder.build();
                 });
     }
 
-    private static class Registration<R, T extends R> {
+    static void onRegister(RegisterEvent event) {
+        var type = event.getRegistryKey();
+        REGISTRY_CORES
+                .values()
+                .forEach(
+                        core -> {
+                            if (!core.registerCallbacks.isEmpty()) {
+                                core.registerCallbacks
+                                        .getMap()
+                                        .forEach(
+                                                (k, v) -> log.warn(
+                                                        "Found {} unused register callback(s) for entry {} [{}]. Was the entry ever registered?",
+                                                        v.size(),
+                                                        k,
+                                                        k.identifier()));
+                                core.registerCallbacks.clear();
+                                if (isDevEnvironment()) {
+                                    throw new IllegalStateException("Found unused register callbacks, see logs");
+                                }
+                            }
+                            var registrationsForType = core.registrations.get(type);
+                            if (!registrationsForType.isEmpty()) {
+                                log.trace(
+                                        DebugMarkers.REGISTER,
+                                        "({}) Registering {} known objects of type {}",
+                                        core.getModid(),
+                                        registrationsForType.size(),
+                                        type.identifier());
+                                registrationsForType
+                                        .values()
+                                        .forEach(
+                                                r -> {
+                                                    try {
+                                                        r.register((ResourceKey) type, event);
+                                                    } catch (Exception ex) {
+                                                        String err = "Unexpected error while registering entry " + r.key.identifier() + " to registry " + event.getRegistryKey().identifier();
+                                                        if (core.skipErrors) {
+                                                            log.error(DebugMarkers.REGISTER, err);
+                                                        } else {
+                                                            throw new RuntimeException(err, ex);
+                                                        }
+                                                    }
+                                                });
+                            }
+                        });
+    }
 
-        private final Identifier name;
-        private final ResourceKey<? extends Registry<R>> type;
-        private final Supplier<? extends T> creator;
-        private final RegistryEntry<R, T> delegate;
-        private final List<Consumer<? super T>> callbacks = new ArrayList<>();
+    static void onRegisterLate(RegisterEvent event) {
+        var type = event.getRegistryKey();
+        REGISTRY_CORES
+                .values()
+                .forEach(
+                        core -> {
+                            core.afterRegisterCallbacks.remove(type).forEach(Runnable::run);
+                            core.completedRegistrations.add(type);
+                        });
+    }
 
-        Registration(
-                     Identifier name,
-                     ResourceKey<? extends Registry<R>> type,
-                     Supplier<? extends T> creator,
-                     Function<DeferredHolder<R, T>, ? extends RegistryEntry<R, T>> entryFactory) {
-            this.name = name;
-            this.type = type;
-            this.creator = Lazy.of(creator);
-            this.delegate = entryFactory.apply(DeferredHolder.create(type, name));
+    static void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
+        var modifier = new CreativeModeTabModifier(
+                event::getFlags, event::hasPermissions, event::accept, event::getParameters);
+        REGISTRY_CORES
+                .values()
+                .forEach(
+                        core -> core.creativeModeTabModifiers
+                                .get(event.getTabKey())
+                                .forEach(value -> value.accept(modifier)));
+    }
+
+    private void onGatherData(GatherDataEvent.Client event) {
+        extraLang.get();
+        event
+                .getGenerator()
+                .addProvider(true, provider = new RegistryLibDataProvider(this, modid, event));
+    }
+
+    private static final class Registration<R, T extends R> {
+
+        private final ResourceKey<R> key;
+        private final RegistryEntry<R, T> entry;
+        private Function<ResourceKey<R>, ? extends T> creator;
+        private List<Consumer<? super T>> callbacks = new ArrayList<>();
+
+        private Registration(
+                             ResourceKey<? extends Registry<R>> type,
+                             Identifier name,
+                             Function<ResourceKey<R>, ? extends T> creator,
+                             Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
+            this.key = ResourceKey.create(type, name);
+            this.creator = creator;
+            this.entry = entryFactory.apply(this.key);
         }
 
-        Identifier getName() {
-            return name;
-        }
-
-        ResourceKey<? extends Registry<R>> getType() {
-            return type;
-        }
-
-        RegistryEntry<R, T> getDelegate() {
-            return delegate;
-        }
-
-        void register(RegisterEvent event) {
-            T entry = creator.get();
-            event.register(type, rh -> rh.register(name, entry));
+        private void register(ResourceKey<? extends Registry<R>> type, RegisterEvent event) {
+            T entry = creator.apply(key);
+            this.entry.set(entry);
+            event.register(type, rh -> rh.register(key.identifier(), entry));
             callbacks.forEach(c -> c.accept(entry));
-            callbacks.clear();
+            creator = null;
+            callbacks = null;
         }
 
-        void addRegisterCallback(Consumer<? super T> callback) {
-            Preconditions.checkNotNull(callback, "Callback must not be null");
+        private void addRegisterCallback(Consumer<? super T> callback) {
             callbacks.add(callback);
         }
     }

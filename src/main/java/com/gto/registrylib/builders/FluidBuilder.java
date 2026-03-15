@@ -26,7 +26,6 @@ import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -36,13 +35,11 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -207,7 +204,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @SyntaxSugar("lang(type, f -> f.getFluidType().getDescriptionId(), name)")
     public FluidBuilder<T, P> lang(
-            @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+                                   @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
         return lang(type, f -> f.getFluidType().getDescriptionId(), name);
     }
 
@@ -244,7 +241,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     }
 
     @StandardAPI("Configures a BlockBuilder for the fluid block sub-entry via lambda.")
-    public FluidBuilder<T, P> block(@Nonnull Consumer<BlockBuilder<LiquidBlock, FluidBuilder<T, P>>> consumer) {
+    public FluidBuilder<T, P> block(
+                                    @Nonnull Consumer<BlockBuilder<LiquidBlock, FluidBuilder<T, P>>> consumer) {
         return block(LiquidBlock::new, consumer);
     }
 
@@ -290,7 +288,10 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
-    /** Sets a default creative tab that will be applied to any bucket item created via {@link #bucket}. */
+    /**
+     * Sets a default creative tab that will be applied to any bucket item created via {@link
+     * #bucket}.
+     */
     @StandardAPI
     public FluidBuilder<T, P> defaultBucketTab(@Nonnull ResourceKey<CreativeModeTab> tab) {
         this.defaultBucketTab = tab;
@@ -298,7 +299,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     }
 
     @StandardAPI("Configures an ItemBuilder for the bucket sub-entry via lambda.")
-    public FluidBuilder<T, P> bucket(@Nonnull Consumer<ItemBuilder<BucketItem, FluidBuilder<T, P>>> consumer) {
+    public FluidBuilder<T, P> bucket(
+                                     @Nonnull Consumer<ItemBuilder<BucketItem, FluidBuilder<T, P>>> consumer) {
         return bucket(BucketItem::new, consumer);
     }
 
@@ -390,32 +392,17 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     private BaseFlowingFluid.Properties makeProperties() {
         Supplier<? extends BaseFlowingFluid> source = this.source;
-        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(
-                fluidType, source == null ? null : source::get, asSupplier());
+        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, source, asSupplier());
         fluidProperties.accept(ret);
         return ret;
     }
 
     private FluidType.Properties makeTypeProperties() {
         FluidType.Properties properties = FluidType.Properties.create();
-        Optional<RegistryEntry<Block, Block>> block = getOwner().getOptional(sourceName, Registries.BLOCK);
         this.typeProperties.accept(properties);
-
-        if (block.isPresent() && block.get().isBound()) {
-            properties.descriptionId(block.get().get().getDescriptionId());
-            setData(ProviderType.LANG, (ctx, prov) -> {});
-        } else {
-            properties.descriptionId(
-                    Identifier.fromNamespaceAndPath(getOwner().getModid(), sourceName)
-                            .toLanguageKey("fluid"));
-        }
-
+        properties.descriptionId(
+                Identifier.fromNamespaceAndPath(getOwner().getModid(), sourceName).toLanguageKey("fluid"));
         return properties;
-    }
-
-    @Override
-    protected T createEntry() {
-        return fluidFactory.create(makeProperties());
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -423,7 +410,12 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @StandardAPI
     public FluidEntry<T> register() {
         if (this.registerType) {
-            getOwner().simple(this, this.sourceName, NeoForgeRegistries.Keys.FLUID_TYPES, this.fluidType);
+            getOwner()
+                    .simple(
+                            this,
+                            this.sourceName,
+                            NeoForgeRegistries.Keys.FLUID_TYPES,
+                            _ -> this.fluidType.get());
         }
 
         if (defaultSource == Boolean.TRUE) {
@@ -438,7 +430,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
         Supplier<? extends BaseFlowingFluid> source = this.source;
         if (source != null) {
-            getCallback().accept(sourceName, Registries.FLUID, (FluidBuilder) this, source::get);
+            getCallback().accept(sourceName, Registries.FLUID, (FluidBuilder) this, _ -> source.get());
         } else {
             throw new IllegalStateException("Fluid must have a source version: " + getName());
         }
@@ -447,8 +439,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     }
 
     @Override
-    protected RegistryEntry<Fluid, T> createEntryWrapper(DeferredHolder<Fluid, T> delegate) {
-        return new FluidEntry<>(getOwner(), delegate);
+    protected T createEntry(ResourceKey<Fluid> key) {
+        return fluidFactory.create(makeProperties());
+    }
+
+    @Override
+    protected RegistryEntry<Fluid, T> createEntryWrapper(ResourceKey<Fluid> key) {
+        return new FluidEntry<>(getOwner(), key);
     }
 
     // --- DefaultFluidTypeExtension ---

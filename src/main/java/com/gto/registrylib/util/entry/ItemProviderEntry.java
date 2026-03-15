@@ -1,17 +1,16 @@
 package com.gto.registrylib.util.entry;
 
-import com.gto.registrylib.RegistryCore;
-
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
-public class ItemProviderEntry<R extends ItemLike, T extends R> extends RegistryEntry<R, T>
+public class ItemProviderEntry<T extends ItemLike, S extends T> extends RegistryEntry<T, S>
                               implements ItemLike {
 
-    public ItemProviderEntry(RegistryCore owner, DeferredHolder<R, T> delegate) {
-        super(owner, delegate);
+    public ItemProviderEntry(ResourceKey<T> key) {
+        super(key);
     }
 
     public ItemStack asStack() {
@@ -22,16 +21,20 @@ public class ItemProviderEntry<R extends ItemLike, T extends R> extends Registry
         return new ItemStack(this, count);
     }
 
-    public boolean isIn(ItemStack stack) {
-        return value().asItem() == stack.getItem();
+    public boolean is(ItemStack stack) {
+        return value.asItem() == stack.getItem();
+    }
+
+    public boolean is(Holder<Item> holder) {
+        return value.asItem() == holder.value();
     }
 
     public boolean is(Item item) {
-        return value().asItem() == item;
+        return value.asItem() == item;
     }
 
     @Override
     public Item asItem() {
-        return value().asItem();
+        return value.asItem();
     }
 }

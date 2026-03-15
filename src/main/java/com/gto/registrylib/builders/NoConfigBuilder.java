@@ -5,12 +5,12 @@ import com.gto.registrylib.RegistryCore;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
 
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 public class NoConfigBuilder<R, T extends R, P>
                             extends AbstractBuilder<R, T, P, NoConfigBuilder<R, T, P>> {
 
-    private final Supplier<T> factory;
+    private final Function<ResourceKey<R>, T> factory;
 
     public NoConfigBuilder(
                            RegistryCore owner,
@@ -18,13 +18,13 @@ public class NoConfigBuilder<R, T extends R, P>
                            String name,
                            BuilderCallback callback,
                            ResourceKey<? extends Registry<R>> registryType,
-                           Supplier<T> factory) {
+                           Function<ResourceKey<R>, T> factory) {
         super(owner, parent, name, callback, registryType);
         this.factory = factory;
     }
 
     @Override
-    protected T createEntry() {
-        return factory.get();
+    protected T createEntry(ResourceKey<R> key) {
+        return factory.apply(key);
     }
 }

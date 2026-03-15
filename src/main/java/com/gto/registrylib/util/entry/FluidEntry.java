@@ -3,26 +3,24 @@ package com.gto.registrylib.util.entry;
 import com.gto.registrylib.RegistryCore;
 
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
-import java.util.Optional;
-
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class FluidEntry<T extends BaseFlowingFluid> extends RegistryEntry<Fluid, T> {
 
     private final @Nullable BlockEntry<? extends Block> block;
 
-    public FluidEntry(RegistryCore owner, DeferredHolder<Fluid, T> delegate) {
-        super(owner, delegate);
+    public FluidEntry(RegistryCore owner, ResourceKey<Fluid> key) {
+        super(key);
         BlockEntry<? extends Block> block = null;
         try {
-            block = BlockEntry.cast(getSibling(BuiltInRegistries.BLOCK));
+            block = BlockEntry.cast(getSibling(owner, BuiltInRegistries.BLOCK));
         } catch (IllegalArgumentException e) {
             // No block sibling
         }
@@ -31,25 +29,26 @@ public class FluidEntry<T extends BaseFlowingFluid> extends RegistryEntry<Fluid,
 
     @Override
     public <R> boolean is(R entry) {
-        return get().isSame((Fluid) entry);
+        return value.isSame((Fluid) entry);
     }
 
     @SuppressWarnings("unchecked")
     public <S extends BaseFlowingFluid> S getSource() {
-        return (S) get().getSource();
+        return (S) value.getSource();
     }
 
     public FluidType getType() {
-        return get().getFluidType();
+        return value.getFluidType();
+    }
+
+    @SuppressWarnings("unchecked")
+    public <B extends Block> B getBlock() {
+        if (block == null) return null;
+        return (B) block.value;
     }
 
     @SuppressWarnings({ "unchecked", "null" })
-    public <B extends Block> Optional<B> getBlock() {
-        return (Optional<B>) Optional.ofNullable(block).map(RegistryEntry::get);
-    }
-
-    @SuppressWarnings({ "unchecked", "null" })
-    public <I extends Item> Optional<I> getBucket() {
-        return Optional.ofNullable((I) get().getBucket());
+    public <I extends Item> I getBucket() {
+        return (I) value.getBucket();
     }
 }

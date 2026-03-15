@@ -4,52 +4,62 @@ import com.gto.registrylib.RegistryCore;
 
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
-import net.neoforged.neoforge.registries.DeferredHolder;
 
-import java.util.Objects;
+import lombok.Getter;
+
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class RegistryEntry<R, S extends R> extends DeferredHolder<R, S> implements Supplier<S> {
+public class RegistryEntry<T, S extends T> implements Supplier<S> {
 
-    private final RegistryCore owner;
+    @Getter
+    protected final ResourceKey<T> key;
 
-    public RegistryEntry(RegistryCore owner, DeferredHolder<R, S> key) {
-        super(key.getKey());
+    protected S value;
 
-        if (owner == null) throw new NullPointerException("Owner must not be null");
-        this.owner = owner;
+    public RegistryEntry(ResourceKey<T> key) {
+        this.key = key;
     }
 
     public <X, Y extends X> RegistryEntry<X, Y> getSibling(
-                                                           ResourceKey<? extends Registry<X>> registryType) {
+                                                           RegistryCore owner, ResourceKey<? extends Registry<X>> registryType) {
         return owner.get(key.identifier().getPath(), registryType);
     }
 
-    public <X, Y extends X> RegistryEntry<X, Y> getSibling(Registry<X> registry) {
-        return getSibling(registry.key());
+    public <X, Y extends X> RegistryEntry<X, Y> getSibling(RegistryCore owner, Registry<X> registry) {
+        return getSibling(owner, registry.key());
     }
 
-    public Optional<RegistryEntry<R, S>> filter(Predicate<R> predicate) {
-        Objects.requireNonNull(predicate);
-        if (predicate.test(value())) {
+    public Optional<RegistryEntry<T, S>> filter(Predicate<T> predicate) {
+        if (predicate.test(value)) {
             return Optional.of(this);
         }
         return Optional.empty();
     }
 
     public <X> boolean is(X entry) {
-        return value() == entry;
+        return value == entry;
     }
 
     @SuppressWarnings("unchecked")
     protected static <E extends RegistryEntry<?, ?>> E cast(
                                                             Class<? super E> clazz, RegistryEntry<?, ?> entry) {
-        if (clazz.isInstance(entry)) {
+        try {
             return (E) entry;
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException(
+                    "Could not convert RegistryEntry: expecting " + clazz + ", found " + entry.getClass());
         }
-        throw new IllegalArgumentException(
-                "Could not convert RegistryEntry: expecting " + clazz + ", found " + entry.getClass());
+    }
+
+    @Override
+    public S get() {
+        return value;
+    }
+
+    public void set(S value) {
+        if (this.value != null) throw new IllegalStateException("key: " + key + " value already bound");
+        this.value = value;
     }
 }

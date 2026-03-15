@@ -15,6 +15,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -22,6 +24,7 @@ import java.util.function.Supplier;
 public final class DataIngredient {
 
     private final Ingredient parent;
+    @Getter
     private final Identifier id;
     private final Function<RegistryLibRecipeProvider, Criterion<InventoryChangeTrigger.TriggerInstance>> criteriaFactory;
 
@@ -41,10 +44,6 @@ public final class DataIngredient {
         this.parent = parent;
         this.id = id;
         this.criteriaFactory = prov -> RegistryLibRecipeProvider.inventoryTrigger(predicates);
-    }
-
-    public Identifier getId() {
-        return id;
     }
 
     public Criterion<InventoryChangeTrigger.TriggerInstance> getCriterion(

@@ -16,8 +16,9 @@ import net.minecraft.world.item.Items;
 /**
  * 使用 Advancement API 全部功能的复杂示例。
  *
- * <p>涵盖：多个 Tab（背景不同）/ 三种 AdvancementType（TASK / GOAL / CHALLENGE）/
- * adv.title() 与 adv.desc() 国际化 / 多层级进度树 / 隐藏成就。
+ * <p>
+ * 涵盖：多个 Tab（背景不同）/ 三种 AdvancementType（TASK / GOAL / CHALLENGE）/ adv.title() 与 adv.desc() 国际化 /
+ * 多层级进度树 / 隐藏成就。
  *
  * <pre>
  * Tab 1 — RegistryCore Basics
@@ -46,7 +47,9 @@ public class FullAdvancementExample {
                                     Identifier.withDefaultNamespace(
                                             "textures/gui/advancements/backgrounds/stone.png"),
                                     AdvancementType.TASK,
-                                    false, false, false)
+                                    false,
+                                    false,
+                                    false)
                             .addCriterion(
                                     "has_crafting_table",
                                     InventoryChangeTrigger.TriggerInstance.hasItems(Items.CRAFTING_TABLE))
@@ -61,7 +64,9 @@ public class FullAdvancementExample {
                                     adv.desc(cat, "basics/get_coin", "Obtain a Copper Coin"),
                                     null,
                                     AdvancementType.TASK,
-                                    true, true, false)
+                                    true,
+                                    true,
+                                    false)
                             .addCriterion(
                                     "has_coin",
                                     InventoryChangeTrigger.TriggerInstance.hasItems(
@@ -77,11 +82,12 @@ public class FullAdvancementExample {
                                     adv.desc(cat, "basics/get_magic_wand", "Craft a Magic Wand"),
                                     null,
                                     AdvancementType.GOAL,
-                                    true, true, false)
+                                    true,
+                                    true,
+                                    false)
                             .addCriterion(
                                     "has_magic_wand",
-                                    InventoryChangeTrigger.TriggerInstance.hasItems(
-                                            FullItemExample.MAGIC_WAND.get()))
+                                    InventoryChangeTrigger.TriggerInstance.hasItems(FullItemExample.MAGIC_WAND.get()))
                             .save(adv, Identifier.fromNamespaceAndPath(cat, "basics/get_magic_wand"));
 
                     // ── Tab 2: Advanced Crafting ─────────────────────────────────
@@ -94,10 +100,11 @@ public class FullAdvancementExample {
                                     Identifier.withDefaultNamespace(
                                             "textures/gui/advancements/backgrounds/nether.png"),
                                     AdvancementType.TASK,
-                                    false, false, false)
+                                    false,
+                                    false,
+                                    false)
                             .addCriterion(
-                                    "has_iron",
-                                    InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
+                                    "has_iron", InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
                             .save(adv, Identifier.fromNamespaceAndPath(cat, "advanced/root"));
 
                     // GOAL：挖到魔法矿石
@@ -109,7 +116,9 @@ public class FullAdvancementExample {
                                     adv.desc(cat, "advanced/mine_magic_ore", "Mine a block of Magic Ore"),
                                     null,
                                     AdvancementType.GOAL,
-                                    true, true, false)
+                                    true,
+                                    true,
+                                    false)
                             .addCriterion(
                                     "has_magic_ore",
                                     InventoryChangeTrigger.TriggerInstance.hasItems(
@@ -125,7 +134,9 @@ public class FullAdvancementExample {
                                     adv.desc(cat, "advanced/build_timer", "Craft a Tier 3 Timer"),
                                     null,
                                     AdvancementType.CHALLENGE,
-                                    true, true, true)
+                                    true,
+                                    true,
+                                    true)
                             .addCriterion(
                                     "has_timer_3",
                                     InventoryChangeTrigger.TriggerInstance.hasItems(

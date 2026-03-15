@@ -23,16 +23,15 @@ import net.minecraft.world.level.Level;
 /**
  * 使用 ItemBuilder 全部 API 的复杂物品示例。
  *
- * <p>涵盖：properties / initialProperties / lang / defaultModel / defaultLang /
- * tab / removeTab / model / recipe / tooltip（两种重载）/ attach / tag /
- * 独立 RootNodeRef / CompositeItemAttachment。
+ * <p>
+ * 涵盖：properties / initialProperties / lang / defaultModel / defaultLang / tab / removeTab /
+ * model / recipe / tooltip（两种重载）/ attach / tag / 独立 RootNodeRef / CompositeItemAttachment。
  */
 public class FullItemExample {
 
     // ── 独立 Tooltip 根节点 ──────────────────────────────────────────────────
 
-    public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
-            RegistryLibTest.MOD_ID + ":detail_box", 10, true);
+    public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(RegistryLibTest.MOD_ID + ":detail_box", 10, true);
 
     // ── CompositeItem 附件 ──────────────────────────────────────────────────
 
@@ -40,7 +39,7 @@ public class FullItemExample {
 
         @Override
         public InteractionResult use(
-                CompositeItem item, Level level, Player player, InteractionHand hand) {
+                                     CompositeItem item, Level level, Player player, InteractionHand hand) {
             if (!level.isClientSide()) {
                 player.sendSystemMessage(Component.literal("Inspecting magic wand..."));
             }
@@ -49,7 +48,7 @@ public class FullItemExample {
 
         @Override
         public void collectTooltipNodes(
-                CompositeItem item, ItemStack stack, TooltipNodeCollector collector) {
+                                        CompositeItem item, ItemStack stack, TooltipNodeCollector collector) {
             collector.node(new SubNode.Basic(Component.literal("§eRight-click to inspect"), 100));
         }
     }
@@ -73,31 +72,26 @@ public class FullItemExample {
             // --- removeTab: 演示从某个标签页中移除（此处移除后又加回，仅展示 API） ---
             .removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
             .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-            // --- recipe: 通过 DataGen 生成一个合成配方 ---
-            .recipe((ctx, prov) -> {
-                // ShapedRecipeBuilder.shaped(...) 可在此处添加配方
-                // 此处留空仅展示 API 调用方式
-            })
             // --- tag: 给物品添加原版标签 ---
             .tag(ItemTags.DURABILITY_ENCHANTABLE)
             // --- tooltip（快捷版）: 添加单行 Tooltip ---
             .tooltip(Component.literal("§5A powerful magical artifact"))
             // --- tooltip（完整版）: 动态多行 Tooltip + 独立根节点 ---
-            .tooltip((collector, stack) -> {
-                collector.node(
-                        new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);
-                collector.node(
-                        new SubNode.Basic(
-                                Component.literal("§7Durability: §f" + (stack.getMaxDamage() - stack.getDamageValue())),
-                                10));
-                // 向独立浮窗写入信息
-                collector.node(
-                        DETAIL_BOX,
-                        new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
-                collector.node(
-                        DETAIL_BOX,
-                        new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
-            })
+            .tooltip(
+                    (collector, stack) -> {
+                        collector.node(
+                                new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);
+                        collector.node(
+                                new SubNode.Basic(
+                                        Component.literal(
+                                                "§7Durability: §f" + (stack.getMaxDamage() - stack.getDamageValue())),
+                                        10));
+                        // 向独立浮窗写入信息
+                        collector.node(
+                                DETAIL_BOX, new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
+                        collector.node(
+                                DETAIL_BOX, new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
+                    })
             // --- attach: 绑定 CompositeItem 附件 ---
             .attach(new InspectAttachment())
             .register();
