@@ -6,14 +6,13 @@ permalink: /register-items/
 
 # Register Items
 
-RegistryLib 使用流畅的 Builder 风格注册物品。你只需提供一个 id、一个物品工厂和一个配置 Consumer，
-即可在同一处完成属性设置、语言、模型、标签页、配方、Tooltip 及 CompositeItem 附件等所有配置。
+RegistryLib registers items using a fluent Builder pattern. Provide an id, an item factory, and a configuration Consumer to complete all setup — properties, language, model, creative tab, recipe, tooltip, and CompositeItem attachments — in one place.
 
 ---
 
 ## Simple Example
 
-最基础的物品注册：一个物品 + 一行语言。
+The simplest item registration: one item and a display name.
 
 ```java
 public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB.item(
@@ -28,7 +27,7 @@ public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB.it
 
 ## Full Example
 
-使用 ItemBuilder 全部 API 的 CompositeItem 示例，包含属性、Tooltip 系统、附件、标签等。
+A CompositeItem example exercising every ItemBuilder API, including properties, the tooltip system, attachments, and tags.
 
 ```java
 public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB.item(
@@ -42,7 +41,7 @@ public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGIST
             item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
             item.removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES);
             item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-            item.recipe((ctx, prov) -> { /* ShapedRecipeBuilder 等 */ });
+            item.recipe((ctx, prov) -> { /* ShapedRecipeBuilder, etc. */ });
             item.tag(ItemTags.DURABILITY_ENCHANTABLE);
             item.tooltip(Component.literal("§5A powerful magical artifact"));
             item.tooltip((collector, stack) -> {
@@ -66,31 +65,31 @@ public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGIST
 
 ### `initialProperties(Supplier<Item.Properties>)`
 
-提供一个全新的 `Item.Properties` 作为基础，替换默认的空 Properties。
+Provides a fresh `Item.Properties` as the base, replacing the default empty Properties.
 
 ```java
 item.initialProperties(() -> new Item.Properties().stacksTo(1));
 ```
 
-用于需要在属性创建阶段就确定某些值的场景（如最大堆叠数）。
+Use this when certain values must be fixed at property-creation time (e.g. max stack size).
 
 ---
 
 ### `properties(UnaryOperator<Item.Properties>)`
 
-在已有 Properties 基础上追加修改。可多次调用，效果叠加。
+Appends modifications on top of the existing Properties. Can be called multiple times; effects accumulate.
 
 ```java
 item.properties(p -> p.fireResistant());
 ```
 
-与 `initialProperties` 互补：先用 `initialProperties` 设基础，再用 `properties` 叠加调整。
+Complements `initialProperties`: use `initialProperties` to set the foundation, then `properties` to layer adjustments on top.
 
 ---
 
 ### `lang(String)`
 
-设置英文显示名称，自动写入语言文件。
+Sets the display name and writes it to the language file automatically.
 
 ```java
 item.lang("Copper Coin");
@@ -100,7 +99,7 @@ item.lang("Copper Coin");
 
 ### `defaultLang()`
 
-从注册名自动推导英文名（如 `copper_coin` → `Copper Coin`）。
+Derives the display name automatically from the registry name (e.g. `copper_coin` → `Copper Coin`).
 
 ```java
 item.defaultLang();
@@ -110,19 +109,19 @@ item.defaultLang();
 
 ### `defaultModel()`
 
-使用默认扁平物品模型（`FLAT_ITEM`）。
+Uses the default flat item model (`FLAT_ITEM`).
 
 ```java
 item.defaultModel();
 ```
 
-对普通材料类物品（如矿粉、宝石）足够使用，不需要自定义模型。
+Sufficient for common material items (e.g. dust, gems) that don't need a custom model.
 
 ---
 
 ### `model(Supplier<BiConsumer<DataGenContext, RegistryLibItemModelGenerator>>)`
 
-自定义物品模型生成逻辑。
+Customises the item model generation logic.
 
 ```java
 item.model(() -> (ctx, prov) -> {
@@ -130,13 +129,13 @@ item.model(() -> (ctx, prov) -> {
 });
 ```
 
-当需要多层纹理、手持模型或非标准模型时使用。
+Use this when you need a multi-layer texture, a held-item override, or a non-standard model.
 
 ---
 
 ### `tab(ResourceKey<CreativeModeTab>)`
 
-将物品加入指定创造标签页，使用默认排序。
+Adds the item to the specified creative tab using default ordering.
 
 ```java
 item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
@@ -146,7 +145,7 @@ item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
 
 ### `tab(ResourceKey<CreativeModeTab>, BiConsumer)`
 
-将物品加入标签页，并通过 modifier 控制排列位置。
+Adds the item to a creative tab and controls its position via a modifier.
 
 ```java
 item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES, (ctx, modifier) -> {
@@ -154,13 +153,13 @@ item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES, (ctx, modifier) -> {
 });
 ```
 
-第二个参数可指定插入位置（排在某物品之后）。
+The second argument specifies the insertion position (placed after a given item).
 
 ---
 
 ### `removeTab(ResourceKey<CreativeModeTab>)`
 
-从指定标签页中移除物品。
+Removes the item from the specified creative tab.
 
 ```java
 item.removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES);
@@ -170,7 +169,7 @@ item.removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES);
 
 ### `recipe(BiConsumer<DataGenContext, RegistryLibRecipeProvider>)`
 
-通过 DataGen 生成配方。
+Generates a recipe through DataGen.
 
 ```java
 item.recipe((ctx, prov) -> {
@@ -182,7 +181,7 @@ item.recipe((ctx, prov) -> {
 
 ### `tag(TagKey<Item>...)`
 
-给物品添加一个或多个标签。
+Adds one or more tags to the item.
 
 ```java
 item.tag(ItemTags.DURABILITY_ENCHANTABLE);
@@ -192,19 +191,19 @@ item.tag(ItemTags.DURABILITY_ENCHANTABLE);
 
 ### `tooltip(Component)`
 
-添加单行静态 Tooltip。
+Adds a single-line static tooltip.
 
 ```java
 item.tooltip(Component.literal("§5A powerful magical artifact"));
 ```
 
-最简单的 Tooltip 方式，适合一行描述。
+The simplest tooltip option, suitable for a one-line description.
 
 ---
 
 ### `tooltip(TooltipNodeCollector.TooltipConfig)`
 
-注册动态多行 Tooltip，支持排序优先级和独立根节点。
+Registers a dynamic multi-line tooltip with support for sort priority and independent root nodes.
 
 ```java
 item.tooltip((collector, stack) -> {
@@ -213,16 +212,16 @@ item.tooltip((collector, stack) -> {
 });
 ```
 
-`collector.node(rootRef, subNode)` 可向独立浮窗写入信息，用于分层展示。
+`collector.node(rootRef, subNode)` writes information into a separate tooltip pane, enabling layered display.
 
 ---
 
 ### `attach(CompositeItemAttachment<?>)`
 
-绑定 CompositeItem 附件，为物品添加右键交互、额外 Tooltip、tick 行为等。
+Binds a CompositeItem attachment, adding right-click interactions, extra tooltips, tick behaviour, and more.
 
 ```java
 item.attach(new InspectAttachment());
 ```
 
-仅对 `CompositeItem` 类型有效。附件可覆写 `use()`、`useOn()`、`inventoryTick()`、`collectTooltipNodes()` 等方法。
+Only valid for `CompositeItem`. Attachments can override `use()`, `useOn()`, `inventoryTick()`, `collectTooltipNodes()`, etc.

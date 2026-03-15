@@ -6,14 +6,13 @@ permalink: /register-advancements/
 
 # Register Advancements
 
-RegistryLib 通过 `addDataGenerator(ProviderType.ADVANCEMENT, ...)` 将成就进度树接入数据生成流程。
-你可以在一个 Consumer 中定义完整的进度树结构，包含多个 Tab、多层级父子关系和国际化标题/描述。
+RegistryLib hooks advancement trees into the data-generation pipeline via `addDataGenerator(ProviderType.ADVANCEMENT, ...)`. You can define a complete advancement tree — including multiple tabs, multi-level parent/child relationships, and localised titles/descriptions — inside a single Consumer.
 
 ---
 
 ## Simple Example
 
-最基础的成就注册：一个根成就 + 一个子成就。
+The simplest advancement registration: one root advancement and one child.
 
 ```java
 static void register() {
@@ -22,7 +21,7 @@ static void register() {
             adv -> {
                 String cat = RegistryLibTest.MOD_ID;
 
-                // 根成就
+                // root advancement
                 AdvancementHolder root = Advancement.Builder.advancement()
                         .display(
                                 Items.CRAFTING_TABLE,
@@ -38,7 +37,7 @@ static void register() {
                                         Items.CRAFTING_TABLE))
                         .save(adv, Identifier.fromNamespaceAndPath(cat, "simple/root"));
 
-                // 子成就
+                // child advancement
                 Advancement.Builder.advancement()
                         .parent(root)
                         .display(
@@ -61,7 +60,7 @@ static void register() {
 
 ## Full Example
 
-多 Tab、多类型（TASK / GOAL / CHALLENGE）、隐藏成就的完整示例。
+A complete example with multiple tabs, multiple types (TASK / GOAL / CHALLENGE), and hidden advancements.
 
 ```java
 static void register() {
@@ -85,7 +84,7 @@ static void register() {
                                         Items.CRAFTING_TABLE))
                         .save(adv, Identifier.fromNamespaceAndPath(cat, "basics/root"));
 
-                // GOAL 类型
+                // GOAL type
                 Advancement.Builder.advancement()
                         .parent(root)
                         .display(
@@ -115,7 +114,7 @@ static void register() {
                                 InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
                         .save(adv, Identifier.fromNamespaceAndPath(cat, "advanced/root"));
 
-                // CHALLENGE 类型（隐藏）
+                // CHALLENGE type (hidden)
                 Advancement.Builder.advancement()
                         .parent(advRoot)
                         .display(
@@ -140,45 +139,45 @@ static void register() {
 
 ### `addDataGenerator(ProviderType.ADVANCEMENT, Consumer)`
 
-将成就进度注册到 RegistryCore 的数据生成流程。Consumer 接收 `RegistryLibAdvancementProvider`。
+Registers advancements into RegistryCore's data-generation pipeline. The Consumer receives a `RegistryLibAdvancementProvider`.
 
 ```java
 RegistryLibTest.REGISTRYLIB.addDataGenerator(
         ProviderType.ADVANCEMENT,
-        adv -> { /* 在此定义进度树 */ });
+        adv -> { /* define your advancement tree here */ });
 ```
 
-在 `RegistryLibTest` 的 `static` 块中调用一次即可。
+Call this once in `RegistryLibTest`'s `static` initialiser block.
 
 ---
 
 ### `adv.title(String category, String name, String title)`
 
-为成就生成国际化标题，自动写入语言文件并返回 `MutableComponent`。
+Generates a localised advancement title, writes it to the language file automatically, and returns a `MutableComponent`.
 
 ```java
 adv.title(cat, "basics/root", "RegistryCore Basics")
 ```
 
-语言键格式：`advancements.<category>.<name>.title`
+Language key format: `advancements.<category>.<name>.title`
 
 ---
 
 ### `adv.desc(String category, String name, String desc)`
 
-为成就生成国际化描述，自动写入语言文件并返回 `MutableComponent`。
+Generates a localised advancement description, writes it to the language file automatically, and returns a `MutableComponent`.
 
 ```java
 adv.desc(cat, "basics/root", "Getting started with RegistryCore")
 ```
 
-语言键格式：`advancements.<category>.<name>.description`
+Language key format: `advancements.<category>.<name>.description`
 
 ---
 
 ### `Advancement.Builder.advancement()`
 
-创建一个成就构建器。使用原版 Minecraft 的 Advancement API。
+Creates an advancement builder using the vanilla Minecraft Advancement API.
 
 ```java
 Advancement.Builder.advancement()
@@ -191,28 +190,28 @@ Advancement.Builder.advancement()
 
 ### `AdvancementType`
 
-成就类型决定了边框样式和完成提示：
+The advancement type determines the border style and completion notification:
 
-| 类型 | 说明 | 边框 |
+| Type | Description | Border |
 | --- | --- | --- |
-| `TASK` | 普通任务 | 方形边框 |
-| `GOAL` | 目标（较难） | 圆角边框 |
-| `CHALLENGE` | 挑战（最难） | 尖角边框 |
+| `TASK` | Normal task | Square border |
+| `GOAL` | Goal (harder) | Rounded border |
+| `CHALLENGE` | Challenge (hardest) | Spiky border |
 
 ---
 
-### `.display()` 参数说明
+### `.display()` Parameters
 
 ```java
 .display(
-    icon,        // ItemStack 或 Item — 图标
-    title,       // Component — 标题
-    desc,        // Component — 描述
-    background,  // Identifier — 背景纹理（仅根成就需要，子成就传 null）
+    icon,        // ItemStack or Item — icon
+    title,       // Component — title
+    desc,        // Component — description
+    background,  // Identifier — background texture (root advancements only, pass null for children)
     type,        // AdvancementType — TASK / GOAL / CHALLENGE
-    showToast,   // boolean — 完成时是否弹出提示
-    announceChat,// boolean — 完成时是否在聊天栏公告
-    hidden       // boolean — 是否隐藏（完成前不可见）
+    showToast,   // boolean — show toast on completion
+    announceChat,// boolean — announce in chat on completion
+    hidden       // boolean — hidden (not visible until completed)
 )
 ```
 
@@ -220,7 +219,7 @@ Advancement.Builder.advancement()
 
 ### `.parent(AdvancementHolder)`
 
-设置父成就，形成进度树层级关系。根成就不需要父节点。
+Sets the parent advancement, forming the progress tree hierarchy. Root advancements do not need a parent.
 
 ```java
 Advancement.Builder.advancement()
@@ -232,10 +231,10 @@ Advancement.Builder.advancement()
 
 ### `.save(Consumer<AdvancementHolder>, Identifier)`
 
-保存成就到数据生成器，返回 `AdvancementHolder` 供后续子成就引用。
+Saves the advancement to the data generator and returns an `AdvancementHolder` for subsequent child advancements to reference.
 
 ```java
 .save(adv, Identifier.fromNamespaceAndPath(cat, "basics/root"));
 ```
 
-`Identifier` 的路径决定了成就 JSON 文件的位置和 Tab 归属（相同前缀为同一 Tab）。
+The `Identifier`'s path determines the location of the advancement JSON file and its tab grouping (advancements sharing a path prefix appear in the same tab).

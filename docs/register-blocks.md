@@ -6,14 +6,13 @@ permalink: /register-blocks/
 
 # Register Blocks
 
-RegistryLib 的方块注册使用与物品相同的流畅 Builder 风格。方块定义、属性、战利品表、
-BlockItem 绑定和 Group 共享配置可以集中在一处完成。
+RegistryLib registers blocks using the same fluent Builder pattern as items. Block definition, properties, loot tables, BlockItem binding, and Group-shared configuration can all be handled in one place.
 
 ---
 
 ## Simple Example
 
-最基础的方块注册：一个方块 + 语言 + 自动 BlockItem。
+The simplest block registration: one block, a display name, and an automatic BlockItem.
 
 ```java
 public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB.block(
@@ -30,10 +29,10 @@ public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTR
 
 ## Full Example
 
-使用 BlockBuilder 全部 API 的方块示例，包含自定义子类、Group 系统等。
+A block example exercising every BlockBuilder API, including custom subclasses and the Group system.
 
 ```java
-// ── 使用全部 API 的单方块 ──
+// ── single block using every API ──
 public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.block(
         "magic_ore",
         Block::new,
@@ -44,7 +43,7 @@ public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.bl
             block.loot((tables, b) ->
                     tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())));
             block.tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL);
-            block.recipe((ctx, prov) -> { /* 配方生成 */ });
+            block.recipe((ctx, prov) -> { /* recipe generation */ });
             block.item(itemBuilder -> {
                 itemBuilder.tooltip((collector, stack) -> {
                     collector.node(
@@ -54,7 +53,7 @@ public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.bl
             });
         });
 
-// ── 自定义方块子类 ──
+// ── custom block subclass ──
 public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB.block(
         "standalone_timer",
         p -> new TimerBlock(p, 4),
@@ -66,7 +65,7 @@ public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.RE
                     .simpleItem();
         });
 
-// ── Group 系统：批量共享配置 ──
+// ── Group system: batch shared configuration ──
 public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
         .group("timers")
         .langPrefix("Timer")
@@ -91,19 +90,19 @@ public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP.block(
 
 ### `initialProperties(Supplier<? extends Block>)`
 
-从另一个已有方块复制属性作为基础。
+Copies properties from an existing block to use as the base.
 
 ```java
 block.initialProperties(() -> Blocks.IRON_ORE);
 ```
 
-等价于 `BlockBehaviour.Properties.ofFullCopy(block)`，常用于让新方块继承原版方块的硬度、声音、工具等级等。
+Equivalent to `BlockBehaviour.Properties.ofFullCopy(block)`. Commonly used to inherit hardness, sounds, and required tool tier from a vanilla block.
 
 ---
 
 ### `properties(UnaryOperator<BlockBehaviour.Properties>)`
 
-在已有属性基础上追加修改。可多次调用，效果叠加。
+Appends modifications on top of the existing properties. Can be called multiple times; effects accumulate.
 
 ```java
 block.properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops());
@@ -113,7 +112,7 @@ block.properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops());
 
 ### `lang(String)`
 
-设置方块英文显示名称，自动写入语言文件。
+Sets the block's display name and writes it to the language file automatically.
 
 ```java
 block.lang("Magic Ore");
@@ -123,7 +122,7 @@ block.lang("Magic Ore");
 
 ### `defaultLang()`
 
-从注册名自动推导英文名（如 `magic_ore` → `Magic Ore`）。
+Derives the display name automatically from the registry name (e.g. `magic_ore` → `Magic Ore`).
 
 ```java
 block.defaultLang();
@@ -133,19 +132,19 @@ block.defaultLang();
 
 ### `simpleItem()`
 
-使用默认设置自动生成对应的 BlockItem，无需额外配置。
+Automatically generates a corresponding BlockItem with default settings, requiring no additional configuration.
 
 ```java
 block.simpleItem();
 ```
 
-适合装饰方块、简单材料方块等不需要自定义 BlockItem 的场景。
+Suitable for decorative or simple material blocks that don't need a customised BlockItem.
 
 ---
 
 ### `item(Consumer<ItemBuilder<BlockItem, BlockBuilder>>)`
 
-创建 BlockItem 子条目并通过 Consumer 配置（Tooltip、标签页等）。
+Creates a BlockItem sub-entry and configures it via a Consumer (tooltip, tab, etc.).
 
 ```java
 block.item(itemBuilder -> {
@@ -157,7 +156,7 @@ block.item(itemBuilder -> {
 
 ### `item(BiFunction, Consumer)`
 
-使用自定义 BlockItem 工厂 + Consumer 配置。
+Uses a custom BlockItem factory together with a Consumer for further configuration.
 
 ```java
 block.item(MyBlockItem::new, itemBuilder -> {
@@ -169,7 +168,7 @@ block.item(MyBlockItem::new, itemBuilder -> {
 
 ### `blockEntity(BlockEntityFactory, Consumer)`
 
-内联创建 BlockEntity 子条目，无需单独调用 `RegistryCore.blockEntity()`。
+Creates a BlockEntity sub-entry inline, without a separate `RegistryCore.blockEntity()` call.
 
 ```java
 block.blockEntity(MyBlockEntity::new, be -> {
@@ -181,7 +180,7 @@ block.blockEntity(MyBlockEntity::new, be -> {
 
 ### `defaultBlockstate()`
 
-使用默认的六面立方体方块状态模型。
+Uses the default full-cube blockstate model.
 
 ```java
 block.defaultBlockstate();
@@ -191,7 +190,7 @@ block.defaultBlockstate();
 
 ### `blockstate(Supplier<BiConsumer<DataGenContext, RegistryLibBlockModelGenerator>>)`
 
-自定义方块状态和模型生成逻辑。
+Customises the blockstate and model generation logic.
 
 ```java
 block.blockstate(() -> (ctx, prov) -> {
@@ -203,7 +202,7 @@ block.blockstate(() -> (ctx, prov) -> {
 
 ### `defaultLoot()`
 
-使用默认战利品表（方块自身掉落）。
+Uses the default loot table (drops the block itself).
 
 ```java
 block.defaultLoot();
@@ -213,24 +212,24 @@ block.defaultLoot();
 
 ### `loot(BiConsumer<RegistryLibBlockLootTables, T>)`
 
-自定义战利品表生成逻辑。
+Customises the loot table generation logic.
 
 ```java
 block.loot((tables, b) ->
         tables.add(b, tables.createOreDrop(b, Items.DIAMOND)));
 ```
 
-适合矿石掉落、丝绸之触判断等自定义掉落逻辑。
+Suitable for ore drops, Silk Touch checks, and other custom drop logic.
 
 ---
 
 ### `recipe(BiConsumer<DataGenContext, RegistryLibRecipeProvider>)`
 
-通过 DataGen 生成配方。
+Generates a recipe through DataGen.
 
 ```java
 block.recipe((ctx, prov) -> {
-    // ShapedRecipeBuilder 等配方生成逻辑
+    // ShapedRecipeBuilder and other recipe builders
 });
 ```
 
@@ -238,7 +237,7 @@ block.recipe((ctx, prov) -> {
 
 ### `tag(TagKey<Block>...)`
 
-给方块添加一个或多个标签。
+Adds one or more tags to the block.
 
 ```java
 block.tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL);
@@ -246,11 +245,11 @@ block.tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL);
 
 ---
 
-## Group 系统
+## Group System
 
-Group 允许多个方块共享一组默认配置（属性、语言前缀等），减少重复代码。
+Groups allow multiple blocks to share a set of default configuration (properties, language prefix, etc.), reducing boilerplate.
 
-### 创建 Group
+### Create a Group
 
 ```java
 public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
@@ -260,13 +259,13 @@ public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
         .build();
 ```
 
-### 使用 Group 注册方块
+### Register blocks with a Group
 
 ```java
 public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP.block(
         "tier_1",
         p -> new TimerBlock(p, 1),
-        block -> { /* 个性化配置 */ });
+        block -> { /* per-block overrides */ });
 ```
 
-Group 还提供 `item()`、`blockEntity()`、`fluid()` 入口，当你的 Mod 有大量同系列内容时非常适用。
+Groups also provide `item()`, `blockEntity()`, and `fluid()` entry points, making them ideal when your mod contains large families of related content.
