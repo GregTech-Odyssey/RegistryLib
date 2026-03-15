@@ -6,8 +6,8 @@ permalink: /lang-system/
 
 # Lang System
 
-RegistryLib auto-generates `en_us.json` (and an upside-down `en_ud.json`) for every
-registered entry that calls `.lang(...)`. The same mechanism is fully extensible —
+RegistryLib auto-generates `en_us.json` for every registered entry that calls `.lang(...)`.
+The same mechanism is fully extensible —
 you can attach extra lang providers for any locale in the same fluent builder chain.
 
 ---
@@ -18,7 +18,7 @@ Every builder type exposes these overloads out of the box:
 
 | Call | Result |
 |------|--------|
-| `.lang("Display Name")` | Writes to `en_us.json`; auto-inverts to `en_ud.json`. |
+| `.lang("Display Name")` | Writes to `en_us.json`. |
 | `.defaultLang()` | Derives a name from the registry path (`magic_ore` → `Magic Ore`). Available on `BlockBuilder` and `FluidBuilder` only. |
 
 ```java
@@ -219,7 +219,7 @@ REGISTRYLIB.fluid(REGISTRYLIB, "molten_iron", STILL, FLOW, BaseFlowingFluid.Flow
 
 | Constructor | Description |
 |-------------|-------------|
-| `(RegistryCore, PackOutput)` | Targets `en_us` + `en_ud`. |
+| `(RegistryCore, PackOutput)` | Targets `en_us`. |
 | `protected (RegistryCore, PackOutput, String locale)` | Subclass entry point; targets the given locale, no upside-down companion. |
 
 ---
