@@ -47,6 +47,10 @@ focus on gameplay.
 | --- |
 | [Register Advancements](register-advancements) |
 
+| Systems |
+| --- |
+| [Tooltip System](tooltip-system) |
+
 ## Repository
 
 - [GitHub Repository](https://github.com/GregTech-Odyssey/RegistryLib)
