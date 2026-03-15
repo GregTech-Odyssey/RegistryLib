@@ -3,52 +3,30 @@ package com.gto.registrylib.util;
 import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ItemLike;
-
-import java.util.function.BiConsumer;
-import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 
 public final class CreativeModeTabModifier implements CreativeModeTab.Output {
 
-    private final Supplier<FeatureFlagSet> flags;
-    private final BooleanSupplier hasPermissions;
-    private final BiConsumer<ItemStack, CreativeModeTab.TabVisibility> acceptFunc;
-    private final Supplier<CreativeModeTab.ItemDisplayParameters> parameters;
+    private final BuildCreativeModeTabContentsEvent event;
 
-    public CreativeModeTabModifier(
-                                   Supplier<FeatureFlagSet> flags,
-                                   BooleanSupplier hasPermissions,
-                                   BiConsumer<ItemStack, CreativeModeTab.TabVisibility> acceptFunc,
-                                   Supplier<CreativeModeTab.ItemDisplayParameters> parameters) {
-        this.flags = flags;
-        this.hasPermissions = hasPermissions;
-        this.acceptFunc = acceptFunc;
-        this.parameters = parameters;
+    public CreativeModeTabModifier(BuildCreativeModeTabContentsEvent event) {
+        this.event = event;
     }
 
     public FeatureFlagSet getFlags() {
-        return flags.get();
+        return event.getFlags();
     }
 
     public CreativeModeTab.ItemDisplayParameters getParameters() {
-        return parameters.get();
+        return event.getParameters();
     }
 
     public boolean hasPermissions() {
-        return hasPermissions.getAsBoolean();
+        return event.hasPermissions();
     }
 
     @Override
     public void accept(ItemStack stack, CreativeModeTab.TabVisibility visibility) {
-        acceptFunc.accept(stack, visibility);
-    }
-
-    public void accept(Supplier<? extends ItemLike> item, CreativeModeTab.TabVisibility visibility) {
-        accept(item.get(), visibility);
-    }
-
-    public void accept(Supplier<? extends ItemLike> item) {
-        accept(item.get());
+        event.accept(stack, CreativeModeTab.TabVisibility.PARENT_TAB_ONLY);
     }
 }

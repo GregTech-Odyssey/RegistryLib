@@ -640,8 +640,7 @@ public class RegistryCore {
     }
 
     static void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
-        var modifier = new CreativeModeTabModifier(
-                event::getFlags, event::hasPermissions, event::accept, event::getParameters);
+        var modifier = new CreativeModeTabModifier(event);
         REGISTRY_CORES
                 .values()
                 .forEach(
