@@ -550,14 +550,11 @@ public class RegistryCore {
 
     // --- Items ---
 
-    @StandardAPI("Consumer-scoped: configures and auto-registers an Item entry.")
-    public <T extends Item> ItemEntry<T> item(
+    @StandardAPI("Returns an ItemBuilder for fluent chain configuration. Call .register() to finalise.")
+    public <T extends Item> ItemBuilder<T, RegistryCore> item(
                                               @Nonnull String name,
-                                              @Nonnull Function<Item.Properties, T> factory,
-                                              @Nonnull Consumer<ItemBuilder<T, RegistryCore>> config) {
-        var builder = item(this, name, factory);
-        config.accept(builder);
-        return builder.register();
+                                              @Nonnull Function<Item.Properties, T> factory) {
+        return item(this, name, factory);
     }
 
     public <T extends Item, P> ItemBuilder<T, P> item(
@@ -570,14 +567,11 @@ public class RegistryCore {
 
     // --- Blocks ---
 
-    @StandardAPI("Consumer-scoped: configures and auto-registers a Block entry.")
-    public <T extends Block> BlockEntry<T> block(
+    @StandardAPI("Returns a BlockBuilder for fluent chain configuration. Call .register() to finalise.")
+    public <T extends Block> BlockBuilder<T, RegistryCore> block(
                                                  @Nonnull String name,
-                                                 @Nonnull Function<BlockBehaviour.Properties, T> factory,
-                                                 @Nonnull Consumer<BlockBuilder<T, RegistryCore>> config) {
-        var builder = block(this, name, factory);
-        config.accept(builder);
-        return builder.register();
+                                                 @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+        return block(this, name, factory);
     }
 
     public <T extends Block, P> BlockBuilder<T, P> block(
@@ -589,15 +583,11 @@ public class RegistryCore {
 
     // --- Block Entities ---
 
-    @SuppressWarnings("unchecked")
-    @StandardAPI("Consumer-scoped: configures and auto-registers a BlockEntity entry.")
-    public <T extends BlockEntity> BlockEntityEntry<T> blockEntity(
+    @StandardAPI("Returns a BlockEntityBuilder for fluent chain configuration. Call .register() to finalise.")
+    public <T extends BlockEntity> BlockEntityBuilder<T, RegistryCore> blockEntity(
                                                                    @Nonnull String name,
-                                                                   @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory,
-                                                                   @Nonnull Consumer<BlockEntityBuilder<T, RegistryCore>> config) {
-        var builder = blockEntity(this, name, factory);
-        config.accept(builder);
-        return (BlockEntityEntry<T>) builder.register();
+                                                                   @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
+        return blockEntity(this, name, factory);
     }
 
     public <T extends BlockEntity, P> BlockEntityBuilder<T, P> blockEntity(
@@ -609,27 +599,21 @@ public class RegistryCore {
 
     // --- Fluids ---
 
-    @StandardAPI("Consumer-scoped: configures and auto-registers a Fluid entry with default Flowing type.")
-    public FluidEntry<BaseFlowingFluid.Flowing> fluid(
+    @StandardAPI("Returns a FluidBuilder for fluent chain configuration. Call .register() to finalise.")
+    public FluidBuilder<BaseFlowingFluid.Flowing, RegistryCore> fluid(
                                                       @Nonnull String name,
                                                       @Nonnull Identifier stillTexture,
-                                                      @Nonnull Identifier flowingTexture,
-                                                      @Nonnull Consumer<FluidBuilder<BaseFlowingFluid.Flowing, RegistryCore>> config) {
-        var builder = fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new);
-        config.accept(builder);
-        return builder.register();
+                                                      @Nonnull Identifier flowingTexture) {
+        return fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new);
     }
 
-    @StandardAPI("Consumer-scoped: configures and auto-registers a Fluid entry with custom FluidFactory.")
-    public <T extends BaseFlowingFluid> FluidEntry<T> fluid(
+    @StandardAPI("Returns a FluidBuilder with custom FluidFactory for fluent chain configuration. Call .register() to finalise.")
+    public <T extends BaseFlowingFluid> FluidBuilder<T, RegistryCore> fluid(
                                                             @Nonnull String name,
                                                             @Nonnull Identifier stillTexture,
                                                             @Nonnull Identifier flowingTexture,
-                                                            @Nonnull FluidBuilder.FluidFactory<T> fluidFactory,
-                                                            @Nonnull Consumer<FluidBuilder<T, RegistryCore>> config) {
-        var builder = fluid(this, name, stillTexture, flowingTexture, fluidFactory);
-        config.accept(builder);
-        return builder.register();
+                                                            @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+        return fluid(this, name, stillTexture, flowingTexture, fluidFactory);
     }
 
     @StandardAPI

@@ -8,7 +8,6 @@ import com.gto.registrylib.util.entry.BlockEntityEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Block;
@@ -32,7 +31,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @FunctionalInterface
     public interface BlockEntityFactory<T extends BlockEntity> {
 
-        T create(BlockEntityType<T> type, BlockPos pos, BlockState state);
+        T create(BlockEntityType<?> type, BlockPos pos, BlockState state);
     }
 
     public static <T extends BlockEntity, P> BlockEntityBuilder<T, P> create(
@@ -73,10 +72,12 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     }
 
     @StandardAPI
-    public <BERS extends BlockEntityRenderState> BlockEntityBuilder<BE, P> renderer(
-                                                                                    @Nonnull Supplier<BlockEntityRendererProvider<? super BE, BERS>> renderer) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public BlockEntityBuilder<BE, P> renderer(
+                                              @Nonnull Supplier<? extends BlockEntityRendererProvider> renderer) {
         DistExecutor.unsafeRunWhenOn(
-                Dist.CLIENT, () -> () -> Client.registerBER(this::getEntry, renderer.get()));
+                Dist.CLIENT,
+                () -> () -> Client.registerBER(this::getEntry, renderer.get()));
         return this;
     }
 
@@ -92,5 +93,11 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     protected RegistryEntry<BlockEntityType<?>, BlockEntityType<BE>> createEntryWrapper(
                                                                                         DeferredHolder<BlockEntityType<?>, BlockEntityType<BE>> delegate) {
         return new BlockEntityEntry<>(getOwner(), delegate);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public BlockEntityEntry<BE> register() {
+        return (BlockEntityEntry<BE>) super.register();
     }
 }

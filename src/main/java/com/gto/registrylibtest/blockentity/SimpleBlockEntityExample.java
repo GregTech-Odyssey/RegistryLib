@@ -8,10 +8,8 @@ import com.gto.registrylibtest.block.FullBlockExample;
 public class SimpleBlockEntityExample {
 
     public static final BlockEntityEntry<TimerBlockEntity> SIMPLE_TIMER_BE =
-            RegistryLibTest.REGISTRYLIB.blockEntity(
-                    "simple_timer",
-                    TimerBlockEntity::new,
-                    be -> {
-                        be.validBlock(FullBlockExample.STANDALONE_TIMER);
-                    });
+            RegistryLibTest.REGISTRYLIB
+                    .blockEntity("simple_timer", TimerBlockEntity::new)
+                    .validBlock(FullBlockExample.STANDALONE_TIMER)
+                    .register();
 }

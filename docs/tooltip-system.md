@@ -209,16 +209,16 @@ Good candidates for separate boxes:
 
 ### 4. Add Tooltips to Blocks
 
-Blocks expose item tooltips through their `BlockItem`, so you configure the tooltip via `block.item(...)`.
+Blocks expose item tooltips through their `BlockItem`, so you configure the tooltip via `.item().build()`.
 
 ```java
-block.item(itemBuilder -> {
-    itemBuilder.tooltip((collector, stack) -> {
+block.item()
+    .tooltip((collector, stack) -> {
         collector.node(
                 new SubNode.Basic(Component.literal("§5Drops coins when mined")),
                 true, false);
-    });
-});
+    })
+    .build();
 ```
 
 All tooltip features available to items also work here, because the block item uses the same item builder pipeline.
@@ -397,40 +397,35 @@ public class FullItemExample {
     }
 
     public static final ItemEntry<CompositeItem> MAGIC_WAND =
-            RegistryLibTest.REGISTRYLIB.item(
-                    "magic_wand",
-                    CompositeItem::new,
-                    item -> {
-                        item.initialProperties(() -> new Item.Properties().stacksTo(1));
-                        item.properties(p -> p.fireResistant());
-                        item.lang("Magic Wand");
-                        item.defaultModel();
-                        item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-                        item.tag(ItemTags.DURABILITY_ENCHANTABLE);
-
-                        item.tooltip(Component.literal("§5A powerful magical artifact"));
-
-                        item.tooltip((collector, stack) -> {
-                            collector.node(
-                                    new SubNode.Basic(Component.literal("§dMagic Wand"), 0),
-                                    true, false);
-                            collector.node(
-                                    new SubNode.Basic(
-                                            Component.literal("§7Durability: §f"
-                                                    + (stack.getMaxDamage()
-                                                            - stack.getDamageValue())),
-                                            10));
-                            collector.node(
-                                    DETAIL_BOX,
-                                    new SubNode.Basic(
-                                            Component.literal("§bDetailed Information"), 0));
-                            collector.node(
-                                    DETAIL_BOX,
-                                    new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
-                        });
-
-                        item.attach(new InspectAttachment());
-                    });
+            RegistryLibTest.REGISTRYLIB
+                    .item("magic_wand", CompositeItem::new)
+                    .initialProperties(() -> new Item.Properties().stacksTo(1))
+                    .properties(p -> p.fireResistant())
+                    .lang("Magic Wand")
+                    .defaultModel()
+                    .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+                    .tag(ItemTags.DURABILITY_ENCHANTABLE)
+                    .tooltip(Component.literal("§5A powerful magical artifact"))
+                    .tooltip((collector, stack) -> {
+                        collector.node(
+                                new SubNode.Basic(Component.literal("§dMagic Wand"), 0),
+                                true, false);
+                        collector.node(
+                                new SubNode.Basic(
+                                        Component.literal("§7Durability: §f"
+                                                + (stack.getMaxDamage()
+                                                        - stack.getDamageValue())),
+                                        10));
+                        collector.node(
+                                DETAIL_BOX,
+                                new SubNode.Basic(
+                                        Component.literal("§bDetailed Information"), 0));
+                        collector.node(
+                                DETAIL_BOX,
+                                new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
+                    })
+                    .attach(new InspectAttachment())
+                    .register();
 }
 ```
 

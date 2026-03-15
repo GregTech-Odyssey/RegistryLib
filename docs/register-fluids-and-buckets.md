@@ -21,14 +21,11 @@ private static final Identifier FLUID_FLOW =
         Identifier.fromNamespaceAndPath("registrylib", "block/fluid/liquid_flow");
 
 public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
-        RegistryLibTest.REGISTRYLIB.fluid(
-                "acid",
-                FLUID_STILL,
-                FLUID_FLOW,
-                fluid -> {
-                    fluid.lang("Acid")
-                            .clientExtension(FLUID_STILL, FLUID_FLOW);
-                });
+        RegistryLibTest.REGISTRYLIB
+                .fluid("acid", FLUID_STILL, FLUID_FLOW)
+                .lang("Acid")
+                .clientExtension(FLUID_STILL, FLUID_FLOW)
+                .register();
 ```
 
 ---
@@ -39,30 +36,35 @@ A full FluidBuilder example covering tinting, physical parameters, block/bucket 
 
 ```java
 public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
-        RegistryLibTest.REGISTRYLIB.fluid(
-                "molten_iron",
-                FLUID_STILL,
-                FLUID_FLOW,
-                fluid -> {
-                    fluid.properties(p -> p.density(3000).viscosity(6000).temperature(1800));
-                    fluid.lang("Molten Iron");
-                    fluid.clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400);
-                    fluid.tag(FluidTags.LAVA);
-                    fluid.block(block -> block.properties(p -> p.lightLevel(s -> 12)));
-                    fluid.bucket(bucket -> bucket.lang("Molten Iron Bucket"));
-                });
+        RegistryLibTest.REGISTRYLIB
+                .fluid("molten_iron", FLUID_STILL, FLUID_FLOW)
+                .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
+                .lang("Molten Iron")
+                .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
+                .tag(FluidTags.LAVA)
+                .block()
+                    .properties(p -> p.lightLevel(s -> 12))
+                    .build()
+                .bucket()
+                    .lang("Molten Iron Bucket")
+                    .build()
+                .register();
 
 public static final FluidEntry<BaseFlowingFluid.Flowing> LIQUID_MAGIC =
-        RegistryLibTest.REGISTRYLIB.fluid(
-                "liquid_magic",
-                Identifier.withDefaultNamespace("block/water_still"),
-                Identifier.withDefaultNamespace("block/water_flow"),
-                fluid -> {
-                    fluid.properties(p -> p.lightLevel(15).density(500).viscosity(200));
-                    fluid.lang("Liquid Magic");
-                    fluid.block(block -> block.properties(p -> p.lightLevel(s -> 15)));
-                    fluid.bucket(bucket -> bucket.lang("Liquid Magic Bucket"));
-                });
+        RegistryLibTest.REGISTRYLIB
+                .fluid(
+                        "liquid_magic",
+                        Identifier.withDefaultNamespace("block/water_still"),
+                        Identifier.withDefaultNamespace("block/water_flow"))
+                .properties(p -> p.lightLevel(15).density(500).viscosity(200))
+                .lang("Liquid Magic")
+                .block()
+                    .properties(p -> p.lightLevel(s -> 15))
+                    .build()
+                .bucket()
+                    .lang("Liquid Magic Bucket")
+                    .build()
+                .register();
 ```
 
 ---
@@ -171,24 +173,27 @@ fluid.defaultSource();
 
 ---
 
-### `block(Consumer<BlockBuilder<LiquidBlock, FluidBuilder>>)`
+### `block()`
 
-Configures the fluid block sub-entry. Block properties can be customised inside the Consumer.
+Returns a BlockBuilder for the fluid block sub-entry. Call `.build()` to return to the parent FluidBuilder.
 
 ```java
-fluid.block(block -> block.properties(p -> p.lightLevel(s -> 15)));
+fluid.block()
+    .properties(p -> p.lightLevel(s -> 15))
+    .build();
 ```
 
 Use this to set block-specific properties such as light emission and explosion resistance.
 
 ---
 
-### `block(BiFunction, Consumer)`
+### `block(BiFunction)`
 
-Uses a custom `LiquidBlock` subclass factory together with a Consumer for further configuration.
+Uses a custom `LiquidBlock` subclass factory and returns a BlockBuilder for chain configuration.
 
 ```java
-fluid.block(MyLiquidBlock::new, block -> { /* configure */ });
+fluid.block(MyLiquidBlock::new)
+    .build();
 ```
 
 ---
@@ -213,22 +218,25 @@ fluid.defaultBlock();
 
 ---
 
-### `bucket(Consumer<ItemBuilder<BucketItem, FluidBuilder>>)`
+### `bucket()`
 
-Configures the bucket item sub-entry. The display name, creative tab, and more can be set inside the Consumer.
+Returns an ItemBuilder for the bucket item sub-entry. Call `.build()` to return to the parent FluidBuilder.
 
 ```java
-fluid.bucket(bucket -> bucket.lang("Molten Iron Bucket"));
+fluid.bucket()
+    .lang("Molten Iron Bucket")
+    .build();
 ```
 
 ---
 
-### `bucket(BiFunction, Consumer)`
+### `bucket(BiFunction)`
 
-Uses a custom `BucketItem` subclass factory together with a Consumer for further configuration.
+Uses a custom `BucketItem` subclass factory and returns an ItemBuilder for chain configuration.
 
 ```java
-fluid.bucket(MyBucket::new, bucket -> { /* configure */ });
+fluid.bucket(MyBucket::new)
+    .build();
 ```
 
 ---

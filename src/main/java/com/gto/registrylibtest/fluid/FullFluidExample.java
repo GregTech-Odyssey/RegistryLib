@@ -27,29 +27,25 @@ public class FullFluidExample {
      * 流体方块（自发光）、桶物品（自定义显示名），并打上流体标签。
      */
     public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
-            RegistryLibTest.REGISTRYLIB.fluid(
-                    "molten_iron",
-                    FLUID_STILL,
-                    FLUID_FLOW,
-                    fluid -> {
-                        // --- properties: 配置 FluidType 的物理参数 ---
-                        fluid.properties(p -> p.density(3000).viscosity(6000).temperature(1800));
-
-                        // --- lang: 自定义流体显示名称 ---
-                        fluid.lang("Molten Iron");
-
-                        // --- clientExtension（3 参数）: 灰度纹理 + ARGB 颜色着色 ---
-                        fluid.clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400);
-
-                        // --- tag: 给流体添加标签 ---
-                        fluid.tag(FluidTags.LAVA);
-
-                        // --- block: 自定义流体方块属性（自发光） ---
-                        fluid.block(block -> block.properties(p -> p.lightLevel(s -> 12)));
-
-                        // --- bucket: 自定义桶物品显示名 ---
-                        fluid.bucket(bucket -> bucket.lang("Molten Iron Bucket"));
-                    });
+            RegistryLibTest.REGISTRYLIB
+                    .fluid("molten_iron", FLUID_STILL, FLUID_FLOW)
+                    // --- properties: 配置 FluidType 的物理参数 ---
+                    .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
+                    // --- lang: 自定义流体显示名称 ---
+                    .lang("Molten Iron")
+                    // --- clientExtension（3 参数）: 灰度纹理 + ARGB 颜色着色 ---
+                    .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
+                    // --- tag: 给流体添加标签 ---
+                    .tag(FluidTags.LAVA)
+                    // --- block: 自定义流体方块属性（自发光） ---
+                    .block()
+                        .properties(p -> p.lightLevel(s -> 12))
+                        .build()
+                    // --- bucket: 自定义桶物品显示名 ---
+                    .bucket()
+                        .lang("Molten Iron Bucket")
+                        .build()
+                    .register();
 
     // ── 使用原版纹理 + 多层配置 ────────────────────────────────────────────
 
@@ -57,21 +53,22 @@ public class FullFluidExample {
      * 魔法液体：复用原版水纹理、嵌套配置流体方块和桶物品。
      */
     public static final FluidEntry<BaseFlowingFluid.Flowing> LIQUID_MAGIC =
-            RegistryLibTest.REGISTRYLIB.fluid(
-                    "liquid_magic",
-                    Identifier.withDefaultNamespace("block/water_still"),
-                    Identifier.withDefaultNamespace("block/water_flow"),
-                    fluid -> {
-                        // --- properties: 物理参数（含光照等级） ---
-                        fluid.properties(p -> p.lightLevel(15).density(500).viscosity(200));
-
-                        // --- lang ---
-                        fluid.lang("Liquid Magic");
-
-                        // --- block（Consumer 版）: 方块子对象配置 ---
-                        fluid.block(block -> block.properties(p -> p.lightLevel(s -> 15)));
-
-                        // --- bucket（Consumer 版）: 桶物品子对象配置 ---
-                        fluid.bucket(bucket -> bucket.lang("Liquid Magic Bucket"));
-                    });
+            RegistryLibTest.REGISTRYLIB
+                    .fluid(
+                            "liquid_magic",
+                            Identifier.withDefaultNamespace("block/water_still"),
+                            Identifier.withDefaultNamespace("block/water_flow"))
+                    // --- properties: 物理参数（含光照等级） ---
+                    .properties(p -> p.lightLevel(15).density(500).viscosity(200))
+                    // --- lang ---
+                    .lang("Liquid Magic")
+                    // --- block: 方块子对象配置 ---
+                    .block()
+                        .properties(p -> p.lightLevel(s -> 15))
+                        .build()
+                    // --- bucket: 桶物品子对象配置 ---
+                    .bucket()
+                        .lang("Liquid Magic Bucket")
+                        .build()
+                    .register();
 }

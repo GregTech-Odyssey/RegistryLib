@@ -15,14 +15,12 @@ RegistryLib registers blocks using the same fluent Builder pattern as items. Blo
 The simplest block registration: one block, a display name, and an automatic BlockItem.
 
 ```java
-public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB.block(
-        "decorative_stone",
-        Block::new,
-        block -> {
-            block.initialProperties(() -> Blocks.STONE)
-                    .lang("Decorative Stone")
-                    .simpleItem();
-        });
+public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
+        .block("decorative_stone", Block::new)
+        .initialProperties(() -> Blocks.STONE)
+        .lang("Decorative Stone")
+        .simpleItem()
+        .register();
 ```
 
 ---
@@ -35,37 +33,32 @@ A block example exercising every BlockBuilder API, including custom subclasses a
 // ── single block using every API ──
 public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.block(
         "magic_ore",
-        Block::new,
-        block -> {
-            block.initialProperties(() -> Blocks.IRON_ORE);
-            block.properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops());
-            block.lang("Magic Ore");
-            block.loot((tables, b) ->
-                    tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())));
-            block.tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL);
-            block.recipe((ctx, prov) -> { /* recipe generation */ });
-            block.item(itemBuilder -> {
-                itemBuilder.tooltip((collector, stack) -> {
-                    collector.node(
-                            new SubNode.Basic(Component.literal("§5Drops coins when mined")),
-                            true, false);
-                });
-            });
-        });
+        Block::new)
+        .initialProperties(() -> Blocks.IRON_ORE)
+        .properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops())
+        .lang("Magic Ore")
+        .loot((tables, b) ->
+                tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))
+        .tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
+        .recipe((ctx, prov) -> { /* recipe generation */ })
+        .item()
+            .tooltip((collector, stack) -> {
+                collector.node(
+                        new SubNode.Basic(Component.literal("§5Drops coins when mined")),
+                        true, false);
+            })
+            .build()
+        .register();
 
 // ── custom block subclass ──
-public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB.block(
-        "standalone_timer",
-        p -> new TimerBlock(p, 4),
-        block -> {
-            block.initialProperties(() -> Blocks.IRON_BLOCK)
-                    .lang("Standalone Timer")
-                    .defaultLoot()
-                    .defaultBlockstate()
-                    .simpleItem();
-        });
-
-
+public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB
+        .block("standalone_timer", p -> new TimerBlock(p, 4))
+        .initialProperties(() -> Blocks.IRON_BLOCK)
+        .lang("Standalone Timer")
+        .defaultLoot()
+        .defaultBlockstate()
+        .simpleItem()
+        .register();
 ```
 
 ---
@@ -126,38 +119,38 @@ Suitable for decorative or simple material blocks that don't need a customised B
 
 ---
 
-### `item(Consumer<ItemBuilder<BlockItem, BlockBuilder>>)`
+### `item()`
 
-Creates a BlockItem sub-entry and configures it via a Consumer (tooltip, tab, etc.).
+Creates a BlockItem sub-entry and returns its ItemBuilder for chain configuration. Call `.build()` to return to the parent BlockBuilder.
 
 ```java
-block.item(itemBuilder -> {
-    itemBuilder.tooltip(Component.literal("§5Drops coins when mined"));
-});
+block.item()
+    .tooltip(Component.literal("§5Drops coins when mined"))
+    .build();
 ```
 
 ---
 
-### `item(BiFunction, Consumer)`
+### `item(BiFunction)`
 
-Uses a custom BlockItem factory together with a Consumer for further configuration.
+Uses a custom BlockItem factory and returns its ItemBuilder for chain configuration.
 
 ```java
-block.item(MyBlockItem::new, itemBuilder -> {
-    itemBuilder.lang("Custom Block Item");
-});
+block.item(MyBlockItem::new)
+    .lang("Custom Block Item")
+    .build();
 ```
 
 ---
 
-### `blockEntity(BlockEntityFactory, Consumer)`
+### `blockEntity(BlockEntityFactory)`
 
-Creates a BlockEntity sub-entry inline, without a separate `RegistryCore.blockEntity()` call.
+Creates a BlockEntity sub-entry inline and returns its builder. Call `.build()` to return to the parent BlockBuilder.
 
 ```java
-block.blockEntity(MyBlockEntity::new, be -> {
-    be.renderer(() -> MyRenderer::new);
-});
+block.blockEntity(MyBlockEntity::new)
+    .renderer(() -> MyRenderer::new)
+    .build();
 ```
 
 ---

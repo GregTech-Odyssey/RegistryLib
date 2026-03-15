@@ -6,7 +6,7 @@ permalink: /register-items/
 
 # Register Items
 
-RegistryLib registers items using a fluent Builder pattern. Provide an id, an item factory, and a configuration Consumer to complete all setup — properties, language, model, creative tab, recipe, tooltip, and CompositeItem attachments — in one place.
+RegistryLib registers items using a fluent Builder pattern. Provide an id and an item factory, then chain configuration calls — properties, language, model, creative tab, recipe, tooltip, and CompositeItem attachments — and finalise with `.register()`.
 
 ---
 
@@ -15,12 +15,10 @@ RegistryLib registers items using a fluent Builder pattern. Provide an id, an it
 The simplest item registration: one item and a display name.
 
 ```java
-public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB.item(
-        "copper_coin",
-        Item::new,
-        item -> {
-            item.lang("Copper Coin");
-        });
+public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
+        .item("copper_coin", Item::new)
+        .lang("Copper Coin")
+        .register();
 ```
 
 ---
@@ -30,33 +28,31 @@ public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB.it
 A CompositeItem example exercising every ItemBuilder API, including properties, the tooltip system, attachments, and tags.
 
 ```java
-public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB.item(
-        "magic_wand",
-        CompositeItem::new,
-        item -> {
-            item.initialProperties(() -> new Item.Properties().stacksTo(1));
-            item.properties(p -> p.fireResistant());
-            item.lang("Magic Wand");
-            item.defaultModel();
-            item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-            item.removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-            item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-            item.recipe((ctx, prov) -> { /* ShapedRecipeBuilder, etc. */ });
-            item.tag(ItemTags.DURABILITY_ENCHANTABLE);
-            item.tooltip(Component.literal("§5A powerful magical artifact"));
-            item.tooltip((collector, stack) -> {
-                collector.node(
-                        new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);
-                collector.node(
-                        new SubNode.Basic(
-                                Component.literal("§7Durability: §f"
-                                        + (stack.getMaxDamage() - stack.getDamageValue())), 10));
-                collector.node(
-                        DETAIL_BOX,
-                        new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
-            });
-            item.attach(new InspectAttachment());
-        });
+public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB
+        .item("magic_wand", CompositeItem::new)
+        .initialProperties(() -> new Item.Properties().stacksTo(1))
+        .properties(p -> p.fireResistant())
+        .lang("Magic Wand")
+        .defaultModel()
+        .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .recipe((ctx, prov) -> { /* ShapedRecipeBuilder, etc. */ })
+        .tag(ItemTags.DURABILITY_ENCHANTABLE)
+        .tooltip(Component.literal("§5A powerful magical artifact"))
+        .tooltip((collector, stack) -> {
+            collector.node(
+                    new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);
+            collector.node(
+                    new SubNode.Basic(
+                            Component.literal("§7Durability: §f"
+                                    + (stack.getMaxDamage() - stack.getDamageValue())), 10));
+            collector.node(
+                    DETAIL_BOX,
+                    new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
+        })
+        .attach(new InspectAttachment())
+        .register();
 ```
 
 ---

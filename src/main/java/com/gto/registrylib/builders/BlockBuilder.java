@@ -28,7 +28,6 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -69,18 +68,16 @@ public class BlockBuilder<T extends Block, P>
         this.initialProperties = initialProperties;
     }
 
-    // === Sub-resource Configuration (Consumer-scoped, returns this BlockBuilder) ===
+    // === Sub-resource Configuration (returns sub-Builder for chain; call .build() to return here) ===
 
-    @SyntaxSugar("item(BlockItem::new, config)")
-    public BlockBuilder<T, P> item(
-                                   @Nonnull Consumer<ItemBuilder<BlockItem, BlockBuilder<T, P>>> config) {
-        return item(BlockItem::new, config);
+    @StandardAPI("Opens an ItemBuilder for the BlockItem sub-entry. Call .build() to return to this BlockBuilder.")
+    public ItemBuilder<BlockItem, BlockBuilder<T, P>> item() {
+        return item(BlockItem::new);
     }
 
-    @StandardAPI("Configures a custom item type sub-entry via consumer. Returns this BlockBuilder.")
-    public <I extends Item> BlockBuilder<T, P> item(
-                                                    @Nonnull BiFunction<? super T, Item.Properties, ? extends I> factory,
-                                                    @Nonnull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> config) {
+    @StandardAPI("Opens an ItemBuilder with a custom item factory. Call .build() to return to this BlockBuilder.")
+    public <I extends Item> ItemBuilder<I, BlockBuilder<T, P>> item(
+                                                    @Nonnull BiFunction<? super T, Item.Properties, ? extends I> factory) {
         var builder = getOwner()
                 .<I, BlockBuilder<T, P>>item(
                         this, getName(), p -> factory.apply(getEntry(), p.useBlockDescriptionPrefix()))
@@ -102,9 +99,7 @@ public class BlockBuilder<T extends Block, P>
         if (defaultItemTab != null) {
             builder.tab(defaultItemTab);
         }
-        config.accept(builder);
-        builder.register();
-        return this;
+        return builder;
     }
 
     /** Sets a default creative tab that will be applied to any BlockItem created via {@link #item}. */
@@ -114,21 +109,17 @@ public class BlockBuilder<T extends Block, P>
         return this;
     }
 
-    @StandardAPI("Configures a BlockEntity sub-entry via consumer. Returns this BlockBuilder.")
-    public <BE extends BlockEntity> BlockBuilder<T, P> blockEntity(
-                                                                   @Nonnull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
-                                                                   @Nonnull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> config) {
-        var builder = getOwner().blockEntity(this, getName(), beFactory).validBlock(this::getEntry);
-        config.accept(builder);
-        builder.register();
-        return this;
+    @StandardAPI("Opens a BlockEntityBuilder for the block entity sub-entry. Call .build() to return to this BlockBuilder.")
+    public <BE extends BlockEntity> BlockEntityBuilder<BE, BlockBuilder<T, P>> blockEntity(
+                                                                   @Nonnull BlockEntityBuilder.BlockEntityFactory<BE> beFactory) {
+        return getOwner().<BE, BlockBuilder<T, P>>blockEntity(this, getName(), beFactory).validBlock(this::getEntry);
     }
 
     // === Syntax Sugar ===
 
-    @SyntaxSugar("item($ -> {})")
+    @SyntaxSugar("item().build()")
     public BlockBuilder<T, P> simpleItem() {
-        return item($ -> {});
+        return item().build();
     }
 
     @SyntaxSugar("blockstate(() -> (ctx, prov) -> prov.createTrivialCube(ctx.getEntry()))")

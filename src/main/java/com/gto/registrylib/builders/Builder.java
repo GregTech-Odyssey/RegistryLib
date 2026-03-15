@@ -138,4 +138,15 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>>
     default S transform(@Nonnull UnaryOperator<S> func) {
         return func.apply((S) this);
     }
+
+    /**
+     * Registers this entry and returns the parent object, allowing the caller to continue
+     * configuring the parent builder. Typically used to close a sub-entry chain:
+     * {@code .item().tooltip(...).build()  // returns the parent BlockBuilder}.
+     */
+    @StandardAPI
+    default P build() {
+        register();
+        return getParent();
+    }
 }

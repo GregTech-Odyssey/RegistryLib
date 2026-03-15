@@ -15,12 +15,9 @@ public class SimpleFluidExample {
             Identifier.fromNamespaceAndPath("registrylib", "block/fluid/liquid_flow");
 
     public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
-            RegistryLibTest.REGISTRYLIB.fluid(
-                    "acid",
-                    FLUID_STILL,
-                    FLUID_FLOW,
-                    fluid -> {
-                        fluid.lang("Acid")
-                                .clientExtension(FLUID_STILL, FLUID_FLOW);
-                    });
+            RegistryLibTest.REGISTRYLIB
+                    .fluid("acid", FLUID_STILL, FLUID_FLOW)
+                    .lang("Acid")
+                    .clientExtension(FLUID_STILL, FLUID_FLOW)
+                    .register();
 }
