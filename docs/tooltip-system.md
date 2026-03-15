@@ -6,79 +6,166 @@ permalink: /tooltip-system/
 
 # Tooltip System
 
-RegistryLib extends vanilla Minecraft tooltips with a **two-level node model**. Instead of plain text lines, you work with **RootNodes** (box containers) and **SubNodes** (content leaves). This gives you priority-based ordering, automatic separator lines, independent floating boxes, and fully custom rendering — all configured through the same fluent builder API you use for items and blocks.
+RegistryLib extends vanilla Minecraft tooltips with a two-level model:
+
+- `SubNode` is the content you want to show.
+- `RootNode` is the container that decides where that content is rendered.
+
+That extra structure gives you four things vanilla tooltips do not have:
+
+- ordering by priority
+- automatic separator lines
+- extra tooltip boxes below the vanilla box
+- custom-rendered content such as bars, icons, or swatches
+
+If you only need one sentence under the item name, use `item.tooltip(Component)`. If you need layout, ordering, or custom visuals, use tooltip nodes.
+
+For general item registration, also see [Register Items]({{ '/register-items/' | relative_url }}).
 
 ---
 
-## Key Concepts
+## Quick Start
 
-### How It Relates to Vanilla Tooltips
-
-Vanilla Minecraft renders tooltips as a flat list of `Component` lines inside a single dark box. RegistryLib injects additional content into that pipeline via NeoForge's `RenderTooltipEvent.GatherComponents`. Your nodes appear **alongside** the vanilla tooltip content — you don't replace it, you extend it.
-
-### SubNode — The Content Leaf
-
-A `SubNode` is the smallest renderable unit inside a tooltip. The built-in `SubNode.Basic` wraps a `Component` for text display. Each SubNode carries an `int priority` — lower values appear higher.
+If you are new to the system, start here.
 
 ```java
-// priority 0 — appears near the top
-new SubNode.Basic(Component.literal("§dTitle"), 0)
+public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
+        "mymod:detail_box", 10, true);
 
-// priority 10 — appears below priority-0 nodes
-new SubNode.Basic(Component.literal("§7Some info"), 10)
+item.tooltip((collector, stack) -> {
+    collector.node(
+            new SubNode.Basic(Component.literal("§dMagic Wand"), 0),
+            true, false);
+    collector.node(
+            new SubNode.Basic(
+                    Component.literal("§7Durability: §f"
+                            + (stack.getMaxDamage() - stack.getDamageValue())),
+                    10));
+
+    collector.node(
+            DETAIL_BOX,
+            new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
+    collector.node(
+            DETAIL_BOX,
+            new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
+});
 ```
 
-### RootNode — The Box Container
+What this does:
 
-A `RootNode` groups SubNodes into a rendering area. There are two modes:
+1. Adds two inline lines to the vanilla tooltip area.
+2. Inserts a separator above the first custom inline line.
+3. Creates a second tooltip box below the vanilla one for extra details.
+4. Sorts all custom lines by priority within their own container.
 
-| Mode | `separateBox` | Behaviour |
+Use this mental shortcut:
+
+- same box as vanilla -> default root
+- different box below vanilla -> custom `RootNodeRef`
+- text line -> `SubNode.Basic`
+- custom visual element -> extend `SubNode`
+
+Examples use `Component.literal(...)` for brevity. In a real mod, prefer `Component.translatable(...)` when the text should be localizable.
+
+---
+
+## Choose the Right Approach
+
+| Goal | API | Use it when |
 | --- | --- | --- |
-| **Inline** | `false` | SubNodes appear inside the vanilla tooltip frame, below vanilla content. |
-| **Independent box** | `true` | SubNodes render in a separate bordered box below the vanilla tooltip. |
+| Add one static line | `item.tooltip(Component)` | You just want a short description. |
+| Add dynamic lines | `item.tooltip((collector, stack) -> ...)` | Content depends on `ItemStack`, durability, NBT, mode, or attachments. |
+| Add a visual break from vanilla lines | `collector.node(node, true, false)` | You want your custom section to read like a separate block. |
+| Show extra information in another box | `TooltipRegistry.rootNode(..., true)` | Secondary details should not crowd the main tooltip. |
+| Add tooltip logic from an attachment | `collectTooltipNodes(...)` | Tooltip content belongs to a reusable `CompositeItemAttachment`. |
+| Render icons or bars | custom `SubNode` | Text is not enough. |
 
-A built-in **default RootNode** (`separateBox=false`) is always available. When you call `collector.node(subNode)` without specifying a RootNode, the node goes into this default inline container.
+---
 
-### RootNodeRef — A Handle to a RootNode
+## Core Mental Model
 
-You never interact with `RootNode` directly in registration code. Instead you hold a `RootNodeRef` — a lightweight ID-based handle that you pass to `collector.node(ref, subNode)`. Create one with:
+Vanilla Minecraft treats a tooltip as a flat list of lines inside one dark box. RegistryLib does not replace that system. It injects additional tooltip content during NeoForge's `RenderTooltipEvent.GatherComponents`, so your content appears alongside the vanilla tooltip.
+
+Think of the RegistryLib model like this:
+
+- `SubNode`: one renderable unit, such as a text line or progress bar
+- `RootNode`: one tooltip region that holds subnodes
+- `RootNodeRef`: the handle you keep in registration code
+- `TooltipNodeCollector`: the object you write nodes into during tooltip construction
+
+### `SubNode`
+
+`SubNode` is the smallest renderable part of the tooltip. The built-in `SubNode.Basic` wraps a `Component`.
+
+Each subnode has a priority:
 
 ```java
-public static final RootNodeRef MY_BOX =
-        TooltipRegistry.rootNode("mymod:my_box", 10, true);
+new SubNode.Basic(Component.literal("§dTitle"), 0);
+new SubNode.Basic(Component.literal("§7Details"), 10);
 ```
 
-### Separator Lines
+Lower priority values render higher within the same root.
 
-When adding a SubNode, you can request a separator above and/or below it. The system automatically inserts a thin semi-transparent line between nodes — no manual management needed.
+### `RootNode`
+
+`RootNode` decides where a group of subnodes is rendered.
+
+| Mode | `separateBox` | Result |
+| --- | --- | --- |
+| Inline | `false` | Content is appended inside the vanilla tooltip frame. |
+| Independent box | `true` | Content is drawn in its own box below the vanilla tooltip. |
+
+RegistryLib always provides one built-in default root node with `separateBox=false`. If you call `collector.node(subNode)`, that node goes there.
+
+### `RootNodeRef`
+
+You usually do not construct `RootNode` directly in item registration code. Instead, create and reuse a `RootNodeRef`:
+
+```java
+public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
+        "mymod:detail_box", 10, true);
+```
+
+Declare it once, usually as `static final`, and reuse it everywhere that should write into that box.
+
+### Separators
+
+Separators are inserted automatically by the registry. You only express the intent:
 
 ```java
 collector.node(subNode, true, false);
-//                      ↑      ↑
-//           separatorAbove  separatorBelow
 ```
+
+This means:
+
+- `separatorAbove=true`: add a separator before this node when appropriate
+- `separatorBelow=true`: add a separator after this node if another node follows
+
+For the default inline root, `separatorAbove` on the first node is the usual way to visually split your custom section from the vanilla lines.
 
 ---
 
-## Adding Tooltips to Items
+## Step by Step
 
-### Single-Line Tooltip
+### 1. Add a Single Static Line
 
-The simplest way — one line of text appended to the vanilla tooltip:
+Use this when all you want is a short description.
 
 ```java
 item.tooltip(Component.literal("§5A powerful magical artifact"));
 ```
 
-### Multi-Line Dynamic Tooltip
+This is the simplest API and the right default choice for basic item flavor text.
 
-Use the callback form for dynamic content based on the ItemStack:
+### 2. Add Dynamic Multi-Line Content
+
+Use the callback form when the tooltip depends on the current `ItemStack`.
 
 ```java
 item.tooltip((collector, stack) -> {
     collector.node(
             new SubNode.Basic(Component.literal("§dMagic Wand"), 0),
-            true, false);   // separator above this node
+            true, false);
     collector.node(
             new SubNode.Basic(
                     Component.literal("§7Durability: §f"
@@ -87,37 +174,42 @@ item.tooltip((collector, stack) -> {
 });
 ```
 
-Nodes are sorted by priority within the default RootNode. The first node requests a separator above it, creating a visual break from vanilla content.
+Why this is useful:
 
-### Independent Floating Box
+- `stack` gives you access to durability, NBT, custom data, and state
+- priorities keep the output stable even when several systems contribute nodes
+- the separator makes the custom content read like a real section rather than an arbitrary extra line
 
-Define a custom `RootNodeRef` and route nodes into it:
+### 3. Move Details into a Separate Box
+
+When there is too much information for the main tooltip, split it into another box.
 
 ```java
-// 1) Declare a separate-box root node (once, in a static field)
-public static final RootNodeRef DETAIL_BOX =
-        TooltipRegistry.rootNode("mymod:detail_box", 10, true);
+public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
+        "mymod:detail_box", 10, true);
 
-// 2) Write nodes into it during tooltip configuration
 item.tooltip((collector, stack) -> {
-    // Inline (default root)
     collector.node(new SubNode.Basic(Component.literal("§dTitle"), 0), true, false);
 
-    // Independent box
-    collector.node(DETAIL_BOX,
+    collector.node(
+            DETAIL_BOX,
             new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
-    collector.node(DETAIL_BOX,
+    collector.node(
+            DETAIL_BOX,
             new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
 });
 ```
 
-The independent box renders below the vanilla tooltip with its own dark background and border, positioned automatically.
+Good candidates for separate boxes:
 
----
+- secondary stats
+- debug or dev-only details
+- contextual usage instructions
+- attachment-provided auxiliary info
 
-## Adding Tooltips to Blocks
+### 4. Add Tooltips to Blocks
 
-Block tooltips work through the **BlockItem**. Use `block.item(...)` to access the item builder, then call `.tooltip()` as usual:
+Blocks expose item tooltips through their `BlockItem`, so you configure the tooltip via `block.item(...)`.
 
 ```java
 block.item(itemBuilder -> {
@@ -129,45 +221,162 @@ block.item(itemBuilder -> {
 });
 ```
 
-All tooltip features (dynamic content, independent boxes, separators) are available on block items, since they share the same `ItemBuilder` API.
+All tooltip features available to items also work here, because the block item uses the same item builder pipeline.
 
----
+### 5. Let Attachments Contribute Tooltip Content
 
-## Integration with CompositeItem Attachments
-
-`CompositeItemAttachment` subclasses can contribute tooltip nodes by overriding `collectTooltipNodes()`. The system detects this override automatically and registers a unified tooltip config that invokes all relevant attachments.
+If you use `CompositeItemAttachment`, the attachment can provide its own tooltip nodes by overriding `collectTooltipNodes(...)`.
 
 ```java
-public class MyAttachment extends CompositeItemAttachment<CompositeItem> {
+public class InspectAttachment extends CompositeItemAttachment<CompositeItem> {
 
     @Override
     public void collectTooltipNodes(
             CompositeItem item, ItemStack stack, TooltipNodeCollector collector) {
-        collector.node(new SubNode.Basic(
-                Component.literal("§eContributed by attachment"), 100));
+        collector.node(
+                new SubNode.Basic(Component.literal("§eRight-click to inspect"), 100));
     }
 }
 ```
 
-Attach it during registration:
+Then attach it normally:
 
 ```java
-item.attach(new MyAttachment());
+item.attach(new InspectAttachment());
 ```
 
-The attachment's nodes are merged with all other tooltip configurations for the item, respecting priority and separator rules.
+This is a good fit when tooltip content belongs to behavior that is already encapsulated in an attachment. The attachment's nodes are merged with all other tooltip sources for that item.
+
+### 6. Render Custom Visual Content with a `SubNode`
+
+When text is not enough, extend `SubNode` directly.
+
+```java
+public class ProgressBarNode extends SubNode {
+
+    private final float progress;
+
+    public ProgressBarNode(float progress, int priority) {
+        super(priority);
+        this.progress = progress;
+    }
+
+    @Override
+    public int getHeight(Font font) {
+        return 7;
+    }
+
+    @Override
+    public int getWidth(Font font) {
+        return 80;
+    }
+
+    @Override
+    public void renderImage(
+            Font font, int x, int y, int width, int height, GuiGraphics graphics) {
+        graphics.fill(x, y + 2, x + 80, y + 5, 0xFF333333);
+        int fillWidth = (int) (80 * progress);
+        graphics.fill(x, y + 2, x + fillWidth, y + 5, 0xFF55FF55);
+    }
+}
+```
+
+Use it like any other node:
+
+```java
+item.tooltip((collector, stack) -> {
+    float pct = 1.0f - (float) stack.getDamageValue() / stack.getMaxDamage();
+    collector.node(new ProgressBarNode(pct, 20));
+});
+```
+
+Implementation guidelines:
+
+- implement `getWidth()` and `getHeight()` accurately, because layout depends on them
+- put text in `renderText(...)`
+- put shapes, icons, lines, and bars in `renderImage(...)`
+- override only what you need; both render methods are no-ops by default
+
+### 7. Customize the Box Background
+
+Independent boxes can use a custom background renderer.
+
+```java
+public static final RootNodeRef CUSTOM_BOX = TooltipRegistry.rootNode(
+        "mymod:custom",
+        5,
+        true,
+        6,
+        (graphics, x, y, w, h) -> {
+            graphics.fill(x, y, x + w, y + h, 0xCC222222);
+        });
+```
+
+The default renderer matches the vanilla tooltip look closely: dark background, subtle bright top border, and darker bottom edge.
+
+---
+
+## Copy-Paste Recipes
+
+### Recipe: Add a Basic Section Below the Vanilla Lines
+
+```java
+item.tooltip((collector, stack) -> {
+    collector.node(
+            new SubNode.Basic(Component.literal("§6Special Properties"), 0),
+            true, false);
+    collector.node(new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
+    collector.node(new SubNode.Basic(Component.literal("§7Unbreakable in lava"), 20));
+});
+```
+
+Use this for the most common “append a mini section” case.
+
+### Recipe: Keep Main Tooltip Short, Put Details Elsewhere
+
+```java
+public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
+        "mymod:details", 10, true);
+
+item.tooltip((collector, stack) -> {
+    collector.node(
+            new SubNode.Basic(Component.literal("§aPortable Generator"), 0),
+            true, false);
+
+    collector.node(DETAIL_BOX,
+            new SubNode.Basic(Component.literal("§7Output: §f80 FE/t"), 0));
+    collector.node(DETAIL_BOX,
+            new SubNode.Basic(Component.literal("§7Buffer: §f100000 FE"), 10));
+});
+```
+
+Use this when the item should stay readable at a glance.
+
+### Recipe: Tooltip from an Attachment
+
+```java
+public class ChargeAttachment extends CompositeItemAttachment<CompositeItem> {
+    @Override
+    public void collectTooltipNodes(
+            CompositeItem item, ItemStack stack, TooltipNodeCollector collector) {
+        collector.node(new SubNode.Basic(Component.literal("§bCharge module installed"), 50));
+    }
+}
+```
+
+Use this when tooltip content should travel with the attachment rather than the item registration itself.
 
 ---
 
 ## Full Example
 
-A complete item registration combining all tooltip features:
+This example combines static text, dynamic lines, a separate detail box, and attachment-contributed content.
 
 ```java
 public class FullItemExample {
 
-    public static final RootNodeRef DETAIL_BOX =
-            TooltipRegistry.rootNode("mymod:detail_box", 10, true);
+    public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
+            "mymod:detail_box", 10, true);
 
     static class InspectAttachment extends CompositeItemAttachment<CompositeItem> {
         @Override
@@ -199,14 +408,11 @@ public class FullItemExample {
                         item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
                         item.tag(ItemTags.DURABILITY_ENCHANTABLE);
 
-                        // Single-line tooltip
                         item.tooltip(Component.literal("§5A powerful magical artifact"));
 
-                        // Dynamic multi-line tooltip + independent box
                         item.tooltip((collector, stack) -> {
                             collector.node(
-                                    new SubNode.Basic(
-                                            Component.literal("§dMagic Wand"), 0),
+                                    new SubNode.Basic(Component.literal("§dMagic Wand"), 0),
                                     true, false);
                             collector.node(
                                     new SubNode.Basic(
@@ -214,164 +420,137 @@ public class FullItemExample {
                                                     + (stack.getMaxDamage()
                                                             - stack.getDamageValue())),
                                             10));
-                            collector.node(DETAIL_BOX,
+                            collector.node(
+                                    DETAIL_BOX,
                                     new SubNode.Basic(
                                             Component.literal("§bDetailed Information"), 0));
-                            collector.node(DETAIL_BOX,
-                                    new SubNode.Basic(
-                                            Component.literal("§7Fire resistant"), 10));
+                            collector.node(
+                                    DETAIL_BOX,
+                                    new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
                         });
 
-                        // Attachment contributes tooltip nodes automatically
                         item.attach(new InspectAttachment());
                     });
 }
 ```
 
-The resulting tooltip shows:
-1. **Vanilla tooltip area**: the item name, "§5A powerful magical artifact", a separator, "§dMagic Wand", "§7Durability: §f...", "§eRight-click to inspect" (from attachment).
-2. **Independent box below**: "§bDetailed Information", "§7Fire resistant" — rendered in a separate dark bordered box.
+Resulting layout:
+
+1. Vanilla tooltip area shows the item name, the static tooltip line, a separator, the inline custom lines, and the attachment line.
+2. A second bordered box below shows the extra detail lines.
 
 ---
 
-## Extending with Custom SubNode
+## How Ordering and Layout Work
 
-For content beyond plain text — icons, progress bars, colour swatches — extend `SubNode` directly:
+Understanding these rules will prevent most confusion.
 
-```java
-public class ProgressBarNode extends SubNode {
+### Ordering
 
-    private final float progress; // 0.0 – 1.0
+- nodes are grouped by `RootNodeRef`
+- nodes are sorted by `SubNode.priority` inside each root
+- lower priority values render first
+- separate boxes are sorted by `RootNode.priority`
 
-    public ProgressBarNode(float progress, int priority) {
-        super(priority);
-        this.progress = progress;
-    }
+### Separators
 
-    @Override
-    public int getHeight(Font font) {
-        return 7;
-    }
+- separators are inserted by the registry, not by user code
+- a separator appears between two nodes if the previous node requested `separatorBelow` or the next node requested `separatorAbove`
+- for the default root, `separatorAbove` on the first node is how you create a visual break from vanilla content
 
-    @Override
-    public int getWidth(Font font) {
-        return 80;
-    }
+### Inline vs Separate Box
 
-    @Override
-    public void renderImage(
-            Font font, int x, int y, int width, int height, GuiGraphics graphics) {
-        graphics.fill(x, y + 2, x + 80, y + 5, 0xFF333333);   // track
-        int fillWidth = (int) (80 * progress);
-        graphics.fill(x, y + 2, x + fillWidth, y + 5, 0xFF55FF55); // bar
-    }
-}
-```
-
-Use it like any other SubNode:
-
-```java
-item.tooltip((collector, stack) -> {
-    float pct = 1.0f - (float) stack.getDamageValue() / stack.getMaxDamage();
-    collector.node(new ProgressBarNode(pct, 20));
-});
-```
-
-Implement `renderText()` for text content and `renderImage()` for graphical elements. Both default to no-op, so you only override what you need.
-
----
-
-## Custom Box Rendering
-
-When creating an independent-box RootNode, you can supply a custom `BoxRenderer` to control the background appearance:
-
-```java
-public static final RootNodeRef CUSTOM_BOX = TooltipRegistry.rootNode(
-        "mymod:custom",
-        5,
-        true,
-        6,    // 6px padding
-        (graphics, x, y, w, h) -> {
-            graphics.fill(x, y, x + w, y + h, 0xCC222222);
-        });
-```
-
-The default renderer (`RootNode.DEFAULT_BOX_RENDERER`) draws a dark background (`0xF0100010`) with a 1px gradient border (white highlight at top fading to shadow at bottom), matching the vanilla tooltip style.
-
-`BoxRenderer` is a functional interface:
-
-```java
-@FunctionalInterface
-public interface BoxRenderer {
-    void render(GuiGraphics graphics, int x, int y, int width, int height);
-}
-```
-
----
-
-## Architecture and Rendering Pipeline
-
-### End-to-End Flow
-
-```
-Registration phase                     Render phase (per-frame)
-──────────────────                     ────────────────────────
-ItemBuilder.tooltip(config)            RenderTooltipEvent.GatherComponents
-        │                                        │
-        ▼                                        ▼
-TooltipRegistry.register(item, config)   TooltipRegistry.resolve(itemStack)
-        │                                        │
-        ▼                                        ├─ Invoke all TooltipConfigs
-(stored in pendingEntries)                       │   config.configure(collector, stack)
-                                                 │
-                                                 ├─ Group SubNodes by RootNodeRef
-                                                 │
-                                                 ├─ Sort within each group by SubNode.priority
-                                                 │
-                                                 ├─ Insert SeparatorNodes per preferences
-                                                 │
-                                                 ├─ separateBox=false → inline nodes
-                                                 │   separateBox=true  → independent box
-                                                 │
-                                                 ▼
-                                      RegistryLibTooltipComponent
-                                                 │
-                                                 ▼
-                                      RegistryLibClientTooltip
-                                        ├─ renderText()  → inline text + box bg & text
-                                        └─ renderImage() → inline images + box images
-```
-
-### How It Hooks into Minecraft
-
-Two NeoForge events are registered in `Client.java`:
-
-1. **`RegisterClientTooltipComponentFactoriesEvent`** — maps `RegistryLibTooltipComponent` to `RegistryLibClientTooltip`, telling Minecraft how to render the custom component.
-2. **`RenderTooltipEvent.GatherComponents`** — fires every time a tooltip is about to render. Calls `TooltipRegistry.resolve(itemStack)` and injects the result into the vanilla component list via `Either.right(component)`.
-
-### Inline Nodes
-
-Inline nodes (default RootNode, `separateBox=false`) are rendered inside the vanilla tooltip frame. Their `getWidth()` / `getHeight()` contribute to the vanilla tooltip's size calculation.
-
-### Independent Boxes
-
-Independent-box nodes (`separateBox=true`) render **below** the vanilla tooltip:
-
-- Offset: vanilla tooltip bottom edge + 3px border + 2px gap
-- Each box draws its background via `BoxRenderer`, then renders SubNodes inside with configured padding
-- Multiple boxes stack vertically with a 2px gap between them
-- Boxes are sorted by their RootNode's `priority` (ascending)
+- inline nodes contribute to the vanilla tooltip's width and height
+- separate boxes render below the vanilla tooltip
+- separate boxes use their own padding and background renderer
+- multiple separate boxes stack vertically with a small gap
 
 ### Render Order
 
-1. `renderText()` is called first — inline text, then independent box backgrounds + text
-2. `renderImage()` is called second — inline images, then independent box images
+Rendering happens in two passes:
 
-This ensures box backgrounds are drawn before any overlaid content.
+1. `renderText(...)` draws inline text, then separate box backgrounds, then separate box text.
+2. `renderImage(...)` draws inline graphics, then separate box graphics.
 
-### SeparatorNode
+This ordering ensures backgrounds are already in place before custom imagery is drawn on top.
 
-A system-managed node automatically inserted between SubNodes. Renders a full-width 1px semi-transparent white line (`0x40FFFFFF`) with 3px padding above and below (7px total). **You never create this manually.**
+---
+
+## Troubleshooting
+
+### My tooltip does not appear
+
+Check these first:
+
+- you registered the tooltip on the item or block item, not only on the block itself
+- the item actually reaches the tooltip callback for the hovered stack
+- your collector receives at least one node
+- your custom nodes report non-zero width and height when they should be visible
+
+### My nodes are in the wrong order
+
+Priority is ascending. `0` renders above `10`. If content from multiple places is mixing badly, assign a clear priority convention such as `0-49` for title and summary, `50-99` for item internals, and `100+` for attachments.
+
+### My separator is missing
+
+Remember that separators are conditional. The most common pattern is:
+
+```java
+collector.node(new SubNode.Basic(Component.literal("§6Details"), 0), true, false);
+```
+
+That requests a separator above the first inline node, which creates a break from the vanilla lines.
+
+### My separate box is not separate
+
+Make sure the root node was created with `separateBox=true`:
+
+```java
+TooltipRegistry.rootNode("mymod:detail_box", 10, true)
+```
+
+### My custom node renders but layout looks wrong
+
+Usually the problem is one of these:
+
+- `getWidth()` is too small, so content gets clipped or overlaps visually
+- `getHeight()` is too small, so the next node renders too early
+- drawing code assumes a fixed width that does not match the reported width
+
+### I have too much tooltip logic in one place
+
+Move reusable behavior into a `CompositeItemAttachment` and let it contribute via `collectTooltipNodes(...)`.
+
+---
+
+## Best Practices
+
+- Start with `item.tooltip(Component)` unless you actually need node-level control.
+- Use one inline section for the most important information and move secondary details into a separate box.
+- Reuse `RootNodeRef` values instead of creating them ad hoc inside tooltip callbacks.
+- Prefer clear priority ranges over arbitrary numbers.
+- Prefer `Component.translatable(...)` for user-facing text in production mods.
+- Keep custom `SubNode` dimensions honest; layout quality depends on them.
+
+---
+
+## Source Reference
+
+If you want to understand or debug the implementation, these are the main entry points in the source tree:
+
+- `src/main/java/com/gto/registrylib/tooltip/TooltipRegistry.java`
+- `src/main/java/com/gto/registrylib/tooltip/TooltipNodeCollector.java`
+- `src/main/java/com/gto/registrylib/tooltip/SubNode.java`
+- `src/main/java/com/gto/registrylib/tooltip/RootNode.java`
+- `src/main/java/com/gto/registrylib/client/Client.java`
+- `src/main/java/com/gto/registrylib/client/RegistryLibClientTooltip.java`
+- `src/main/java/com/gto/registrylibtest/item/FullItemExample.java`
+
+Use them in this order:
+
+1. `FullItemExample` to see intended usage.
+2. `TooltipRegistry` to understand grouping, sorting, and separator insertion.
+3. `RegistryLibClientTooltip` to understand final rendering behavior.
 
 ---
 
@@ -379,30 +558,28 @@ A system-managed node automatically inserted between SubNodes. Renders a full-wi
 
 ### `TooltipRegistry`
 
-The global registry managing RootNodes and per-item tooltip callbacks.
+Global registry for root nodes and per-item tooltip callbacks.
 
 | Method | Description |
 | --- | --- |
-| `defaultRootRef()` | Returns the built-in default `RootNodeRef` (inline, no separate box). |
-| `rootNode(id, priority, separateBox)` | Creates a custom `RootNode` with default padding (4px) and default box renderer. Returns a `RootNodeRef`. |
-| `rootNode(id, priority, separateBox, padding, boxRenderer)` | Fully customised variant with explicit padding and box renderer. |
-| `registerRootNode(ref, rootNode)` | Registers a pre-built `RootNode` instance. |
-| `register(ItemLike, TooltipConfig)` | Manually registers a tooltip callback for an item (usually handled by `ItemBuilder.tooltip()`). |
+| `defaultRootRef()` | Returns the built-in inline root node reference. |
+| `rootNode(id, priority, separateBox)` | Creates a root node with default padding and the default box renderer. |
+| `rootNode(id, priority, separateBox, padding, boxRenderer)` | Creates a root node with explicit padding and custom box rendering. |
+| `registerRootNode(ref, rootNode)` | Registers a pre-built root node instance manually. |
+| `register(ItemLike, TooltipConfig)` | Registers a tooltip callback for an item. Usually called indirectly by `ItemBuilder.tooltip(...)`. |
 
 ### `TooltipNodeCollector`
 
-Collects `SubNode` entries grouped by `RootNodeRef`. Passed to your `TooltipConfig` callback.
+Receives nodes during tooltip assembly.
 
 | Method | Description |
 | --- | --- |
-| `node(SubNode)` | Default root, no separators. |
-| `node(SubNode, separatorAbove, separatorBelow)` | Default root, with separator control. |
-| `node(RootNodeRef, SubNode)` | Specific root, no separators. |
-| `node(RootNodeRef, SubNode, separatorAbove, separatorBelow)` | Specific root, with separator control. |
+| `node(SubNode)` | Adds a node to the default inline root. |
+| `node(SubNode, separatorAbove, separatorBelow)` | Same as above, but requests separators. |
+| `node(RootNodeRef, SubNode)` | Adds a node to a specific root. |
+| `node(RootNodeRef, SubNode, separatorAbove, separatorBelow)` | Adds a node to a specific root with separator preferences. |
 
 ### `TooltipNodeCollector.TooltipConfig`
-
-Functional interface for tooltip configuration callbacks.
 
 ```java
 @FunctionalInterface
@@ -413,41 +590,41 @@ public interface TooltipConfig {
 
 ### `SubNode`
 
-Abstract base class for tooltip leaf nodes.
+Base class for tooltip leaf content.
 
 | Member | Description |
 | --- | --- |
-| `SubNode(int priority)` | Constructor. Lower priority = higher position. |
-| `getHeight(Font)` | Node height in pixels (abstract). |
-| `getWidth(Font)` | Node width in pixels (abstract). |
-| `renderText(GuiGraphics, Font, x, y)` | Renders text content. Default no-op. |
-| `renderImage(Font, x, y, width, height, GuiGraphics)` | Renders graphical content. Default no-op. |
+| `SubNode(int priority)` | Constructor. Lower value means earlier rendering inside the same root. |
+| `getHeight(Font)` | Returns this node's height in pixels. |
+| `getWidth(Font)` | Returns this node's width in pixels. |
+| `renderText(GuiGraphics, Font, x, y)` | Draws text content. Default no-op. |
+| `renderImage(Font, x, y, width, height, GuiGraphics)` | Draws graphics. Default no-op. |
 
 ### `SubNode.Basic`
 
-Built-in text node wrapping a `Component`.
+Built-in text node for `Component` content.
 
 | Constructor | Description |
 | --- | --- |
-| `Basic(Component text)` | Priority defaults to 0. |
-| `Basic(Component text, int priority)` | Explicit priority. |
+| `Basic(Component text)` | Creates a text node with default priority `0`. |
+| `Basic(Component text, int priority)` | Creates a text node with explicit priority. |
 
 ### `RootNode`
 
-Box container defining how a group of SubNodes is rendered.
+Defines how a group of subnodes is rendered.
 
-| Parameter | Default | Description |
-| --- | --- | --- |
-| `id` | — | Unique string identifier. |
-| `priority` | — | Sort order among independent boxes. |
-| `separateBox` | — | `true` = independent box; `false` = inline. |
-| `padding` | `4` | Inner padding in pixels. |
-| `boxRenderer` | `DEFAULT_BOX_RENDERER` | Custom box background renderer. |
+| Property | Meaning |
+| --- | --- |
+| `id` | Unique string identifier. |
+| `priority` | Order among separate boxes. |
+| `separateBox` | Whether the root renders in an independent box. |
+| `padding` | Inner padding used for separate-box rendering. |
+| `boxRenderer` | Background renderer for separate boxes. |
 
 ### `RootNodeRef`
 
-Lightweight handle referencing a `RootNode` by string ID. Store as `static final` and pass to `collector.node(ref, ...)`.
+Lightweight handle for a root node. Keep it as a reusable constant and pass it to `collector.node(ref, ...)`.
 
-### `CompositeItemAttachment.collectTooltipNodes(T, ItemStack, TooltipNodeCollector)`
+### `CompositeItemAttachment.collectTooltipNodes(...)`
 
-Override this in your attachment to contribute tooltip nodes. The system automatically detects the override via bitmask introspection (`COLLECT_TOOLTIP = 1 << 6`) and registers a unified config.
+Override this in attachments when the attachment should contribute tooltip nodes. RegistryLib detects the override automatically and merges the result with the item's other tooltip sources.
