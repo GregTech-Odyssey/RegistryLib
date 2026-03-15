@@ -37,12 +37,13 @@ setx GITHUB_TOKEN your-token
 
 Restart your terminal after running these commands.
 
-Security notice:
-
-- `setx` writes user-level environment variables that are readable by applications running under your account.
-- The token is stored in plaintext in `HKEY_CURRENT_USER\Environment`.
-- Avoid this approach on shared or production machines.
-- Restricting the token to `read:packages` minimizes impact if exposed.
+{: .important }
+> **Security notice:**
+>
+> - `setx` writes user-level environment variables that are readable by applications running under your account.
+> - The token is stored in plaintext in `HKEY_CURRENT_USER\Environment`.
+> - Avoid this approach on shared or production machines.
+> - Restricting the token to `read:packages` minimizes impact if exposed.
 
 ### Step 3: Add the Repository and Dependency to Your Project
 

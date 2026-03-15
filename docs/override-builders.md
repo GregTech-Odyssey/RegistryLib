@@ -54,6 +54,9 @@ automatically produces the extended builder.
 
 ---
 
+{: .important }
+> The single-argument shorthand methods (`block("name", factory)`, `item("name", factory)`, `fluid("name", still, flow)`) return the base builder type. Because Java generics are invariant, a subclass **cannot** override these to return `ModBlockBuilder<T, ModRegistryCore>` — the types are incompatible. Callers must use the **two-argument** form (`block(parent, name, factory)`) to receive the extended builder type at compile time.
+
 ## Java Return-Type Constraint
 
 The single-argument convenience methods

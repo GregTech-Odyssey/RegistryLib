@@ -10,7 +10,8 @@ A `Group` is a wrapper around `RegistryCore` that applies shared defaults — la
 
 Without a group, blocks in the same content family each repeat the same `lang(...)`, `tab(...)`, and `blockProperties(...)` calls. A group sets these once and every member entry inherits them automatically.
 
-If you are registering a single isolated block or item, use `RegistryCore.block(...)` directly. Groups are the right tool when your mod has content families: tiers, variants, or any set of entries that belong together.
+{: .note }
+> If you are registering a single isolated block or item, use `RegistryCore.block(...)` directly. Groups are the right tool when your mod has content families: tiers, variants, or any set of entries that belong together.
 
 For block-specific registration options, also see [Register Blocks]({{ '/register-blocks/' | relative_url }}).
 

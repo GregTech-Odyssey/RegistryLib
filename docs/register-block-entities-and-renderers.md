@@ -81,4 +81,5 @@ Lazily binds the client renderer. The outer `Supplier` ensures renderer code is 
 be.renderer(() -> TimerBlockEntityRenderer::new);
 ```
 
-The renderer class (e.g. `TimerBlockEntityRenderer`) is only instantiated on the client; the server runtime never touches it. This is the NeoForge-recommended client-isolation pattern.
+{: .important }
+> The renderer class (e.g. `TimerBlockEntityRenderer`) is only instantiated on the client; the server runtime never touches it. This is the NeoForge-recommended client-isolation pattern.

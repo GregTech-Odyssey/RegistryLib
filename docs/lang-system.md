@@ -28,7 +28,8 @@ public static final RegistryCore REGISTRYLIB =
         RegistryCore.create(MOD_ID).upsideDownLang(true);
 ```
 
-This is disabled by default.
+{: .note }
+> This is disabled by default.
 
 ```java
 REGISTRYLIB.item("copper_coin", Item::new)

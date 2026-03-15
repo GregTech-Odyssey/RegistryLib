@@ -91,7 +91,8 @@ Sets the textures and tints them with an ARGB colour. Designed for use with grey
 fluid.clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400);
 ```
 
-The colour format is ARGB (e.g. `0xFFFF4400` = opaque orange-red). Tinting is also applied to the bucket item model.
+{: .note }
+> The colour format is ARGB (e.g. `0xFFFF4400` = opaque orange-red). Tinting is also applied to the bucket item model.
 
 ---
 

@@ -65,7 +65,8 @@ Use this mental shortcut:
 - text line -> `SubNode.Basic`
 - custom visual element -> extend `SubNode`
 
-Examples use `Component.literal(...)` for brevity. In a real mod, prefer `Component.translatable(...)` when the text should be localizable.
+{: .note }
+> Examples use `Component.literal(...)` for brevity. In a real mod, prefer `Component.translatable(...)` when the text should be localizable.
 
 ---
 

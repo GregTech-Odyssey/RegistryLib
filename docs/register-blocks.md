@@ -115,7 +115,8 @@ Automatically generates a corresponding BlockItem with default settings, requiri
 block.simpleItem();
 ```
 
-Suitable for decorative or simple material blocks that don't need a customised BlockItem.
+{: .note }
+> Suitable for decorative or simple material blocks that don't need a customised BlockItem.
 
 ---
 

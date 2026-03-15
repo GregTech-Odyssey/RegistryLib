@@ -220,4 +220,5 @@ Binds a CompositeItem attachment, adding right-click interactions, extra tooltip
 item.attach(new InspectAttachment());
 ```
 
-Only valid for `CompositeItem`. Attachments can override `use()`, `useOn()`, `inventoryTick()`, `collectTooltipNodes()`, etc.
+{: .important }
+> Only valid for `CompositeItem`. Attachments can override `use()`, `useOn()`, `inventoryTick()`, `collectTooltipNodes()`, etc.
