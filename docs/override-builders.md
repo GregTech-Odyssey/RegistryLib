@@ -1,4 +1,4 @@
----
+﻿---
 title: Override Builders
 nav_order: 11
 permalink: /override-builders/
@@ -6,37 +6,93 @@ permalink: /override-builders/
 
 # Override Builders
 
-This tutorial shows how to subclass `RegistryCore` so that every builder your mod
-creates already carries custom methods — for example a `.langCn("中文名")` shortcut
-for Simplified-Chinese translations.
+`RegistryCore` exposes three **protected factory hooks** that every
+`.block()` / `.item()` / `.fluid()` call delegates to. By overriding
+these hooks in a subclass you can substitute your own builder classes
+ with any custom methods you need  without modifying the library.
 
-The result is a mod-local `ModRegistryCore` that you use in place of the plain
-`RegistryCore`, with zero changes to the RegistryLib library itself.
+This page uses **adding a `.langCn()` method** as the worked example, but the
+pattern applies to any per-builder customisation (extra defaults, extra tags,
+logging, etc.).
 
----
-
-## Why subclass?
-
-| Approach | Call site |
-|----------|-----------|
-| **Standard ProviderType** (Approach 1) | `.lang(MyMod.LANG_ZH_CN, "铜币")` |
-| **Subclassed RegistryCore** (this page) | `.langCn("铜币")` *(when you have a typed builder reference)* |
-
-Use this approach when you register many entries and want the extra locale to feel
-native rather than like a tag-on.
-
-> **Java type-system note.** `RegistryCore.block("name", factory)` is declared to
-> return `BlockBuilder<T, RegistryCore>`. Because Java generics are invariant,
-> a subclass *cannot* safely override that return type to `ModBlockBuilder<T, ModRegistryCore>`
-> without changing the library's API signature. The two-argument form
-> `block(parent, "name", factory)`, however, *can* be safely overridden (both parent
-> and override share the same generic `P` variable), so `langCn()` is accessible on
-> the result of that call. For standard fluent chains the idiomatic choice remains
-> `.lang(ModRegistryCore.LANG_ZH_CN, "...")`.
+For how to *use* `.langCn()` once the setup is done, see
+[Lang System  Approach 2]({{ site.baseurl }}/lang-system/#approach-2--custom-builder-method).
 
 ---
 
-## Step 1 — Create ZhCnLangProvider
+## How the Hook System Works
+
+Every public registration method on `RegistryCore` goes through one of these
+three overrideable factory methods:
+
+```
+RegistryCore.block("name", factory)
+  internally calls: newBlockBuilder(parent, name, callback, factory)
+  default impl:     BlockBuilder.create(...)
+                         
+  your override:    ModBlockBuilder.create(...)   inject here
+```
+
+```java
+// The three hooks in RegistryCore  these are what you override:
+protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
+        P parent, String name, BuilderCallback callback,
+        Function<BlockBehaviour.Properties, T> factory) { ... }
+
+protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
+        P parent, String name, BuilderCallback callback,
+        Function<Item.Properties, T> factory) { ... }
+
+protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
+        P parent, String name, BuilderCallback callback,
+        FluidBuilder.FluidFactory<T> fluidFactory) { ... }
+```
+
+Override all three (or just the ones you need), return your own builder subclass,
+and every `.block()` / `.item()` / `.fluid()` call on your `ModRegistryCore`
+automatically produces the extended builder.
+
+---
+
+## Java Return-Type Constraint
+
+The single-argument convenience methods
+(`block("name", factory)`, `item("name", factory)`, `fluid("name", still, flow)`) are
+declared to return `BlockBuilder<T, RegistryCore>` / `ItemBuilder<T, RegistryCore>` / etc.
+Because Java generics are invariant, a subclass **cannot** override these to return
+`ModBlockBuilder<T, ModRegistryCore>`  the types are incompatible.
+
+The **two-argument** form (`block(P parent, String name, factory)`) **can** be safely
+overridden with a covariant return type, because `P` is the same generic variable in
+both the parent declaration and the override:
+
+```java
+// In ModRegistryCore  covariant override of the two-arg form:
+@SuppressWarnings("unchecked")
+@Override
+public <T extends Block, P> ModBlockBuilder<T, P> block(
+        P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
+    return (ModBlockBuilder<T, P>) super.block(parent, name, factory);
+    // safe: newBlockBuilder() always returns ModBlockBuilder at runtime
+}
+```
+
+This means callers must use the two-argument form to get `ModBlockBuilder` back
+at compile time:
+
+```java
+//  ModBlockBuilder  langCn() visible
+REGISTRYLIB.block(REGISTRYLIB, "magic_ore", Block::new).langCn(...);
+
+//  BlockBuilder  langCn() not visible (but still datagens correctly at runtime)
+REGISTRYLIB.block("magic_ore", Block::new).langCn(...);
+```
+
+---
+
+## Implementation  Step by Step
+
+### Step 1  Create the Lang Provider
 
 ```java
 public class ZhCnLangProvider extends RegistryLibLangProvider {
@@ -45,7 +101,10 @@ public class ZhCnLangProvider extends RegistryLibLangProvider {
         super(owner, packOutput, "zh_cn");
     }
 
-    /** Routes callbacks to our own ProviderType, not the default LANG. */
+    /**
+     * Routes callbacks to our own ProviderType.
+     * Without this override, callbacks would be written into en_us instead of zh_cn.
+     */
     @Override
     protected ProviderType<? extends RegistryLibLangProvider> getProviderType() {
         return ModRegistryCore.LANG_ZH_CN;
@@ -53,24 +112,16 @@ public class ZhCnLangProvider extends RegistryLibLangProvider {
 }
 ```
 
----
-
-## Step 2 — Create ModRegistryCore
-
-Subclass `RegistryCore`. Declare `LANG_ZH_CN` here so it lives next to the builders
-that use it, and override the three builder-factory hooks.
+### Step 2  Create ModRegistryCore
 
 ```java
 public class ModRegistryCore extends RegistryCore {
 
-    // ── Shared ProviderType ──────────────────────────────────────────────────
-
+    /** Shared ProviderType  declares the zh_cn datagen pipeline. */
     public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
             ProviderType.registerClientProvider(
                     "lang_zh_cn",
                     () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
-
-    // ── Construction ─────────────────────────────────────────────────────────
 
     protected ModRegistryCore(String modid) {
         super(modid);
@@ -83,9 +134,7 @@ public class ModRegistryCore extends RegistryCore {
         return ret;
     }
 
-    // ── Builder-factory hooks ────────────────────────────────────────────────
-    // Override these three protected methods so every .block() / .item() / .fluid()
-    // call on this instance creates a Mod*Builder instead of the plain library type.
+    //  Hook overrides 
 
     @Override
     protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
@@ -108,10 +157,8 @@ public class ModRegistryCore extends RegistryCore {
         return ModFluidBuilder.create(this, parent, name, callback, fluidFactory);
     }
 
-    // ── Covariant two-argument overrides ─────────────────────────────────────
-    // The two-arg (parent, name, factory) form CAN be overridden covariantely
-    // because the generic P is the same variable in parent and override.
-    // Result: block(REGISTRYLIB, "name", factory) returns ModBlockBuilder directly.
+    //  Covariant two-argument overrides 
+    // These expose the Mod*Builder return type to callers using the (parent, name, factory) form.
 
     @SuppressWarnings("unchecked")
     @Override
@@ -139,12 +186,11 @@ public class ModRegistryCore extends RegistryCore {
 }
 ```
 
----
+### Step 3  Create ModBlockBuilder
 
-## Step 3 — Create ModBlockBuilder
-
-Extend `BlockBuilder` and add your locale method. The `create()` factory mirrors
-the one in the library; the key addition is `.langCn()`.
+The `create()` static factory **must mirror** the library's defaults
+(`defaultBlockstate()`, `defaultLoot()`, `defaultLang()`)
+before returning, otherwise these defaults are skipped.
 
 ```java
 public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
@@ -157,13 +203,14 @@ public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
         return (ModBlockBuilder<T, P>) b.defaultBlockstate().defaultLoot().defaultLang();
     }
 
-    protected ModBlockBuilder(RegistryCore owner, P parent, String name,
+    protected ModBlockBuilder(
+            RegistryCore owner, P parent, String name,
             BuilderCallback callback,
             Function<BlockBehaviour.Properties, T> factory) {
         super(owner, parent, name, callback, factory);
     }
 
-    /** Sets the Simplified-Chinese display name. Sugar for {@code lang(LANG_ZH_CN, name)}. */
+    /** Example custom method  add any methods you need here. */
     public ModBlockBuilder<T, P> langCn(String name) {
         lang(ModRegistryCore.LANG_ZH_CN, name);
         return this;
@@ -171,14 +218,12 @@ public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
 }
 ```
 
----
+### Step 4  Create ModItemBuilder and ModFluidBuilder
 
-## Step 4 — Create ModItemBuilder and ModFluidBuilder
-
-Repeat the same pattern for items and fluids:
+Repeat the same pattern. The important requirement is that each `create()` method
+applies the same defaults as the library's original `create()` for that builder type.
 
 ```java
-// ModItemBuilder — same pattern, extends ItemBuilder
 public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
 
     public static <T extends Item, P> ModItemBuilder<T, P> create(
@@ -189,7 +234,8 @@ public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
         return (ModItemBuilder<T, P>) b.defaultModel().defaultLang();
     }
 
-    protected ModItemBuilder(RegistryCore owner, P parent, String name,
+    protected ModItemBuilder(
+            RegistryCore owner, P parent, String name,
             BuilderCallback callback,
             Function<Item.Properties, T> factory) {
         super(owner, parent, name, callback, factory);
@@ -203,20 +249,20 @@ public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
 ```
 
 ```java
-// ModFluidBuilder — extends FluidBuilder
 public class ModFluidBuilder<T extends BaseFlowingFluid, P> extends FluidBuilder<T, P> {
 
     public static <T extends BaseFlowingFluid, P> ModFluidBuilder<T, P> create(
             RegistryCore owner, P parent, String name,
             BuilderCallback callback,
             FluidBuilder.FluidFactory<T> fluidFactory) {
-        var b = new ModFluidBuilder<>(owner, parent, name, callback,
-                FluidType::new, fluidFactory);
+        var b = new ModFluidBuilder<>(
+                owner, parent, name, callback, FluidType::new, fluidFactory);
         return (ModFluidBuilder<T, P>) b.defaultLang().defaultSource()
                 .defaultBlock().defaultBucket();
     }
 
-    protected ModFluidBuilder(RegistryCore owner, P parent, String name,
+    protected ModFluidBuilder(
+            RegistryCore owner, P parent, String name,
             BuilderCallback callback,
             FluidBuilder.FluidTypeFactory typeFactory,
             FluidBuilder.FluidFactory<T> fluidFactory) {
@@ -230,12 +276,9 @@ public class ModFluidBuilder<T extends BaseFlowingFluid, P> extends FluidBuilder
 }
 ```
 
----
+### Step 5  Wire up in your mod entry class
 
-## Step 5 — Use ModRegistryCore in your mod
-
-Replace `RegistryCore.create(MOD_ID)` with `ModRegistryCore.create(MOD_ID)` in your
-mod's entry class:
+Replace `RegistryCore.create(MOD_ID)` with `ModRegistryCore.create(MOD_ID)`:
 
 ```java
 @Mod(MyMod.MOD_ID)
@@ -246,62 +289,29 @@ public class MyMod {
 
     static {
         REGISTRYLIB.defaultCreativeTab("main_tab").register();
-        /* trigger static initializers … */
+        // trigger registration class static initializers...
     }
 }
 ```
 
 ---
 
-## Using the API
+## Beyond Lang
 
-### Standard fluent registration (Approach 1 style)
-
-The no-arg convenience methods (`block("name", factory)`, `item("name", factory)`, etc.)
-return the base library types at compile time. Use `.lang(ModRegistryCore.LANG_ZH_CN, "...")`
-as you would in Approach 1 — all the zh_cn datagen still flows through the overridden
-builder hooks, so nothing is lost.
+The same pattern works for any per-builder functionality. Some examples:
 
 ```java
-public static final BlockEntry<Block> MAGIC_ORE = MyMod.REGISTRYLIB
-        .block("magic_ore", Block::new)
-        .lang("Magic Ore")
-        .lang(ModRegistryCore.LANG_ZH_CN, "魔法矿石")
-        .register();
-```
+// Example: always apply a tag on every block registration
+public ModBlockBuilder<T, P> alwaysMineableWithPickaxe() {
+    tag(BlockTags.MINEABLE_WITH_PICKAXE);
+    return this;
+}
 
-### Two-argument form to unlock langCn()
-
-When you pass `REGISTRYLIB` as the parent, the covariant two-arg override kicks in
-and the return type is `ModBlockBuilder`, giving access to `.langCn()` before any
-inherited `BlockBuilder` method is called.
-
-```java
-public static final BlockEntry<Block> MAGIC_ORE = MyMod.REGISTRYLIB
-        .block(MyMod.REGISTRYLIB, "magic_ore", Block::new)
-        .langCn("魔法矿石")           // on ModBlockBuilder — works
-        .lang("Magic Ore")            // returns BlockBuilder from here on
-        .register();
-```
-
-> Call `.langCn()` **before** any method inherited from `BlockBuilder` (e.g. `.lang(String)`,
-> `.simpleItem()`, `.tag(...)`) because those methods return `BlockBuilder` (the self-type
-> bound at class declaration time), which does not carry `langCn()`.
-> This is a Java generics limitation; see the note at the top of this page for details.
-
-### Nested bucket builders
-
-The `bucket(...)` callback receives an `ItemBuilder`, not a `ModItemBuilder`, so use
-`.lang(ModRegistryCore.LANG_ZH_CN, "...")` inside bucket callbacks:
-
-```java
-REGISTRYLIB.fluid("molten_iron", STILL, FLOW)
-    .lang("Molten Iron")
-    .lang(ModRegistryCore.LANG_ZH_CN, "熔融铁")
-    .bucket(bucket -> bucket
-        .lang("Molten Iron Bucket")
-        .lang(ModRegistryCore.LANG_ZH_CN, "熔融铁桶"))
-    .register();
+// Example: apply a shared default tooltip
+public ModItemBuilder<T, P> betaTooltip() {
+    tooltip(Component.literal("7[Beta]"));
+    return this;
+}
 ```
 
 ---
