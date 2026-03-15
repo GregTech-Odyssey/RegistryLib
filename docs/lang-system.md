@@ -21,6 +21,15 @@ Every builder type exposes these overloads out of the box:
 | `.lang("Display Name")` | Writes to `en_us.json`. |
 | `.defaultLang()` | Derives a name from the registry path (`magic_ore` → `Magic Ore`). Available on `BlockBuilder` and `FluidBuilder` only. |
 
+An upside-down mirror (`en_ud.json`) can be enabled on the `RegistryCore` instance:
+
+```java
+public static final RegistryCore REGISTRYLIB =
+        RegistryCore.create(MOD_ID).upsideDownLang(true);
+```
+
+This is disabled by default.
+
 ```java
 REGISTRYLIB.item("copper_coin", Item::new)
     .lang("Copper Coin")

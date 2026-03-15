@@ -81,6 +81,7 @@ public class RegistryCore {
     @Nullable
     private IEventBus modEventBus;
     private boolean skipErrors;
+    private boolean upsideDownLang = false;
 
     // === Constructor + Factory ===
 
@@ -119,6 +120,10 @@ public class RegistryCore {
 
     public void setModEventBus(@Nullable IEventBus bus) {
         this.modEventBus = bus;
+    }
+
+    public boolean isUpsideDownLangEnabled() {
+        return upsideDownLang;
     }
 
     // === Event Registration ===
@@ -435,6 +440,11 @@ public class RegistryCore {
         } else {
             this.skipErrors = skipErrors;
         }
+        return this;
+    }
+
+    public RegistryCore upsideDownLang(boolean upsideDownLang) {
+        this.upsideDownLang = upsideDownLang;
         return this;
     }
 
