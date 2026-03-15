@@ -22,7 +22,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import static com.gto.registrylibtest.BlockEntityTest.TIMER_BLOCK_ENTITY;
+import static com.gto.registrylibtest.blockentity.FullBlockEntityExample.TIMER_BLOCK_ENTITY;
 
 public class TimerBlockEntity extends BlockEntity {
 

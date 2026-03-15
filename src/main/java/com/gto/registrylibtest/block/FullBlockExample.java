@@ -1,0 +1,113 @@
+package com.gto.registrylibtest.block;
+
+import com.gto.registrylib.Group;
+import com.gto.registrylib.tooltip.SubNode;
+import com.gto.registrylib.util.entry.BlockEntry;
+import com.gto.registrylibtest.RegistryLibTest;
+import com.gto.registrylibtest.item.SimpleItemExample;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+
+/**
+ * 使用 BlockBuilder 全部 API 的复杂方块示例。
+ *
+ * <p>涵盖：initialProperties / properties / lang / simpleItem /
+ * item（自定义配置）/ defaultBlockstate / defaultLang / defaultLoot /
+ * blockstate / loot / recipe / tag / blockEntity（内联）/ Group 系统。
+ */
+public class FullBlockExample {
+
+    // ── 使用全部 API 的单方块 ───────────────────────────────────────────────
+
+    public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.block(
+            "magic_ore",
+            Block::new,
+            block -> {
+                // --- initialProperties: 复用已有方块的属性 ---
+                block.initialProperties(() -> Blocks.IRON_ORE);
+
+                // --- properties: 在已有基础上追加修改 ---
+                block.properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops());
+
+                // --- lang: 设置英文显示名称 ---
+                block.lang("Magic Ore");
+
+                // --- loot: 自定义战利品表（矿石掉落逻辑） ---
+                block.loot((tables, b) ->
+                        tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())));
+
+                // --- tag: 给方块添加原版标签 ---
+                block.tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL);
+
+                // --- recipe: 通过 DataGen 生成配方 ---
+                block.recipe((ctx, prov) -> {
+                    // 此处可添加 ShapedRecipeBuilder 等配方生成逻辑
+                });
+
+                // --- item: 自定义 BlockItem 配置，含 Tooltip ---
+                block.item(itemBuilder -> {
+                    itemBuilder.tooltip((collector, stack) -> {
+                        collector.node(
+                                new SubNode.Basic(Component.literal("§5Drops coins when mined")),
+                                true, false);
+                    });
+                });
+            });
+
+    // ── 使用自定义方块子类 ──────────────────────────────────────────────────
+
+    public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB.block(
+            "standalone_timer",
+            p -> new TimerBlock(p, 4),
+            block -> {
+                block.initialProperties(() -> Blocks.IRON_BLOCK)
+                        .lang("Standalone Timer")
+                        .defaultLoot()
+                        .defaultBlockstate()
+                        .simpleItem();
+            });
+
+    // ── Group 系统：批量共享配置 ────────────────────────────────────────────
+
+    public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
+            .group("timers")
+            .langPrefix("Timer")
+            .blockProperties(p -> p.strength(5.0F, 6.0F))
+            .build();
+
+    public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP.block(
+            "tier_1",
+            p -> new TimerBlock(p, 1),
+            block -> {
+                block.initialProperties(() -> Blocks.IRON_BLOCK)
+                        .item(itemBuilder -> itemBuilder.tooltip((collector, stack) -> {
+                            collector.node(new SubNode.Basic(Component.literal("§aTier 1"), 0), true, false);
+                            collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 20"), 10));
+                        }));
+            });
+
+    public static final BlockEntry<TimerBlock> TIMER_TIER_2 = TIMER_GROUP.block(
+            "tier_2",
+            p -> new TimerBlock(p, 2),
+            block -> {
+                block.initialProperties(() -> Blocks.IRON_BLOCK)
+                        .item(itemBuilder -> itemBuilder.tooltip((collector, stack) -> {
+                            collector.node(new SubNode.Basic(Component.literal("§bTier 2"), 0), true, false);
+                            collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 10"), 10));
+                        }));
+            });
+
+    public static final BlockEntry<TimerBlock> TIMER_TIER_3 = TIMER_GROUP.block(
+            "tier_3",
+            p -> new TimerBlock(p, 3),
+            block -> {
+                block.initialProperties(() -> Blocks.IRON_BLOCK)
+                        .item(itemBuilder -> itemBuilder.tooltip((collector, stack) -> {
+                            collector.node(new SubNode.Basic(Component.literal("§6Tier 3"), 0), true, false);
+                            collector.node(new SubNode.Basic(Component.literal("§7Tick interval: 5"), 10));
+                        }));
+            });
+}

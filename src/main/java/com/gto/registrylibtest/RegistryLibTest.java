@@ -1,6 +1,16 @@
 package com.gto.registrylibtest;
 
 import com.gto.registrylib.RegistryCore;
+import com.gto.registrylibtest.advancement.FullAdvancementExample;
+import com.gto.registrylibtest.advancement.SimpleAdvancementExample;
+import com.gto.registrylibtest.block.FullBlockExample;
+import com.gto.registrylibtest.block.SimpleBlockExample;
+import com.gto.registrylibtest.blockentity.FullBlockEntityExample;
+import com.gto.registrylibtest.blockentity.SimpleBlockEntityExample;
+import com.gto.registrylibtest.fluid.FullFluidExample;
+import com.gto.registrylibtest.fluid.SimpleFluidExample;
+import com.gto.registrylibtest.item.FullItemExample;
+import com.gto.registrylibtest.item.SimpleItemExample;
 
 import com.mojang.logging.LogUtils;
 
@@ -21,11 +31,11 @@ import org.slf4j.Logger;
  *
  * <p><b>示例文件索引：</b>
  * <ul>
- *   <li>{@link ItemTest} — 物品注册（基础物品、CompositeItem、Tooltip 系统）
- *   <li>{@link BlockTest} — 方块注册（战利品表、Group 系统、自定义子类）
- *   <li>{@link BlockEntityTest} — BlockEntity 注册与客户端渲染器绑定
- *   <li>{@link FluidTest} — 流体注册（着色、多层配置、bucket/block 定制）
- *   <li>{@link AdvancementTest} — 所有成就进度树
+ *   <li>{@link SimpleItemExample} / {@link FullItemExample} — 物品注册
+ *   <li>{@link SimpleBlockExample} / {@link FullBlockExample} — 方块注册
+ *   <li>{@link SimpleBlockEntityExample} / {@link FullBlockEntityExample} — BlockEntity 注册
+ *   <li>{@link SimpleFluidExample} / {@link FullFluidExample} — 流体注册
+ *   <li>{@link SimpleAdvancementExample} / {@link FullAdvancementExample} — 成就进度
  * </ul>
  */
 @Mod(RegistryLibTest.MOD_ID)
@@ -47,19 +57,24 @@ public class RegistryLibTest {
     // 强制其 static 块在 RegistryLibTest 加载时同步执行。
     static {
         // 物品示例
-        var _items = ItemTest.TEST_ITEM;
+        var _item1 = SimpleItemExample.COPPER_COIN;
+        var _item2 = FullItemExample.MAGIC_WAND;
 
         // 方块示例
-        var _blocks = BlockTest.TEST_BLOCK;
+        var _block1 = SimpleBlockExample.DECORATIVE_STONE;
+        var _block2 = FullBlockExample.MAGIC_ORE;
 
         // BlockEntity 示例
-        var _be = BlockEntityTest.TIMER_BLOCK_ENTITY;
+        var _be1 = SimpleBlockEntityExample.SIMPLE_TIMER_BE;
+        var _be2 = FullBlockEntityExample.TIMER_BLOCK_ENTITY;
 
         // 流体示例
-        var _fluids = FluidTest.MOLTEN_IRON;
+        var _fluid1 = SimpleFluidExample.ACID;
+        var _fluid2 = FullFluidExample.MOLTEN_IRON;
 
         // 成就进度
-        AdvancementTest.register();
+        SimpleAdvancementExample.register();
+        FullAdvancementExample.register();
     }
 
     public RegistryLibTest(IEventBus modEventBus, ModContainer modContainer) {

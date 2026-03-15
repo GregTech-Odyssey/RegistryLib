@@ -33,11 +33,15 @@ focus on gameplay.
 
 | Items | Blocks |
 | --- | --- |
-| [How to Register Items](how-to-register-items) | [How to Register Blocks](how-to-register-blocks) |
+| [Register Items](register-items) | [Register Blocks](register-blocks) |
 
 | Block Entities and Renderers | Fluids and Buckets |
 | --- | --- |
-| [How to Register Block Entities and Renderers](how-to-register-block-entities-and-renderers) | [How to Register Fluids and Buckets](how-to-register-fluids-and-buckets) |
+| [Register Block Entities and Renderers](register-block-entities-and-renderers) | [Register Fluids and Buckets](register-fluids-and-buckets) |
+
+| Advancements |
+| --- |
+| [Register Advancements](register-advancements) |
 
 ## Repository
 
