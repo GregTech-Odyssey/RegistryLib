@@ -15,6 +15,9 @@ This page has one goal: show you the shortest path from dependency setup to a wo
 - You want one page that covers dependency setup, local validation, and the first minimal registration chain.
 - You only want to get a minimal Item working first rather than understanding every system at once.
 
+{: .note }
+> The first registration example below is excerpted from `SimpleItemExample` in `RegistryLibTest`, and the current test mod passes `runData`.
+
 ## Development Setup
 
 RegistryLib is published through GitHub Packages. For direct dependency resolution, prepare credentials first.
@@ -86,11 +89,12 @@ Common commands during setup:
 ```java
 public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
         .item("copper_coin", Item::new)
+        .langCn("铜币")
         .lang("Copper Coin")
         .register();
 ```
 
-This chain does three things at once: it declares the registry name, provides the factory method, and generates the English display name.
+This is the real minimal item chain used by the test mod: it declares the registry name, provides the factory method, and generates both the English and Chinese display names.
 
 ## How You Should Verify It
 

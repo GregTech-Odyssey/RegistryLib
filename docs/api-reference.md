@@ -12,6 +12,9 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 {: .note }
 > Deduplication rule: this page only provides method families, responsibility boundaries, and common chain lookup. It does not repeat full tutorial examples.
 
+{: .note }
+> The code snippets on this page are short excerpts from the runnable `RegistryLibTest` examples, not invented pseudo-code.
+
 ## Which Entry Point Should I Start From?
 
 | What you want to do | Entry point | What usually comes next |
@@ -63,7 +66,8 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 ### Minimal Item
 
 ```java
-REGISTRYLIB.item("copper_coin", Item::new)
+RegistryLibTest.REGISTRYLIB.item("copper_coin", Item::new)
+        .langCn("铜币")
         .lang("Copper Coin")
         .register();
 ```
@@ -71,7 +75,9 @@ REGISTRYLIB.item("copper_coin", Item::new)
 ### Component Item with Attachments
 
 ```java
-REGISTRYLIB.componentItem("magic_wand")
+RegistryLibTest.REGISTRYLIB.componentItem("magic_wand")
+        .initialProperties(() -> new Item.Properties().stacksTo(1))
+        .properties(Item.Properties::fireResistant)
         .lang("Magic Wand")
         .defaultModel()
         .attach(new InspectAttachment())
@@ -81,8 +87,10 @@ REGISTRYLIB.componentItem("magic_wand")
 ### Minimal Block
 
 ```java
-REGISTRYLIB.block("decorative_stone", Block::new)
+RegistryLibTest.REGISTRYLIB.block(RegistryLibTest.REGISTRYLIB, "decorative_stone", Block::new)
+        .langCn("装饰石")
         .initialProperties(() -> Blocks.STONE)
+        .lang("Decorative Stone")
         .simpleItem()
         .register();
 ```

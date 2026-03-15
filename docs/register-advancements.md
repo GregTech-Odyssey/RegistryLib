@@ -17,6 +17,9 @@ When you want Advancement definitions to follow the same organizational style as
 - You want Advancement datagen and naming conventions to stay aligned with the rest of the project.
 - You need a complete registration example, not just a reminder that Minecraft already has an Advancement API.
 
+{: .note }
+> The quick and full examples below are excerpted from `SimpleAdvancementExample` and `FullAdvancementExample` in `RegistryLibTest`. They match the current test sources that pass `runData`.
+
 ## Quick Start
 
 ```java

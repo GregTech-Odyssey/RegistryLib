@@ -17,39 +17,56 @@ When you need to register a normal Item, or you want to keep language, model, to
 - You want display name, model, creative tab, tooltip, recipe, and related behavior to live in one chain.
 - You want later code to reference the result through `ItemEntry<T>`.
 
+{: .note }
+> The code snippets on this page are excerpted from `SimpleItemExample` and `FullItemExample` in `RegistryLibTest`. They match the current test sources that pass `runData`.
+
 ## Quick Start
 
 ```java
 public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
         .item("copper_coin", Item::new)
+        .langCn("铜币")
         .lang("Copper Coin")
-        .defaultModel()
         .register();
 ```
 
-This chain declares an Item named `copper_coin`, provides its English display name, and generates the default item model resource.
+This is the exact simple registration flow used in `SimpleItemExample`: one item, one English name, and one extra Chinese locale entry through the custom test Builder.
 
 ## Full Example
 
 ```java
 public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB
         .componentItem("magic_wand")
+        .initialProperties(() -> new Item.Properties().stacksTo(1))
+        .properties(Item.Properties::fireResistant)
         .lang("Magic Wand")
+        .lang(ModRegistryCore.LANG_ZH_CN, "魔法杆")
         .defaultModel()
         .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-        .tooltip(Component.literal("A configurable tool"))
+        .removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .tag(ItemTags.DURABILITY_ENCHANTABLE)
+        .tooltip(Component.literal("§5A powerful magical artifact"))
+        .tooltip((collector, stack) -> {
+            collector.node(new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);
+            collector.node(new SubNode.Basic(
+                    Component.literal("§7Durability: §f" + (stack.getMaxDamage() - stack.getDamageValue())),
+                    10));
+            collector.node(DETAIL_BOX, new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
+            collector.node(DETAIL_BOX, new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
+        })
         .attach(new InspectAttachment())
         .register();
 ```
 
 ## Step-by-Step Explanation
 
-1. `componentItem("magic_wand")` starts an `ItemBuilder` chain that is already prepared for attachments.
-2. `.lang("Magic Wand")` provides the display name for datagen.
-3. `.defaultModel()` requests the most common default item model generation.
-4. `.tab(...)` controls which creative inventory tab the Item belongs to.
-5. `.tooltip(...)` supplies tooltip content or node construction logic to the Tooltip System.
-6. `.attach(...)` only applies to Item types that implement `IComponentItem`, including the built-in `ComponentItem` path created by `componentItem(...)`.
+1. `componentItem("magic_wand")` starts an attachment-ready `ItemBuilder` exactly as used in `FullItemExample`.
+2. `.initialProperties(...)` and `.properties(...)` show the two-layer property pattern used by the test mod.
+3. `.lang(...)` and `.lang(ModRegistryCore.LANG_ZH_CN, ...)` show the bilingual naming path the test project actually generates.
+4. `.defaultModel()`, `.tab(...)`, `.removeTab(...)`, and `.tag(...)` demonstrate the content-organization APIs used in the runnable example.
+5. The two `.tooltip(...)` calls show both the simple overload and the collector-based overload with a separate root node.
+6. `.attach(...)` binds a real `ItemAttachment` implementation from the test project.
 7. `.register()` submits the registration and returns `ItemEntry<ComponentItem>`.
 
 {: .important }

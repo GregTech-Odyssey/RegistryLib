@@ -17,38 +17,47 @@ In RegistryLib, a Fluid is usually not a single object. It is a connected family
 - You want to generate a bucket or fluid block at the same time.
 - You need to configure still and flow textures together with client rendering behavior.
 
+{: .note }
+> The code snippets on this page are excerpted from `SimpleFluidExample` and `FullFluidExample` in `RegistryLibTest`. They match the current test sources that pass `runData`.
+
 ## Quick Start
 
 ```java
-public static final FluidEntry<BaseFlowingFluid> OIL = RegistryLibTest.REGISTRYLIB
-        .fluid("oil", rl("block/oil_still"), rl("block/oil_flow"))
-        .lang("Oil")
-        .bucket()
+public static final FluidEntry<BaseFlowingFluid.Flowing> ACID = RegistryLibTest.REGISTRYLIB
+        .fluid(
+                RegistryLibTest.REGISTRYLIB,
+                "acid",
+                FLUID_STILL,
+                FLUID_FLOW,
+                BaseFlowingFluid.Flowing::new)
+        .langCn("酸液")
+        .lang("Acid")
         .register();
 ```
 
 ## Full Example
 
 ```java
-public static final FluidEntry<BaseFlowingFluid> STEAM = RegistryLibTest.REGISTRYLIB
-        .fluid("steam", rl("block/steam_still"), rl("block/steam_flow"))
-        .lang("Steam")
-        .properties(props -> props.density(-500).viscosity(100))
-        .clientExtension(0xCCFFFFFF, rl("block/steam_still"), rl("block/steam_flow"))
-        .block()
-        .bucket()
+public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON = RegistryLibTest.REGISTRYLIB
+        .fluid("molten_iron", FLUID_STILL, FLUID_FLOW)
+        .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
+        .lang("Molten Iron")
+        .lang(ModRegistryCore.LANG_ZH_CN, "熔融铁")
+        .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
+        .tag(FluidTags.LAVA)
+        .block(block -> block.properties(p -> p.lightLevel(s -> 12)))
+        .bucket(bucket -> bucket.lang("Molten Iron Bucket").lang(ModRegistryCore.LANG_ZH_CN, "熔融铁桶"))
         .register();
 ```
 
 ## Step-by-Step Explanation
 
-1. `fluid("steam", still, flow)` creates the `FluidBuilder` and fixes the still and flow texture resources.
-2. `.lang(...)` sets the display name.
-3. `.properties(...)` customizes the fluid type or fluid properties.
-4. `.clientExtension(...)` defines client rendering parameters, commonly for tinting or texture strategy.
-5. `.block()` generates the fluid block.
-6. `.bucket()` generates the bucket item.
-7. `.register()` returns `FluidEntry<T>` so the related fluid objects can be accessed together.
+1. `fluid(parent, "acid", still, flow, factory)` in `SimpleFluidExample` is the explicit-parent path used by the test project to expose `langCn(...)`.
+2. `fluid("molten_iron", still, flow)` in `FullFluidExample` uses the standard fluent path for a larger fluid family.
+3. `.properties(...)`, `.lang(...)`, and `.clientExtension(...)` configure the physical behavior, localized name, and rendering strategy.
+4. `.tag(...)` applies the fluid tag used by the runnable example.
+5. `.block(...)` and `.bucket(...)` show the sub-entry configuration pattern actually used in the test code.
+6. `.register()` returns `FluidEntry<T>` so the related fluid objects can be accessed together.
 
 {: .important }
 > When choosing a `clientExtension(...)` overload, decide first whether your texture already contains color information. Grayscale textures usually need an explicit tint, while colored textures usually do not.

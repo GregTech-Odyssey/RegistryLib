@@ -17,29 +17,35 @@ When a Block needs persistent state, ticking logic, or a custom renderer, you us
 - You need to bind one or more host Blocks.
 - You need to register a client renderer without forcing client classes to load too early on the server.
 
+{: .note }
+> The code snippets on this page are excerpted from `SimpleBlockEntityExample` and `FullBlockEntityExample` in `RegistryLibTest`. They match the current test sources that pass `runData`.
+
 ## Quick Start
 
 ```java
-public static final BlockEntityEntry<MachineBlockEntity> MACHINE_BE = RegistryLibTest.REGISTRYLIB
-        .blockEntity("machine", MachineBlockEntity::new)
-        .validBlock(MACHINE_CASING)
+public static final BlockEntityEntry<TimerBlockEntity> SIMPLE_TIMER_BE = RegistryLibTest.REGISTRYLIB
+        .blockEntity("simple_timer", TimerBlockEntity::new)
+        .validBlock(FullBlockExample.STANDALONE_TIMER)
         .register();
 ```
 
 ## Example with a Renderer
 
 ```java
-public static final BlockEntityEntry<MachineBlockEntity> MACHINE_BE = RegistryLibTest.REGISTRYLIB
-        .blockEntity("machine", MachineBlockEntity::new)
-        .validBlock(MACHINE_CASING)
-        .renderer(() -> MachineBlockEntityRenderer::new)
+public static final BlockEntityEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY = RegistryLibTest.REGISTRYLIB
+        .blockEntity("timer", TimerBlockEntity::new)
+        .validBlocks(
+                FullBlockExample.TIMER_TIER_1,
+                FullBlockExample.TIMER_TIER_2,
+                FullBlockExample.TIMER_TIER_3)
+        .renderer(() -> TimerBlockEntityRenderer::new)
         .register();
 ```
 
 ## Step-by-Step Explanation
 
-1. `blockEntity("machine", MachineBlockEntity::new)` creates the `BlockEntityBuilder`.
-2. `.validBlock(...)` or `.validBlocks(...)` defines which Blocks this `BlockEntityType` can attach to.
+1. `blockEntity("simple_timer", TimerBlockEntity::new)` and `blockEntity("timer", TimerBlockEntity::new)` are the actual test entry points.
+2. `.validBlock(...)` handles the single-block case, while `.validBlocks(...)` in the full example binds one `BlockEntityType` to multiple timer blocks.
 3. `.renderer(...)` provides the renderer factory and keeps client loading lazy through a `Supplier`.
 4. `.register()` submits the registration and returns `BlockEntityEntry<T>`.
 
