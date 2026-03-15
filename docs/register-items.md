@@ -1,18 +1,25 @@
 ---
-title: Register Items
+title: 注册 Items
 nav_order: 3
+parent: Content Guides
 permalink: /register-items/
 ---
 
-# Register Items
+# 注册 Items
 
-RegistryLib registers items using a fluent Builder pattern. Provide an id and an item factory, then chain configuration calls — properties, language, model, creative tab, recipe, tooltip, and CompositeItem attachments — and finalise with `.register()`.
+本页说明如何用 RegistryLib 的 ItemBuilder 注册普通 Item 或 CompositeItem，并把语言、模型、配方、creative tab、tooltip 与 attachment 收拢到同一条 fluent chain 里。
 
----
+如果你要做的是“一个可注册、可生成资源、可逐步追加行为的 Item”，这里就是主入口。
 
-## Simple Example
+## 适用场景 / 前置条件
 
-The simplest item registration: one item and a display name.
+- 你已经有可用的 RegistryCore，例如 `RegistryLibTest.REGISTRYLIB`
+- 你需要注册普通 Item，或带 `CompositeItemAttachment` 的 `CompositeItem`
+- 你希望把 `lang`、`model`、`recipe`、`tooltip` 与 tag 配置放在同一个注册链中
+
+## 快速开始
+
+最小可用版本只需要名称、工厂方法和 `.register()`；这里额外保留 `.lang(...)`，方便你直接看到生成的显示名
 
 ```java
 public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
@@ -21,11 +28,11 @@ public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
         .register();
 ```
 
----
+这条链已经完成了三件事：声明注册名、指定 Item 工厂、写入英文语言项。
 
-## Full Example
+## 完整示例
 
-A CompositeItem example exercising every ItemBuilder API, including properties, the tooltip system, attachments, and tags.
+下面的示例来自现有文档，展示了 `CompositeItem` 注册链里最常一起出现的能力：properties、默认模型、creative tab、recipe、tag、tooltip，以及 attachment。
 
 ```java
 public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB
@@ -55,170 +62,38 @@ public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGIST
         .register();
 ```
 
----
+## 分步骤解释
 
-## API Reference
-
-### `initialProperties(Supplier<Item.Properties>)`
-
-Provides a fresh `Item.Properties` as the base, replacing the default empty Properties.
-
-```java
-item.initialProperties(() -> new Item.Properties().stacksTo(1));
-```
-
-Use this when certain values must be fixed at property-creation time (e.g. max stack size).
-
----
-
-### `properties(UnaryOperator<Item.Properties>)`
-
-Appends modifications on top of the existing Properties. Can be called multiple times; effects accumulate.
-
-```java
-item.properties(p -> p.fireResistant());
-```
-
-Complements `initialProperties`: use `initialProperties` to set the foundation, then `properties` to layer adjustments on top.
-
----
-
-### `lang(String)`
-
-Sets the display name and writes it to the language file automatically.
-
-```java
-item.lang("Copper Coin");
-```
-
----
-
-### `defaultLang()`
-
-Derives the display name automatically from the registry name (e.g. `copper_coin` → `Copper Coin`).
-
-```java
-item.defaultLang();
-```
-
----
-
-### `defaultModel()`
-
-Uses the default flat item model (`FLAT_ITEM`).
-
-```java
-item.defaultModel();
-```
-
-Sufficient for common material items (e.g. dust, gems) that don't need a custom model.
-
----
-
-### `model(Supplier<BiConsumer<DataGenContext, RegistryLibItemModelGenerator>>)`
-
-Customises the item model generation logic.
-
-```java
-item.model(() -> (ctx, prov) -> {
-    prov.generateFlatItem(ctx.get(), ModelTemplates.FLAT_ITEM);
-});
-```
-
-Use this when you need a multi-layer texture, a held-item override, or a non-standard model.
-
----
-
-### `tab(ResourceKey<CreativeModeTab>)`
-
-Adds the item to the specified creative tab using default ordering.
-
-```java
-item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-```
-
----
-
-### `tab(ResourceKey<CreativeModeTab>, BiConsumer)`
-
-Adds the item to a creative tab and controls its position via a modifier.
-
-```java
-item.tab(CreativeModeTabs.TOOLS_AND_UTILITIES, (ctx, modifier) -> {
-    modifier.accept(ctx, Items.DIAMOND_PICKAXE.getDefaultInstance());
-});
-```
-
-The second argument specifies the insertion position (placed after a given item).
-
----
-
-### `removeTab(ResourceKey<CreativeModeTab>)`
-
-Removes the item from the specified creative tab.
-
-```java
-item.removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-```
-
----
-
-### `recipe(BiConsumer<DataGenContext, RegistryLibRecipeProvider>)`
-
-Generates a recipe through DataGen.
-
-```java
-item.recipe((ctx, prov) -> {
-    // ShapedRecipeBuilder.shaped(RecipeCategory.MISC, ctx.get())...
-});
-```
-
----
-
-### `tag(TagKey<Item>...)`
-
-Adds one or more tags to the item.
-
-```java
-item.tag(ItemTags.DURABILITY_ENCHANTABLE);
-```
-
----
-
-### `tooltip(Component)`
-
-Adds a single-line static tooltip.
-
-```java
-item.tooltip(Component.literal("§5A powerful magical artifact"));
-```
-
-The simplest tooltip option, suitable for a one-line description.
-
----
-
-### `tooltip(TooltipNodeCollector.TooltipConfig)`
-
-Registers a dynamic multi-line tooltip with support for sort priority and independent root nodes.
-
-```java
-item.tooltip((collector, stack) -> {
-    collector.node(new SubNode.Basic(Component.literal("§dTitle"), 0), true, false);
-    collector.node(new SubNode.Basic(Component.literal("§7Info"), 10));
-});
-```
-
-`collector.node(rootRef, subNode)` writes information into a separate tooltip pane, enabling layered display.
-
----
-
-### `attach(CompositeItemAttachment<?>)`
-
-Binds a CompositeItem attachment, adding right-click interactions, extra tooltips, tick behaviour, and more.
-
-```java
-item.attach(new InspectAttachment());
-```
+1. 用 `.item("id", factory)` 开始注册链。`id` 决定注册名，`factory` 决定实际 Item 类型。
+2. 用 `.initialProperties(...)` 设定基础 `Item.Properties`。像 `stacksTo(1)` 这类需要在初始构造时确定的值，适合放这里。
+3. 用 `.properties(...)` 叠加后续修改。它可以多次调用，适合补充 `fireResistant()` 之类的附加属性。
+4. 用 `.lang(...)`、`.defaultModel()`、`.tab(...)` 把显示名、模型和 creative tab 补齐，让 datagen 与游戏内展示同步完成。
+5. 用 `.recipe(...)`、`.tag(...)`、`.tooltip(...)` 添加资源与交互信息。静态一行提示可直接传 `Component`，动态内容则使用收集器回调。
+6. 只有当注册对象是 `CompositeItem` 时，才继续用 `.attach(...)` 绑定 attachment；最后统一以 `.register()` 收尾。
 
 {: .important }
-> Only valid for `CompositeItem`. Attachments can override `use()`, `useOn()`, `inventoryTick()`, `collectTooltipNodes()`, etc.
+> `.attach(...)` 只适用于 `CompositeItem`。如果工厂返回的是普通 `Item`，不要把 attachment 链接搬过去。
+
+## 常见模式 / 常见坑
+
+- 先用 `.initialProperties(...)` 打底，再用 `.properties(...)` 叠加。把两者职责分开后，注册链更容易维护。
+- 只需要一句描述时，用 `.tooltip(Component)` 即可；需要按优先级排序、读 `ItemStack` 状态或拆分额外 tooltip box 时，再切换到回调形式。
+- `removeTab(...)` 通常只在你先继承了 Group 或默认 tab、后面又想显式改写时才有意义。单个独立 Item 大多不需要它。
+- `defaultModel()` 适合常见平面 Item；如果你本来就有自定义 model 生成逻辑，不要再同时保留默认模型调用。
+
+## Quick API
+
+| 方法 | 何时使用 |
+| --- | --- |
+| `.item("id", Item::new)` | 开始一个 Item 注册链。 |
+| `.lang("Name")` | 写入英文显示名。 |
+| `.defaultModel()` | 生成默认平面 Item 模型。 |
+| `.tooltip(...)` | 添加静态或动态 tooltip。 |
+| `.attach(...)` | 给 `CompositeItem` 绑定可复用行为。 |
+
+## 相关链接
+
+- [Content Guides]({{ '/content-guides/' | relative_url }})
+- [Tooltip System]({{ '/tooltip-system/' | relative_url }})
+- [Lang System]({{ '/lang-system/' | relative_url }})
+- [注册 Blocks]({{ '/register-blocks/' | relative_url }})

@@ -1,18 +1,25 @@
 ---
-title: Register Fluids and Buckets
+title: 注册 Fluids 和 Buckets
 nav_order: 6
+parent: Content Guides
 permalink: /register-fluids-and-buckets/
 ---
 
-# Register Fluids and Buckets
+# 注册 Fluids 和 Buckets
 
-RegistryLib's fluid registration consolidates the flowing fluid, visual settings, fluid block, and bucket item into a single Builder flow. For mods with large numbers of chemicals, molten materials, or custom liquids, this makes fluid content much easier to scale.
+本页说明如何在 RegistryLib 里用一条 FluidBuilder 链同时注册 flowing fluid、客户端渲染设置、fluid block 与 bucket item。
 
----
+如果你的 mod 有化学液体、熔融金属或其他批量流体内容，这套写法比手动拆多个注册点更容易扩展。
 
-## Simple Example
+## 适用场景 / 前置条件
 
-The simplest fluid registration: built-in greyscale textures and a display name.
+- 你已经准备好了 still / flow 纹理 `Identifier`
+- 你希望 fluid、bucket、block 在一个注册链里完成联动配置
+- 你需要调整渲染 tint、物理参数或 bucket 显示名
+
+## 快速开始
+
+下面是最小可用版本：使用 RegistryLib 自带灰度流体纹理，并在客户端注册对应的 `clientExtension(...)`。
 
 ```java
 private static final Identifier FLUID_STILL =
@@ -28,11 +35,11 @@ public static final FluidEntry<BaseFlowingFluid.Flowing> ACID =
                 .register();
 ```
 
----
+        这条链已经把显示名和客户端纹理表现绑定好了，适合先确认最基础的流体注册是否生效。
 
-## Full Example
+        ## 完整示例
 
-A full FluidBuilder example covering tinting, physical parameters, block/bucket configuration, and tags.
+        下面保留现有文档中的两个完整例子：一个展示灰度纹理 + 运行时 tint，另一个展示复用 vanilla 水纹理的写法。
 
 ```java
 public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
@@ -41,232 +48,39 @@ public static final FluidEntry<BaseFlowingFluid.Flowing> MOLTEN_IRON =
                 .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
                 .lang("Molten Iron")
                 .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
-                .tag(FluidTags.LAVA)
-                .block(block -> block
-                    .properties(p -> p.lightLevel(s -> 12))
-                )
-                .bucket(bucket -> bucket
-                    .lang("Molten Iron Bucket")
-                )
-                .register();
+## 分步骤解释
 
-public static final FluidEntry<BaseFlowingFluid.Flowing> LIQUID_MAGIC =
-        RegistryLibTest.REGISTRYLIB
-                .fluid(
-                        "liquid_magic",
-                        Identifier.withDefaultNamespace("block/water_still"),
-                        Identifier.withDefaultNamespace("block/water_flow"))
-                .properties(p -> p.lightLevel(15).density(500).viscosity(200))
-                .lang("Liquid Magic")
-                .block(block -> block
-                    .properties(p -> p.lightLevel(s -> 15))
-                )
-                .bucket(bucket -> bucket
-                    .lang("Liquid Magic Bucket")
-                )
-                .register();
-```
-
----
-
-## API Reference
-
-### `clientExtension(Identifier, Identifier)`
-
-Sets the still and flowing textures for the fluid without tinting.
-
-```java
-fluid.clientExtension(FLUID_STILL, FLUID_FLOW);
-```
-
-When using registrylib's built-in greyscale textures, omitting the colour preserves the original grey tone.
-
----
-
-### `clientExtension(Identifier, Identifier, int)`
-
-Sets the textures and tints them with an ARGB colour. Designed for use with greyscale textures and runtime tinting.
-
-```java
-fluid.clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400);
-```
+1. 用 `.fluid("id", still, flow)` 开始注册链，先确定 registry name 和基础纹理路径。
+2. 用 `.lang(...)` 设置流体显示名；如果你使用的是灰度纹理，再用 `.clientExtension(still, flow, color)` 在客户端施加运行时 tint。
+3. 用 `.properties(...)` 调整 `FluidType.Properties`，把密度、粘度、温度和光照等物理特征集中到同一处。
+4. 用 `.block(...)` 配置 fluid block，用 `.bucket(...)` 配置 bucket item。大多数情况下，这两个子构建器已经足够把 source、block、bucket 的关联关系串起来。
+5. 用 `.tag(...)` 给 source fluid 与 flowing fluid 同时打 tag；最后以 `.register()` 收尾。
 
 {: .note }
-> The colour format is ARGB (e.g. `0xFFFF4400` = opaque orange-red). Tinting is also applied to the bucket item model.
+> 三参数 `clientExtension(still, flow, color)` 的 `color` 使用 ARGB，例如 `0xFFFF4400`。这种写法最适合灰度流体纹理的运行时着色。
 
----
+## 常见模式 / 常见坑
 
-### `clientExtension(Supplier<Supplier<IClientFluidTypeExtensions>>)`
+- 如果你用的是 RegistryLib 自带灰度纹理，优先选择带颜色参数的 `clientExtension(...)`；如果你复用的是原本就带颜色的信息纹理，例如 vanilla 水纹理，就用两参数版本。
+- `block(...)` 和 `bucket(...)` 会处理大多数常见联动；除非你确实要干预 `BaseFlowingFluid.Properties` 细节，否则通常不需要额外写 `fluidProperties(...)`。
+- `tag(...)` 会同时作用于 source fluid 与 flowing fluid，所以不需要分别配置两次。
+- 想让流体不能放置或没有桶时，再使用 `noBlock()`、`noBucket()`；不要把它们和对应的子构建器混在一起保留。
 
-Fully custom client fluid rendering extension, for advanced usage.
+## Quick API
 
-```java
-fluid.clientExtension(() -> () -> new IClientFluidTypeExtensions() {
-    // custom implementation
-});
-```
+| 方法 | 何时使用 |
+| --- | --- |
+| `.fluid("id", still, flow)` | 开始一个流体注册链。 |
+| `.clientExtension(...)` | 指定客户端纹理与可选 tint。 |
+| `.properties(...)` | 配置 `FluidType.Properties`。 |
+| `.block(...)` | 定义 fluid block 的子配置。 |
+| `.bucket(...)` | 定义 bucket item 的子配置。 |
 
----
+## 相关链接
 
-### `properties(Consumer<FluidType.Properties>)`
-
-Configures FluidType's physical parameters: density, viscosity, temperature, light level, and more.
-
-```java
-fluid.properties(p -> p.density(3000).viscosity(6000).temperature(1800));
-```
-
-These parameters affect the fluid's buoyancy calculations, flow-speed display, and tooltip information.
-
----
-
-### `fluidProperties(Consumer<BaseFlowingFluid.Properties>)`
-
-Configures properties at the `BaseFlowingFluid` level (e.g. manually linking source/block/bucket).
-
-```java
-fluid.fluidProperties(p -> p.slopeFindDistance(4).levelDecreasePerBlock(1));
-```
-
-In most cases this does not need to be called manually; `block()` and `bucket()` handle the linking automatically.
-
----
-
-### `lang(String)`
-
-Sets the fluid's display name.
-
-```java
-fluid.lang("Molten Iron");
-```
-
----
-
-### `defaultLang()`
-
-Derives the display name automatically from the registry name (e.g. `molten_iron` → `Molten Iron`).
-
-```java
-fluid.defaultLang();
-```
-
----
-
-### `source(Function<BaseFlowingFluid.Properties, ? extends BaseFlowingFluid>)`
-
-Sets a custom source fluid factory.
-
-```java
-fluid.source(BaseFlowingFluid.Source::new);
-```
-
-By default `defaultSource()` is called automatically; use this only when a custom source fluid class is required.
-
----
-
-### `defaultSource()`
-
-Uses the default `BaseFlowingFluid.Source` as the source fluid.
-
-```java
-fluid.defaultSource();
-```
-
----
-
-### `block(Consumer)`
-
-Accepts a lambda to configure the BlockBuilder for the fluid block sub-entry.
-
-```java
-fluid.block(block -> block
-    .properties(p -> p.lightLevel(s -> 15))
-);
-```
-
-Use this to set block-specific properties such as light emission and explosion resistance.
-
----
-
-### `block(BiFunction, Consumer)`
-
-Uses a custom `LiquidBlock` subclass factory and accepts a lambda to configure the BlockBuilder.
-
-```java
-fluid.block(MyLiquidBlock::new, block -> block
-    .properties(p -> p.lightLevel(s -> 10))
-);
-```
-
----
-
-### `noBlock()`
-
-Disables fluid block generation. The fluid will not be placeable as a block in the world.
-
-```java
-fluid.noBlock();
-```
-
----
-
-### `defaultBlock()`
-
-Uses the default fluid block settings.
-
-```java
-fluid.defaultBlock();
-```
-
----
-
-### `bucket(Consumer)`
-
-Accepts a lambda to configure the ItemBuilder for the bucket item sub-entry.
-
-```java
-fluid.bucket(bucket -> bucket
-    .lang("Molten Iron Bucket")
-);
-```
-
----
-
-### `bucket(BiFunction, Consumer)`
-
-Uses a custom `BucketItem` subclass factory and accepts a lambda to configure the ItemBuilder.
-
-```java
-fluid.bucket(MyBucket::new, bucket -> bucket
-    .lang("Custom Bucket")
-);
-```
-
----
-
-### `noBucket()`
-
-Disables bucket item generation.
-
-```java
-fluid.noBucket();
-```
-
----
-
-### `defaultBucketTab(ResourceKey<CreativeModeTab>)`
-
-Sets the default creative tab for the bucket item.
-
-```java
-fluid.defaultBucketTab(CreativeModeTabs.TOOLS_AND_UTILITIES);
-```
-
----
-
-### `tag(TagKey<Fluid>...)`
-
-Adds tags to the fluid.
+- [Content Guides]({{ '/content-guides/' | relative_url }})
+- [注册 Blocks]({{ '/register-blocks/' | relative_url }})
+- [Lang System]({{ '/lang-system/' | relative_url }})
 
 ```java
 fluid.tag(FluidTags.LAVA);
