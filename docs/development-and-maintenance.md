@@ -1,53 +1,38 @@
 ---
-title: Development and Maintenance
-nav_order: 2
+title: 工程与维护
+nav_order: 7
 permalink: /development-and-maintenance/
 ---
 
-# Development and Maintenance
+# 工程与维护
 
-This page collects the repository-level information needed by developers and maintainers, including
-dependency setup, local development workflow, and release publishing.
+这一页收集仓库级信息：如何把 RegistryLib 作为依赖接入、如何本地开发、如何理解 API 注解约定，以及如何发布新版本。
 
-It also documents the API annotation conventions used throughout RegistryLib so readers can quickly
-distinguish core builder contracts from convenience shortcuts.
+## 作为依赖使用
 
----
+RegistryLib 通过 GitHub Packages 发布。解析依赖时需要一个具备 `read:packages` 权限的 GitHub Token。
 
-## Using as a Dependency
+### 第一步：准备 GitHub Token
 
-RegistryLib is published to GitHub Packages (Maven). A GitHub Personal Access Token is required to
-resolve the package.
+1. 登录 GitHub。
+2. 进入 Settings → Developer settings → Personal access tokens → Tokens (classic)。
+3. 生成一个仅包含 `read:packages` 的 token。
 
-### Step 1: Generate a GitHub Personal Access Token
-
-1. Log in to GitHub and go to **Settings → Developer settings → Personal access tokens → Tokens (classic)**
-2. Click **Generate new token (classic)**
-3. Check the scope: `read:packages`
-4. Click **Generate token** and copy the token
-
-### Step 2: Configure the Token on Your Machine
-
-Recommended: set Windows user environment variables.
+### 第二步：配置本机环境变量
 
 ```cmd
 setx GITHUB_ACTOR your-github-username
 setx GITHUB_TOKEN your-token
 ```
 
-Restart your terminal after running these commands.
+执行后重开终端，让新环境变量生效。
 
 {: .important }
-> **Security notice:**
->
-> - `setx` writes user-level environment variables that are readable by applications running under your account.
-> - The token is stored in plaintext in `HKEY_CURRENT_USER\Environment`.
-> - Avoid this approach on shared or production machines.
-> - Restricting the token to `read:packages` minimizes impact if exposed.
+> `setx` 会把 token 明文写入当前用户环境变量。不要在共享机器或生产环境上用高权限 token，最小化权限范围。
 
-### Step 3: Add the Repository and Dependency to Your Project
+### 第三步：配置仓库与依赖
 
-Recommended `settings.gradle`:
+推荐的 `settings.gradle`：
 
 ```groovy
 dependencyResolutionManagement {
@@ -66,7 +51,7 @@ dependencyResolutionManagement {
 }
 ```
 
-`build.gradle`:
+`build.gradle`：
 
 ```groovy
 dependencies {
@@ -74,51 +59,38 @@ dependencies {
 }
 ```
 
-Replace the version with the one you need. Available versions are listed on the GitHub Packages page.
+精确版本以当前仓库发布记录为准。
 
----
+## 本地开发
 
-## Local Development
+1. 克隆仓库。
+2. 以 Gradle 工程导入 IDE。
+3. 运行构建或对应运行任务验证环境。
 
-1. Clone the repository.
-2. Import it as a Gradle project in your IDE.
-3. Run `./gradlew build` to build.
+### 常用 Gradle 任务
 
-### Common Gradle Tasks
-
-| Command | Description |
+| 命令 | 用途 |
 | --- | --- |
-| `./gradlew runClient` | Launch the Minecraft client |
-| `./gradlew runServer` | Launch a dedicated server |
-| `./gradlew runData` | Run data generators |
-| `./gradlew build` | Build the mod JAR |
+| `./gradlew runClient` | 启动 Minecraft 客户端 |
+| `./gradlew runServer` | 启动独立服务端 |
+| `./gradlew runData` | 运行数据生成 |
+| `./gradlew build` | 构建 mod JAR |
 
----
+## API 设计约定
 
-## API Design Conventions
+Builder 方法使用 `@StandardAPI` 与 `@SyntaxSugar` 标识不同层级的 API 职责。
 
-Builder methods are annotated with `@StandardAPI` and `@SyntaxSugar`.
+- `@StandardAPI` 表示核心契约入口。
+- `@SyntaxSugar` 表示便捷语法糖，最终仍会委托到标准入口。
 
-- `@StandardAPI` marks the core API contract.
-- `@SyntaxSugar` marks a convenience method that delegates to a `@StandardAPI` call.
+阅读 Builder API 时，优先把 `@StandardAPI` 视为长期稳定入口，再把 `@SyntaxSugar` 视为常见场景的快捷写法。
 
-When reading the builder APIs, treat `@StandardAPI` methods as the canonical entry points and
-`@SyntaxSugar` methods as shortcuts for common cases.
+## 发布新版本
 
----
+发布流程由 GitHub Actions 自动化完成。
 
-## Publishing a New Version
+1. 更新 `gradle.properties` 中的 `mod_version`。
+2. 提交并推送代码。
+3. 在 GitHub Actions 中运行发布工作流。
 
-The publish workflow is fully automated via GitHub Actions.
-
-1. Update `mod_version` in `gradle.properties`.
-2. Commit and push to the repository.
-3. Open the repository on GitHub.
-4. Go to **Actions → Gradle Package → Run workflow**.
-
-The workflow will:
-
-- Read the current `mod_version` and generate a tag such as `v1.0.0-build1`.
-- Auto-increment if the tag already exists.
-- Run `./gradlew build` and `./gradlew publish`.
-- Create a corresponding GitHub Release with the built JAR attached.
+工作流会自动构建、发布并创建对应的 GitHub Release。

@@ -1,25 +1,21 @@
 ---
 title: 注册 Blocks
-nav_order: 4
-parent: Content Guides
+nav_order: 2
+parent: 内容指南
 permalink: /register-blocks/
 ---
 
 # 注册 Blocks
 
-本页说明如何用 BlockBuilder 把 Block 本体、BlockItem、loot、recipe 与 tag 放进同一条注册链里。
-
-如果你要做的是“一个能被放置、有掉落、通常还带一个 BlockItem 的方块”，优先从这里开始；BlockEntity 相关内容则放在单独页面展开。
+本页解决“如何把 Block 本体、BlockItem、掉落、配方和 tag 放进同一条注册链里”的问题。
 
 ## 适用场景 / 前置条件
 
-- 你已经有可用的 RegistryCore 或 Group
-- 你要注册普通 Block，或者带自定义 `BlockItem` 的 Block
-- 你希望把方块属性、掉落表、物品提示与 datagen 配置集中管理
+- 你已经有可用的 `RegistryCore` 或 `Group`。
+- 你要注册普通方块，或带自定义 `BlockItem` 的方块。
+- 你希望 Block 的 datagen 与运行时配置放在同一处维护。
 
 ## 快速开始
-
-下面这个例子适合最常见的“普通方块 + 自动 BlockItem”场景。
 
 ```java
 public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
@@ -30,14 +26,11 @@ public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTR
         .register();
 ```
 
-    这个版本已经完成了基础属性复制、显示名写入，以及默认 `BlockItem` 生成。
+这个例子已经完成属性复制、显示名写入和默认 `BlockItem` 生成。
 
-    ## 完整示例
-
-    下面的示例保留了现有文档中的两种常见路径：一个是功能更完整的普通 Block 链；另一个是自定义 Block 子类的注册方式。
+## 完整示例
 
 ```java
-// ── single block using every API ──
 public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.block(
         "magic_ore",
         Block::new)
@@ -57,7 +50,6 @@ public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB.bl
         )
         .register();
 
-// ── custom block subclass ──
 public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB
         .block("standalone_timer", p -> new TimerBlock(p, 4))
         .initialProperties(() -> Blocks.IRON_BLOCK)
@@ -70,36 +62,34 @@ public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.RE
 
 ## 分步骤解释
 
-1. 用 `.block("id", factory)` 声明方块，并用 `.initialProperties(...)` 从现有方块复制一套基础属性。
-2. 用 `.properties(...)` 追加真正和你内容有关的差异，例如硬度、爆炸抗性或 `requiresCorrectToolForDrops()`。
-3. 用 `.lang(...)`、`.defaultBlockstate()`、`.defaultLoot()` 先把最常见的资源生成路径走通；这套组合适合大量“标准全方块”内容。
-4. 如果需要方块物品，使用 `.simpleItem()` 或 `.item(...)`。前者适合默认 `BlockItem`，后者适合追加 tooltip、语言或自定义工厂。
-5. 用 `.loot(...)`、`.recipe(...)`、`.tag(...)` 处理掉落、配方和挖掘分组；像矿石掉落这种偏行为的差异，通常都放在 `.loot(...)`。
-6. 如果方块需要 `BlockEntity`，可以在这里内联创建，也可以跳到专门的 [注册 Block Entities 和 Renderers]({{ '/register-block-entities-and-renderers/' | relative_url }}) 页面单独处理。
+1. `block("id", factory)` 开始注册链，`initialProperties(...)` 用于复制现有方块的基线属性。
+2. `properties(...)` 追加真正和当前内容相关的差异，例如强度、爆炸抗性或掉落要求。
+3. `lang(...)`、`defaultBlockstate()`、`defaultLoot()` 适合标准全方块内容的快速落地。
+4. 需要方块物品时，选择 `simpleItem()` 或 `item(...)`。前者生成默认 `BlockItem`，后者允许追加 tooltip 或自定义工厂。
+5. `loot(...)`、`recipe(...)`、`tag(...)` 负责掉落、配方和分类；矿石等特殊掉落通常直接写在 `loot(...)` 里。
 
 {: .note }
-> `.simpleItem()` 只会生成默认 BlockItem。只要你需要 tooltip、改名或自定义工厂，就改用 `.item(...)`。
+> `.simpleItem()` 只生成默认 BlockItem。只要你需要 tooltip、改名或自定义工厂，就切换到 `.item(...)`。
 
 ## 常见模式 / 常见坑
 
-- `initialProperties(() -> Blocks.X)` 的意义是“复制基线”，不是“引用原方块实例”。它适合快速继承 vanilla 手感。
-- 没有调用 `.simpleItem()` 或 `.item(...)` 时，注册出来的只是 Block 本体，不会自动出现对应 BlockItem。
-- `defaultLoot()` 适合“挖掉自己掉自己”；矿石、条件掉落或特殊产物请直接写 `.loot(...)`。
-- 多个同类方块共享 creative tab、lang 前缀或属性修饰时，不要在每个条目里重复写，改用 [Group System]({{ '/group-system/' | relative_url }})。
+- `initialProperties(() -> Blocks.X)` 表示复制属性基线，而不是复用原方块实例。
+- 没有调用 `.simpleItem()` 或 `.item(...)` 时，注册出来的只有 Block 本体。
+- `defaultLoot()` 适合“挖掉自己掉自己”；矿石、条件掉落或特殊产物请直接使用 `.loot(...)`。
 
-## Quick API
+## 常用 API 速览
 
-| 方法 | 何时使用 |
+| 方法 | 什么时候用 |
 | --- | --- |
-| `.block("id", Block::new)` | 开始一个 Block 注册链。 |
+| `.block("id", factory)` | 开始一个 Block 注册链。 |
+| `.initialProperties(...)` | 复制现有方块的属性基线。 |
 | `.simpleItem()` | 生成默认 BlockItem。 |
 | `.item(...)` | 自定义 BlockItem 行为或展示。 |
-| `.defaultLoot()` / `.loot(...)` | 生成默认掉落，或覆写掉落逻辑。 |
-| `.tag(...)` | 把方块加入挖掘与分类 tag。 |
+| `.defaultLoot()` / `.loot(...)` | 使用默认掉落，或覆写掉落逻辑。 |
 
 ## 相关链接
 
-- [Content Guides]({{ '/content-guides/' | relative_url }})
+- [内容指南]({{ '/content-guides/' | relative_url }})
 - [Group System]({{ '/group-system/' | relative_url }})
 - [注册 Block Entities 和 Renderers]({{ '/register-block-entities-and-renderers/' | relative_url }})
 - [注册 Items]({{ '/register-items/' | relative_url }})
