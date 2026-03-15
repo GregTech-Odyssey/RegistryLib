@@ -21,6 +21,7 @@ import net.neoforged.neoforge.fluids.FluidType;
 import lombok.experimental.UtilityClass;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 @UtilityClass
@@ -33,28 +34,31 @@ public class Client {
         NeoForge.EVENT_BUS.addListener(Client::onGatherTooltipComponents);
     }
 
-    private ConcurrentHashMap<Supplier<BlockEntityType<?>>, BlockEntityRendererProvider> BER = new ConcurrentHashMap<>();
+    private final AtomicReference<ConcurrentHashMap<Supplier<BlockEntityType<?>>, BlockEntityRendererProvider>> BER =
+            new AtomicReference<>(new ConcurrentHashMap<>());
 
-    private ConcurrentHashMap<Supplier<FluidType>, IClientFluidTypeExtensions> FLUID_TYPE_EXTENSIONS = new ConcurrentHashMap<>();
+    private final AtomicReference<ConcurrentHashMap<Supplier<FluidType>, IClientFluidTypeExtensions>> FLUID_TYPE_EXTENSIONS =
+            new AtomicReference<>(new ConcurrentHashMap<>());
 
     public void registerBER(Supplier<BlockEntityType<?>> type, BlockEntityRendererProvider provider) {
-        BER.put(type, provider);
+        var map = BER.get();
+        if (map != null) map.put(type, provider);
     }
 
     public void registerFluidTypeExtensions(
                                             Supplier<FluidType> type, IClientFluidTypeExtensions extensions) {
-        FLUID_TYPE_EXTENSIONS.put(type, extensions);
+        var map = FLUID_TYPE_EXTENSIONS.get();
+        if (map != null) map.put(type, extensions);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
-        BER.forEach(((type, provider) -> BlockEntityRenderers.register(type.get(), provider)));
-        BER = null;
+        var map = BER.getAndSet(null);
+        if (map != null) map.forEach((type, provider) -> BlockEntityRenderers.register(type.get(), provider));
     }
 
     private void onRegisterClientExtensions(RegisterClientExtensionsEvent event) {
-        FLUID_TYPE_EXTENSIONS.forEach(
-                (type, extensions) -> event.registerFluidType(extensions, type.get()));
-        FLUID_TYPE_EXTENSIONS = null;
+        var map = FLUID_TYPE_EXTENSIONS.getAndSet(null);
+        if (map != null) map.forEach((type, extensions) -> event.registerFluidType(extensions, type.get()));
     }
 
     private void onRegisterTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
