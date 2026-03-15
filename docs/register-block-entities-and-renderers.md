@@ -1,6 +1,6 @@
 ---
 title: Register Block Entities and Renderers
-nav_order: 4
+nav_order: 5
 permalink: /register-block-entities-and-renderers/
 ---
 

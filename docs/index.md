@@ -31,6 +31,10 @@ focus on gameplay.
 
 ## Guides
 
+| Development and Maintenance |
+| --- |
+| [Development and Maintenance](development-and-maintenance) |
+
 | Items | Blocks |
 | --- | --- |
 | [Register Items](register-items) | [Register Blocks](register-blocks) |
