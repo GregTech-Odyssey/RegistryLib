@@ -53,6 +53,15 @@ public static final FluidEntry<BaseFlowingFluid> STEAM = RegistryLibTest.REGISTR
 {: .important }
 > When choosing a `clientExtension(...)` overload, decide first whether your texture already contains color information. Grayscale textures usually need an explicit tint, while colored textures usually do not.
 
+## Working with the Returned `FluidEntry`
+
+The returned `FluidEntry<T>` now does more than hold the flowing fluid reference.
+
+- `getSource()` gives you the source fluid.
+- `getType()` gives you the shared `FluidType`.
+- `getBlock()` and `getBucket()` let you reach the related sub-entries when they exist.
+- `asStack(...)` and `asResource(...)` build transfer-friendly fluid values without reassembling them manually.
+
 ## Common Patterns
 
 ### I Only Want the Fluid and the Bucket

@@ -17,7 +17,7 @@ First check whether the registration class is actually loaded. Then confirm that
 
 ### Why can `.attach(...)` not be used on a normal `Item`?
 
-Because attachments are an extension point for `CompositeItem`. A normal `Item` does not have the corresponding attachment lifecycle.
+Because attachments are an extension point for `ComponentItem` or another `IComponentItem` implementation. A normal `Item` does not have the corresponding attachment lifecycle.
 
 ### Why did I register a Block, but there is no matching BlockItem in game?
 

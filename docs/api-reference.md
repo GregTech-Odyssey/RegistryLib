@@ -17,9 +17,12 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 | What you want to do | Entry point | What usually comes next |
 | --- | --- | --- |
 | Register a regular or composite Item | `item("id", factory)` | `lang`, `defaultModel`, `tab`, `tooltip`, `attach` |
+| Register a component-driven Item with attachments | `componentItem("id")` or `componentItem("id", factory)` | `lang`, `defaultModel`, `tooltip`, `attach` |
 | Register a Block | `block("id", factory)` | `initialProperties`, `simpleItem` or `item`, `loot`, `tag` |
 | Register a Fluid | `fluid("id", still, flow)` | `lang`, `clientExtension`, `properties`, `block`, `bucket` |
 | Register a BlockEntity | `blockEntity("id", factory)` | `validBlock` or `validBlocks`, `renderer` |
+| Register a generic object in another registry | `generic("id", registryKey, factory)` or `simple(...)` | `register` or immediate completion |
+| Register a creative tab | `creativeTab("id")` | title, icon, content population |
 | Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `blockProperties`, `itemProperties` |
 
 ## Builder Family Quick Lookup
@@ -35,10 +38,25 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 
 | Type | Typical use |
 | --- | --- |
-| `ItemEntry<T>` | Reference an Item from another registration chain, recipe, or gameplay logic |
-| `BlockEntry<T>` | Reference a Block and, where relevant, its default state or block item |
-| `FluidEntry<T>` | Access source, type, block, bucket, and other fluid-related objects together |
+| `ItemEntry<T>` | Reference an Item from another registration chain, recipe, or gameplay logic; item-providing entries can also create `ItemStack` and `ItemResource` values directly |
+| `BlockEntry<T>` | Reference a Block, its default state, and holder-style APIs that expect a `Holder<Block>` |
+| `FluidEntry<T>` | Access source, type, block, bucket, `FluidStack`, and `FluidResource` values together |
 | `BlockEntityEntry<T>` | Reference a `BlockEntityType` and complete host binding |
+
+## Entry Helper Quick Lookup
+
+| Entry helper | What it gives you |
+| --- | --- |
+| `ItemEntry.asStack()` | A default `ItemStack` without reconstructing the item manually |
+| `ItemEntry.asResource()` | An `ItemResource` wrapper for transfer-related APIs |
+| `BlockEntry.getDefaultState()` | The block's default state for world placement or state configuration |
+| `FluidEntry.getSource()` | The matching source fluid instance |
+| `FluidEntry.getType()` | The `FluidType` associated with the family |
+| `FluidEntry.getBlock()` / `getBucket()` | The related fluid block or bucket when they exist |
+| `FluidEntry.asStack()` / `asResource()` | Transfer-friendly fluid values without rebuilding them by hand |
+
+{: .note }
+> Several Entry wrappers now also satisfy holder-style usage directly. When another API expects a `Holder<Item>`, `Holder<Block>`, or `Holder<Fluid>`, the RegistryLib entry wrapper is often already usable as that value.
 
 ## Common Chain Lookup
 
@@ -47,6 +65,16 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 ```java
 REGISTRYLIB.item("copper_coin", Item::new)
         .lang("Copper Coin")
+        .register();
+```
+
+### Component Item with Attachments
+
+```java
+REGISTRYLIB.componentItem("magic_wand")
+        .lang("Magic Wand")
+        .defaultModel()
+        .attach(new InspectAttachment())
         .register();
 ```
 

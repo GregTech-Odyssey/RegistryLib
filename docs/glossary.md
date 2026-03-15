@@ -17,7 +17,7 @@ A chained configuration object such as `ItemBuilder`, `BlockBuilder`, or `FluidB
 
 ## Entry
 
-A wrapper type around the registered result, such as `ItemEntry`, `BlockEntry`, or `FluidEntry`. It is the most common way to reference a registered object later in code.
+A wrapper type around the registered result, such as `ItemEntry`, `BlockEntry`, or `FluidEntry`. It is the most common way to reference a registered object later in code. Many Entry types also expose convenience helpers such as `asStack()`, `asResource()`, `getDefaultState()`, or fluid-family accessors.
 
 ## Group
 
@@ -27,9 +27,9 @@ A set of shared defaults wrapped around `RegistryCore`. It is appropriate when a
 
 The data generation pipeline, including language files, models, recipes, loot tables, and Advancements.
 
-## CompositeItem / attachment
+## ComponentItem / attachment
 
-`CompositeItem` is an Item type that supports reusable attachments. An attachment encapsulates extended behavior such as right-click logic, tooltip contributions, or tick behavior.
+`ComponentItem` is an Item type that supports reusable `ItemAttachment` components. An attachment encapsulates extended behavior such as right-click logic, tooltip contributions, or tick behavior. The higher-level registration entry point for this workflow is `componentItem(...)`.
 
 ## RootNode / SubNode
 

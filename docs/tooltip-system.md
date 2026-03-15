@@ -59,7 +59,7 @@ The collector merges nodes from multiple sources, including the Item's tooltip c
 ## Common Combinations
 
 - Keep the main Item information in the default root and write debug or secondary information into a separate `RootNodeRef`.
-- Let `CompositeItemAttachment` contribute separate nodes through `collectTooltipNodes(...)`.
+- Let `ItemAttachment` on a `ComponentItem` contribute separate nodes through `collectTooltipNodes(...)`.
 - Reuse the same tooltip pipeline for Blocks through `.item(item -> ...)`.
 
 ## Boundaries and Pitfalls
