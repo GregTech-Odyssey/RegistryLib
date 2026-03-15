@@ -4,96 +4,112 @@ nav_order: 12
 permalink: /special-optimizations/
 ---
 
-# Special Optimizations
+# Optimization Methods & Checklist
 
-This page documents performance and correctness optimizations applied to the codebase, organized by technique category.
+A catalogue of general optimization techniques applied in this project. Each entry describes the applicable scenario and the approach taken.
 
 ---
 
-## Thread Safety
+## Concurrency & Thread Safety
 
-### Double-Checked Locking on `Lazy<T>`
+### Double-Checked Locking for Lazy Initialization
 
-**The entire `get()` method was `synchronized`, causing every read — including all hot reads after initialization — to acquire an intrinsic lock.**
+**When to use:** A lazily-initialized value is read frequently from multiple threads, but written only once. The full `synchronized` block on every read is unnecessary after the first initialization.
 
-The implementation now uses double-checked locking (DCL) with a sentinel object `UNINITIALIZED` and a `volatile` backing field. The outer check runs without any lock, so threads reading an already-initialized value take a pure load path with no synchronization. Only the first thread to observe `UNINITIALIZED` enters the `synchronized` block, computes the value, stores it, and clears the delegate reference. All subsequent callers return immediately from the unsynchronized fast path.
+Perform an unsynchronized volatile read first. Only if the sentinel value is observed, enter a `synchronized` block and check again before computing. This confines the lock contention to the very first call while all subsequent reads take a lock-free fast path.
 
-### Atomic Null-Out for Client-Side Registration Maps
+### Atomic Swap for One-Shot Collection Draining
 
-**Client-side BER and fluid extension maps were plain mutable fields. After the setup events fired they were set to `null` directly, creating a race window between the in-progress `forEach` and the null assignment where a concurrent registration call could observe a non-null map reference that was about to disappear.**
+**When to use:** A collection accumulates entries during a setup phase, is drained (iterated) exactly once by an event, and must be discarded afterwards — while producers may still be racing to add entries.
 
-Both maps are now wrapped in `AtomicReference`. The flush side uses `getAndSet(null)` to atomically exchange the map for `null` in a single operation — no other thread can observe a non-null reference after the swap begins. The registration side retrieves the reference once, checks for null, and writes into the local reference. A registration that arrives after the flush simply discards its entry rather than throwing `NullPointerException` or silently losing data.
+Wrap the collection in an `AtomicReference` and drain via `getAndSet(null)`. The swap is atomic: producers that call `get()` after the swap observe `null` and gracefully skip, so no entry is silently lost and no `NullPointerException` is possible. This is safer than assigning `null` to a plain field after iterating.
 
 ---
 
 ## Memory Reclamation
 
-### Releasing One-Time References After Use
+### Null-Out One-Time References After Consumption
 
-**Factory functions, callback lists, and supplier delegates hold closures and object graphs that serve no purpose once they have been consumed exactly once.**
+**When to use:** A field (factory, callback list, supplier delegate, etc.) is consumed exactly once during initialization or registration and serves no purpose afterwards, yet it holds a closure or object graph that prevents garbage collection.
 
-`Lazy<T>` nulls out `delegate` immediately after the value is computed on first call, freeing the supplier closure for GC. `Registration` nulls out both `creator` and `callbacks` after `register()` completes. The client-side maps are reclaimed via `AtomicReference.getAndSet(null)`. The pattern is consistent: any field used for deferred initialization is cleared as soon as that initialization fires.
+Set the field to `null` immediately after its single use. This severs the reference chain, allowing the GC to reclaim the closure and everything it captures. Typical targets: lazy-init delegates, builder factories, registration callback lists.
 
-### Shared Sentinel Constants for Common Functions
+### Replace Repeated Lambda Allocations with Shared Constants
 
-**Anonymous lambdas used as no-ops, identity functions, or constant suppliers were being freshly allocated at each call site, even though all instances are behaviorally identical.**
+**When to use:** The same stateless lambda — no-op consumer, identity function, always-true predicate, null-returning supplier — is instantiated at multiple call sites. Each allocation is tiny but adds up in aggregate.
 
-`FunctionUtil` provides a single set of package-level constant instances — `NO_OP_CONSUMER`, `NO_OP_BICONSUMER`, `IDENTITY_FN`, `ALWAYS_TRUE`, `ALWAYS_FALSE`, `NULL_SUPPLIER` — and typed accessor methods that return them via an unchecked cast. The same approach is applied to `ProviderType`: a single `NULL` sentinel constant replaces the repeated creation of `context -> null` lambdas in `registerClientProvider`. Call sites that need any of these behaviors now share one object rather than allocating a new closure.
-
----
-
-## Collection & Data Structure
-
-### Identity-Hash Collections for Singleton Keys
-
-**`ResourceKey`, `ProviderType`, and related objects are effective singletons whose equality is reference equality. They were stored in `HashSet` and `HashMap`, which call `hashCode()` and `equals()` on every insertion and lookup even though those calls always reduce to a pointer comparison.**
-
-These have been replaced with fastutil `ReferenceOpenHashSet` and `Reference2ReferenceOpenHashMap` across `completedRegistrations`, `AbstractBuilder.tagsByType`, `BlockEntityBuilder.validBlocks`, the datagen added-set in `DataProviderInitializer`, the loot table creator set, and `RegistryCore`'s internal maps. Identity collections skip the hash and equality computation entirely, eliminating that overhead from every registration and lookup in hot paths.
-
-### Custom Nested Map Utilities Replacing Guava
-
-**`RegistryCore`'s internal tables and multimaps used Guava `HashBasedTable` and `HashMultimap`, which do not support identity semantics and carry structural overhead from Guava's generalized API.**
-
-The `NestedMap`, `NestedMultiMap`, and `MultiMap` interfaces (provided by the bundled FastCollection library) replace these. Each is backed by fastutil identity-hash maps at the outer and inner levels. The wrapper implementations auto-detect whether the inner map is a `Reference2ReferenceMap` to select the correct `computeIfAbsent` overload, and they clean up empty inner maps on removal to avoid unbounded key accumulation. This replaces Guava as a structural dependency for the core registration tables.
+Declare a single `static final` constant for each common behavior and share it across all call sites via a typed accessor method. This reduces class count, allocation pressure, and metaspace usage for lambda classes that are functionally identical.
 
 ---
 
-## Tag Registration
+## Collection Selection
 
-### Per-Tag `isOptional` with Deferred Bulk Application
+### Use Identity-Hash Collections for Singleton Keys
 
-**`isOptional` was a single boolean field on the builder shared by all tags on an entry. Data generators were registered eagerly on each `tag()` call, risking duplicate `setData` registrations when multiple tags targeted the same provider type.**
+**When to use:** Keys are singletons or interned objects (registry keys, enum-like constants, provider-type instances) where `==` is equivalent to `.equals()`, but the collection still pays for `hashCode()` and `equals()` on every operation.
 
-`tagsByType` now maps each `TagKey` to its own `boolean isOptional` via `Reference2BooleanOpenHashMap`. All tag data generators are collected during `tag()` calls and bulk-applied in a single `setData` call per provider type inside `register()`. Tags can be individually marked optional with `tag(type, true, tags)`, and the number of `setData` invocations is bounded to one per provider type regardless of how many `tag()` calls were made.
+Replace `HashSet` / `HashMap` with identity-hash variants (e.g., fastutil `ReferenceOpenHashSet`, `Reference2ReferenceOpenHashMap`). These use `System.identityHashCode()` and `==` internally, eliminating virtual dispatch on `hashCode()` and `equals()` for every insertion and lookup.
+
+### Replace General-Purpose Multimaps/Tables with Purpose-Built Nested Maps
+
+**When to use:** A Guava `Table` or `Multimap` is used for a two-level keyed structure, but its generality (hashing strategy, iteration ordering, copy-on-structural-modification safety) is not needed, and identity semantics at the outer or inner level would be beneficial.
+
+Implement lightweight `NestedMap` / `NestedMultiMap` wrappers backed by identity-hash maps at each level. These auto-clean empty inner maps on removal (preventing unbounded key accumulation) and select the correct `computeIfAbsent` overload based on whether the inner map supports identity semantics.
+
+---
+
+## Deferred & Batched Operations
+
+### Defer Side Effects to a Single Terminal Point
+
+**When to use:** A builder or configuration API accumulates state over multiple calls, and each call currently triggers an immediate side effect (e.g., registering a data generator). Repeated calls to the same state slot overwrite or duplicate the effect.
+
+Collect all state during configuration calls without triggering side effects. Apply the accumulated state in one batch at the terminal method (e.g., `register()` or `build()`). This guarantees each effect fires exactly once, simplifies removal/override of individual entries before finalization, and makes the builder order-independent.
+
+### Store Per-Entry Flags Instead of Global State
+
+**When to use:** A boolean flag (e.g., "optional") applies conceptually to individual entries within a collection, but is implemented as a single field on the enclosing builder, forcing all entries to share the same flag value.
+
+Replace the global flag with a per-entry map (e.g., `Reference2BooleanOpenHashMap<TagKey<?>>`) that stores each entry's flag independently. This allows mixed states (some entries optional, some not) without separate builder invocations or workarounds.
 
 ---
 
 ## Structural Decoupling
 
-### `RegistryCore` Extracted from `RegistryLib`
+### Extract Internal State into a Dedicated Core Class
 
-**`RegistryLib` contained all registration state — tables, callbacks, datagens, creative-tab modifiers — making it a monolithic class where the public API and internal machinery were inseparable.**
+**When to use:** A main API class contains both the public-facing fluent API and a large body of internal registration state, event handling, and bookkeeping. Modifications to internals risk breaking the public API surface, and the class is difficult to test in isolation.
 
-The internal state and event handling have been moved to `RegistryCore`. `RegistryLib` becomes a thin entry-point that wires the event bus once and delegates entirely to `RegistryCore`. `RegistryCore` is independently instantiable and carries no dependency on the public `RegistryLib` API surface, making it straightforward to use in isolation or to test without the full mod lifecycle.
+Move all internal tables, callbacks, and event wiring into a separate core class. The public class becomes a thin facade that delegates to the core. This makes the core independently testable, reduces the risk of accidental API breakage during internal refactoring, and clearly separates what belongs to consumers versus what belongs to the implementation.
 
-### Centralized Static Event Handlers
+### Centralize Event Listeners as Static Handlers
 
-**Each `RegistryCore` instance registered its own event listeners on construction, causing the event bus to accumulate per-instance listeners and invoke them all on every event.**
+**When to use:** Multiple instances of a class each register their own event listener, causing the event bus to accumulate N listeners for the same event type. Each listener does the same dispatch logic, differing only in which instance it belongs to.
 
-Event handling is now static: `RegistryLib` registers `RegistryCore::onRegister`, `RegistryCore::onRegisterLate`, and related static methods once at mod init. A `ConcurrentHashMap<String, RegistryCore> REGISTRY_CORES` holds all live instances by mod ID; each static handler fans out to the appropriate core. The event bus holds one listener per event type instead of one per `RegistryCore` instance.
+Register a single static handler on the event bus and maintain a lookup map (e.g., `ConcurrentHashMap<String, Instance>`) keyed by discriminator (mod ID, name, etc.). The one handler fans out to the appropriate instance on each event. This reduces event bus overhead from O(N) listeners to O(1) and eliminates the need to unregister per-instance listeners.
 
 ---
 
-## API & Minor Improvements
+## Annotation & Metadata Hygiene
 
-### Annotation Retention Downgraded to `CLASS`
+### Downgrade Retention to `CLASS` for Documentation-Only Annotations
 
-**`@StandardAPI` and `@SyntaxSugar` used `@Retention(RetentionPolicy.RUNTIME)`, keeping their descriptors accessible through reflection at runtime — a use case that does not exist for these developer-documentation markers.**
+**When to use:** An annotation exists purely as developer documentation or as a compile-time marker (e.g., "this method is a standard API entry point"). It is never read via reflection at runtime, but `@Retention(RUNTIME)` keeps its descriptor in the class file's runtime-visible annotation table.
 
-Both annotations now carry `@Retention(RetentionPolicy.CLASS)`. They remain visible to the compiler and to bytecode tooling, but are stripped from class data at load time, reducing the annotation metadata held in the JVM method area for every annotated method.
+Change retention to `RetentionPolicy.CLASS`. The annotation remains visible to the compiler, annotation processors, and bytecode analysis tools, but is stripped from the class data at load time, reducing annotation metadata held in the JVM's method area.
 
-### Stream Terminal `.toList()` over `Collectors.toList()`
+---
 
-**Stream pipelines that produced read-only lists terminated with `Collectors.toList()`, which allocates an intermediate `Collector` object on each call.**
+## Minor Idioms
 
-These have been replaced with `.toList()` (Java 16+), which produces an unmodifiable list directly through the stream infrastructure with no intermediate factory allocation. The semantics are equivalent for all read-only uses in the codebase.
+### Prefer `.toList()` over `Collectors.toList()`
+
+**When to use:** A stream pipeline produces a list that is only read after collection. `Collectors.toList()` allocates an intermediate `Collector` object on each call.
+
+Use `.toList()` (Java 16+). It produces an unmodifiable list directly through the stream infrastructure without an intermediate collector, and signals to the reader that the result is not intended to be mutated.
+
+### Remove Unnecessary Lazy Wrapping of Static Flags
+
+**When to use:** A value is wrapped in `Lazy.of(...)` but the underlying computation is trivially cheap or the value is already fixed at process startup (e.g., a boolean flag set by the launcher). The lazy wrapper adds an indirection and a volatile read on every access for no benefit.
+
+Replace the `Lazy` wrapper with a direct method call or a plain `static final` field. Reserve `Lazy` for computations that are genuinely expensive or whose dependencies are not yet available at class-load time.
