@@ -19,9 +19,10 @@ public final class RegistryLib {
     public static final Logger LOGGER = LogManager.getLogger();
 
     public RegistryLib(IEventBus modEventBus) {
-        modEventBus.addListener(RegistryCore::onRegister);
+        modEventBus.addListener(EventPriority.LOW, RegistryCore::onRegister);
         modEventBus.addListener(EventPriority.LOWEST, RegistryCore::onRegisterLate);
         modEventBus.addListener(RegistryCore::onBuildCreativeModeTabContents);
+        modEventBus.addListener(RegistryCore::onEntityAttributeCreation);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.init(modEventBus));
     }
 }

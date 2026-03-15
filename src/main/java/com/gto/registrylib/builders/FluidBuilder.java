@@ -65,8 +65,6 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     private static final Identifier BUCKET_FLUID_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "item/bucket_fluid");
     private static final Identifier BUCKET_BASE_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "item/bucket_base");
 
-    private int tintColor = -1;
-
     @StandardAPI
     public FluidBuilder<T, P> clientExtension(
                                               @Nonnull Supplier<Supplier<IClientFluidTypeExtensions>> clientExtension) {
@@ -122,6 +120,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     }
 
     // --- Fields ---
+
+    private int tintColor = -1;
 
     private final String sourceName, bucketName;
     private final FluidFactory<T> fluidFactory;
@@ -254,14 +254,15 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         final Supplier<T> supplier = asSupplier();
         final Supplier<Integer> lightLevel = Lazy.of(() -> fluidType.get().getLightLevel());
         final ToIntFunction<BlockState> lightLevelInt = $ -> lightLevel.get();
-        final var builder = getOwner()
+        final var block = getOwner()
                 .<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier.get(), p))
                 .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
                 .properties(p -> p.lightLevel(lightLevelInt))
                 .blockstate(() -> (ctx, prov) -> prov.createNonTemplateModelBlock(ctx.get()));
-        this.fluidProperties(p -> p.block(builder.asSupplier()));
-        consumer.accept(builder);
-        return builder.build();
+        var blockSupplier = block.asSupplier();
+        this.fluidProperties(p -> p.block(blockSupplier));
+        consumer.accept(block);
+        return block.build();
     }
 
     @StandardAPI
@@ -318,7 +319,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
             throw new IllegalStateException("Cannot create a bucket before creating a source block");
         }
         final int bucketTintColor = this.tintColor;
-        final var builder = getOwner()
+        final var item = getOwner()
                 .<I, FluidBuilder<T, P>>item(
                         this, bucketName, p -> factory.apply(source.get(), p), false)
                 .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
@@ -338,12 +339,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                                 prov.itemModelOutput.accept(ctx.get(), ItemModelUtils.plainModel(modelId));
                             }
                         });
-        this.fluidProperties(p -> p.bucket(builder.asSupplier()));
+        var itemSupplier = item.asSupplier();
+        this.fluidProperties(p -> p.bucket(itemSupplier));
         if (defaultBucketTab != null) {
-            builder.tab(defaultBucketTab);
+            item.tab(defaultBucketTab);
         }
-        consumer.accept(builder);
-        return builder.build();
+        consumer.accept(item);
+        return item.build();
     }
 
     @StandardAPI

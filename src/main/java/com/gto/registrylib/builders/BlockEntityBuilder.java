@@ -76,15 +76,16 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @SuppressWarnings("rawtypes")
     public BlockEntityBuilder<BE, P> renderer(
                                               @Nonnull Supplier<? extends BlockEntityRendererProvider> renderer) {
+        Supplier supplier = this.asSupplier();
         DistExecutor.unsafeRunWhenOn(
-                Dist.CLIENT, () -> () -> Client.registerBER(this::getEntry, renderer.get()));
+                Dist.CLIENT, () -> () -> Client.registerBER(supplier, renderer.get()));
         return this;
     }
 
     @Override
     protected BlockEntityType<BE> createEntry(ResourceKey<BlockEntityType<?>> key) {
         Block[] blocks = validBlocks.stream().map(Supplier::get).toArray(Block[]::new);
-        Supplier<BlockEntityType<BE>> supplier = asSupplier();
+        var supplier = asSupplier();
         return new BlockEntityType<>(
                 (pos, state) -> factory.create(supplier.get(), pos, state), blocks);
     }

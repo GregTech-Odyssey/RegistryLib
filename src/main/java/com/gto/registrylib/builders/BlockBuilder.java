@@ -42,7 +42,7 @@ public class BlockBuilder<T extends Block, P>
                                                                  String name,
                                                                  BuilderCallback callback,
                                                                  Function<BlockBehaviour.Properties, T> factory) {
-        return new BlockBuilder<>(owner, parent, name, callback, factory, BlockBehaviour.Properties::of)
+        return new BlockBuilder<>(owner, parent, name, callback, factory)
                 .defaultBlockstate()
                 .defaultLoot()
                 .defaultLang();
@@ -59,11 +59,9 @@ public class BlockBuilder<T extends Block, P>
                            P parent,
                            String name,
                            BuilderCallback callback,
-                           Function<BlockBehaviour.Properties, T> factory,
-                           Supplier<BlockBehaviour.Properties> initialProperties) {
+                           Function<BlockBehaviour.Properties, T> factory) {
         super(owner, parent, name, callback, Registries.BLOCK);
         this.factory = factory;
-        this.initialProperties = initialProperties;
     }
 
     // === Sub-resource Configuration (Consumer-scoped, returns this BlockBuilder) ===
@@ -81,13 +79,13 @@ public class BlockBuilder<T extends Block, P>
                 .<I, BlockBuilder<T, P>>item(
                         this,
                         getName(),
-                        p -> factory.apply(getEntry(), p.useBlockDescriptionPrefix()),
+                        p -> factory.apply(getValue(), p.useBlockDescriptionPrefix()),
                         false)
                 .setData(ProviderType.LANG, FunctionUtil.noOpBiConsumer())
                 .model(
                         () -> (ctx, prov) -> getOwner()
                                 .getDataProvider(ProviderType.BLOCKSTATE)
-                                .map(g -> g.seenBlockstates.get(getEntry()))
+                                .map(g -> g.seenBlockstates.get(getValue()))
                                 .flatMap(BlockStateModelDispatcher::simpleModels)
                                 .map(b -> b.models().get(""))
                                 .map(
@@ -118,7 +116,7 @@ public class BlockBuilder<T extends Block, P>
     public <BE extends BlockEntity> BlockBuilder<T, P> blockEntity(
                                                                    @Nonnull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
                                                                    @Nonnull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> consumer) {
-        var builder = getOwner().blockEntity(this, getName(), beFactory).validBlock(this::getEntry);
+        var builder = getOwner().blockEntity(this, getName(), beFactory).validBlock(this::getValue);
         consumer.accept(builder);
         return builder.build();
     }
@@ -199,7 +197,13 @@ public class BlockBuilder<T extends Block, P>
 
     @Override
     protected T createEntry(ResourceKey<Block> key) {
-        BlockBehaviour.Properties properties = this.initialProperties.get();
+        BlockBehaviour.Properties properties;
+        var initialProperties = this.initialProperties;
+        if (initialProperties == null) {
+            properties = BlockBehaviour.Properties.of();
+        } else {
+            properties = initialProperties.get();
+        }
         properties = propertiesCallback.apply(properties);
         return factory.apply(properties.setId(key));
     }

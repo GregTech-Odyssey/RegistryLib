@@ -33,7 +33,7 @@ public class DataGenContext<R, E extends R> implements Supplier<E> {
 
     public static <R, E extends R> DataGenContext<R, E> from(Builder<R, E, ?, ?> builder) {
         return new DataGenContext<>(
-                () -> builder.getOwner().<R, E>get(builder.getName(), builder.getRegistryKey()).get(),
+                builder.asSupplier(),
                 builder.getName(),
                 Identifier.fromNamespaceAndPath(builder.getOwner().getModid(), builder.getName()));
     }

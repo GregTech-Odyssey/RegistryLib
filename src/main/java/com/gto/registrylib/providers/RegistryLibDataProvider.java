@@ -14,9 +14,9 @@ import net.minecraft.data.DataProvider;
 import net.minecraft.resources.ResourceKey;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,7 +49,7 @@ public class RegistryLibDataProvider implements DataProvider {
         this.registriesLookup = event.getLookupProvider();
 
         LOGGER.debug("Gathering providers");
-        Map<ProviderType<?>, RegistryLibProvider> known = new HashMap<>();
+        Map<ProviderType<?>, RegistryLibProvider> known = new Reference2ReferenceOpenHashMap<>();
         for (DataProviderInitializer.Sorted sorted : parent.getDataGenInitializer().getSortedProviders()) {
             ProviderType<?> type = sorted.type();
             var lookup = registriesLookup;

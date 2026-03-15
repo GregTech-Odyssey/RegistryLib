@@ -13,7 +13,6 @@ import com.gto.registrylib.util.map.NestedMap;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
-import com.mojang.serialization.Codec;
 
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
@@ -27,18 +26,13 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
-import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
-import net.neoforged.neoforge.data.loading.DatagenModLoader;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.registries.DataPackRegistryEvent;
-import net.neoforged.neoforge.registries.NewRegistryEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
-import net.neoforged.neoforge.registries.RegistryBuilder;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import lombok.Getter;
@@ -50,7 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -59,15 +52,16 @@ import javax.annotation.Nonnull;
 
 public class RegistryCore {
 
-    private static final ConcurrentHashMap<String, RegistryCore> REGISTRY_CORES = new ConcurrentHashMap<>();
+    private static final PriorityQueue<RegistryCore> REGISTRY_CORES = new PriorityQueue<>(Comparator.comparingInt(RegistryCore::priority));
     private static final Logger log = RegistryLib.LOGGER;
 
+    private final NestedMap<ResourceKey<? extends Registry<?>>, String, RegistryEntry<?, ?>> registryentrys = NestedMap.createIdentity(HashMap::new);
     private final NestedMap<ResourceKey<? extends Registry<?>>, String, Registration<?, ?>> registrations = NestedMap.createIdentity(LinkedHashMap::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Runnable> afterRegisterCallbacks = MultiMap.createIdentity(ArrayList::new);
     private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = new ReferenceOpenHashSet<>();
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
-    private ResourceKey<CreativeModeTab> defaultCreativeModeTab = CreativeModeTabs.SEARCH;
+    private ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
 
     private final Table<Pair<String, ResourceKey<? extends Registry<?>>>, GeneratorType<?>, Consumer<?>> datagensByEntry = HashBasedTable.create();
     private final MultiMap<GeneratorType<?>, Consumer<?>> datagens = MultiMap.createIdentity(ArrayList::new);
@@ -75,19 +69,19 @@ public class RegistryCore {
     @Getter
     private final String modid;
 
-    @Nullable
-    private IEventBus modEventBus;
     private boolean skipErrors;
 
     // === Constructor + Factory ===
 
     protected RegistryCore(String modid) {
         this.modid = modid;
-        REGISTRY_CORES.put(modid, this);
         if (doDatagen()) {
             ModList.get()
                     .getModContainerById(modid)
                     .ifPresent(c -> c.getEventBus().addListener(this::onGatherData));
+        }
+        synchronized (REGISTRY_CORES) {
+            REGISTRY_CORES.offer(this);
         }
     }
 
@@ -95,62 +89,28 @@ public class RegistryCore {
         return new RegistryCore(modid);
     }
 
-    // === Accessors ===
-
-    public static boolean isDevEnvironment() {
-        return !FMLEnvironment.isProduction();
-    }
-
     public boolean doDatagen() {
-        return DatagenModLoader.isRunningDataGen();
+        return Environment.isDatagen;
     }
 
-    @Nullable
-    public IEventBus getModEventBus() {
-        return modEventBus;
-    }
-
-    public void setModEventBus(@Nullable IEventBus bus) {
-        this.modEventBus = bus;
+    public int priority() {
+        return 0;
     }
 
     @Nullable
     private RegistryLibDataProvider provider;
 
     // === Entry Access ===
-
+    @SuppressWarnings("unchecked")
     public <R, T extends R> RegistryEntry<R, T> get(
                                                     String name, ResourceKey<? extends Registry<R>> type) {
-        return this.<R, T>getRegistration(name, type).entry;
-    }
-
-    public <R, T extends R> Optional<RegistryEntry<R, T>> getOptional(
-                                                                      String name, ResourceKey<? extends Registry<R>> type) {
-        Registration<R, T> reg = this.getRegistrationUnchecked(name, type);
-        return reg == null ? Optional.empty() : Optional.of(reg.entry);
+        return (RegistryEntry<R, T>) this.registryentrys.get(type, name);
     }
 
     @SuppressWarnings("unchecked")
-    @Nullable
-    private <R, T extends R> Registration<R, T> getRegistrationUnchecked(
-                                                                         String name, ResourceKey<? extends Registry<R>> type) {
-        return (Registration<R, T>) registrations.get(type, name);
-    }
-
-    private <R, T extends R> Registration<R, T> getRegistration(
-                                                                String name, ResourceKey<? extends Registry<R>> type) {
-        Registration<R, T> reg = this.getRegistrationUnchecked(name, type);
-        if (reg != null) return reg;
-        throw new IllegalArgumentException(
-                "Unknown registration " + name + " for type " + type.identifier());
-    }
-
-    @SuppressWarnings({ "null", "unchecked" })
     public <R, T extends R> Collection<RegistryEntry<R, T>> getAll(
                                                                    ResourceKey<? extends Registry<R>> type) {
-        return registrations.get(type).values().stream()
-                .map(r -> (RegistryEntry<R, T>) r.entry)
-                .toList();
+        return (Collection) registryentrys.get(type).values();
     }
 
     // === Callback Management ===
@@ -312,7 +272,7 @@ public class RegistryCore {
     // === Configuration ===
 
     public RegistryCore skipErrors(boolean skipErrors) {
-        if (skipErrors && !isDevEnvironment()) {
+        if (skipErrors && Environment.isProd) {
             log.error("Ignoring skipErrors(true) as this is not a development environment!");
         } else {
             this.skipErrors = skipErrors;
@@ -327,6 +287,8 @@ public class RegistryCore {
 
     public RegistryCore modifyCreativeModeTab(
                                               ResourceKey<CreativeModeTab> creativeModeTab, Consumer<CreativeModeTabModifier> modifier) {
+        if (creativeModeTab == CreativeModeTabs.SEARCH)
+            throw new RuntimeException("SEARCH is a reserved tab name");
         creativeModeTabModifiers.put(creativeModeTab, modifier);
         return this;
     }
@@ -346,41 +308,17 @@ public class RegistryCore {
                                                           Builder<R, T, ?, ?> builder,
                                                           Function<ResourceKey<R>, ? extends T> factory,
                                                           Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
-        Registration<R, T> reg = new Registration<>(
+        var reg = new Registration<>(
                 type, Identifier.fromNamespaceAndPath(modid, name), factory, entryFactory);
         var callbacks = builder.getCallbacks();
         reg.callbacks.addAll(callbacks);
         callbacks.clear();
         registrations.put(type, name, reg);
+        registryentrys.put(type, name, reg.entry);
         return reg.entry;
     }
 
-    // === RegistryCore Creation ===
-
-    public <R> ResourceKey<Registry<R>> makeRegistry(
-                                                     String name, Function<ResourceKey<Registry<R>>, RegistryBuilder<R>> builder) {
-        final ResourceKey<Registry<R>> registryId = ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath(getModid(), name));
-        OneTimeEventReceiver.addModListener(
-                this, NewRegistryEvent.class, e -> e.register(builder.apply(registryId).create()));
-        return registryId;
-    }
-
-    public <R> ResourceKey<Registry<R>> makeDatapackRegistry(String name, Codec<R> codec) {
-        return makeDatapackRegistry(name, codec, null);
-    }
-
-    public <R> ResourceKey<Registry<R>> makeDatapackRegistry(
-                                                             String name, Codec<R> codec, @Nullable Codec<R> networkCodec) {
-        final ResourceKey<Registry<R>> registryId = ResourceKey.createRegistryKey(Identifier.fromNamespaceAndPath(getModid(), name));
-        OneTimeEventReceiver.addModListener(
-                this,
-                DataPackRegistryEvent.NewRegistry.class,
-                event -> event.dataPackRegistry(registryId, codec, networkCodec));
-        return registryId;
-    }
-
     // === Builder Factory Methods ===
-
     // --- Generic ---
 
     @SyntaxSugar("generic(...).register()")
@@ -579,46 +517,52 @@ public class RegistryCore {
     static void onRegister(RegisterEvent event) {
         var type = event.getRegistry();
         var key = type.key();
-        REGISTRY_CORES
-                .values()
-                .forEach(
-                        core -> core.registrations
-                                .get(key)
-                                .values()
-                                .forEach(
-                                        r -> {
-                                            try {
-                                                r.register((Registry) type);
-                                            } catch (Exception ex) {
-                                                String err = "Unexpected error while registering entry " + r.key.identifier() + " to registry " + key.identifier();
-                                                if (core.skipErrors) {
-                                                    log.error(DebugMarkers.REGISTER, err);
-                                                } else {
-                                                    throw new RuntimeException(err, ex);
-                                                }
-                                            }
-                                        }));
+        REGISTRY_CORES.forEach(
+                core -> core.registrations
+                        .remove(key)
+                        .values()
+                        .forEach(
+                                r -> {
+                                    try {
+                                        r.register((Registry) type);
+                                    } catch (Exception ex) {
+                                        String err = "Unexpected error while registering entry " + r.key.identifier() + " to registry " + key.identifier();
+                                        if (core.skipErrors) {
+                                            log.error(DebugMarkers.REGISTER, err);
+                                        } else {
+                                            throw new RuntimeException(err, ex);
+                                        }
+                                    }
+                                }));
     }
 
     static void onRegisterLate(RegisterEvent event) {
         var type = event.getRegistryKey();
-        REGISTRY_CORES
-                .values()
-                .forEach(
-                        core -> {
-                            core.afterRegisterCallbacks.remove(type).forEach(Runnable::run);
-                            core.completedRegistrations.add(type);
-                        });
+        REGISTRY_CORES.forEach(
+                core -> {
+                    core.afterRegisterCallbacks.remove(type).forEach(Runnable::run);
+                    core.completedRegistrations.add(type);
+                });
     }
 
     static void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
         var modifier = new CreativeModeTabModifier(event);
-        REGISTRY_CORES
-                .values()
-                .forEach(
-                        core -> core.creativeModeTabModifiers
-                                .get(event.getTabKey())
-                                .forEach(value -> value.accept(modifier)));
+        if (event.getTabKey() == CreativeModeTabs.SEARCH) {
+            REGISTRY_CORES.forEach(c -> c.getAll(Registries.ITEM).forEach(modifier::accept));
+        }
+        REGISTRY_CORES.forEach(
+                core -> core.creativeModeTabModifiers
+                        .get(event.getTabKey())
+                        .forEach(value -> value.accept(modifier)));
+    }
+
+    static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
+        REGISTRY_CORES.forEach(
+                core -> {
+                    if (!core.registrations.isEmpty()) {
+                        log.error("Registry {} has unregistered entries", core.registrations.getMap().keySet());
+                    }
+                });
     }
 
     private void onGatherData(GatherDataEvent.Client event) {
@@ -632,8 +576,8 @@ public class RegistryCore {
 
         private final ResourceKey<R> key;
         private final RegistryEntry<R, T> entry;
-        private Function<ResourceKey<R>, ? extends T> creator;
-        private List<Consumer<? super T>> callbacks = new ArrayList<>();
+        private final Function<ResourceKey<R>, ? extends T> creator;
+        private final List<Consumer<? super T>> callbacks = new ArrayList<>();
 
         private Registration(
                              ResourceKey<? extends Registry<R>> type,
@@ -648,11 +592,9 @@ public class RegistryCore {
         @SuppressWarnings("all")
         private void register(Registry<R> registry) {
             T value = creator.apply(key);
-            this.entry.set(value);
+            this.entry.bound(value);
             ((WritableRegistry) registry).register(key, value, RegistrationInfo.BUILT_IN);
             callbacks.forEach(c -> c.accept(value));
-            creator = null;
-            callbacks = null;
         }
     }
 }

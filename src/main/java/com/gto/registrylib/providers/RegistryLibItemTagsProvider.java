@@ -11,7 +11,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -19,7 +20,7 @@ import java.util.concurrent.CompletableFuture;
 public class RegistryLibItemTagsProvider extends RegistryLibTagsProvider.IntrinsicImpl<Item> {
 
     private final CompletableFuture<TagsProvider.TagLookup<Block>> blockTags;
-    private final Map<TagKey<Block>, TagKey<Item>> tagsToCopy = new HashMap<>();
+    private final Map<TagKey<Block>, TagKey<Item>> tagsToCopy = new Reference2ReferenceOpenHashMap<>();
 
     public RegistryLibItemTagsProvider(
                                        RegistryCore owner,

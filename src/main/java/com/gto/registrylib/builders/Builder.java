@@ -39,15 +39,11 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>> {
     List<Consumer<? super T>> getCallbacks();
 
     @NotNull
-    RegistryEntry<R, T> get();
-
-    @NotNull
-    default T getEntry() {
-        return get().get();
-    }
-
-    @NotNull
     Supplier<T> asSupplier();
+
+    default T getValue() {
+        return asSupplier().get();
+    }
 
     // === Configuration ===
 

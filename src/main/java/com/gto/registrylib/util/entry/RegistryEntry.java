@@ -7,8 +7,7 @@ import net.minecraft.resources.ResourceKey;
 
 import lombok.Getter;
 
-import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 public class RegistryEntry<T, S extends T> implements Supplier<S> {
@@ -31,14 +30,7 @@ public class RegistryEntry<T, S extends T> implements Supplier<S> {
         return getSibling(owner, registry.key());
     }
 
-    public Optional<RegistryEntry<T, S>> filter(Predicate<T> predicate) {
-        if (predicate.test(value)) {
-            return Optional.of(this);
-        }
-        return Optional.empty();
-    }
-
-    public <X> boolean is(X entry) {
+    public boolean is(T entry) {
         return value == entry;
     }
 
@@ -58,8 +50,13 @@ public class RegistryEntry<T, S extends T> implements Supplier<S> {
         return value;
     }
 
-    public void set(S value) {
+    public void bound(S value) {
         if (this.value != null) throw new IllegalStateException("key: " + key + " value already bound");
         this.value = value;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.ENGLISH, "RegistryEntry{%s}", this.key);
     }
 }

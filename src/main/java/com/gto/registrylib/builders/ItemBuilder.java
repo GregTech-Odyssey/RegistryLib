@@ -17,8 +17,6 @@ import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
-import com.google.common.collect.Maps;
-
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -27,6 +25,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -52,10 +51,10 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     private final Function<Item.Properties, T> factory;
 
-    private Supplier<Item.Properties> initialProperties = Item.Properties::new;
+    private Supplier<Item.Properties> initialProperties;
     private Function<Item.Properties, Item.Properties> propertiesCallback = FunctionUtil.identityFn();
 
-    private final Map<ResourceKey<CreativeModeTab>, BiConsumer<Item, CreativeModeTabModifier>> creativeModeTabs = Maps.newLinkedHashMap();
+    private final Map<ResourceKey<CreativeModeTab>, BiConsumer<Item, CreativeModeTabModifier>> creativeModeTabs = new Reference2ReferenceOpenHashMap<>();
 
     private final List<TooltipNodeCollector.TooltipConfig> tooltipConfigs = new ArrayList<>();
     private final List<ItemAttachment<?>> pendingAttachments;
@@ -212,7 +211,13 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     @Override
     protected T createEntry(ResourceKey<Item> key) {
-        Item.Properties properties = this.initialProperties.get();
+        Item.Properties properties;
+        var initialProperties = this.initialProperties;
+        if (initialProperties == null) {
+            properties = new Item.Properties();
+        } else {
+            properties = initialProperties.get();
+        }
         properties = propertiesCallback.apply(properties);
         return factory.apply(properties.setId(key));
     }

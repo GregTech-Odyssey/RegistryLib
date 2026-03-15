@@ -24,7 +24,8 @@ import net.minecraft.world.level.block.StairBlock;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.client.model.generators.template.ExtendedModelTemplateBuilder;
 
-import java.util.HashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -32,7 +33,7 @@ import java.util.function.Consumer;
 public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
 
     private final RegistryCore parent;
-    public final Map<Block, BlockStateModelDispatcher> seenBlockstates = new HashMap<>();
+    public final Map<Block, BlockStateModelDispatcher> seenBlockstates = new Reference2ReferenceOpenHashMap<>();
 
     public RegistryLibBlockModelGenerator(
                                           RegistryCore parent,

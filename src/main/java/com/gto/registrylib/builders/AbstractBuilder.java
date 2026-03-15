@@ -6,7 +6,7 @@ import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.RegistryLibTagsProvider;
 import com.gto.registrylib.util.FunctionUtil;
-import com.gto.registrylib.util.entry.LazyRegistryEntry;
+import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
 import net.minecraft.core.Registry;
@@ -50,8 +50,8 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     private final List<Consumer<? super T>> callbacks = new ArrayList<>();
 
     private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
-    private final LazyRegistryEntry<R, T> safeSupplier = new LazyRegistryEntry<>(this);
-    private RegistryEntry<R, T> entry;
+
+    private final Supplier<T> valueSupplier;
 
     protected AbstractBuilder(
                               RegistryCore owner,
@@ -65,6 +65,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         this.callback = callback;
         this.registryKey = registryKey;
         this.tagsByType = owner.doDatagen() ? new Reference2ReferenceOpenHashMap<>() : null;
+        this.valueSupplier = Lazy.of(() -> (T) owner.get(name, registryKey).get());
     }
 
     protected abstract T createEntry(ResourceKey<R> key);
@@ -87,15 +88,9 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return new RegistryEntry<>(key);
     }
 
-    @NotNull
-    public RegistryEntry<R, T> get() {
-        if (entry != null) return entry;
-        return entry = owner.get(name, registryKey);
-    }
-
     @Override
     public @NotNull Supplier<T> asSupplier() {
-        return safeSupplier;
+        return valueSupplier;
     }
 
     // === Configuration ===
