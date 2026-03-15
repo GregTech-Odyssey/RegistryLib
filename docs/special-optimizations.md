@@ -6,7 +6,7 @@ permalink: /special-optimizations/
 
 # Special Optimizations
 
-This page documents performance and correctness optimizations contributed by **nutant (nutant233)** to the 26.1 branch. These optimizations fall into two categories: thread-safety improvements and code/data-structure improvements.
+This page documents performance and correctness optimizations contributed by ** (233)** to the 26.1 branch. These optimizations fall into two categories: thread-safety improvements and code/data-structure improvements.
 
 ---
 
@@ -119,4 +119,4 @@ The internal registration logic (registration table, callbacks, datagens, creati
 
 ### `FastCollection` Library
 
-The project now bundles [nutant's FastCollection library](https://github.com/nutant233/FastCollection) (`libs/fastcollection-1.0.jar`), which provides the `NestedMap`, `NestedMultiMap`, and `MultiMap` interfaces used by `RegistryCore`.
+The project now bundles ['s FastCollection library](https://github.com/233/FastCollection) (`libs/fastcollection-1.0.jar`), which provides the `NestedMap`, `NestedMultiMap`, and `MultiMap` interfaces used by `RegistryCore`.
