@@ -84,6 +84,22 @@ Common commands during setup:
 | `./gradlew runServer` | Check dedicated-server safety |
 | `./gradlew runData` | Confirm datagen output |
 
+## Create `REGISTRYLIB` First
+
+Before you can register an Item, Block, or Fluid, you need one shared registry entry point.
+
+In `RegistryLibTest`, that field is created like this:
+
+```java
+public static final String MOD_ID = "registrylibtest";
+public static final ModRegistryCore REGISTRYLIB = ModRegistryCore.create(MOD_ID);
+```
+
+This is why the later examples can call `RegistryLibTest.REGISTRYLIB.item(...)` directly.
+
+{: .note }
+> The test mod uses `ModRegistryCore` instead of the base `RegistryCore` because its custom Builder layer adds `langCn(...)`. If you do not need that custom Builder behavior, the plain equivalent is `RegistryCore.create(MOD_ID)`.
+
 ## Minimal Example
 
 ```java
@@ -94,7 +110,7 @@ public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
         .register();
 ```
 
-This is the real minimal item chain used by the test mod: it declares the registry name, provides the factory method, and generates both the English and Chinese display names.
+This is the real minimal item chain used by the test mod after the shared `REGISTRYLIB` field already exists: it declares the registry name, provides the factory method, and generates both the English and Chinese display names.
 
 ## How You Should Verify It
 
