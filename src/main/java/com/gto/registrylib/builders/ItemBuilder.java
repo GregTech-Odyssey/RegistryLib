@@ -3,8 +3,9 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
-import com.gto.registrylib.composite.CompositeItem;
-import com.gto.registrylib.composite.CompositeItemAttachment;
+import com.gto.registrylib.composite.ComponentItem;
+import com.gto.registrylib.composite.IComponentItem;
+import com.gto.registrylib.composite.ItemAttachment;
 import com.gto.registrylib.providers.DataGenContext;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
@@ -42,8 +43,11 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                                                                P parent,
                                                                String name,
                                                                BuilderCallback callback,
-                                                               Function<Item.Properties, T> factory) {
-        return new ItemBuilder<>(owner, parent, name, callback, factory).defaultModel().defaultLang();
+                                                               Function<Item.Properties, T> factory,
+                                                               boolean isComponentItem) {
+        return new ItemBuilder<>(owner, parent, name, callback, factory, isComponentItem)
+                .defaultModel()
+                .defaultLang();
     }
 
     private final Function<Item.Properties, T> factory;
@@ -54,17 +58,18 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     private final Map<ResourceKey<CreativeModeTab>, BiConsumer<Item, CreativeModeTabModifier>> creativeModeTabs = Maps.newLinkedHashMap();
 
     private final List<TooltipNodeCollector.TooltipConfig> tooltipConfigs = new ArrayList<>();
-    private final List<CompositeItemAttachment<?>> pendingAttachments = new ArrayList<>();
+    private final List<ItemAttachment<?>> pendingAttachments;
 
     protected ItemBuilder(
                           RegistryCore owner,
                           P parent,
                           String name,
                           BuilderCallback callback,
-                          Function<Item.Properties, T> factory) {
+                          Function<Item.Properties, T> factory,
+                          boolean isComponentItem) {
         super(owner, parent, name, callback, Registries.ITEM);
         this.factory = factory;
-
+        pendingAttachments = isComponentItem ? new ArrayList<>() : null;
         onRegister(
                 item -> {
                     creativeModeTabs.forEach(
@@ -79,26 +84,26 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                     tooltipConfigs.clear();
 
                     // 挂载组合附件
-                    if (item instanceof CompositeItem composite) {
+                    if (isComponentItem) {
+                        if (!(item instanceof IComponentItem<?> componentItem))
+                            throw new RuntimeException("Item is not a component item");
                         for (var attachment : pendingAttachments) {
-                            composite.attachUnchecked(attachment);
+                            componentItem.attachAttachment(attachment.self());
                         }
                         // 自动注册附件的 tooltip 收集
-                        if (composite.getAttachments().stream()
-                                .anyMatch(
-                                        att -> (att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) != 0)) {
+                        if (componentItem.getAttachments().stream()
+                                .anyMatch(att -> (att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) != 0)) {
                             TooltipRegistry.register(
                                     item,
                                     (collector, stack) -> {
-                                        for (var att : composite.getAttachments()) {
-                                            if ((att.overrideFlags & CompositeItemAttachment.COLLECT_TOOLTIP) == 0)
-                                                continue;
-                                            att.collectTooltipNodes(composite, stack, collector);
+                                        for (var att : componentItem.getAttachments()) {
+                                            if ((att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) == 0) continue;
+                                            att.collectTooltipNodes(componentItem.self(), stack, collector);
                                         }
                                     });
                         }
+                        pendingAttachments.clear();
                     }
-                    pendingAttachments.clear();
                 });
     }
 
@@ -191,9 +196,9 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         return this;
     }
 
-    /** 为此物品添加一个组合附件（仅当 Item 为 {@link CompositeItem} 或其子类时有效）。 */
+    /** 为此物品添加一个组合附件（仅当 Item 为 {@link ComponentItem} 或其子类时有效）。 */
     @StandardAPI
-    public ItemBuilder<T, P> attach(@Nonnull CompositeItemAttachment<?> attachment) {
+    public ItemBuilder<T, P> attach(@Nonnull ItemAttachment<?> attachment) {
         pendingAttachments.add(attachment);
         return this;
     }

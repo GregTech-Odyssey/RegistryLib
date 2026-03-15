@@ -1,7 +1,7 @@
 package com.gto.registrylibtest.item;
 
-import com.gto.registrylib.composite.CompositeItem;
-import com.gto.registrylib.composite.CompositeItemAttachment;
+import com.gto.registrylib.composite.ComponentItem;
+import com.gto.registrylib.composite.ItemAttachment;
 import com.gto.registrylib.tooltip.RootNodeRef;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
@@ -25,7 +25,7 @@ import net.minecraft.world.level.Level;
  *
  * <p>
  * 涵盖：properties / initialProperties / lang / defaultModel / defaultLang / tab / removeTab /
- * model / recipe / tooltip（两种重载）/ attach / tag / 独立 RootNodeRef / CompositeItemAttachment。
+ * model / recipe / tooltip（两种重载）/ attach / tag / 独立 RootNodeRef / ItemAttachment。
  */
 public class FullItemExample {
 
@@ -33,13 +33,13 @@ public class FullItemExample {
 
     public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(RegistryLibTest.MOD_ID + ":detail_box", 10, true);
 
-    // ── CompositeItem 附件 ──────────────────────────────────────────────────
+    // ── ComponentItem 附件 ──────────────────────────────────────────────────
 
-    static class InspectAttachment extends CompositeItemAttachment<CompositeItem> {
+    static class InspectAttachment extends ItemAttachment<ComponentItem> {
 
         @Override
         public InteractionResult use(
-                                     CompositeItem item, Level level, Player player, InteractionHand hand) {
+                                     ComponentItem item, Level level, Player player, InteractionHand hand) {
             if (!level.isClientSide()) {
                 player.sendSystemMessage(Component.literal("Inspecting magic wand..."));
             }
@@ -48,15 +48,15 @@ public class FullItemExample {
 
         @Override
         public void collectTooltipNodes(
-                                        CompositeItem item, ItemStack stack, TooltipNodeCollector collector) {
+                                        ComponentItem item, ItemStack stack, TooltipNodeCollector collector) {
             collector.node(new SubNode.Basic(Component.literal("§eRight-click to inspect"), 100));
         }
     }
 
     // ── 注册 ────────────────────────────────────────────────────────────────
 
-    public static final ItemEntry<CompositeItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB
-            .item("magic_wand", CompositeItem::new)
+    public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGISTRYLIB
+            .componentItem("magic_wand")
             // --- initialProperties: 提供全新的 Properties 作为基础 ---
             .initialProperties(() -> new Item.Properties().stacksTo(1))
             // --- properties: 在已有 Properties 上追加修改 ---
@@ -92,7 +92,7 @@ public class FullItemExample {
                         collector.node(
                                 DETAIL_BOX, new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
                     })
-            // --- attach: 绑定 CompositeItem 附件 ---
+            // --- attach: 绑定 ComponentItem 附件 ---
             .attach(new InspectAttachment())
             .register();
 }

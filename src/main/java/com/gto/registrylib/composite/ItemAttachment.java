@@ -17,7 +17,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 /**
- * 可附加到 {@link CompositeItem} 上的行为组件。
+ * 可附加到 {@link IComponentItem} 上的行为组件。
  *
  * <p>
  * 泛型 {@code T} 为宿主 Item 的类型，所有回调方法的 item 参数均为 {@code T}， 编写时可直接访问自定义 Item 子类的成员。
@@ -31,7 +31,7 @@ import java.util.Map;
  * <li><b>累加类</b>（tooltip / tick）：空方法体
  * </ul>
  */
-public class CompositeItemAttachment<T extends CompositeItem> {
+public class ItemAttachment<T extends IComponentItem<T>> {
 
     // ── 位掩码标志 ──
 
@@ -43,7 +43,7 @@ public class CompositeItemAttachment<T extends CompositeItem> {
     public static final int INVENTORY_TICK = 1 << 5;
     public static final int COLLECT_TOOLTIP = 1 << 6;
 
-    private static final Class<?> BASE_CLASS = CompositeItemAttachment.class;
+    private static final Class<?> BASE_CLASS = ItemAttachment.class;
 
     private static final Map<String, Integer> METHOD_FLAGS = Map.of(
             "useOn", USE_ON,
@@ -75,7 +75,10 @@ public class CompositeItemAttachment<T extends CompositeItem> {
     /** 由注册系统在 attach 时设置。 */
     public int overrideFlags = 0;
 
-    /** 附件被挂载到 item 时的回调。 */
+    public final <A> A self() {
+        return (A) this;
+    }
+
     public void onAttached(T item) {}
 
     // ── 短路类：首个非 PASS 即返回 ──

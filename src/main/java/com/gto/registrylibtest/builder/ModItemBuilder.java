@@ -25,8 +25,9 @@ public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
                                                                   P parent,
                                                                   String name,
                                                                   BuilderCallback callback,
-                                                                  Function<Item.Properties, T> factory) {
-        var builder = new ModItemBuilder<>(owner, parent, name, callback, factory);
+                                                                  Function<Item.Properties, T> factory,
+                                                                  boolean isComponentItem) {
+        var builder = new ModItemBuilder<>(owner, parent, name, callback, factory, isComponentItem);
         return (ModItemBuilder<T, P>) builder.defaultModel().defaultLang();
     }
 
@@ -35,8 +36,9 @@ public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
                              P parent,
                              String name,
                              BuilderCallback callback,
-                             Function<Item.Properties, T> factory) {
-        super(owner, parent, name, callback, factory);
+                             Function<Item.Properties, T> factory,
+                             boolean isComponentItem) {
+        super(owner, parent, name, callback, factory, isComponentItem);
     }
 
     /**

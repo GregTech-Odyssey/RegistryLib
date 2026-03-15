@@ -5,6 +5,7 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.RegistryLibTagsProvider;
+import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.LazyRegistryEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
@@ -27,6 +28,7 @@ import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 
+@SuppressWarnings("unchecked")
 public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuilder<R, T, P, S>>
                                      implements Builder<R, T, P, S> {
 
@@ -41,7 +43,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @Getter
     private final ResourceKey<? extends Registry<R>> registryKey;
 
-    private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
     private final LazyRegistryEntry<R, T> safeSupplier = new LazyRegistryEntry<>(this);
     private RegistryEntry<R, T> entry;
 
@@ -56,6 +58,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         this.name = name;
         this.callback = callback;
         this.registryKey = registryKey;
+        this.tagsByType = owner.doDatagen() ? new Reference2ReferenceOpenHashMap<>() : null;
     }
 
     protected abstract T createEntry(ResourceKey<R> key);
@@ -64,11 +67,13 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @StandardAPI
     @MustBeInvokedByOverriders
     public RegistryEntry<R, T> register() {
-        tagsByType.forEach(
-                (type, tags) -> setData(
-                        type,
-                        (_, prov) -> tags.forEach(
-                                (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
+        if (tagsByType != null) {
+            tagsByType.forEach(
+                    (type, tags) -> setData(
+                            type,
+                            (_, prov) -> tags.forEach(
+                                    (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
+        }
         return callback.accept(name, registryKey, this, this::createEntry, this::createEntryWrapper);
     }
 
@@ -96,12 +101,11 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return tag(type, false, tags);
     }
 
-    @SuppressWarnings("unchecked")
     @SafeVarargs
     @StandardAPI
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
                                                                                  @NotNull ProviderType<? extends TP> type, boolean isOptional, @NotNull TagKey<R>... tags) {
-        if (owner.doDatagen()) {
+        if (tagsByType != null) {
             var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
             for (TagKey<R> tag : tags) {
                 map.put(tag, isOptional);
@@ -116,15 +120,16 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return TagEntry.element(id);
     }
 
-    @SuppressWarnings("unchecked")
     @SafeVarargs
     @StandardAPI
     public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S removeTag(
                                                                                        @NotNull ProviderType<TP> type, @NotNull TagKey<R>... tags) {
-        var set = tagsByType.get(type);
-        if (set != null) {
-            for (TagKey<R> tag : tags) {
-                set.removeBoolean(tag);
+        if (tagsByType != null) {
+            var set = tagsByType.get(type);
+            if (set != null) {
+                for (TagKey<R> tag : tags) {
+                    set.removeBoolean(tag);
+                }
             }
         }
         return (S) this;
@@ -132,12 +137,18 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     @StandardAPI
     public S lang(@NotNull Function<T, String> langKeyProvider) {
-        return lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, getRegistryKey()));
+        if (owner.doDatagen()) {
+            return lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, getRegistryKey()));
+        }
+        return (S) this;
     }
 
     @StandardAPI
     public S lang(@NotNull Function<T, String> langKeyProvider, @NotNull String name) {
-        return lang(langKeyProvider, (_, _) -> name);
+        if (owner.doDatagen()) {
+            return lang(langKeyProvider, FunctionUtil.constantBiFn(name));
+        }
+        return (S) this;
     }
 
     @StandardAPI
@@ -145,7 +156,10 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                   @Nonnull ProviderType<? extends RegistryLibLangProvider> type,
                   @Nonnull Function<T, String> langKeyProvider,
                   @Nonnull String name) {
-        return setData(type, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
+        if (owner.doDatagen()) {
+            return setData(type, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
+        }
+        return (S) this;
     }
 
     private S lang(

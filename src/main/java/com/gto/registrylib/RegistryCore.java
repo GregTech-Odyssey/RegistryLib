@@ -3,6 +3,7 @@ package com.gto.registrylib;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.*;
+import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.providers.*;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.DebugMarkers;
@@ -441,13 +442,25 @@ public class RegistryCore {
     @StandardAPI("Returns an ItemBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Item> ItemBuilder<T, RegistryCore> item(
                                                               @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
-        return item(this, name, factory);
+        return item(this, name, factory, false);
+    }
+
+    public <T extends ComponentItem> ItemBuilder<T, RegistryCore> componentItem(
+                                                                                @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+        return item(this, name, factory, true);
+    }
+
+    public ItemBuilder<ComponentItem, RegistryCore> componentItem(@Nonnull String name) {
+        return item(this, name, ComponentItem::new, true);
     }
 
     public <T extends Item, P> ItemBuilder<T, P> item(
-                                                      @Nonnull P parent, @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+                                                      @Nonnull P parent,
+                                                      @Nonnull String name,
+                                                      @Nonnull Function<Item.Properties, T> factory,
+                                                      boolean isComponentItem) {
         return entry(
-                callback -> newItemBuilder(parent, name, callback, factory)
+                callback -> newItemBuilder(parent, name, callback, factory, isComponentItem)
                         .transform(
                                 builder -> this.defaultCreativeModeTab == null ? builder : builder.tab(this.defaultCreativeModeTab)));
     }
@@ -456,8 +469,9 @@ public class RegistryCore {
                                                                    @Nonnull P parent,
                                                                    @Nonnull String name,
                                                                    @Nonnull BuilderCallback callback,
-                                                                   @Nonnull Function<Item.Properties, T> factory) {
-        return ItemBuilder.create(this, parent, name, callback, factory);
+                                                                   @Nonnull Function<Item.Properties, T> factory,
+                                                                   boolean isComponentItem) {
+        return ItemBuilder.create(this, parent, name, callback, factory, isComponentItem);
     }
 
     // --- Blocks ---
