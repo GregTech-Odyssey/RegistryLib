@@ -6,6 +6,7 @@ import com.gto.registrylib.builders.BlockEntityBuilder;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
+import com.gto.registrylib.util.FunctionUtil;
 
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -78,26 +79,33 @@ public class Group {
     @StandardAPI("Returns a BlockBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends Block> BlockBuilder<T, Group> block(
                                                           String name, Function<BlockBehaviour.Properties, T> factory) {
-        return registryCore.<T, Group>block(this, name, factory).transform(this::applyBlockDefaults);
+        return registryCore.block(this, name, factory).transform(this::applyBlockDefaults);
+    }
+
+    public <T extends Item> ItemBuilder<T, Group> item(
+                                                       String name, Function<Item.Properties, T> factory) {
+        return registryCore.item(this, name, factory, false).transform(this::applyItemDefaults);
     }
 
     @StandardAPI("Returns an ItemBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends Item> ItemBuilder<T, Group> item(
-                                                       String name, Function<Item.Properties, T> factory) {
-        return registryCore.<T, Group>item(this, name, factory).transform(this::applyItemDefaults);
+                                                       String name, Function<Item.Properties, T> factory, boolean isComponentItem) {
+        return registryCore
+                .item(this, name, factory, isComponentItem)
+                .transform(this::applyItemDefaults);
     }
 
     @StandardAPI("Returns a BlockEntityBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends BlockEntity> BlockEntityBuilder<T, Group> blockEntity(
                                                                             String name, BlockEntityBuilder.BlockEntityFactory<T> factory) {
-        return registryCore.<T, Group>blockEntity(this, name, factory);
+        return registryCore.blockEntity(this, name, factory);
     }
 
     @StandardAPI("Returns a FluidBuilder with group defaults applied. Call .register() to finalise.")
     public FluidBuilder<BaseFlowingFluid.Flowing, Group> fluid(
                                                                String name, Identifier stillTexture, Identifier flowingTexture) {
-        return registryCore.<BaseFlowingFluid.Flowing, Group>fluid(
-                this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new)
+        return registryCore
+                .fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new)
                 .transform(this::applyFluidDefaults);
     }
 
@@ -108,7 +116,7 @@ public class Group {
                                                                      Identifier flowingTexture,
                                                                      FluidBuilder.FluidFactory<T> fluidFactory) {
         return registryCore
-                .<T, Group>fluid(this, name, stillTexture, flowingTexture, fluidFactory)
+                .fluid(this, name, stillTexture, flowingTexture, fluidFactory)
                 .transform(this::applyFluidDefaults);
     }
 
@@ -157,8 +165,8 @@ public class Group {
         private ResourceKey<CreativeModeTab> tab;
         @Nullable
         private String langPrefix;
-        private UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier = UnaryOperator.identity();
-        private UnaryOperator<Item.Properties> itemPropertiesModifier = UnaryOperator.identity();
+        private UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier = FunctionUtil.identityUnaryOp();
+        private UnaryOperator<Item.Properties> itemPropertiesModifier = FunctionUtil.identityUnaryOp();
 
         Builder(RegistryCore registryCore, String name) {
             this.registryCore = registryCore;

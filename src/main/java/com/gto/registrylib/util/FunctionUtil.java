@@ -12,6 +12,8 @@ public class FunctionUtil {
 
     public final Function IDENTITY_FN = Function.identity();
 
+    public final UnaryOperator IDENTITY_UNARY_OP = UnaryOperator.identity();
+
     public final Consumer NO_OP_CONSUMER = _ -> {};
 
     public final BiConsumer NO_OP_BICONSUMER = (_, _) -> {};
@@ -22,6 +24,10 @@ public class FunctionUtil {
 
     public <T, R> Function<T, R> identityFn() {
         return IDENTITY_FN;
+    }
+
+    public <T> UnaryOperator<T> identityUnaryOp() {
+        return IDENTITY_UNARY_OP;
     }
 
     public <T> Consumer<T> noOpConsumer() {

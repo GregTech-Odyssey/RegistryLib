@@ -4,11 +4,9 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.*;
 import com.gto.registrylib.composite.ComponentItem;
+import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.providers.*;
-import com.gto.registrylib.util.CreativeModeTabModifier;
-import com.gto.registrylib.util.DebugMarkers;
-import com.gto.registrylib.util.Lazy;
-import com.gto.registrylib.util.OneTimeEventReceiver;
+import com.gto.registrylib.util.*;
 import com.gto.registrylib.util.entry.*;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
@@ -445,13 +443,13 @@ public class RegistryCore {
         return item(this, name, factory, false);
     }
 
-    public <T extends ComponentItem> ItemBuilder<T, RegistryCore> componentItem(
-                                                                                @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+    public <T extends Item & IComponentItem<T>> ItemBuilder<T, RegistryCore> componentItem(
+                                                                                           @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
         return item(this, name, factory, true);
     }
 
     public ItemBuilder<ComponentItem, RegistryCore> componentItem(@Nonnull String name) {
-        return item(this, name, ComponentItem::new, true);
+        return componentItem(name, ComponentItem::new);
     }
 
     public <T extends Item, P> ItemBuilder<T, P> item(
@@ -566,14 +564,13 @@ public class RegistryCore {
     // --- Creative Tab ---
 
     @StandardAPI
-    public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> defaultCreativeTab(
-                                                                                              String name) {
-        return defaultCreativeTab(name, tab -> {});
+    public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> creativeTab(String name) {
+        return creativeTab(name, FunctionUtil.noOpConsumer());
     }
 
     @StandardAPI
-    public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> defaultCreativeTab(
-                                                                                              String name, Consumer<CreativeModeTab.Builder> config) {
+    public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> creativeTab(
+                                                                                       String name, Consumer<CreativeModeTab.Builder> config) {
         return this.generic(
                 name,
                 Registries.CREATIVE_MODE_TAB,

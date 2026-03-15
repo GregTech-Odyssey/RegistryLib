@@ -58,7 +58,8 @@ public class RegistryLibTest {
 
     // === Creative Tab ===
     static {
-        REGISTRYLIB.defaultCreativeTab("test_tab").register();
+        var tab = REGISTRYLIB.creativeTab("test_tab").register();
+        REGISTRYLIB.defaultCreativeTab(tab.getKey());
     }
 
     // === 触发各示例类静态初始化 ===

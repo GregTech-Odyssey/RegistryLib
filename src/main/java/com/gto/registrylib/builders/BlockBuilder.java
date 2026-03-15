@@ -7,7 +7,6 @@ import com.gto.registrylib.providers.DataGenContext;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.generators.RegistryLibBlockModelGenerator;
-import com.gto.registrylib.providers.generators.RegistryLibRecipeProvider;
 import com.gto.registrylib.providers.loot.RegistryLibBlockLootTables;
 import com.gto.registrylib.providers.loot.RegistryLibLootTableProvider.LootType;
 import com.gto.registrylib.util.FunctionUtil;
@@ -51,7 +50,7 @@ public class BlockBuilder<T extends Block, P>
 
     private final Function<BlockBehaviour.Properties, T> factory;
     private Supplier<BlockBehaviour.Properties> initialProperties;
-    private Function<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = UnaryOperator.identity();
+    private Function<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = FunctionUtil.identityFn();
     @Nullable
     private ResourceKey<CreativeModeTab> defaultItemTab;
 
@@ -80,8 +79,11 @@ public class BlockBuilder<T extends Block, P>
                                                     @Nonnull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> consumer) {
         var builder = getOwner()
                 .<I, BlockBuilder<T, P>>item(
-                        this, getName(), p -> factory.apply(getEntry(), p.useBlockDescriptionPrefix()))
-                .setData(ProviderType.LANG, (ctx, prov) -> {})
+                        this,
+                        getName(),
+                        p -> factory.apply(getEntry(), p.useBlockDescriptionPrefix()),
+                        false)
+                .setData(ProviderType.LANG, FunctionUtil.noOpBiConsumer())
                 .model(
                         () -> (ctx, prov) -> getOwner()
                                 .getDataProvider(ProviderType.BLOCKSTATE)
@@ -177,6 +179,7 @@ public class BlockBuilder<T extends Block, P>
 
     @StandardAPI
     public BlockBuilder<T, P> loot(@NotNull BiConsumer<RegistryLibBlockLootTables, T> cons) {
+        if (!getOwner().doDatagen()) return this;
         return setData(
                 ProviderType.LOOT,
                 (ctx, prov) -> prov.addLootAction(
@@ -186,12 +189,6 @@ public class BlockBuilder<T extends Block, P>
                                 cons.accept(tb, ctx.getEntry());
                             }
                         }));
-    }
-
-    @StandardAPI
-    public BlockBuilder<T, P> recipe(
-                                     @NotNull BiConsumer<DataGenContext<Block, T>, RegistryLibRecipeProvider> cons) {
-        return setData(ProviderType.RECIPE, cons);
     }
 
     @SafeVarargs

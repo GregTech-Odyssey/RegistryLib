@@ -5,6 +5,8 @@ import com.gto.registrylib.builders.BlockBuilder;
 import com.gto.registrylib.builders.BuilderCallback;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.builders.ItemBuilder;
+import com.gto.registrylib.composite.ComponentItem;
+import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylibtest.builder.ModBlockBuilder;
@@ -91,9 +93,29 @@ public class ModRegistryCore extends RegistryCore {
     }
 
     @Override
+    public <T extends Item> ModItemBuilder<T, RegistryCore> item(
+                                                                 @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+        return item(this, name, factory, false);
+    }
+
+    @Override
+    public <T extends Item & IComponentItem<T>> ModItemBuilder<T, RegistryCore> componentItem(
+                                                                                              @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+        return item(this, name, factory, true);
+    }
+
+    @Override
+    public ModItemBuilder<ComponentItem, RegistryCore> componentItem(@Nonnull String name) {
+        return componentItem(name, ComponentItem::new);
+    }
+
+    @Override
     public <T extends Item, P> ModItemBuilder<T, P> item(
-                                                         @Nonnull P parent, @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
-        return (ModItemBuilder<T, P>) super.item(parent, name, factory);
+                                                         @Nonnull P parent,
+                                                         @Nonnull String name,
+                                                         @Nonnull Function<Item.Properties, T> factory,
+                                                         boolean isComponentItem) {
+        return (ModItemBuilder<T, P>) super.item(parent, name, factory, isComponentItem);
     }
 
     @Override
@@ -122,8 +144,9 @@ public class ModRegistryCore extends RegistryCore {
                                                                    @Nonnull P parent,
                                                                    @Nonnull String name,
                                                                    @Nonnull BuilderCallback callback,
-                                                                   @Nonnull Function<Item.Properties, T> factory) {
-        return ModItemBuilder.create(this, parent, name, callback, factory);
+                                                                   @Nonnull Function<Item.Properties, T> factory,
+                                                                   boolean isComponentItem) {
+        return ModItemBuilder.create(this, parent, name, callback, factory, isComponentItem);
     }
 
     @Override

@@ -60,7 +60,7 @@ public class FullItemExample {
             // --- initialProperties: 提供全新的 Properties 作为基础 ---
             .initialProperties(() -> new Item.Properties().stacksTo(1))
             // --- properties: 在已有 Properties 上追加修改 ---
-            .properties(p -> p.fireResistant())
+            .properties(Item.Properties::fireResistant)
             // --- lang: 设置英文显示名称 ---
             .lang("Magic Wand")
             // --- lang (zh_cn): 简体中文显示名称 ---

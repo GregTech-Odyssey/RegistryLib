@@ -33,7 +33,6 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     }
 
     /** 挂载附件。自动检测该 attachment 类覆盖了哪些方法，更新位掩码。 */
-    @SuppressWarnings("unchecked")
     public void attachAttachment(ItemAttachment<ComponentItem> attachment) {
         attachment.overrideFlags = ItemAttachment.detectOverrides(attachment.getClass());
         combinedFlags |= attachment.overrideFlags;

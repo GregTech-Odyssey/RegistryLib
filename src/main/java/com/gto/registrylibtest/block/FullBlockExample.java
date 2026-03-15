@@ -38,11 +38,6 @@ public class FullBlockExample {
                     (tables, b) -> tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))
             // --- tag: 给方块添加原版标签 ---
             .tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
-            // --- recipe: 通过 DataGen 生成配方 ---
-            .recipe(
-                    (ctx, prov) -> {
-                        // 此处可添加 ShapedRecipeBuilder 等配方生成逻辑
-                    })
             // --- item: 自定义 BlockItem 配置，含 Tooltip ---
             .item(
                     item -> item.tooltip(

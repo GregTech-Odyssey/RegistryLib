@@ -7,6 +7,7 @@ import com.gto.registrylib.client.Client;
 import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.util.DistExecutor;
+import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.FluidEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
@@ -37,9 +38,6 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -134,14 +132,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @Nullable
     private ResourceKey<CreativeModeTab> defaultBucketTab;
 
-    private Consumer<FluidType.Properties> typeProperties = unusedProperties -> {};
-    private Consumer<BaseFlowingFluid.Properties> fluidProperties = unusedProperties -> {};
+    private Consumer<FluidType.Properties> typeProperties = FunctionUtil.noOpConsumer();
+    private Consumer<BaseFlowingFluid.Properties> fluidProperties = FunctionUtil.noOpConsumer();
 
     private final boolean registerType;
 
     @Nullable
     private Supplier<? extends BaseFlowingFluid> source;
-    private final List<TagKey<Fluid>> tags = new ArrayList<>();
 
     // --- Constructors ---
 
@@ -322,7 +319,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         }
         final int bucketTintColor = this.tintColor;
         final var builder = getOwner()
-                .<I, FluidBuilder<T, P>>item(this, bucketName, p -> factory.apply(source.get(), p))
+                .<I, FluidBuilder<T, P>>item(
+                        this, bucketName, p -> factory.apply(source.get(), p), false)
                 .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
                 .model(
                         () -> (ctx, prov) -> {
@@ -362,24 +360,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @SafeVarargs
     @StandardAPI
     public final FluidBuilder<T, P> tag(TagKey<Fluid>... tags) {
-        FluidBuilder<T, P> ret = this.tag(ProviderType.FLUID_TAGS, tags);
-        if (this.tags.isEmpty()) {
-            ret.getOwner()
-                    .setDataGenerator(
-                            ret.sourceName,
-                            getRegistryKey(),
-                            ProviderType.FLUID_TAGS,
-                            prov -> this.tags.stream().map(prov::tag).forEach(p -> p.add(getSource())));
-        }
-        this.tags.addAll(Arrays.asList(tags));
-        return ret;
-    }
-
-    @SafeVarargs
-    @StandardAPI
-    public final FluidBuilder<T, P> removeTag(TagKey<Fluid>... tags) {
-        this.tags.removeAll(Arrays.asList(tags));
-        return this.removeTag(ProviderType.FLUID_TAGS, tags);
+        return this.tag(ProviderType.FLUID_TAGS, tags);
     }
 
     // --- Internal helpers ---
@@ -422,10 +403,10 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
             source(BaseFlowingFluid.Source::new);
         }
         if (defaultBlock == Boolean.TRUE) {
-            block($ -> {});
+            block(FunctionUtil.noOpConsumer());
         }
         if (defaultBucket == Boolean.TRUE) {
-            bucket($ -> {});
+            bucket(FunctionUtil.noOpConsumer());
         }
 
         Supplier<? extends BaseFlowingFluid> source = this.source;

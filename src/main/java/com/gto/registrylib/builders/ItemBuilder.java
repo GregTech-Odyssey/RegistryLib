@@ -3,7 +3,6 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
-import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.composite.ItemAttachment;
 import com.gto.registrylib.providers.DataGenContext;
@@ -14,6 +13,7 @@ import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
+import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
@@ -53,7 +53,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     private final Function<Item.Properties, T> factory;
 
     private Supplier<Item.Properties> initialProperties = Item.Properties::new;
-    private Function<Item.Properties, Item.Properties> propertiesCallback = UnaryOperator.identity();
+    private Function<Item.Properties, Item.Properties> propertiesCallback = FunctionUtil.identityFn();
 
     private final Map<ResourceKey<CreativeModeTab>, BiConsumer<Item, CreativeModeTabModifier>> creativeModeTabs = Maps.newLinkedHashMap();
 
@@ -196,9 +196,10 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         return this;
     }
 
-    /** 为此物品添加一个组合附件（仅当 Item 为 {@link ComponentItem} 或其子类时有效）。 */
+    /** 为此物品添加一个组合附件（仅当 Item 为 {@link IComponentItem} 或其子类时有效）。 */
     @StandardAPI
     public ItemBuilder<T, P> attach(@Nonnull ItemAttachment<?> attachment) {
+        if (pendingAttachments == null) throw new IllegalStateException("Item is not a component item");
         pendingAttachments.add(attachment);
         return this;
     }

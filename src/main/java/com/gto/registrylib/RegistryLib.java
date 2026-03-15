@@ -1,11 +1,12 @@
 package com.gto.registrylib;
 
 import com.gto.registrylib.client.Client;
+import com.gto.registrylib.util.DistExecutor;
 
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.loading.FMLEnvironment;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,8 +22,6 @@ public final class RegistryLib {
         modEventBus.addListener(RegistryCore::onRegister);
         modEventBus.addListener(EventPriority.LOWEST, RegistryCore::onRegisterLate);
         modEventBus.addListener(RegistryCore::onBuildCreativeModeTabContents);
-        if (FMLEnvironment.getDist().isClient()) {
-            Client.init(modEventBus);
-        }
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.init(modEventBus));
     }
 }

@@ -16,7 +16,7 @@ import net.minecraft.world.item.Item;
 public class SimpleItemExample {
 
     public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
-            .item(RegistryLibTest.REGISTRYLIB, "copper_coin", Item::new)
+            .item("copper_coin", Item::new)
             .langCn("铜币") // Approach 2: ModItemBuilder.langCn()
             .lang("Copper Coin")
             .register();
