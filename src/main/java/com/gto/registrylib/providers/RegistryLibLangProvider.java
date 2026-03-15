@@ -72,7 +72,16 @@ public class RegistryLibLangProvider extends LanguageProvider implements Registr
 
     @Override
     protected void addTranslations() {
-        owner.genData(ProviderType.LANG, this);
+        owner.genData(getProviderType(), this);
+    }
+
+    /**
+     * Returns the {@link ProviderType} this provider is registered under.
+     * Subclasses must override this to return their own ProviderType so that
+     * {@link #addTranslations()} drives the correct set of registered callbacks.
+     */
+    protected ProviderType<? extends RegistryLibLangProvider> getProviderType() {
+        return ProviderType.LANG;
     }
 
     public static String toEnglishName(String internalName) {

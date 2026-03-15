@@ -1,6 +1,7 @@
 package com.gto.registrylibtest;
 
 import com.gto.registrylib.RegistryCore;
+import com.gto.registrylib.providers.ProviderType;
 import com.gto.registrylib.providers.RegistryLibLangProvider;
 
 import net.minecraft.data.PackOutput;
@@ -16,5 +17,10 @@ public class ZhCnLangProvider extends RegistryLibLangProvider {
 
     public ZhCnLangProvider(RegistryCore owner, PackOutput packOutput) {
         super(owner, packOutput, "zh_cn");
+    }
+
+    @Override
+    protected ProviderType<? extends RegistryLibLangProvider> getProviderType() {
+        return RegistryLibTest.LANG_ZH_CN;
     }
 }

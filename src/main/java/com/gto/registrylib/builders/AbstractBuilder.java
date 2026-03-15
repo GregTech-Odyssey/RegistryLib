@@ -142,12 +142,12 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return (S) this;
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, getRegistryKey()))")
     public S lang(@Nonnull Function<T, String> langKeyProvider) {
         return lang(langKeyProvider, (p, t) -> p.<R>getAutomaticName(t, getRegistryKey()));
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(langKeyProvider, (p, s) -> name)")
     public S lang(@Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
         return lang(langKeyProvider, (p, s) -> name);
     }
@@ -160,7 +160,6 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return setData(type, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
     }
 
-    @StandardAPI
     private S lang(
                    @Nonnull Function<T, String> langKeyProvider,
                    @Nonnull BiFunction<RegistryLibLangProvider, Supplier<? extends T>, String> localizedNameProvider) {
