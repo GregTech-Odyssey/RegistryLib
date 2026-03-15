@@ -73,5 +73,5 @@ This is the most stable order both to read and to implement. First make the Bloc
 ## Related Links
 
 - [Registering Blocks]({{ '/register-blocks/' | relative_url }})
-- [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }})
+- [Maintenance]({{ '/development-and-maintenance/' | relative_url }})
 - [Troubleshooting]({{ '/troubleshooting/' | relative_url }})

@@ -32,5 +32,6 @@ If this is your first time working with the project, start with Getting Started.
 
 ## Repository and Project Information
 
-- [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }}): dependency integration, local development, release workflow, and API conventions.
+- [5-Minute Quickstart]({{ '/quickstart/' | relative_url }}): dependency integration, local development setup, and the first working registration chain.
+- [Maintenance]({{ '/development-and-maintenance/' | relative_url }}): release workflow, API conventions, and long-term compatibility rules.
 - [GitHub Repository](https://github.com/GregTech-Odyssey/RegistryLib)

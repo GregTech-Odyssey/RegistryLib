@@ -20,6 +20,16 @@ This page explains how to turn project-specific syntax sugar or default rules in
 ```java
 public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
 
+    public static <T extends Block, P> ModBlockBuilder<T, P> create(
+            RegistryCore owner,
+            P parent,
+            String name,
+            BuilderCallback callback,
+            Function<BlockBehaviour.Properties, T> factory) {
+        var builder = new ModBlockBuilder<>(owner, parent, name, callback, factory);
+        return (ModBlockBuilder<T, P>) builder.defaultBlockstate().defaultLoot().defaultLang();
+    }
+
     public ModBlockBuilder<T, P> langCn(String name) {
         lang(ModRegistryCore.LANG_ZH_CN, name);
         return this;
@@ -27,7 +37,7 @@ public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
 }
 ```
 
-This shows the most common goal: wrapping an extra locale into Builder syntax sugar that feels native inside the project.
+This is the real pattern used in the test project: the custom Builder adds `langCn(...)`, and its static `create(...)` factory preserves the same default chain that the standard path would have applied.
 
 ## Core Concepts
 
@@ -41,6 +51,17 @@ The public registration entry points of `RegistryCore` eventually pass through t
 
 After you override them, you can replace the default Builders with your own subclasses.
 
+### The Full Flow
+
+In the test project, the extension has four moving parts that work together:
+
+1. Declare a new provider-side capability, here `ModRegistryCore.LANG_ZH_CN` backed by `ZhCnLangProvider`.
+2. Add custom Builder subclasses such as `ModBlockBuilder`, `ModItemBuilder`, and `ModFluidBuilder`.
+3. Override `newBlockBuilder(...)`, `newItemBuilder(...)`, and `newFluidBuilder(...)` in a custom `RegistryCore` subclass so the public entry points actually instantiate those Builders.
+4. Override the public registration methods that can legally return your subtype at compile time.
+
+If you skip step 4, your runtime object may still be a custom Builder, but the compiler can fall back to the base `BlockBuilder`, `ItemBuilder`, or `FluidBuilder` type and your new sugar methods will disappear from the chain.
+
 ### Recommended Implementation Order
 
 1. Implement the language-side or other datagen-side support types first.
@@ -49,7 +70,157 @@ After you override them, you can replace the default Builders with your own subc
 4. Switch the project entry point from `RegistryCore.create(...)` to `ModRegistryCore.create(...)`.
 
 {: .important }
-> The single-argument shorthand entry points usually return the base Builder type. If you want your custom Builder subtype at compile time, you typically need an overload that keeps the explicit `parent` type.
+> Item entry points can be overridden covariantly in the test project, so `item("name", factory)` still exposes `langCn(...)`. For Blocks and Fluids, the safe compile-time path is the overload that keeps an explicit `parent`, such as `block(parent, name, factory)` or `fluid(parent, ...)`.
+
+## Step-by-Step Implementation
+
+### Step 1: Add the Shared Capability
+
+`ModRegistryCore` defines a project-wide `ProviderType` that can be reused by every custom Builder:
+
+```java
+public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
+        ProviderType.registerClientProvider(
+                "lang_zh_cn",
+                () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
+```
+
+This is what makes `langCn(...)` more than a string helper. It points at a real datagen target.
+
+### Step 2: Replace `RegistryCore` with Your Own Subclass
+
+```java
+public class ModRegistryCore extends RegistryCore {
+
+    protected ModRegistryCore(String modid) {
+        super(modid);
+    }
+
+    public static ModRegistryCore create(String modid) {
+        return new ModRegistryCore(modid);
+    }
+}
+```
+
+Your project entry point should now be created through `ModRegistryCore.create(...)`, not `RegistryCore.create(...)`. Otherwise your Builder hooks never run.
+
+### Step 3: Override the Builder Hooks
+
+```java
+@Override
+protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
+        P parent,
+        String name,
+        BuilderCallback callback,
+        Function<BlockBehaviour.Properties, T> factory) {
+    return ModBlockBuilder.create(this, parent, name, callback, factory);
+}
+
+@Override
+protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
+        P parent,
+        String name,
+        BuilderCallback callback,
+        Function<Item.Properties, T> factory,
+        boolean isComponentItem) {
+    return ModItemBuilder.create(this, parent, name, callback, factory, isComponentItem);
+}
+
+@Override
+protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
+        P parent,
+        String name,
+        BuilderCallback callback,
+        FluidBuilder.FluidFactory<T> fluidFactory) {
+    return ModFluidBuilder.create(this, parent, name, callback, fluidFactory);
+}
+```
+
+This is the runtime swap. Every public registration entry point eventually passes through these factory hooks.
+
+### Step 4: Preserve the Default Bootstrap Chain
+
+Your custom static `create(...)` methods should keep the same baseline behavior the project expects:
+
+- `ModBlockBuilder.create(...)` ends with `defaultBlockstate().defaultLoot().defaultLang()`.
+- `ModItemBuilder.create(...)` ends with `defaultModel().defaultLang()`.
+- `ModFluidBuilder.create(...)` ends with `defaultLang().defaultSource().defaultBlock().defaultBucket()`.
+
+If you replace the Builder type but forget these defaults, the syntax sugar compiles, but the generated resources or related registrations no longer match the normal project behavior.
+
+{: .important }
+> The custom Builder factory is part of the contract. If you only add `langCn(...)` and forget the inherited default chain, your project will silently regress in datagen or related object creation.
+
+### Step 5: Expose the Subtype Where Java Allows It
+
+The test project overrides the public methods that can return a more specific Builder type safely:
+
+```java
+@Override
+public <T extends Block, P> ModBlockBuilder<T, P> block(
+        P parent,
+        String name,
+        Function<BlockBehaviour.Properties, T> factory) {
+    return (ModBlockBuilder<T, P>) super.block(parent, name, factory);
+}
+
+@Override
+public <T extends Item> ModItemBuilder<T, RegistryCore> item(
+        String name,
+        Function<Item.Properties, T> factory) {
+    return item(this, name, factory, false);
+}
+
+@Override
+public <T extends BaseFlowingFluid, P> ModFluidBuilder<T, P> fluid(
+        P parent,
+        String name,
+        Identifier stillTexture,
+        Identifier flowingTexture,
+        FluidBuilder.FluidFactory<T> fluidFactory) {
+    return (ModFluidBuilder<T, P>) super.fluid(parent, name, stillTexture, flowingTexture, fluidFactory);
+}
+```
+
+The important nuance is the one noted in `ModRegistryCore`: Java generic invariance prevents some shorthand forms from being overridden with the exact project-specific subtype you would like. That is why the explicit-`parent` overloads matter for Blocks and Fluids.
+
+### Step 6: Use the Right Entry Point in Real Code
+
+Item chains in the test project can use the short form directly:
+
+```java
+public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
+        .item("copper_coin", Item::new)
+        .langCn("Copper Coin (zh_cn)")
+        .lang("Copper Coin")
+        .register();
+```
+
+For Blocks and Fluids, use the explicit-`parent` overload when you want the custom Builder API to remain visible:
+
+```java
+public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
+        .block(RegistryLibTest.REGISTRYLIB, "decorative_stone", Block::new)
+        .langCn("Decorative Stone (zh_cn)")
+        .initialProperties(() -> Blocks.STONE)
+        .lang("Decorative Stone")
+        .simpleItem()
+        .register();
+```
+
+```java
+public static final FluidEntry<BaseFlowingFluid.Flowing> ACID = RegistryLibTest.REGISTRYLIB
+        .fluid(RegistryLibTest.REGISTRYLIB, "acid", STILL, FLOW, BaseFlowingFluid.Flowing::new)
+        .langCn("Acid (zh_cn)")
+        .lang("Acid")
+        .register();
+```
+
+### Step 7: Call Custom Sugar Before You Fall Back to the Base Type
+
+In the block and fluid examples above, `langCn(...)` appears before methods such as `initialProperties(...)`. That ordering is intentional.
+
+Once a chain step returns the base Builder type, the compiler no longer sees your project-specific methods unless you explicitly override those fluent methods too. In practice, this means custom sugar should usually be placed early in the chain.
 
 ## Common Combinations
 
@@ -61,6 +232,8 @@ After you override them, you can replace the default Builders with your own subc
 
 - Custom Builders are not meant to replace Group. Group is good at shared defaults, while custom Builders are good at new syntax sugar and custom compile-time return types.
 - When creating a custom `create()` factory, verify that you did not drop important default behavior from the base Builder path.
+- Verify the compile-time type, not only the runtime type. If your IDE no longer offers `langCn(...)`, you probably entered through a shorthand overload that returned the base Builder type.
+- For Blocks and Fluids, keep the explicit `parent` overload in mind as part of the API design, not as an incidental workaround.
 - This kind of extension raises the abstraction level inside the project, so it is only worth doing when the rule is stable and heavily repeated.
 
 ## Related Links

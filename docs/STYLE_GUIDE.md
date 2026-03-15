@@ -18,7 +18,7 @@ The documentation serves four jobs at the same time: fastest onboarding, impleme
 - Core Systems: explanations organized by cross-cutting system.
 - API Reference: method families, responsibility boundaries, and quick lookup without full teaching.
 - Advanced Topics: extension points and implementation strategy.
-- Development and Maintenance: dependency, development, release, and contribution boundaries.
+- Maintenance: release, compatibility, and contribution boundaries after setup is already complete.
 
 ## Page Templates
 

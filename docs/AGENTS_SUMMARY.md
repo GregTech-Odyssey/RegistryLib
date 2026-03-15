@@ -32,7 +32,7 @@ All three agents agreed on the following:
 
 ## Round 2: Converged Decisions
 
-- Use parent pages to aggregate content and compress the top-level navigation into Homepage, Getting Started, Content Guides, Core Systems, API Reference, Advanced Topics, and Development and Maintenance.
+- Use parent pages to aggregate content and compress the top-level navigation into Homepage, Getting Started, Content Guides, Core Systems, API Reference, Advanced Topics, and Maintenance, while keeping dependency setup inside Quickstart.
 - Keep Common API Lookup on tutorial pages, but limit it strictly to 3 to 5 methods so it does not duplicate API Reference.
 - Keep the special-optimizations filename, but rewrite it as a RegistryLib-specific optimization strategy page.
 - Keep AGENTS_SUMMARY and STYLE_GUIDE under docs/, but keep them out of the main navigation.
@@ -61,7 +61,7 @@ API Reference
 Advanced Topics
   override-builders
   special-optimizations
-Development and Maintenance
+Maintenance
 ```
 
 ## Round 3: Sign-Off

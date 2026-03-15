@@ -69,4 +69,4 @@ If an internal structure is meant to be consumed only once during one event phas
 
 - [Advanced Topics]({{ '/advanced-topics/' | relative_url }})
 - [Override Builders]({{ '/override-builders/' | relative_url }})
-- [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }})
+- [Maintenance]({{ '/development-and-maintenance/' | relative_url }})

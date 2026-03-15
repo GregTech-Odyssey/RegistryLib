@@ -39,4 +39,4 @@ If you are using the `ProviderType` approach, confirm that the provider returns 
 ## Still Not Finding the Answer?
 
 - Go back to the relevant tutorial page and confirm that the minimal chain works first.
-- Then review [FAQ]({{ '/faq/' | relative_url }}) and [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }}).
+- Then review [FAQ]({{ '/faq/' | relative_url }}), [5-Minute Quickstart]({{ '/quickstart/' | relative_url }}), and [Maintenance]({{ '/development-and-maintenance/' | relative_url }}).

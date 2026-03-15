@@ -39,4 +39,4 @@ RegistryLib is good at organizing the entry point, naming, and output location. 
 ## When to Continue Elsewhere
 
 - If you care about language generation and multi-locale output, continue with [Lang System]({{ '/lang-system/' | relative_url }}).
-- If you care about project organization and datagen entry points, continue with [Development and Maintenance]({{ '/development-and-maintenance/' | relative_url }}).
+- If you care about repository conventions, release hygiene, and broader upkeep rules, continue with [Maintenance]({{ '/development-and-maintenance/' | relative_url }}).
