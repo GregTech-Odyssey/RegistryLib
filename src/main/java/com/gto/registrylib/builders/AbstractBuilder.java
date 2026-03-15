@@ -151,6 +151,15 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     public S lang(@Nonnull Function<T, String> langKeyProvider, @Nonnull String name) {
         return lang(langKeyProvider, (p, s) -> name);
     }
+
+    @StandardAPI
+    public S lang(
+                  @Nonnull ProviderType<? extends RegistryLibLangProvider> type,
+                  @Nonnull Function<T, String> langKeyProvider,
+                  @Nonnull String name) {
+        return setData(type, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
+    }
+
     @StandardAPI
     private S lang(
                    @Nonnull Function<T, String> langKeyProvider,

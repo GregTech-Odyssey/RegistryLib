@@ -5,6 +5,7 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.providers.DataGenContext;
 import com.gto.registrylib.providers.ProviderType;
+import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.generators.RegistryLibBlockModelGenerator;
 import com.gto.registrylib.providers.generators.RegistryLibRecipeProvider;
 import com.gto.registrylib.providers.loot.RegistryLibBlockLootTables;
@@ -167,6 +168,12 @@ public class BlockBuilder<T extends Block, P>
     @SyntaxSugar("lang(Block::getDescriptionId, name)")
     public BlockBuilder<T, P> lang(@Nonnull String name) {
         return lang(Block::getDescriptionId, name);
+    }
+
+    @SyntaxSugar("lang(type, Block::getDescriptionId, name)")
+    public BlockBuilder<T, P> lang(
+            @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+        return lang(type, Block::getDescriptionId, name);
     }
 
     @StandardAPI

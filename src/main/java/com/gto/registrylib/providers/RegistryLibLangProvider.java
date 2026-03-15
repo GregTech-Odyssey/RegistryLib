@@ -41,12 +41,23 @@ public class RegistryLibLangProvider extends LanguageProvider implements Registr
     }
 
     private final RegistryCore owner;
+    @Nullable
     private final AccessibleLanguageProvider upsideDown;
 
     public RegistryLibLangProvider(RegistryCore owner, PackOutput packOutput) {
         super(packOutput, owner.getModid(), "en_us");
         this.owner = owner;
         this.upsideDown = new AccessibleLanguageProvider(packOutput, owner.getModid(), "en_ud");
+    }
+
+    /**
+     * Constructor for custom-locale lang providers.
+     * The upside-down companion is not generated for non-English locales.
+     */
+    protected RegistryLibLangProvider(RegistryCore owner, PackOutput packOutput, String locale) {
+        super(packOutput, owner.getModid(), locale);
+        this.owner = owner;
+        this.upsideDown = null;
     }
 
     @Override
@@ -56,7 +67,7 @@ public class RegistryLibLangProvider extends LanguageProvider implements Registr
 
     @Override
     public String getName() {
-        return "Lang (en_us/en_ud)";
+        return upsideDown != null ? "Lang (en_us/en_ud)" : "Lang (" + super.getName().replaceFirst(".*\\.", "") + ")";
     }
 
     @Override
@@ -91,12 +102,17 @@ public class RegistryLibLangProvider extends LanguageProvider implements Registr
     @Override
     public void add(String key, String value) {
         super.add(key, value);
-        upsideDown.add(key, toUpsideDown(value));
+        if (upsideDown != null) {
+            upsideDown.add(key, toUpsideDown(value));
+        }
     }
 
     @Override
     public CompletableFuture<?> run(CachedOutput cache) {
-        return CompletableFuture.allOf(super.run(cache), upsideDown.run(cache));
+        if (upsideDown != null) {
+            return CompletableFuture.allOf(super.run(cache), upsideDown.run(cache));
+        }
+        return super.run(cache);
     }
 
     private static final String NORMAL_CHARS = "abcdefghijklmnopqrstuvwxyz" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "0123456789" + "_,;.?!/\\'";

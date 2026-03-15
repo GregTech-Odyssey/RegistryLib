@@ -13,6 +13,7 @@ public class SimpleBlockExample {
             .block("decorative_stone", Block::new)
             .initialProperties(() -> Blocks.STONE)
             .lang("Decorative Stone")
+            .lang(RegistryLibTest.LANG_ZH_CN, "装饰石")
             .simpleItem()
             .register();
 }

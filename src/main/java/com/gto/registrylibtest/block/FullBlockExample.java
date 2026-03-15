@@ -30,6 +30,8 @@ public class FullBlockExample {
             .properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops())
             // --- lang: 设置英文显示名称 ---
             .lang("Magic Ore")
+            // --- lang (zh_cn): 设置简体中文显示名称 ---
+            .lang(RegistryLibTest.LANG_ZH_CN, "魔法矿石")
             // --- loot: 自定义战利品表（矿石掉落逻辑） ---
             .loot((tables, b) ->
                     tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))
@@ -55,6 +57,7 @@ public class FullBlockExample {
             .block("standalone_timer", p -> new TimerBlock(p, 4))
             .initialProperties(() -> Blocks.IRON_BLOCK)
             .lang("Standalone Timer")
+            .lang(RegistryLibTest.LANG_ZH_CN, "独立计时器")
             .defaultLoot()
             .defaultBlockstate()
             .simpleItem()

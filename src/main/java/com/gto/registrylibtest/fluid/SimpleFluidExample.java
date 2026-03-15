@@ -18,6 +18,7 @@ public class SimpleFluidExample {
             RegistryLibTest.REGISTRYLIB
                     .fluid("acid", FLUID_STILL, FLUID_FLOW)
                     .lang("Acid")
+                    .lang(RegistryLibTest.LANG_ZH_CN, "酸液")
                     .clientExtension(FLUID_STILL, FLUID_FLOW)
                     .register();
 }

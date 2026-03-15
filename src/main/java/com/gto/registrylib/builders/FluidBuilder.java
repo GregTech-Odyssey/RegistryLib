@@ -195,13 +195,20 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @SyntaxSugar("lang(f -> f.getFluidType().getDescriptionId(), RegistryLibLangProvider.toEnglishName(sourceName))")
     public FluidBuilder<T, P> defaultLang() {
         return lang(
+                ProviderType.LANG,
                 f -> f.getFluidType().getDescriptionId(),
                 RegistryLibLangProvider.toEnglishName(sourceName));
     }
 
     @SyntaxSugar("lang(f -> f.getFluidType().getDescriptionId(), name)")
     public FluidBuilder<T, P> lang(@Nonnull String name) {
-        return lang(f -> f.getFluidType().getDescriptionId(), name);
+        return lang(ProviderType.LANG, f -> f.getFluidType().getDescriptionId(), name);
+    }
+
+    @SyntaxSugar("lang(type, f -> f.getFluidType().getDescriptionId(), name)")
+    public FluidBuilder<T, P> lang(
+            @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+        return lang(type, f -> f.getFluidType().getDescriptionId(), name);
     }
 
     // --- Source ---

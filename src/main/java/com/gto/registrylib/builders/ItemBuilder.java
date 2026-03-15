@@ -7,6 +7,7 @@ import com.gto.registrylib.composite.CompositeItem;
 import com.gto.registrylib.composite.CompositeItemAttachment;
 import com.gto.registrylib.providers.DataGenContext;
 import com.gto.registrylib.providers.ProviderType;
+import com.gto.registrylib.providers.RegistryLibLangProvider;
 import com.gto.registrylib.providers.generators.RegistryLibItemModelGenerator;
 import com.gto.registrylib.providers.generators.RegistryLibRecipeProvider;
 import com.gto.registrylib.tooltip.SubNode;
@@ -168,6 +169,12 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")
     public ItemBuilder<T, P> lang(@Nonnull String name) {
         return lang(Item::getDescriptionId, name);
+    }
+
+    @SyntaxSugar("lang(type, Item::getDescriptionId, name)")
+    public ItemBuilder<T, P> lang(
+            @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+        return lang(type, Item::getDescriptionId, name);
     }
 
     @StandardAPI

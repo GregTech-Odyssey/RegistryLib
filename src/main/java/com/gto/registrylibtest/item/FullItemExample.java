@@ -63,6 +63,8 @@ public class FullItemExample {
             .properties(p -> p.fireResistant())
             // --- lang: 设置英文显示名称 ---
             .lang("Magic Wand")
+            // --- lang (zh_cn): 简体中文显示名称 ---
+            .lang(RegistryLibTest.LANG_ZH_CN, "魔法杆")
             // --- defaultModel: 使用默认扁平物品模型 ---
             .defaultModel()
             // --- tab: 额外加入原版工具标签页 ---

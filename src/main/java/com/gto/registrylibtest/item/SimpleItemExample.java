@@ -11,5 +11,6 @@ public class SimpleItemExample {
     public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
             .item("copper_coin", Item::new)
             .lang("Copper Coin")
+            .lang(RegistryLibTest.LANG_ZH_CN, "铜币")
             .register();
 }

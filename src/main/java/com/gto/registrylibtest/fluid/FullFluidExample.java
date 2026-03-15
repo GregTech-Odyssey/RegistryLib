@@ -33,6 +33,8 @@ public class FullFluidExample {
                     .properties(p -> p.density(3000).viscosity(6000).temperature(1800))
                     // --- lang: 自定义流体显示名称 ---
                     .lang("Molten Iron")
+                    // --- lang (zh_cn): 简体中文显示名称 ---
+                    .lang(RegistryLibTest.LANG_ZH_CN, "熔融铁")
                     // --- clientExtension（3 参数）: 灰度纹理 + ARGB 颜色着色 ---
                     .clientExtension(FLUID_STILL, FLUID_FLOW, 0xFFFF4400)
                     // --- tag: 给流体添加标签 ---
@@ -44,6 +46,7 @@ public class FullFluidExample {
                     // --- bucket: 自定义桶物品显示名 ---
                     .bucket(bucket -> bucket
                         .lang("Molten Iron Bucket")
+                        .lang(RegistryLibTest.LANG_ZH_CN, "熔融铁桶")
                     )
                     .register();
 
@@ -62,6 +65,8 @@ public class FullFluidExample {
                     .properties(p -> p.lightLevel(15).density(500).viscosity(200))
                     // --- lang ---
                     .lang("Liquid Magic")
+                    // --- lang (zh_cn): 简体中文显示名称 ---
+                    .lang(RegistryLibTest.LANG_ZH_CN, "魔法液体")
                     // --- block: 方块子对象配置 ---
                     .block(block -> block
                         .properties(p -> p.lightLevel(s -> 15))
@@ -69,6 +74,7 @@ public class FullFluidExample {
                     // --- bucket: 桶物品子对象配置 ---
                     .bucket(bucket -> bucket
                         .lang("Liquid Magic Bucket")
+                        .lang(RegistryLibTest.LANG_ZH_CN, "魔法液体桶")
                     )
                     .register();
 }
