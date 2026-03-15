@@ -10,13 +10,14 @@ import com.gto.registrylib.util.*;
 import com.gto.registrylib.util.entry.*;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
-import com.gto.registrylib.util.map.NestedMultiMap;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.mojang.serialization.Codec;
 
+import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
+import net.minecraft.core.WritableRegistry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -61,8 +62,7 @@ public class RegistryCore {
     private static final ConcurrentHashMap<String, RegistryCore> REGISTRY_CORES = new ConcurrentHashMap<>();
     private static final Logger log = RegistryLib.LOGGER;
 
-    private final NestedMap<ResourceKey<? extends Registry<?>>, String, Registration<?, ?>> registrations = NestedMap.createIdentity(HashMap::new);
-    private final NestedMultiMap<ResourceKey<? extends Registry<?>>, String, Consumer<?>> registerCallbacks = NestedMultiMap.createIdentity(HashMap::new, ArrayList::new);
+    private final NestedMap<ResourceKey<? extends Registry<?>>, String, Registration<?, ?>> registrations = NestedMap.createIdentity(LinkedHashMap::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Runnable> afterRegisterCallbacks = MultiMap.createIdentity(ArrayList::new);
     private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = new ReferenceOpenHashSet<>();
 
@@ -154,17 +154,6 @@ public class RegistryCore {
     }
 
     // === Callback Management ===
-
-    public <R, T extends R> RegistryCore addRegisterCallback(
-                                                             String name, ResourceKey<? extends Registry<R>> registryType, Consumer<? super T> callback) {
-        Registration<R, T> reg = this.getRegistrationUnchecked(name, registryType);
-        if (reg == null) {
-            registerCallbacks.put(registryType, name, callback);
-        } else {
-            reg.addRegisterCallback(callback);
-        }
-        return this;
-    }
 
     public <R> RegistryCore addRegisterCallback(
                                                 ResourceKey<? extends Registry<R>> registryType, Runnable callback) {
@@ -359,14 +348,9 @@ public class RegistryCore {
                                                           Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
         Registration<R, T> reg = new Registration<>(
                 type, Identifier.fromNamespaceAndPath(modid, name), factory, entryFactory);
-        registerCallbacks
-                .remove(type, name)
-                .forEach(
-                        callback -> {
-                            @SuppressWarnings({ "unchecked", "null" })
-                            Consumer<? super T> unsafeCallback = (Consumer<? super T>) callback;
-                            reg.addRegisterCallback(unsafeCallback);
-                        });
+        var callbacks = builder.getCallbacks();
+        reg.callbacks.addAll(callbacks);
+        callbacks.clear();
         registrations.put(type, name, reg);
         return reg.entry;
     }
@@ -593,50 +577,27 @@ public class RegistryCore {
     }
 
     static void onRegister(RegisterEvent event) {
-        var type = event.getRegistryKey();
+        var type = event.getRegistry();
+        var key = type.key();
         REGISTRY_CORES
                 .values()
                 .forEach(
-                        core -> {
-                            if (!core.registerCallbacks.isEmpty()) {
-                                core.registerCallbacks
-                                        .getMap()
-                                        .forEach(
-                                                (k, v) -> log.warn(
-                                                        "Found {} unused register callback(s) for entry {} [{}]. Was the entry ever registered?",
-                                                        v.size(),
-                                                        k,
-                                                        k.identifier()));
-                                core.registerCallbacks.clear();
-                                if (isDevEnvironment()) {
-                                    throw new IllegalStateException("Found unused register callbacks, see logs");
-                                }
-                            }
-                            var registrationsForType = core.registrations.get(type);
-                            if (!registrationsForType.isEmpty()) {
-                                log.trace(
-                                        DebugMarkers.REGISTER,
-                                        "({}) Registering {} known objects of type {}",
-                                        core.getModid(),
-                                        registrationsForType.size(),
-                                        type.identifier());
-                                registrationsForType
-                                        .values()
-                                        .forEach(
-                                                r -> {
-                                                    try {
-                                                        r.register((ResourceKey) type, event);
-                                                    } catch (Exception ex) {
-                                                        String err = "Unexpected error while registering entry " + r.key.identifier() + " to registry " + event.getRegistryKey().identifier();
-                                                        if (core.skipErrors) {
-                                                            log.error(DebugMarkers.REGISTER, err);
-                                                        } else {
-                                                            throw new RuntimeException(err, ex);
-                                                        }
-                                                    }
-                                                });
-                            }
-                        });
+                        core -> core.registrations
+                                .get(key)
+                                .values()
+                                .forEach(
+                                        r -> {
+                                            try {
+                                                r.register((Registry) type);
+                                            } catch (Exception ex) {
+                                                String err = "Unexpected error while registering entry " + r.key.identifier() + " to registry " + key.identifier();
+                                                if (core.skipErrors) {
+                                                    log.error(DebugMarkers.REGISTER, err);
+                                                } else {
+                                                    throw new RuntimeException(err, ex);
+                                                }
+                                            }
+                                        }));
     }
 
     static void onRegisterLate(RegisterEvent event) {
@@ -684,17 +645,14 @@ public class RegistryCore {
             this.entry = entryFactory.apply(this.key);
         }
 
-        private void register(ResourceKey<? extends Registry<R>> type, RegisterEvent event) {
-            T entry = creator.apply(key);
-            this.entry.set(entry);
-            event.register(type, rh -> rh.register(key.identifier(), entry));
-            callbacks.forEach(c -> c.accept(entry));
+        @SuppressWarnings("all")
+        private void register(Registry<R> registry) {
+            T value = creator.apply(key);
+            this.entry.set(value);
+            ((WritableRegistry) registry).register(key, value, RegistrationInfo.BUILT_IN);
+            callbacks.forEach(c -> c.accept(value));
             creator = null;
             callbacks = null;
-        }
-
-        private void addRegisterCallback(Consumer<? super T> callback) {
-            callbacks.add(callback);
         }
     }
 }

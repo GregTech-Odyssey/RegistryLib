@@ -22,7 +22,10 @@ import lombok.Getter;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -42,6 +45,9 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     private final BuilderCallback callback;
     @Getter
     private final ResourceKey<? extends Registry<R>> registryKey;
+
+    @Getter
+    private final List<Consumer<? super T>> callbacks = new ArrayList<>();
 
     private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
     private final LazyRegistryEntry<R, T> safeSupplier = new LazyRegistryEntry<>(this);

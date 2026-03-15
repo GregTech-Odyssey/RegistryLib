@@ -14,6 +14,7 @@ import net.neoforged.neoforge.registries.datamaps.DataMapType;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.function.*;
 
 public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>> {
@@ -34,6 +35,8 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>> {
 
     @NotNull
     ResourceKey<? extends Registry<R>> getRegistryKey();
+
+    List<Consumer<? super T>> getCallbacks();
 
     @NotNull
     RegistryEntry<R, T> get();
@@ -108,7 +111,7 @@ public interface Builder<R, T extends R, P, S extends Builder<R, T, P, S>> {
     @SuppressWarnings("unchecked")
     @StandardAPI
     default S onRegister(@NotNull Consumer<? super T> callback) {
-        getOwner().<R, T>addRegisterCallback(getName(), getRegistryKey(), callback);
+        getCallbacks().add(callback);
         return (S) this;
     }
 
