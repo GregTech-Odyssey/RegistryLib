@@ -44,8 +44,8 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     private final Set<Supplier<? extends Block>> validBlocks = new ReferenceOpenHashSet<>();
 
     protected BlockEntityBuilder(
-                                 RegistryCore owner, P parent, String name, BlockEntityFactory<BE> factory) {
-        super(owner, parent, name, Registries.BLOCK_ENTITY_TYPE);
+                                 RegistryCore core, P parent, String name, BlockEntityFactory<BE> factory) {
+        super(core, parent, name, Registries.BLOCK_ENTITY_TYPE);
         this.factory = factory;
     }
 

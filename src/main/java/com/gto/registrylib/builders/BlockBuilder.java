@@ -51,8 +51,8 @@ public class BlockBuilder<T extends Block, P>
     private ResourceKey<CreativeModeTab> defaultItemTab;
 
     protected BlockBuilder(
-                           RegistryCore owner, P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
-        super(owner, parent, name, Registries.BLOCK);
+                           RegistryCore core, P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
+        super(core, parent, name, Registries.BLOCK);
         this.factory = factory;
     }
 

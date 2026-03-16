@@ -57,47 +57,14 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     private final ArrayList<ItemAttachment<?>> pendingAttachments;
 
     protected ItemBuilder(
-                          RegistryCore owner,
+                          RegistryCore core,
                           P parent,
                           String name,
                           Function<Item.Properties, T> factory,
                           boolean isComponentItem) {
-        super(owner, parent, name, Registries.ITEM);
+        super(core, parent, name, Registries.ITEM);
         this.factory = factory;
         pendingAttachments = isComponentItem ? new ArrayList<>() : null;
-        onRegister(
-                item -> {
-                    creativeModeTabs.forEach(owner::modifyCreativeModeTab);
-                    creativeModeTabs.clear();
-
-                    // 注册 tooltip 配置
-                    for (var config : tooltipConfigs) {
-                        TooltipRegistry.register(item, config);
-                    }
-                    tooltipConfigs.clear();
-
-                    // 挂载组合附件
-                    if (isComponentItem) {
-                        if (!(item instanceof IComponentItem<?> componentItem))
-                            throw new RuntimeException("Item is not a component item");
-                        for (var attachment : pendingAttachments) {
-                            componentItem.attachAttachment(attachment.self());
-                        }
-                        // 自动注册附件的 tooltip 收集
-                        if (componentItem.getAttachments().stream()
-                                .anyMatch(att -> (att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) != 0)) {
-                            TooltipRegistry.register(
-                                    item,
-                                    (collector, stack) -> {
-                                        for (var att : componentItem.getAttachments()) {
-                                            if ((att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) == 0) continue;
-                                            att.collectTooltipNodes(componentItem.self(), stack, collector);
-                                        }
-                                    });
-                        }
-                        pendingAttachments.clear();
-                    }
-                });
     }
 
     @StandardAPI
@@ -214,7 +181,35 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
             properties = initialProperties.get();
         }
         properties = propertiesCallback.apply(properties);
-        return factory.apply(properties.setId(key));
+        var item = factory.apply(properties.setId(key));
+        // 注册 tooltip 配置
+        for (var config : tooltipConfigs) {
+            TooltipRegistry.register(item, config);
+        }
+        tooltipConfigs.clear();
+
+        // 挂载组合附件
+        if (pendingAttachments != null) {
+            if (!(item instanceof IComponentItem<?> componentItem))
+                throw new RuntimeException("Item is not a component item");
+            for (var attachment : pendingAttachments) {
+                componentItem.attachAttachment(attachment.self());
+            }
+            // 自动注册附件的 tooltip 收集
+            if (componentItem.getAttachments().stream()
+                    .anyMatch(att -> (att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) != 0)) {
+                TooltipRegistry.register(
+                        item,
+                        (collector, stack) -> {
+                            for (var att : componentItem.getAttachments()) {
+                                if ((att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) == 0) continue;
+                                att.collectTooltipNodes(componentItem.self(), stack, collector);
+                            }
+                        });
+            }
+            pendingAttachments.clear();
+        }
+        return item;
     }
 
     @Override
@@ -228,17 +223,22 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         var entry = (ItemEntry<T>) super.register();
         if (creativeModeTabs.isEmpty()) {
             var tab = core.getDefaultCreativeModeTab();
-            if (tab != null) creativeModeTabs.put(tab, m -> m.acceptEntry(entry));
+            if (tab != null) core.modifyCreativeModeTab(tab, m -> m.acceptEntry(entry));
         } else {
             var visibility = CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS;
             for (var it = creativeModeTabs.reference2ReferenceEntrySet().fastIterator(); it.hasNext();) {
                 var e = it.next();
-                if (e.getValue() == CreativeModeTabModifier.DEFAULT) {
+                var key = e.getKey();
+                var value = e.getValue();
+                if (value == CreativeModeTabModifier.DEFAULT) {
                     var finalVisibility = visibility;
-                    e.setValue(m -> m.acceptEntry(entry, finalVisibility));
+                    core.modifyCreativeModeTab(key, m -> m.acceptEntry(entry, finalVisibility));
                     visibility = CreativeModeTab.TabVisibility.PARENT_TAB_ONLY;
+                } else {
+                    core.modifyCreativeModeTab(key, value);
                 }
             }
+            creativeModeTabs.clear();
         }
         return entry;
     }

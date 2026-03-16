@@ -22,7 +22,6 @@ import org.jspecify.annotations.NonNull;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public class RegistryLibBlockLootTables extends BlockLootSubProvider
                                         implements RegistryLibLootTables {
@@ -53,7 +52,7 @@ public class RegistryLibBlockLootTables extends BlockLootSubProvider
 
     @Override
     protected @NonNull Iterable<Block> getKnownBlocks() {
-        return parent.getAll(Registries.BLOCK).stream().map(Supplier::get).collect(Collectors.toList());
+        return parent.getAll(Registries.BLOCK).stream().map(Supplier::get).toList();
     }
 
     public HolderLookup.Provider getRegistries() {

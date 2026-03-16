@@ -141,12 +141,12 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     // --- Constructors ---
 
     public FluidBuilder(
-                        RegistryCore owner,
+                        RegistryCore core,
                         P parent,
                         String name,
                         FluidTypeFactory typeFactory,
                         FluidFactory<T> fluidFactory) {
-        super(owner, parent, "flowing_" + name, Registries.FLUID);
+        super(core, parent, "flowing_" + name, Registries.FLUID);
         this.sourceName = name;
         this.bucketName = name + "_bucket";
         this.fluidFactory = fluidFactory;
@@ -155,12 +155,12 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     }
 
     public FluidBuilder(
-                        RegistryCore owner,
+                        RegistryCore core,
                         P parent,
                         String name,
                         Supplier<FluidType> fluidType,
                         FluidFactory<T> fluidFactory) {
-        super(owner, parent, "flowing_" + name, Registries.FLUID);
+        super(core, parent, "flowing_" + name, Registries.FLUID);
         this.sourceName = name;
         this.bucketName = name + "_bucket";
         this.fluidFactory = fluidFactory;
