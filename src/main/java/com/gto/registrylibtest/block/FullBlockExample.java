@@ -7,6 +7,7 @@ import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
+import com.gto.registrylibtest.blockentity.SimpleBlockEntityExample;
 import com.gto.registrylibtest.item.SimpleItemExample;
 
 import net.minecraft.network.chat.Component;
@@ -56,7 +57,9 @@ public class FullBlockExample {
     // ── 使用自定义方块子类 ──────────────────────────────────────────────────
 
     public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB
-            .block("standalone_timer", p -> new TimerBlock(p, 4))
+            .block(
+                    "standalone_timer",
+                    p -> new TimerBlock(p, 4, SimpleBlockEntityExample.SIMPLE_TIMER_BE))
             .initialProperties(Blocks.IRON_BLOCK)
             .lang("Standalone Timer")
             .lang(ModRegistryCore.LANG_ZH_CN, "独立计时器")
@@ -66,6 +69,7 @@ public class FullBlockExample {
                     () -> ImageUtil.generateIcon(
                             ColorUtil.generateRandomMutedColor(), ImageUtil.CIRCLE, Color.CYAN))
             .simpleItem()
+            .tag(BlockTags.MINEABLE_WITH_PICKAXE)
             .register();
 
     // ── Group 系统：批量共享配置 ────────────────────────────────────────────
@@ -73,6 +77,7 @@ public class FullBlockExample {
     public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
             .group("timers")
             .langPrefix("Timer")
+            .blockTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .blockProperties(p -> p.strength(5.0F, 6.0F))
             .build();
 

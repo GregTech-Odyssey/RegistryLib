@@ -22,18 +22,12 @@ import net.minecraft.world.level.storage.ValueOutput;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import static com.gto.registrylibtest.blockentity.FullBlockEntityExample.TIMER_BLOCK_ENTITY;
-
 public class TimerBlockEntity extends BlockEntity {
 
     private int count = 0;
 
     public TimerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
-    }
-
-    public TimerBlockEntity(BlockPos pos, BlockState state) {
-        this(TIMER_BLOCK_ENTITY.get(), pos, state);
     }
 
     public int getTier() {

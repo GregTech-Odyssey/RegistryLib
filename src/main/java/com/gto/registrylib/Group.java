@@ -10,13 +10,20 @@ import com.gto.registrylib.util.FunctionUtil;
 
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
@@ -60,12 +67,19 @@ public class Group {
     protected final UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier;
     protected final UnaryOperator<Item.Properties> itemPropertiesModifier;
 
+    protected TagKey<Item>[] itemTags;
+    protected TagKey<Block>[] blockTags;
+    protected TagKey<Fluid>[] fluidTags;
+
     protected Group(Builder builder) {
         this.core = builder.core;
         this.tab = builder.tab;
         this.langPrefix = builder.langPrefix;
-        this.blockPropertiesModifier = builder.blockPropertiesModifier;
-        this.itemPropertiesModifier = builder.itemPropertiesModifier;
+        this.blockPropertiesModifier = builder.blockProperties;
+        this.itemPropertiesModifier = builder.itemProperties;
+        this.itemTags = builder.itemTags.isEmpty() ? null : builder.itemTags.toArray(new TagKey[0]);
+        this.blockTags = builder.blockTags.isEmpty() ? null : builder.blockTags.toArray(new TagKey[0]);
+        this.fluidTags = builder.fluidTags.isEmpty() ? null : builder.fluidTags.toArray(new TagKey[0]);
     }
 
     // === Accessors ===
@@ -126,6 +140,9 @@ public class Group {
         if (langPrefix != null) {
             b = b.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
         }
+        if (blockTags != null) {
+            b.tag(blockTags);
+        }
         return b;
     }
 
@@ -136,6 +153,9 @@ public class Group {
         }
         if (langPrefix != null) {
             b = b.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
+        }
+        if (itemTags != null) {
+            b.tag(itemTags);
         }
         return b;
     }
@@ -148,33 +168,37 @@ public class Group {
         if (langPrefix != null) {
             builder = builder.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
         }
+        if (fluidTags != null) {
+            builder.tag(fluidTags);
+        }
         return builder;
     }
 
     // === Builder ===
 
+    @Accessors(fluent = true, chain = true)
     public static class Builder {
 
         protected final RegistryCore core;
         @Nullable
-        protected ResourceKey<CreativeModeTab> tab;
-        @Nullable
         protected String langPrefix;
-        protected UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier = FunctionUtil.identityUnaryOp();
-        protected UnaryOperator<Item.Properties> itemPropertiesModifier = FunctionUtil.identityUnaryOp();
+        @Nullable
+        @Setter
+        protected ResourceKey<CreativeModeTab> tab;
+
+        @Setter
+        protected UnaryOperator<BlockBehaviour.Properties> blockProperties = FunctionUtil.identityUnaryOp();
+
+        @Setter
+        protected UnaryOperator<Item.Properties> itemProperties = FunctionUtil.identityUnaryOp();
+
+        protected List<TagKey<Item>> itemTags = new ArrayList<>();
+        protected List<TagKey<Block>> blockTags = new ArrayList<>();
+        protected List<TagKey<Fluid>> fluidTags = new ArrayList<>();
 
         protected Builder(RegistryCore core, String name) {
             this.core = core;
             this.langPrefix = core.doDatagen() ? RegistryLibLangProvider.toEnglishName(name) : null;
-        }
-
-        /**
-         * Sets the creative tab for all item-like entries in this group (items, block items, buckets).
-         */
-        @StandardAPI
-        public Builder tab(ResourceKey<CreativeModeTab> tab) {
-            this.tab = tab;
-            return this;
         }
 
         /**
@@ -190,15 +214,18 @@ public class Group {
             return this;
         }
 
-        @StandardAPI
-        public Builder blockProperties(UnaryOperator<BlockBehaviour.Properties> modifier) {
-            this.blockPropertiesModifier = modifier;
+        public Builder itemTag(TagKey<Item> tag) {
+            itemTags.add(tag);
             return this;
         }
 
-        @StandardAPI
-        public Builder itemProperties(UnaryOperator<Item.Properties> modifier) {
-            this.itemPropertiesModifier = modifier;
+        public Builder blockTag(TagKey<Block> tag) {
+            blockTags.add(tag);
+            return this;
+        }
+
+        public Builder fluidTag(TagKey<Fluid> tag) {
+            fluidTags.add(tag);
             return this;
         }
 

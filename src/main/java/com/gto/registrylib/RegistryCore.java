@@ -59,7 +59,7 @@ public class RegistryCore {
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
 
-    private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>,String>, Consumer<?>> datagensByEntry = NestedMap.create(HashMap::new);
+    private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>, String>, Consumer<?>> datagensByEntry = NestedMap.createIdentity(HashMap::new);
     private final MultiMap<GeneratorType<?>, Consumer<?>> datagens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
 
     @Getter
@@ -132,10 +132,13 @@ public class RegistryCore {
     }
 
     public <P> void addDataGenerator(
-                                     String name,ResourceKey<?> key, GeneratorType<? extends P> type, Consumer<? extends P> cons) {
+                                     String name,
+                                     ResourceKey<?> key,
+                                     GeneratorType<? extends P> type,
+                                     Consumer<? extends P> cons) {
         if (!doDatagen()) return;
         @SuppressWarnings("null")
-        Consumer<?> existing = datagensByEntry.put(type, Pair.of(key,name), cons);
+        Consumer<?> existing = datagensByEntry.put(type, Pair.of(key, name), cons);
         if (existing != null) {
             datagens.remove(type, existing);
         }

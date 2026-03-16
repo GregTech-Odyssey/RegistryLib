@@ -99,7 +99,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @StandardAPI
     public <D> S setData(
                          @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
-        core.addDataGenerator(name,registryKey, type, cons);
+        core.addDataGenerator(name, registryKey, type, cons);
         return (S) this;
     }
 
