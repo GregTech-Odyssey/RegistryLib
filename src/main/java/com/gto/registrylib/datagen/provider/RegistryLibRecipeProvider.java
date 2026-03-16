@@ -1,6 +1,6 @@
-package com.gto.registrylib.providers.generators;
+package com.gto.registrylib.datagen.provider;
 
-import com.gto.registrylib.providers.ProviderType;
+import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.util.DataIngredient;
 
 import net.minecraft.advancements.Advancement;

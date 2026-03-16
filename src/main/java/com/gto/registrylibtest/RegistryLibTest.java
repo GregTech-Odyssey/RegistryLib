@@ -1,5 +1,7 @@
 package com.gto.registrylibtest;
 
+import com.gto.registrylib.util.ColorUtil;
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylibtest.advancement.FullAdvancementExample;
 import com.gto.registrylibtest.advancement.SimpleAdvancementExample;
 import com.gto.registrylibtest.block.FullBlockExample;
@@ -85,6 +87,18 @@ public class RegistryLibTest {
         // 成就进度
         SimpleAdvancementExample.register();
         FullAdvancementExample.register();
+
+        long time = System.nanoTime();
+        for (int i = 0; i < 1000; i++) {
+            REGISTRYLIB
+                    .item("test_item_" + i)
+                    .langCn("测试物品 " + i)
+                    .lang("Test Item " + i)
+                    .texture(
+                            () -> ImageUtil.generateIcon(ColorUtil.generateRandomVibrantColor(), ImageUtil.STAR))
+                    .register();
+        }
+        LOGGER.info("register 1000 items in {} ms", (System.nanoTime() - time) / 1000000.0);
     }
 
     public RegistryLibTest(IEventBus modEventBus, ModContainer modContainer) {

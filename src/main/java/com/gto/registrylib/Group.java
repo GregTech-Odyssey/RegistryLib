@@ -5,7 +5,7 @@ import com.gto.registrylib.builders.BlockBuilder;
 import com.gto.registrylib.builders.BlockEntityBuilder;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.builders.ItemBuilder;
-import com.gto.registrylib.providers.RegistryLibLangProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.FunctionUtil;
 
 import net.minecraft.resources.Identifier;

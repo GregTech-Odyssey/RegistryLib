@@ -11,12 +11,16 @@ import net.neoforged.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.Random;
+
 @Mod(RegistryLib.MOD_ID)
 public final class RegistryLib {
 
     public static final String MOD_ID = "registrylib";
 
     public static final Logger LOGGER = LogManager.getLogger();
+
+    public static final Random RANDOM = new Random();
 
     public RegistryLib(IEventBus modEventBus) {
         modEventBus.addListener(EventPriority.LOW, RegistryCore::onRegister);

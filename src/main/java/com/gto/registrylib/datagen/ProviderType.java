@@ -1,8 +1,10 @@
-package com.gto.registrylib.providers;
+package com.gto.registrylib.datagen;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.providers.generators.*;
-import com.gto.registrylib.providers.loot.RegistryLibLootTableProvider;
+import com.gto.registrylib.datagen.generator.RegistryLibBlockModelGenerator;
+import com.gto.registrylib.datagen.generator.RegistryLibItemModelGenerator;
+import com.gto.registrylib.datagen.loot.RegistryLibLootTableProvider;
+import com.gto.registrylib.datagen.provider.*;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
@@ -28,9 +30,7 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
     ProviderType NULL = unusedContext -> null;
 
     // SERVER DATA
-    ProviderType<RegistryLibDatapackProvider> DYNAMIC = registerServerData("dynamic", RegistryLibDatapackProvider::new);
-    ProviderType<RegistryLibDataMapProvider> DATA_MAP = registerServerData("data_map", RegistryLibDataMapProvider::new);
-    ProviderType<RegistryLibRecipeRunner> RECIPE_RUNNER = registerServerData("recipe_runner", RegistryLibRecipeRunner::new);
+    ProviderType<RegistryLibRecipeRunner> RECIPE = registerServerData("recipe", RegistryLibRecipeRunner::new);
     ProviderType<RegistryLibLootTableProvider> LOOT = registerServerData("loot", RegistryLibLootTableProvider::new);
     ProviderType<RegistryLibAdvancementProvider> ADVANCEMENT = registerServerData("advancement", RegistryLibAdvancementProvider::new);
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<Block>> BLOCK_TAGS = registerIntrinsicTag(
@@ -58,8 +58,10 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
             "model", () -> c -> new RegistryLibModelProvider(c.parent(), c.output()));
     ProviderType<RegistryLibLangProvider> LANG = registerClientProvider(
             "lang", () -> c -> new RegistryLibLangProvider(c.parent(), c.output()));
+    ProviderType<RegistryLibGeneralResourceProvider> GENERAL_RESOURCE = registerClientProvider(
+            "general_resource",
+            () -> c -> new RegistryLibGeneralResourceProvider(c.parent(), c.output()));
 
-    GeneratorType<RegistryLibRecipeProvider> RECIPE = RECIPE_RUNNER.createGenerator("recipe");
     GeneratorType<RegistryLibBlockModelGenerator> BLOCKSTATE = MODEL.createGenerator("blockstate");
     GeneratorType<RegistryLibItemModelGenerator> ITEM_MODEL = MODEL.createGenerator("item_model");
 

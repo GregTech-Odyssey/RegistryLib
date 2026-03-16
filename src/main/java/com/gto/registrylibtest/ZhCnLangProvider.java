@@ -1,8 +1,8 @@
 package com.gto.registrylibtest;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.providers.ProviderType;
-import com.gto.registrylib.providers.RegistryLibLangProvider;
+import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 
 import net.minecraft.data.PackOutput;
 

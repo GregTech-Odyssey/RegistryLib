@@ -5,15 +5,15 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.composite.ItemAttachment;
-import com.gto.registrylib.providers.DataGenContext;
-import com.gto.registrylib.providers.ProviderType;
-import com.gto.registrylib.providers.RegistryLibLangProvider;
-import com.gto.registrylib.providers.generators.RegistryLibItemModelGenerator;
+import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.datagen.generator.RegistryLibItemModelGenerator;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
@@ -28,6 +28,8 @@ import net.minecraft.world.item.Item;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.*;
 
@@ -83,7 +85,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     @SyntaxSugar("model(() -> (ctx, prov) -> prov.generateFlatItem(ctx.get(), ModelTemplates.FLAT_ITEM))")
     public ItemBuilder<T, P> defaultModel() {
-        return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx.get(), ModelTemplates.FLAT_ITEM));
+        return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx, ModelTemplates.FLAT_ITEM));
     }
 
     @SyntaxSugar("lang(Item::getDescriptionId)")
@@ -121,10 +123,26 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> model(
-                                   @NotNull Supplier<BiConsumer<DataGenContext<Item, T>, RegistryLibItemModelGenerator>> cons) {
+    public ItemBuilder<T, P> texture(Supplier<BufferedImage> image) {
         if (!core.doDatagen()) return this;
-        return setData(ProviderType.ITEM_MODEL, cons.get());
+        setData(
+                ProviderType.GENERAL_RESOURCE,
+                p -> p.addItemTexture(
+                        (path, stream) -> {
+                            try {
+                                return ImageUtil.writeToStream(name, image.get(), path, stream);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }));
+        return this;
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> model(
+                                   @NotNull Supplier<BiConsumer<T, RegistryLibItemModelGenerator>> cons) {
+        if (!core.doDatagen()) return this;
+        return setData(ProviderType.ITEM_MODEL, p -> cons.get().accept(getValue(), p));
     }
 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")

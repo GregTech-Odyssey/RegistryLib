@@ -2,19 +2,19 @@ package com.gto.registrylib.builders;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
-import com.gto.registrylib.providers.*;
+import com.gto.registrylib.datagen.*;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
-import net.neoforged.neoforge.registries.datamaps.DataMapType;
 
 import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
@@ -61,11 +61,6 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return valueSupplier.get();
     }
 
-    public DataGenContext<R, T> getDataGenContext() {
-        return new DataGenContext<>(
-                valueSupplier, name, Identifier.fromNamespaceAndPath(core.getModid(), name));
-    }
-
     /**
      * Registers this entry and returns the parent object, allowing the caller to continue configuring
      * the parent builder. Typically used to close a sub-entry chain: {@code
@@ -84,7 +79,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
             tagsByType.forEach(
                     (type, tags) -> setData(
                             type,
-                            (_, prov) -> tags.forEach(
+                            prov -> tags.forEach(
                                     (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
         }
         return core.registry(name, registryKey, callbacks, this::createEntry, this::createEntryWrapper);
@@ -103,56 +98,8 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     @StandardAPI
     public <D> S setData(
-                         @NotNull GeneratorType<? extends D> type, @NotNull BiConsumer<DataGenContext<R, T>, D> cons) {
-        if (core.doDatagen()) {
-            core.setDataGenerator(
-                    name, registryKey, type, prov -> cons.accept(getDataGenContext(), prov));
-        }
-        return (S) this;
-    }
-
-    @StandardAPI
-    public <D> S addMiscData(
-                             @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
-        core.addDataGenerator(type, cons);
-        return (S) this;
-    }
-
-    @StandardAPI
-    public <D> S dataMap(@NotNull DataMapType<R, D> type, @NotNull D val) {
-        if (core.doDatagen()) {
-            core.addDataGenerator(
-                    ProviderType.DATA_MAP, e -> e.builder(type).add(getDataGenContext().getId(), val, false));
-        }
-        return (S) this;
-    }
-
-    @StandardAPI
-    public <D> S dataMap(
-                         @NotNull DataMapType<R, D> type, @NotNull Function<DataGenContext<R, T>, D> factory) {
-        if (core.doDatagen()) {
-            core.addDataGenerator(
-                    ProviderType.DATA_MAP,
-                    e -> {
-                        var ctx = getDataGenContext();
-                        e.builder(type).add(ctx.getId(), factory.apply(ctx), false);
-                    });
-        }
-        return (S) this;
-    }
-
-    @StandardAPI
-    public <D> S dataMap(
-                         @NotNull DataMapType<R, D> type,
-                         @NotNull BiFunction<DataGenContext<R, T>, HolderLookup.Provider, D> factory) {
-        if (core.doDatagen()) {
-            core.addDataGenerator(
-                    ProviderType.DATA_MAP,
-                    e -> {
-                        var ctx = getDataGenContext();
-                        e.builder(type).add(ctx.getId(), factory.apply(ctx, e.getProvider()), false);
-                    });
-        }
+                         @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
+        core.addDataGenerator(name,registryKey, type, cons);
         return (S) this;
     }
 
@@ -239,7 +186,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                   @Nonnull Function<T, String> langKeyProvider,
                   @Nonnull String name) {
         if (core.doDatagen()) {
-            return setData(type, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
+            return setData(type, prov -> prov.add(langKeyProvider.apply(getValue()), name));
         }
         return (S) this;
     }
@@ -249,8 +196,8 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                    @NotNull BiFunction<RegistryLibLangProvider, Supplier<? extends T>, String> localizedNameProvider) {
         return setData(
                 ProviderType.LANG,
-                (ctx, prov) -> prov.add(
-                        langKeyProvider.apply(ctx.getEntry()),
-                        localizedNameProvider.apply(prov, ctx::getEntry)));
+                prov -> prov.add(
+                        langKeyProvider.apply(getValue()),
+                        localizedNameProvider.apply(prov, this::getValue)));
     }
 }

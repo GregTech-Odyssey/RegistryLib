@@ -4,8 +4,8 @@ import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.client.Client;
-import com.gto.registrylib.providers.ProviderType;
-import com.gto.registrylib.providers.RegistryLibLangProvider;
+import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.DistExecutor;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
@@ -253,7 +253,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         final var block = core.<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier.get(), p))
                 .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
                 .properties(p -> p.lightLevel(lightLevelInt))
-                .blockstate(() -> (ctx, prov) -> prov.createNonTemplateModelBlock(ctx.get()));
+                .blockstate(() -> (value, prov) -> prov.createNonTemplateModelBlock(value));
         var blockSupplier = block.valueSupplier;
         this.fluidProperties(p -> p.block(blockSupplier));
         consumer.accept(block);
@@ -322,15 +322,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                             TextureMapping textures = new TextureMapping();
                             textures.put(TextureSlot.LAYER0, new Material(BUCKET_FLUID_TEXTURE));
                             textures.put(TextureSlot.LAYER1, new Material(BUCKET_BASE_TEXTURE));
-                            Identifier modelId = ModelTemplates.TWO_LAYERED_ITEM.create(
-                                    ctx.get(), textures, prov.modelOutput);
+                            Identifier modelId = ModelTemplates.TWO_LAYERED_ITEM.create(ctx, textures, prov.modelOutput);
                             if (bucketTintColor != -1) {
                                 prov.itemModelOutput.accept(
-                                        ctx.get(),
+                                        ctx,
                                         ItemModelUtils.tintedModel(
                                                 modelId, ItemModelUtils.constantTint(bucketTintColor)));
                             } else {
-                                prov.itemModelOutput.accept(ctx.get(), ItemModelUtils.plainModel(modelId));
+                                prov.itemModelOutput.accept(ctx, ItemModelUtils.plainModel(modelId));
                             }
                         });
         var itemSupplier = item.valueSupplier;

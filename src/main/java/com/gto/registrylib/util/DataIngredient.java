@@ -1,6 +1,6 @@
 package com.gto.registrylib.util;
 
-import com.gto.registrylib.providers.generators.RegistryLibRecipeProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 
 import com.google.common.collect.ObjectArrays;
 

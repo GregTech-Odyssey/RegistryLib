@@ -1,4 +1,4 @@
-package com.gto.registrylib.providers.loot;
+package com.gto.registrylib.datagen.loot;
 
 import com.gto.registrylib.RegistryCore;
 

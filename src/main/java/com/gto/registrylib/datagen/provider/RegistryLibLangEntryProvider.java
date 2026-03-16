@@ -1,4 +1,4 @@
-package com.gto.registrylib.providers;
+package com.gto.registrylib.datagen.provider;
 
 import javax.annotation.Nullable;
 

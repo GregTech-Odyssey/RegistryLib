@@ -1,7 +1,6 @@
-package com.gto.registrylib.providers.generators;
+package com.gto.registrylib.datagen.provider;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.providers.RegistryLibProvider;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;

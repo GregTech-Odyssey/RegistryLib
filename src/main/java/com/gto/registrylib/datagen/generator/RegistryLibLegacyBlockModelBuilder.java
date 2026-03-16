@@ -1,4 +1,4 @@
-package com.gto.registrylib.providers.generators;
+package com.gto.registrylib.datagen.generator;
 
 import net.minecraft.client.data.models.model.ModelInstance;
 import net.minecraft.client.data.models.model.TextureMapping;

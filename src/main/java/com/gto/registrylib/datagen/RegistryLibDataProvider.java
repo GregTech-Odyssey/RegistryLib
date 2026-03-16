@@ -1,6 +1,9 @@
-package com.gto.registrylib.providers;
+package com.gto.registrylib.datagen;
 
 import com.gto.registrylib.RegistryCore;
+import com.gto.registrylib.datagen.provider.RegistryLibLookupFillerProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;

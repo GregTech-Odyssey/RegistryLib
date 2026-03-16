@@ -1,8 +1,8 @@
-package com.gto.registrylib.providers.loot;
+package com.gto.registrylib.datagen.loot;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.providers.ProviderType;
-import com.gto.registrylib.providers.RegistryLibProvider;
+import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.datagen.provider.RegistryLibProvider;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableList;

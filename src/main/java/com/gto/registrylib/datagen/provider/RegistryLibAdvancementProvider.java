@@ -1,6 +1,7 @@
-package com.gto.registrylib.providers;
+package com.gto.registrylib.datagen.provider;
 
 import com.gto.registrylib.RegistryCore;
+import com.gto.registrylib.datagen.ProviderType;
 
 import com.google.common.collect.Lists;
 

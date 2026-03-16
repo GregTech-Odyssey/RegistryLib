@@ -1,4 +1,6 @@
-package com.gto.registrylib.providers;
+package com.gto.registrylib.datagen;
+
+import com.gto.registrylib.datagen.provider.RegistryLibLookupFillerProvider;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistrySetBuilder;

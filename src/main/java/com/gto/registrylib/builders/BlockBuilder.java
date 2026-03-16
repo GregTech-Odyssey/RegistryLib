@@ -3,13 +3,13 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
-import com.gto.registrylib.providers.DataGenContext;
-import com.gto.registrylib.providers.ProviderType;
-import com.gto.registrylib.providers.RegistryLibLangProvider;
-import com.gto.registrylib.providers.generators.RegistryLibBlockModelGenerator;
-import com.gto.registrylib.providers.loot.RegistryLibBlockLootTables;
-import com.gto.registrylib.providers.loot.RegistryLibLootTableProvider.LootType;
+import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.datagen.generator.RegistryLibBlockModelGenerator;
+import com.gto.registrylib.datagen.loot.RegistryLibBlockLootTables;
+import com.gto.registrylib.datagen.loot.RegistryLibLootTableProvider.LootType;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
@@ -28,6 +28,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.function.*;
 
 import javax.annotation.Nonnull;
@@ -69,7 +71,7 @@ public class BlockBuilder<T extends Block, P>
                                                     @Nonnull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> consumer) {
         var builder = core.<I, BlockBuilder<T, P>>item(
                 this, name, p -> factory.apply(getValue(), p.useBlockDescriptionPrefix()), false)
-                .setData(ProviderType.LANG, FunctionUtil.noOpBiConsumer())
+                .setData(ProviderType.LANG, FunctionUtil.noOpConsumer())
                 .model(
                         () -> (ctx, prov) -> core.getDataProvider(ProviderType.BLOCKSTATE)
                                 .map(g -> g.seenBlockstates.get(getValue()))
@@ -82,7 +84,7 @@ public class BlockBuilder<T extends Block, P>
                                             }
                                             return null;
                                         })
-                                .ifPresent(model -> prov.createWithExistingModel(ctx.get(), model)));
+                                .ifPresent(model -> prov.createWithExistingModel(ctx, model)));
         if (defaultItemTab != null) {
             builder.addTab(defaultItemTab);
         }
@@ -117,7 +119,7 @@ public class BlockBuilder<T extends Block, P>
 
     @SyntaxSugar("blockstate(() -> (ctx, prov) -> prov.createTrivialCube(ctx.getEntry()))")
     public BlockBuilder<T, P> defaultBlockstate() {
-        return blockstate(() -> (ctx, prov) -> prov.createTrivialCube(ctx.get()));
+        return blockstate(() -> (value, prov) -> prov.createTrivialCube(value));
     }
 
     @SyntaxSugar("lang(Block::getDescriptionId)")
@@ -151,10 +153,26 @@ public class BlockBuilder<T extends Block, P>
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> blockstate(
-                                         @NotNull Supplier<BiConsumer<DataGenContext<Block, T>, RegistryLibBlockModelGenerator>> cons) {
+    public BlockBuilder<T, P> texture(Supplier<BufferedImage> image) {
         if (!core.doDatagen()) return this;
-        return setData(ProviderType.BLOCKSTATE, cons.get());
+        setData(
+                ProviderType.GENERAL_RESOURCE,
+                p -> p.addBlockTexture(
+                        (path, stream) -> {
+                            try {
+                                return ImageUtil.writeToStream(name, image.get(), path, stream);
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }));
+        return this;
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> blockstate(
+                                         @NotNull Supplier<BiConsumer<T, RegistryLibBlockModelGenerator>> cons) {
+        if (!core.doDatagen()) return this;
+        return setData(ProviderType.BLOCKSTATE, p -> cons.get().accept(getValue(), p));
     }
 
     @StandardAPI
@@ -173,11 +191,11 @@ public class BlockBuilder<T extends Block, P>
         if (!core.doDatagen()) return this;
         return setData(
                 ProviderType.LOOT,
-                (ctx, prov) -> prov.addLootAction(
+                prov -> prov.addLootAction(
                         LootType.BLOCK,
                         tb -> {
-                            if (ctx.get().getLootTable().isPresent()) {
-                                cons.accept(tb, ctx.get());
+                            if (getValue().getLootTable().isPresent()) {
+                                cons.accept(tb, getValue());
                             }
                         }));
     }

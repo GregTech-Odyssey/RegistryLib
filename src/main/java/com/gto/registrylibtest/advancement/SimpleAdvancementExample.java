@@ -1,6 +1,6 @@
 package com.gto.registrylibtest.advancement;
 
-import com.gto.registrylib.providers.ProviderType;
+import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylibtest.RegistryLibTest;
 import com.gto.registrylibtest.item.SimpleItemExample;
 

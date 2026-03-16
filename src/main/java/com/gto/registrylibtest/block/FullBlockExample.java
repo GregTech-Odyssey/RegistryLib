@@ -2,6 +2,8 @@ package com.gto.registrylibtest.block;
 
 import com.gto.registrylib.Group;
 import com.gto.registrylib.tooltip.SubNode;
+import com.gto.registrylib.util.ColorUtil;
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
@@ -11,6 +13,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+
+import java.awt.*;
 
 /**
  * 使用 BlockBuilder 全部 API 的复杂方块示例。
@@ -58,6 +62,9 @@ public class FullBlockExample {
             .lang(ModRegistryCore.LANG_ZH_CN, "独立计时器")
             .defaultLoot()
             .defaultBlockstate()
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            ColorUtil.generateRandomMutedColor(), ImageUtil.CIRCLE, Color.CYAN))
             .simpleItem()
             .register();
 
@@ -80,6 +87,9 @@ public class FullBlockExample {
                                 collector.node(
                                         new SubNode.Basic(Component.literal("§7Tick interval: 20"), 10));
                             }))
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            ColorUtil.generateRandomMutedColor(), ImageUtil.SQUARE, Color.GREEN))
             .register();
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_2 = TIMER_GROUP
@@ -93,6 +103,9 @@ public class FullBlockExample {
                                 collector.node(
                                         new SubNode.Basic(Component.literal("§7Tick interval: 10"), 10));
                             }))
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            ColorUtil.generateRandomMutedColor(), ImageUtil.SQUARE, Color.ORANGE))
             .register();
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_3 = TIMER_GROUP
@@ -106,5 +119,8 @@ public class FullBlockExample {
                                 collector.node(
                                         new SubNode.Basic(Component.literal("§7Tick interval: 5"), 10));
                             }))
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            ColorUtil.generateRandomMutedColor(), ImageUtil.SQUARE, Color.RED))
             .register();
 }

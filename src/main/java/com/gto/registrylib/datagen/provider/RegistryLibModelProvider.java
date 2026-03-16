@@ -1,7 +1,8 @@
-package com.gto.registrylib.providers.generators;
+package com.gto.registrylib.datagen.provider;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.providers.RegistryLibProvider;
+import com.gto.registrylib.datagen.generator.RegistryLibBlockModelGenerator;
+import com.gto.registrylib.datagen.generator.RegistryLibItemModelGenerator;
 
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;

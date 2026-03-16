@@ -5,15 +5,14 @@ import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.*;
 import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.IComponentItem;
-import com.gto.registrylib.providers.*;
+import com.gto.registrylib.datagen.*;
+import com.gto.registrylib.datagen.RegistryLibDataProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.*;
 import com.gto.registrylib.util.entry.*;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylibtest.builder.ModFluidBuilder;
-
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
 
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
@@ -37,9 +36,7 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.message.Message;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +59,8 @@ public class RegistryCore {
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
 
-    private final Table<Pair<String, ResourceKey<? extends Registry<?>>>, GeneratorType<?>, Consumer<?>> datagensByEntry = HashBasedTable.create();
-    private final MultiMap<GeneratorType<?>, Consumer<?>> datagens = MultiMap.createIdentity(ArrayList::new);
+    private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>,String>, Consumer<?>> datagensByEntry = NestedMap.create(HashMap::new);
+    private final MultiMap<GeneratorType<?>, Consumer<?>> datagens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
 
     @Getter
     protected ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
@@ -134,14 +131,11 @@ public class RegistryCore {
         throw new IllegalStateException("Cannot get data provider before datagen is started");
     }
 
-    public <P, R> void setDataGenerator(
-                                        String entry,
-                                        ResourceKey<? extends Registry<R>> registryType,
-                                        GeneratorType<? extends P> type,
-                                        Consumer<? extends P> cons) {
+    public <P> void addDataGenerator(
+                                     String name,ResourceKey<?> key, GeneratorType<? extends P> type, Consumer<? extends P> cons) {
         if (!doDatagen()) return;
         @SuppressWarnings("null")
-        Consumer<?> existing = datagensByEntry.put(Pair.of(entry, registryType), type, cons);
+        Consumer<?> existing = datagensByEntry.put(type, Pair.of(key,name), cons);
         if (existing != null) {
             datagens.remove(type, existing);
         }
@@ -193,18 +187,6 @@ public class RegistryCore {
     }
 
     // === Data Gen Execution ===
-
-    @SuppressWarnings("null")
-    private Optional<Pair<String, ResourceKey<? extends Registry<?>>>> getEntryForGenerator(
-                                                                                            GeneratorType<?> type, Consumer<?> generator) {
-        for (Map.Entry<Pair<String, ResourceKey<? extends Registry<?>>>, Consumer<?>> e : datagensByEntry.column(type).entrySet()) {
-            if (e.getValue() == generator) {
-                return Optional.of(e.getKey());
-            }
-        }
-        return Optional.empty();
-    }
-
     @SuppressWarnings("unchecked")
     public <T> void genData(GeneratorType<? extends T> type, T gen) {
         if (!doDatagen()) return;
@@ -215,49 +197,13 @@ public class RegistryCore {
                 .get(type)
                 .forEach(
                         cons -> {
-                            Optional<Pair<String, ResourceKey<? extends Registry<?>>>> entry = Optional.empty();
-                            if (log.isEnabled(Level.DEBUG, DebugMarkers.DATA)) {
-                                entry = getEntryForGenerator(type, cons);
-                                if (entry.isPresent()) {
-                                    log.debug(
-                                            DebugMarkers.DATA,
-                                            "Generating data of type {} for entry {} [{}]",
-                                            RegistryLibDataProvider.getTypeName(type),
-                                            entry.get().getLeft(),
-                                            entry.get().getRight().identifier());
-                                } else {
-                                    log.debug(
-                                            DebugMarkers.DATA,
-                                            "Generating unassociated data of type {} ({})",
-                                            RegistryLibDataProvider.getTypeName(type),
-                                            type);
-                                }
-                            }
                             try {
                                 ((Consumer<T>) cons).accept(gen);
                             } catch (Exception e) {
-                                if (entry.isEmpty()) {
-                                    entry = getEntryForGenerator(type, cons);
-                                }
-                                Message err;
-                                if (entry.isPresent()) {
-                                    err = log.getMessageFactory()
-                                            .newMessage(
-                                                    "Unexpected error while running data generator of type {} for entry {} [{}]",
-                                                    RegistryLibDataProvider.getTypeName(type),
-                                                    entry.get().getLeft(),
-                                                    entry.get().getRight().identifier());
-                                } else {
-                                    err = log.getMessageFactory()
-                                            .newMessage(
-                                                    "Unexpected error while running unassociated data generator of type {} ({})",
-                                                    RegistryLibDataProvider.getTypeName(type),
-                                                    type);
-                                }
                                 if (skipErrors) {
-                                    log.error(err);
+                                    log.error(e);
                                 } else {
-                                    throw new RuntimeException(err.getFormattedMessage(), e);
+                                    throw new RuntimeException(e);
                                 }
                             }
                         });
