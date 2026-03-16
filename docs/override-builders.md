@@ -24,9 +24,8 @@ public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
             RegistryCore owner,
             P parent,
             String name,
-            BuilderCallback callback,
             Function<BlockBehaviour.Properties, T> factory) {
-        var builder = new ModBlockBuilder<>(owner, parent, name, callback, factory);
+        var builder = new ModBlockBuilder<>(owner, parent, name, factory);
         return (ModBlockBuilder<T, P>) builder.defaultBlockstate().defaultLoot().defaultLang();
     }
 
@@ -41,15 +40,19 @@ This is the real pattern used in the test project: the custom Builder adds `lang
 
 ## Core Concepts
 
-### Three Factory Hooks
+### One Remaining Builder Hook
 
-The public registration entry points of `RegistryCore` eventually pass through three overridable factory methods:
+For Blocks and Items the public registration methods directly construct the Builders, so the right place to inject custom Builder types is a covariant override of those public methods:
 
-- `newBlockBuilder(...)`
-- `newItemBuilder(...)`
-- `newFluidBuilder(...)`
+- Override `block(parent, name, factory)` to swap in your `ModBlockBuilder`.
+- Override `item(parent, name, factory, isComponentItem)` (and the convenience overloads) to swap in your `ModItemBuilder`.
 
-After you override them, you can replace the default Builders with your own subclasses.
+For Fluids, `RegistryCore` still exposes a single overridable factory hook:
+
+- `newFluidBuilder(parent, name, fluidFactory)` — override this to return your `ModFluidBuilder`.
+
+{: .note }
+> The old `newBlockBuilder(...)` and `newItemBuilder(...)` hooks and the `BuilderCallback` interface have been removed. Custom Block and Item Builders are now injected by overriding the public registration methods directly.
 
 ### The Full Flow
 
@@ -57,7 +60,7 @@ In the test project, the extension has four moving parts that work together:
 
 1. Declare a new provider-side capability, here `ModRegistryCore.LANG_ZH_CN` backed by `ZhCnLangProvider`.
 2. Add custom Builder subclasses such as `ModBlockBuilder`, `ModItemBuilder`, and `ModFluidBuilder`.
-3. Override `newBlockBuilder(...)`, `newItemBuilder(...)`, and `newFluidBuilder(...)` in a custom `RegistryCore` subclass so the public entry points actually instantiate those Builders.
+3. Override the public `block(...)` and `item(...)` registration methods in a custom `RegistryCore` subclass so they instantiate those Builders. For Fluids, override `newFluidBuilder(...)`.
 4. Override the public registration methods that can legally return your subtype at compile time.
 
 If you skip step 4, your runtime object may still be a custom Builder, but the compiler can fall back to the base `BlockBuilder`, `ItemBuilder`, or `FluidBuilder` type and your new sugar methods will disappear from the chain.
@@ -65,7 +68,7 @@ If you skip step 4, your runtime object may still be a custom Builder, but the c
 ### Recommended Implementation Order
 
 1. Implement the language-side or other datagen-side support types first.
-2. Create `ModRegistryCore` and override the Builder factory methods.
+2. Create `ModRegistryCore` and override the public registration methods (and `newFluidBuilder` for fluids).
 3. Create `ModBlockBuilder`, `ModItemBuilder`, and `ModFluidBuilder`.
 4. Switch the project entry point from `RegistryCore.create(...)` to `ModRegistryCore.create(...)`.
 
@@ -104,39 +107,42 @@ public class ModRegistryCore extends RegistryCore {
 
 Your project entry point should now be created through `ModRegistryCore.create(...)`, not `RegistryCore.create(...)`. Otherwise your Builder hooks never run.
 
-### Step 3: Override the Builder Hooks
+### Step 3: Override the Builder Injection Points
+
+For Blocks and Items, override the public registration methods in your `ModRegistryCore` subclass:
 
 ```java
 @Override
-protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
+public <T extends Block, P> ModBlockBuilder<T, P> block(
         P parent,
         String name,
-        BuilderCallback callback,
         Function<BlockBehaviour.Properties, T> factory) {
-    return ModBlockBuilder.create(this, parent, name, callback, factory);
+    return ModBlockBuilder.create(this, parent, name, factory);
 }
 
 @Override
-protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
+public <T extends Item, P> ModItemBuilder<T, P> item(
         P parent,
         String name,
-        BuilderCallback callback,
         Function<Item.Properties, T> factory,
         boolean isComponentItem) {
-    return ModItemBuilder.create(this, parent, name, callback, factory, isComponentItem);
+    return ModItemBuilder.create(this, parent, name, factory, isComponentItem);
 }
+```
 
+For Fluids, override `newFluidBuilder(...)` — this is the one remaining protected hook:
+
+```java
 @Override
 protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
         P parent,
         String name,
-        BuilderCallback callback,
         FluidBuilder.FluidFactory<T> fluidFactory) {
-    return ModFluidBuilder.create(this, parent, name, callback, fluidFactory);
+    return ModFluidBuilder.create(this, parent, name, fluidFactory);
 }
 ```
 
-This is the runtime swap. Every public registration entry point eventually passes through these factory hooks.
+This is the runtime swap. Every public registration entry point calls these methods.
 
 ### Step 4: Preserve the Default Bootstrap Chain
 
