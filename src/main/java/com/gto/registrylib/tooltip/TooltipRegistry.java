@@ -1,10 +1,9 @@
 package com.gto.registrylib.tooltip;
 
+import com.gto.registrylib.util.map.MultiMap;
+
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ItemLike;
-
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 import java.util.*;
 
@@ -17,8 +16,6 @@ import java.util.*;
  */
 public final class TooltipRegistry {
 
-    private static final List<PendingEntry> pendingEntries = new ArrayList<>();
-
     /** 已注册的 RootNode 实例映射。 */
     private static final Map<RootNodeRef, RootNode> rootNodes = new HashMap<>();
 
@@ -29,8 +26,8 @@ public final class TooltipRegistry {
         rootNodes.put(DEFAULT_ROOT_REF, new RootNode("registrylib:default", 0, false));
     }
 
-    /** 已解析的查找表。 */
-    private static Reference2ObjectOpenHashMap<Item, List<TooltipNodeCollector.TooltipConfig>> resolvedMap;
+    /** 查找表。 */
+    private static final MultiMap<Item, TooltipNodeCollector.TooltipConfig> map = MultiMap.createIdentity(ArrayList::new);
 
     /** 复用的收集器，避免每次 resolve 创建新实例。 */
     private static final TooltipNodeCollector reusableCollector = new TooltipNodeCollector();
@@ -62,20 +59,8 @@ public final class TooltipRegistry {
     }
 
     /** 为指定物品注册一个 tooltip 配置回调。 */
-    public static void register(ItemLike itemLike, TooltipNodeCollector.TooltipConfig config) {
-        pendingEntries.add(new PendingEntry(itemLike, config));
-        resolvedMap = null; // invalidate cache
-    }
-
-    private static Reference2ObjectOpenHashMap<Item, List<TooltipNodeCollector.TooltipConfig>> ensureResolved() {
-        if (resolvedMap != null) return resolvedMap;
-
-        var grouped = new Reference2ObjectOpenHashMap<Item, List<TooltipNodeCollector.TooltipConfig>>();
-        for (var entry : pendingEntries) {
-            grouped.computeIfAbsent(entry.itemLike.asItem(), k -> new ArrayList<>()).add(entry.config);
-        }
-        resolvedMap = grouped;
-        return grouped;
+    public static void register(Item itemLike, TooltipNodeCollector.TooltipConfig config) {
+        map.put(itemLike, config);
     }
 
     /**
@@ -85,8 +70,8 @@ public final class TooltipRegistry {
      * 按 {@link RootNodeRef} 分组收集 {@link SubNode}，在每组内按 priority 排序， 根据节点的分隔线偏好插入分隔符。
      */
     public static RegistryLibTooltipComponent resolve(ItemStack itemStack) {
-        var configs = ensureResolved().get(itemStack.getItem());
-        if (configs == null) return null;
+        var configs = map.get(itemStack.getItem());
+        if (configs.isEmpty()) return null;
 
         var collector = reusableCollector;
         collector.nodesByRoot.clear();
@@ -139,6 +124,4 @@ public final class TooltipRegistry {
         separateRoots.sort(Comparator.comparingInt(r -> r.rootNode().getPriority()));
         return new RegistryLibTooltipComponent(inlineSubNodes, separateRoots);
     }
-
-    private record PendingEntry(ItemLike itemLike, TooltipNodeCollector.TooltipConfig config) {}
 }
