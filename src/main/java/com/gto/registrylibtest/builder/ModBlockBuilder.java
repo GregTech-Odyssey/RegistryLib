@@ -2,7 +2,6 @@ package com.gto.registrylibtest.builder;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.builders.BlockBuilder;
-import com.gto.registrylib.builders.BuilderCallback;
 import com.gto.registrylibtest.ModRegistryCore;
 
 import net.minecraft.world.level.block.Block;
@@ -22,22 +21,14 @@ import javax.annotation.Nonnull;
 public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
 
     public static <T extends Block, P> ModBlockBuilder<T, P> create(
-                                                                    RegistryCore owner,
-                                                                    P parent,
-                                                                    String name,
-                                                                    BuilderCallback callback,
-                                                                    Function<BlockBehaviour.Properties, T> factory) {
-        var builder = new ModBlockBuilder<>(owner, parent, name, callback, factory);
+                                                                    RegistryCore owner, P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
+        var builder = new ModBlockBuilder<>(owner, parent, name, factory);
         return (ModBlockBuilder<T, P>) builder.defaultBlockstate().defaultLoot().defaultLang();
     }
 
     protected ModBlockBuilder(
-                              RegistryCore owner,
-                              P parent,
-                              String name,
-                              BuilderCallback callback,
-                              Function<BlockBehaviour.Properties, T> factory) {
-        super(owner, parent, name, callback, factory);
+                              RegistryCore owner, P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
+        super(owner, parent, name, factory);
     }
 
     /**

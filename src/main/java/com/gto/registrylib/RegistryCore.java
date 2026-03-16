@@ -10,6 +10,7 @@ import com.gto.registrylib.util.*;
 import com.gto.registrylib.util.entry.*;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
+import com.gto.registrylibtest.builder.ModFluidBuilder;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -31,7 +32,6 @@ import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
-import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -55,16 +55,18 @@ public class RegistryCore {
     private static final PriorityQueue<RegistryCore> REGISTRY_CORES = new PriorityQueue<>(Comparator.comparingInt(RegistryCore::priority));
     private static final Logger log = RegistryLib.LOGGER;
 
-    private final NestedMap<ResourceKey<? extends Registry<?>>, String, RegistryEntry<?, ?>> registryentrys = NestedMap.createIdentity(HashMap::new);
-    private final NestedMap<ResourceKey<? extends Registry<?>>, String, Registration<?, ?>> registrations = NestedMap.createIdentity(LinkedHashMap::new);
+    private final NestedMap<ResourceKey<? extends Registry<?>>, String, RegistryEntry<?, ?>> registryentrys = NestedMap.createIdentity(LinkedHashMap::new);
+    private final MultiMap<ResourceKey<? extends Registry<?>>, Registration<?, ?>> registrations = MultiMap.createIdentity(ArrayList::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Runnable> afterRegisterCallbacks = MultiMap.createIdentity(ArrayList::new);
     private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = new ReferenceOpenHashSet<>();
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
-    private ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
 
     private final Table<Pair<String, ResourceKey<? extends Registry<?>>>, GeneratorType<?>, Consumer<?>> datagensByEntry = HashBasedTable.create();
     private final MultiMap<GeneratorType<?>, Consumer<?>> datagens = MultiMap.createIdentity(ArrayList::new);
+
+    @Getter
+    protected ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
 
     @Getter
     private final String modid;
@@ -115,10 +117,9 @@ public class RegistryCore {
 
     // === Callback Management ===
 
-    public <R> RegistryCore addRegisterCallback(
-                                                ResourceKey<? extends Registry<R>> registryType, Runnable callback) {
+    public <R> void addRegisterCallback(
+                                        ResourceKey<? extends Registry<R>> registryType, Runnable callback) {
         afterRegisterCallbacks.put(registryType, callback);
-        return this;
     }
 
     public <R> boolean isRegistered(ResourceKey<? extends Registry<R>> registryType) {
@@ -133,34 +134,27 @@ public class RegistryCore {
         throw new IllegalStateException("Cannot get data provider before datagen is started");
     }
 
-    public <P, R> RegistryCore setDataGenerator(
-                                                Builder<R, ?, ?, ?> builder, GeneratorType<? extends P> type, Consumer<? extends P> cons) {
-        return this.setDataGenerator(builder.getName(), builder.getRegistryKey(), type, cons);
-    }
-
-    public <P, R> RegistryCore setDataGenerator(
-                                                String entry,
-                                                ResourceKey<? extends Registry<R>> registryType,
-                                                GeneratorType<? extends P> type,
-                                                Consumer<? extends P> cons) {
-        if (!doDatagen()) return this;
+    public <P, R> void setDataGenerator(
+                                        String entry,
+                                        ResourceKey<? extends Registry<R>> registryType,
+                                        GeneratorType<? extends P> type,
+                                        Consumer<? extends P> cons) {
+        if (!doDatagen()) return;
         @SuppressWarnings("null")
         Consumer<?> existing = datagensByEntry.put(Pair.of(entry, registryType), type, cons);
         if (existing != null) {
             datagens.remove(type, existing);
         }
-        return addDataGenerator(type, cons);
+        addDataGenerator(type, cons);
     }
 
-    public <T> RegistryCore addDataGenerator(
-                                             GeneratorType<? extends T> type, Consumer<? extends T> cons) {
+    public <T> void addDataGenerator(GeneratorType<? extends T> type, Consumer<? extends T> cons) {
         if (doDatagen()) {
             if (provider != null)
                 throw new IllegalStateException(
                         "Cannot add data generator after construction of root generator");
             datagens.put(type, cons);
         }
-        return this;
     }
 
     @Nullable
@@ -280,40 +274,30 @@ public class RegistryCore {
         return this;
     }
 
-    public RegistryCore defaultCreativeTab(ResourceKey<CreativeModeTab> creativeModeTab) {
+    public void defaultCreativeTab(ResourceKey<CreativeModeTab> creativeModeTab) {
         defaultCreativeModeTab = creativeModeTab;
-        return this;
     }
 
-    public RegistryCore modifyCreativeModeTab(
-                                              ResourceKey<CreativeModeTab> creativeModeTab, Consumer<CreativeModeTabModifier> modifier) {
+    public void modifyCreativeModeTab(
+                                      ResourceKey<CreativeModeTab> creativeModeTab, Consumer<CreativeModeTabModifier> modifier) {
         if (creativeModeTab == CreativeModeTabs.SEARCH)
             throw new RuntimeException("SEARCH is a reserved tab name");
         creativeModeTabModifiers.put(creativeModeTab, modifier);
-        return this;
-    }
-
-    // === Entry Helper ===
-
-    public <R, T extends R, P, S2 extends Builder<R, T, P, S2>> S2 entry(
-                                                                         Function<BuilderCallback, S2> factory) {
-        return factory.apply(this::accept);
     }
 
     // === Core Registration ===
 
-    protected <R, T extends R> RegistryEntry<R, T> accept(
-                                                          String name,
-                                                          ResourceKey<? extends Registry<R>> type,
-                                                          Builder<R, T, ?, ?> builder,
-                                                          Function<ResourceKey<R>, ? extends T> factory,
-                                                          Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
+    public <R, T extends R> RegistryEntry<R, T> registry(
+                                                         String name,
+                                                         ResourceKey<? extends Registry<R>> type,
+                                                         List<Consumer<? super T>> callbacks,
+                                                         Function<ResourceKey<R>, ? extends T> factory,
+                                                         Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
         var reg = new Registration<>(
                 type, Identifier.fromNamespaceAndPath(modid, name), factory, entryFactory);
-        var callbacks = builder.getCallbacks();
         reg.callbacks.addAll(callbacks);
         callbacks.clear();
-        registrations.put(type, name, reg);
+        registrations.put(type, reg);
         registryentrys.put(type, name, reg.entry);
         return reg.entry;
     }
@@ -334,8 +318,7 @@ public class RegistryCore {
                                                                         @NotNull String name,
                                                                         @NotNull ResourceKey<Registry<R>> registryType,
                                                                         @NotNull Function<ResourceKey<R>, T> factory) {
-        return entry(
-                callback -> new NoConfigBuilder<>(this, this, name, callback, registryType, factory));
+        return new NoConfigBuilder<>(this, this, name, registryType, factory);
     }
 
     @SyntaxSugar("generic(...).register()")
@@ -353,16 +336,27 @@ public class RegistryCore {
                                                                 @NotNull String name,
                                                                 @NotNull ResourceKey<Registry<R>> registryType,
                                                                 @NotNull Function<ResourceKey<R>, T> factory) {
-        return entry(
-                callback -> new NoConfigBuilder<>(this, parent, name, callback, registryType, factory));
+        return new NoConfigBuilder<>(this, parent, name, registryType, factory);
     }
 
     // --- Items ---
+
+    public <T extends Item, P> ItemBuilder<T, P> item(
+                                                      @Nonnull P parent,
+                                                      @Nonnull String name,
+                                                      @Nonnull Function<Item.Properties, T> factory,
+                                                      boolean isComponentItem) {
+        return ItemBuilder.create(this, parent, name, factory, isComponentItem);
+    }
 
     @StandardAPI("Returns an ItemBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Item> ItemBuilder<T, RegistryCore> item(
                                                               @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
         return item(this, name, factory, false);
+    }
+
+    public ItemBuilder<Item, RegistryCore> item(@Nonnull String name) {
+        return item(this, name, Item::new, false);
     }
 
     public <T extends Item & IComponentItem<T>> ItemBuilder<T, RegistryCore> componentItem(
@@ -371,30 +365,17 @@ public class RegistryCore {
     }
 
     public ItemBuilder<ComponentItem, RegistryCore> componentItem(@Nonnull String name) {
-        return componentItem(name, ComponentItem::new);
-    }
-
-    public <T extends Item, P> ItemBuilder<T, P> item(
-                                                      @Nonnull P parent,
-                                                      @Nonnull String name,
-                                                      @Nonnull Function<Item.Properties, T> factory,
-                                                      boolean isComponentItem) {
-        return entry(
-                callback -> newItemBuilder(parent, name, callback, factory, isComponentItem)
-                        .transform(
-                                builder -> this.defaultCreativeModeTab == null ? builder : builder.tab(this.defaultCreativeModeTab)));
-    }
-
-    protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
-                                                                   @Nonnull P parent,
-                                                                   @Nonnull String name,
-                                                                   @Nonnull BuilderCallback callback,
-                                                                   @Nonnull Function<Item.Properties, T> factory,
-                                                                   boolean isComponentItem) {
-        return ItemBuilder.create(this, parent, name, callback, factory, isComponentItem);
+        return item(this, name, ComponentItem::new, true);
     }
 
     // --- Blocks ---
+
+    public <T extends Block, P> BlockBuilder<T, P> block(
+                                                         @Nonnull P parent,
+                                                         @Nonnull String name,
+                                                         @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+        return BlockBuilder.create(this, parent, name, factory);
+    }
 
     @StandardAPI("Returns a BlockBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Block> BlockBuilder<T, RegistryCore> block(
@@ -402,22 +383,18 @@ public class RegistryCore {
         return block(this, name, factory);
     }
 
-    public <T extends Block, P> BlockBuilder<T, P> block(
-                                                         @Nonnull P parent,
-                                                         @Nonnull String name,
-                                                         @Nonnull Function<BlockBehaviour.Properties, T> factory) {
-        return entry(callback -> newBlockBuilder(parent, name, callback, factory));
-    }
-
-    protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
-                                                                      @Nonnull P parent,
-                                                                      @Nonnull String name,
-                                                                      @Nonnull BuilderCallback callback,
-                                                                      @Nonnull Function<BlockBehaviour.Properties, T> factory) {
-        return BlockBuilder.create(this, parent, name, callback, factory);
+    public BlockBuilder<Block, RegistryCore> block(@Nonnull String name) {
+        return block(this, name, Block::new);
     }
 
     // --- Block Entities ---
+
+    public <T extends BlockEntity, P> BlockEntityBuilder<T, P> blockEntity(
+                                                                           @Nonnull P parent,
+                                                                           @Nonnull String name,
+                                                                           @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
+        return BlockEntityBuilder.create(this, parent, name, factory);
+    }
 
     @StandardAPI("Returns a BlockEntityBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends BlockEntity> BlockEntityBuilder<T, RegistryCore> blockEntity(
@@ -425,22 +402,12 @@ public class RegistryCore {
         return blockEntity(this, name, factory);
     }
 
-    public <T extends BlockEntity, P> BlockEntityBuilder<T, P> blockEntity(
-                                                                           @Nonnull P parent,
-                                                                           @Nonnull String name,
-                                                                           @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
-        return entry(callback -> newBlockEntityBuilder(parent, name, callback, factory));
-    }
-
-    protected <T extends BlockEntity, P> BlockEntityBuilder<T, P> newBlockEntityBuilder(
-                                                                                        @Nonnull P parent,
-                                                                                        @Nonnull String name,
-                                                                                        @Nonnull BuilderCallback callback,
-                                                                                        @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
-        return BlockEntityBuilder.create(this, parent, name, callback, factory);
-    }
-
     // --- Fluids ---
+
+    protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
+                                                                                 @Nonnull P parent, @Nonnull String name, @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+        return ModFluidBuilder.create(this, parent, name, fluidFactory);
+    }
 
     @StandardAPI("Returns a FluidBuilder for fluent chain configuration. Call .register() to finalise.")
     public FluidBuilder<BaseFlowingFluid.Flowing, RegistryCore> fluid(
@@ -464,16 +431,8 @@ public class RegistryCore {
                                                                     @Nonnull Identifier stillTexture,
                                                                     @Nonnull Identifier flowingTexture,
                                                                     @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
-        return entry(callback -> newFluidBuilder(parent, name, callback, fluidFactory))
+        return newFluidBuilder(parent, name, fluidFactory)
                 .clientExtension(stillTexture, flowingTexture);
-    }
-
-    protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
-                                                                                 @Nonnull P parent,
-                                                                                 @Nonnull String name,
-                                                                                 @Nonnull BuilderCallback callback,
-                                                                                 @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
-        return FluidBuilder.create(this, parent, name, callback, FluidType::new, fluidFactory);
     }
 
     // --- Group ---
@@ -520,7 +479,6 @@ public class RegistryCore {
         REGISTRY_CORES.forEach(
                 core -> core.registrations
                         .remove(key)
-                        .values()
                         .forEach(
                                 r -> {
                                     try {
@@ -547,9 +505,6 @@ public class RegistryCore {
 
     static void onBuildCreativeModeTabContents(BuildCreativeModeTabContentsEvent event) {
         var modifier = new CreativeModeTabModifier(event);
-        if (event.getTabKey() == CreativeModeTabs.SEARCH) {
-            REGISTRY_CORES.forEach(c -> c.getAll(Registries.ITEM).forEach(modifier::accept));
-        }
         REGISTRY_CORES.forEach(
                 core -> core.creativeModeTabModifiers
                         .get(event.getTabKey())

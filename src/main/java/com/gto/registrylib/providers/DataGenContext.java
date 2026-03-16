@@ -1,7 +1,5 @@
 package com.gto.registrylib.providers;
 
-import com.gto.registrylib.builders.Builder;
-
 import net.minecraft.resources.Identifier;
 
 import lombok.Getter;
@@ -29,12 +27,5 @@ public class DataGenContext<R, E extends R> implements Supplier<E> {
 
     public E getEntry() {
         return entry.get();
-    }
-
-    public static <R, E extends R> DataGenContext<R, E> from(Builder<R, E, ?, ?> builder) {
-        return new DataGenContext<>(
-                builder.asSupplier(),
-                builder.getName(),
-                Identifier.fromNamespaceAndPath(builder.getOwner().getModid(), builder.getName()));
     }
 }

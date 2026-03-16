@@ -10,6 +10,8 @@ import net.neoforged.neoforge.transfer.item.ItemResource;
 public class ItemProviderEntry<T extends ItemLike, S extends T> extends RegistryEntry<T, S>
                               implements ItemLike {
 
+    private ItemStack readOnlyStack;
+
     public ItemProviderEntry(ResourceKey<T> key) {
         super(key);
     }
@@ -20,6 +22,13 @@ public class ItemProviderEntry<T extends ItemLike, S extends T> extends Registry
 
     public ItemResource asResource(DataComponentPatch components) {
         return ItemResource.of(value, components);
+    }
+
+    public ItemStack readOnlyStack() {
+        if (readOnlyStack == null || readOnlyStack.count != 1) {
+            readOnlyStack = asStack();
+        }
+        return readOnlyStack;
     }
 
     public ItemStack asStack() {

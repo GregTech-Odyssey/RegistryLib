@@ -52,16 +52,16 @@ import javax.annotation.Nullable;
  */
 public class Group {
 
-    private final RegistryCore registryCore;
+    protected final RegistryCore core;
     @Nullable
-    private final ResourceKey<CreativeModeTab> tab;
+    protected final ResourceKey<CreativeModeTab> tab;
     @Nullable
-    private final String langPrefix;
-    private final UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier;
-    private final UnaryOperator<Item.Properties> itemPropertiesModifier;
+    protected final String langPrefix;
+    protected final UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier;
+    protected final UnaryOperator<Item.Properties> itemPropertiesModifier;
 
-    private Group(Builder builder) {
-        this.registryCore = builder.registryCore;
+    protected Group(Builder builder) {
+        this.core = builder.core;
         this.tab = builder.tab;
         this.langPrefix = builder.langPrefix;
         this.blockPropertiesModifier = builder.blockPropertiesModifier;
@@ -71,7 +71,7 @@ public class Group {
     // === Accessors ===
 
     public RegistryCore getRegistryLib() {
-        return registryCore;
+        return core;
     }
 
     // === Factory Methods ===
@@ -79,34 +79,31 @@ public class Group {
     @StandardAPI("Returns a BlockBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends Block> BlockBuilder<T, Group> block(
                                                           String name, Function<BlockBehaviour.Properties, T> factory) {
-        return registryCore.block(this, name, factory).transform(this::applyBlockDefaults);
+        return applyBlockDefaults(core.block(this, name, factory));
     }
 
     public <T extends Item> ItemBuilder<T, Group> item(
                                                        String name, Function<Item.Properties, T> factory) {
-        return registryCore.item(this, name, factory, false).transform(this::applyItemDefaults);
+        return applyItemDefaults(core.item(this, name, factory, false));
     }
 
     @StandardAPI("Returns an ItemBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends Item> ItemBuilder<T, Group> item(
                                                        String name, Function<Item.Properties, T> factory, boolean isComponentItem) {
-        return registryCore
-                .item(this, name, factory, isComponentItem)
-                .transform(this::applyItemDefaults);
+        return applyItemDefaults(core.item(this, name, factory, isComponentItem));
     }
 
     @StandardAPI("Returns a BlockEntityBuilder with group defaults applied. Call .register() to finalise.")
     public <T extends BlockEntity> BlockEntityBuilder<T, Group> blockEntity(
                                                                             String name, BlockEntityBuilder.BlockEntityFactory<T> factory) {
-        return registryCore.blockEntity(this, name, factory);
+        return core.blockEntity(this, name, factory);
     }
 
     @StandardAPI("Returns a FluidBuilder with group defaults applied. Call .register() to finalise.")
     public FluidBuilder<BaseFlowingFluid.Flowing, Group> fluid(
                                                                String name, Identifier stillTexture, Identifier flowingTexture) {
-        return registryCore
-                .fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new)
-                .transform(this::applyFluidDefaults);
+        return applyFluidDefaults(
+                core.fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new));
     }
 
     @StandardAPI("Returns a FluidBuilder with custom FluidFactory and group defaults applied. Call .register() to finalise.")
@@ -115,9 +112,7 @@ public class Group {
                                                                      Identifier stillTexture,
                                                                      Identifier flowingTexture,
                                                                      FluidBuilder.FluidFactory<T> fluidFactory) {
-        return registryCore
-                .fluid(this, name, stillTexture, flowingTexture, fluidFactory)
-                .transform(this::applyFluidDefaults);
+        return applyFluidDefaults(core.fluid(this, name, stillTexture, flowingTexture, fluidFactory));
     }
 
     // === Default Application ===
@@ -137,7 +132,7 @@ public class Group {
     private <T extends Item> ItemBuilder<T, Group> applyItemDefaults(ItemBuilder<T, Group> builder) {
         var b = builder.properties(itemPropertiesModifier);
         if (tab != null) {
-            b = b.tab(tab);
+            b = b.addTab(tab);
         }
         if (langPrefix != null) {
             b = b.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
@@ -160,17 +155,17 @@ public class Group {
 
     public static class Builder {
 
-        private final RegistryCore registryCore;
+        protected final RegistryCore core;
         @Nullable
-        private ResourceKey<CreativeModeTab> tab;
+        protected ResourceKey<CreativeModeTab> tab;
         @Nullable
-        private String langPrefix;
-        private UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier = FunctionUtil.identityUnaryOp();
-        private UnaryOperator<Item.Properties> itemPropertiesModifier = FunctionUtil.identityUnaryOp();
+        protected String langPrefix;
+        protected UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier = FunctionUtil.identityUnaryOp();
+        protected UnaryOperator<Item.Properties> itemPropertiesModifier = FunctionUtil.identityUnaryOp();
 
-        Builder(RegistryCore registryCore, String name) {
-            this.registryCore = registryCore;
-            this.langPrefix = RegistryLibLangProvider.toEnglishName(name);
+        protected Builder(RegistryCore core, String name) {
+            this.core = core;
+            this.langPrefix = core.doDatagen() ? RegistryLibLangProvider.toEnglishName(name) : null;
         }
 
         /**
@@ -189,7 +184,9 @@ public class Group {
          */
         @StandardAPI
         public Builder langPrefix(String prefix) {
-            this.langPrefix = prefix;
+            if (core.doDatagen()) {
+                this.langPrefix = prefix;
+            }
             return this;
         }
 

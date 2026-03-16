@@ -2,19 +2,19 @@ package com.gto.registrylib.builders;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
-import com.gto.registrylib.providers.ProviderType;
-import com.gto.registrylib.providers.RegistryLibLangProvider;
-import com.gto.registrylib.providers.RegistryLibTagsProvider;
+import com.gto.registrylib.providers.*;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
+import net.neoforged.neoforge.registries.datamaps.DataMapType;
 
 import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
@@ -24,53 +24,59 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 import javax.annotation.Nonnull;
 
 @SuppressWarnings("unchecked")
-public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuilder<R, T, P, S>>
-                                     implements Builder<R, T, P, S> {
+public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuilder<R, T, P, S>> {
 
+    protected final RegistryCore core;
+    protected final P parent;
     @Getter
-    private final RegistryCore owner;
-    @Getter
-    private final P parent;
-    @Getter
-    private final String name;
-    @Getter
-    private final BuilderCallback callback;
-    @Getter
-    private final ResourceKey<? extends Registry<R>> registryKey;
+    protected final String name;
+    protected final ResourceKey<? extends Registry<R>> registryKey;
 
-    @Getter
-    private final List<Consumer<? super T>> callbacks = new ArrayList<>();
-
-    private final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
-
-    private final Supplier<T> valueSupplier;
+    protected final List<Consumer<? super T>> callbacks = new ArrayList<>();
+    protected final Supplier<T> valueSupplier;
+    protected final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
 
     protected AbstractBuilder(
-                              RegistryCore owner,
-                              P parent,
-                              String name,
-                              BuilderCallback callback,
-                              ResourceKey<? extends Registry<R>> registryKey) {
-        this.owner = owner;
+                              RegistryCore core, P parent, String name, ResourceKey<? extends Registry<R>> registryKey) {
+        this.core = core;
         this.parent = parent;
         this.name = name;
-        this.callback = callback;
         this.registryKey = registryKey;
-        this.tagsByType = owner.doDatagen() ? new Reference2ReferenceOpenHashMap<>() : null;
-        this.valueSupplier = Lazy.of(() -> (T) owner.get(name, registryKey).get());
+        this.tagsByType = core.doDatagen() ? new Reference2ReferenceOpenHashMap<>() : null;
+        this.valueSupplier = Lazy.of(() -> (T) core.get(name, registryKey).get());
     }
 
     protected abstract T createEntry(ResourceKey<R> key);
 
-    @Override
+    protected RegistryEntry<R, T> createEntryWrapper(ResourceKey<R> key) {
+        return new RegistryEntry<>(key);
+    }
+
+    public T getValue() {
+        return valueSupplier.get();
+    }
+
+    public DataGenContext<R, T> getDataGenContext() {
+        return new DataGenContext<>(
+                valueSupplier, name, Identifier.fromNamespaceAndPath(core.getModid(), name));
+    }
+
+    /**
+     * Registers this entry and returns the parent object, allowing the caller to continue configuring
+     * the parent builder. Typically used to close a sub-entry chain: {@code
+     * .item().tooltip(...).build() // returns the parent BlockBuilder}.
+     */
+    @StandardAPI
+    public P build() {
+        register();
+        return parent;
+    }
+
     @StandardAPI
     @MustBeInvokedByOverriders
     public RegistryEntry<R, T> register() {
@@ -81,19 +87,94 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                             (_, prov) -> tags.forEach(
                                     (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
         }
-        return callback.accept(name, registryKey, this, this::createEntry, this::createEntryWrapper);
+        return core.registry(name, registryKey, callbacks, this::createEntry, this::createEntryWrapper);
     }
 
-    protected RegistryEntry<R, T> createEntryWrapper(ResourceKey<R> key) {
-        return new RegistryEntry<>(key);
-    }
-
-    @Override
-    public @NotNull Supplier<T> asSupplier() {
-        return valueSupplier;
+    public static <R, T extends R> RegistryEntry<R, T> registry(
+                                                                RegistryCore core,
+                                                                String name,
+                                                                ResourceKey<? extends Registry<R>> type,
+                                                                AbstractBuilder<R, T, ?, ?> builder,
+                                                                Function<ResourceKey<R>, ? extends T> factory) {
+        return core.registry(name, type, builder.callbacks, factory, RegistryEntry::new);
     }
 
     // === Configuration ===
+
+    @StandardAPI
+    public <D> S setData(
+                         @NotNull GeneratorType<? extends D> type, @NotNull BiConsumer<DataGenContext<R, T>, D> cons) {
+        if (core.doDatagen()) {
+            core.setDataGenerator(
+                    name, registryKey, type, prov -> cons.accept(getDataGenContext(), prov));
+        }
+        return (S) this;
+    }
+
+    @StandardAPI
+    public <D> S addMiscData(
+                             @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
+        core.addDataGenerator(type, cons);
+        return (S) this;
+    }
+
+    @StandardAPI
+    public <D> S dataMap(@NotNull DataMapType<R, D> type, @NotNull D val) {
+        if (core.doDatagen()) {
+            core.addDataGenerator(
+                    ProviderType.DATA_MAP, e -> e.builder(type).add(getDataGenContext().getId(), val, false));
+        }
+        return (S) this;
+    }
+
+    @StandardAPI
+    public <D> S dataMap(
+                         @NotNull DataMapType<R, D> type, @NotNull Function<DataGenContext<R, T>, D> factory) {
+        if (core.doDatagen()) {
+            core.addDataGenerator(
+                    ProviderType.DATA_MAP,
+                    e -> {
+                        var ctx = getDataGenContext();
+                        e.builder(type).add(ctx.getId(), factory.apply(ctx), false);
+                    });
+        }
+        return (S) this;
+    }
+
+    @StandardAPI
+    public <D> S dataMap(
+                         @NotNull DataMapType<R, D> type,
+                         @NotNull BiFunction<DataGenContext<R, T>, HolderLookup.Provider, D> factory) {
+        if (core.doDatagen()) {
+            core.addDataGenerator(
+                    ProviderType.DATA_MAP,
+                    e -> {
+                        var ctx = getDataGenContext();
+                        e.builder(type).add(ctx.getId(), factory.apply(ctx, e.getProvider()), false);
+                    });
+        }
+        return (S) this;
+    }
+
+    @StandardAPI
+    public S onRegister(@NotNull Consumer<? super T> callback) {
+        callbacks.add(callback);
+        return (S) this;
+    }
+
+    @StandardAPI
+    public <OR> S onRegisterAfter(
+                                  @NotNull ResourceKey<? extends Registry<OR>> dependencyType,
+                                  @NotNull Consumer<? super T> callback) {
+        return onRegister(
+                e -> {
+                    if (core.isRegistered(dependencyType)) {
+                        callback.accept(e);
+                    } else {
+                        core.addRegisterCallback(dependencyType, () -> callback.accept(e));
+                    }
+                });
+    }
 
     @SafeVarargs
     @StandardAPI
@@ -116,7 +197,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     }
 
     protected TagEntry asTag(boolean isOptional) {
-        Identifier id = Identifier.fromNamespaceAndPath(getOwner().getModid(), getName());
+        Identifier id = Identifier.fromNamespaceAndPath(core.getModid(), name);
         if (isOptional) return TagEntry.optionalElement(id);
         return TagEntry.element(id);
     }
@@ -138,15 +219,15 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     @StandardAPI
     public S lang(@NotNull Function<T, String> langKeyProvider) {
-        if (owner.doDatagen()) {
-            return lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, getRegistryKey()));
+        if (core.doDatagen()) {
+            return lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, registryKey));
         }
         return (S) this;
     }
 
     @StandardAPI
     public S lang(@NotNull Function<T, String> langKeyProvider, @NotNull String name) {
-        if (owner.doDatagen()) {
+        if (core.doDatagen()) {
             return lang(langKeyProvider, FunctionUtil.constantBiFn(name));
         }
         return (S) this;
@@ -157,7 +238,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                   @Nonnull ProviderType<? extends RegistryLibLangProvider> type,
                   @Nonnull Function<T, String> langKeyProvider,
                   @Nonnull String name) {
-        if (owner.doDatagen()) {
+        if (core.doDatagen()) {
             return setData(type, (ctx, prov) -> prov.add(langKeyProvider.apply(ctx.getEntry()), name));
         }
         return (S) this;

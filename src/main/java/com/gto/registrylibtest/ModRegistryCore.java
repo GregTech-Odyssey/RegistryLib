@@ -1,10 +1,7 @@
 package com.gto.registrylibtest;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.builders.BlockBuilder;
-import com.gto.registrylib.builders.BuilderCallback;
 import com.gto.registrylib.builders.FluidBuilder;
-import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.providers.ProviderType;
@@ -89,13 +86,18 @@ public class ModRegistryCore extends RegistryCore {
                                                             @Nonnull P parent,
                                                             @Nonnull String name,
                                                             @Nonnull Function<BlockBehaviour.Properties, T> factory) {
-        return (ModBlockBuilder<T, P>) super.block(parent, name, factory);
+        return ModBlockBuilder.create(this, parent, name, factory);
     }
 
     @Override
     public <T extends Item> ModItemBuilder<T, RegistryCore> item(
                                                                  @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
         return item(this, name, factory, false);
+    }
+
+    @Override
+    public ModItemBuilder<Item, RegistryCore> item(@Nonnull String name) {
+        return item(this, name, Item::new, false);
     }
 
     @Override
@@ -115,7 +117,7 @@ public class ModRegistryCore extends RegistryCore {
                                                          @Nonnull String name,
                                                          @Nonnull Function<Item.Properties, T> factory,
                                                          boolean isComponentItem) {
-        return (ModItemBuilder<T, P>) super.item(parent, name, factory, isComponentItem);
+        return ModItemBuilder.create(this, parent, name, factory, isComponentItem);
     }
 
     @Override
@@ -131,30 +133,8 @@ public class ModRegistryCore extends RegistryCore {
     // ── Builder hooks ────────────────────────────────────────────────────────
 
     @Override
-    protected <T extends Block, P> BlockBuilder<T, P> newBlockBuilder(
-                                                                      @Nonnull P parent,
-                                                                      @Nonnull String name,
-                                                                      @Nonnull BuilderCallback callback,
-                                                                      @Nonnull Function<BlockBehaviour.Properties, T> factory) {
-        return ModBlockBuilder.create(this, parent, name, callback, factory);
-    }
-
-    @Override
-    protected <T extends Item, P> ItemBuilder<T, P> newItemBuilder(
-                                                                   @Nonnull P parent,
-                                                                   @Nonnull String name,
-                                                                   @Nonnull BuilderCallback callback,
-                                                                   @Nonnull Function<Item.Properties, T> factory,
-                                                                   boolean isComponentItem) {
-        return ModItemBuilder.create(this, parent, name, callback, factory, isComponentItem);
-    }
-
-    @Override
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
-                                                                                 @Nonnull P parent,
-                                                                                 @Nonnull String name,
-                                                                                 @Nonnull BuilderCallback callback,
-                                                                                 @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
-        return ModFluidBuilder.create(this, parent, name, callback, fluidFactory);
+                                                                                 @Nonnull P parent, @Nonnull String name, @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+        return ModFluidBuilder.create(this, parent, name, fluidFactory);
     }
 }

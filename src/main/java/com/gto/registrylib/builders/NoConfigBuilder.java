@@ -16,10 +16,9 @@ public class NoConfigBuilder<R, T extends R, P>
                            RegistryCore owner,
                            P parent,
                            String name,
-                           BuilderCallback callback,
                            ResourceKey<? extends Registry<R>> registryType,
                            Function<ResourceKey<R>, T> factory) {
-        super(owner, parent, name, callback, registryType);
+        super(owner, parent, name, registryType);
         this.factory = factory;
     }
 

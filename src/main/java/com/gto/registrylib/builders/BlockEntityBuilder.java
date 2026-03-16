@@ -36,24 +36,16 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     }
 
     public static <T extends BlockEntity, P> BlockEntityBuilder<T, P> create(
-                                                                             RegistryCore owner,
-                                                                             P parent,
-                                                                             String name,
-                                                                             BuilderCallback callback,
-                                                                             BlockEntityFactory<T> factory) {
-        return new BlockEntityBuilder<>(owner, parent, name, callback, factory);
+                                                                             RegistryCore owner, P parent, String name, BlockEntityFactory<T> factory) {
+        return new BlockEntityBuilder<>(owner, parent, name, factory);
     }
 
     private final BlockEntityFactory<BE> factory;
     private final Set<Supplier<? extends Block>> validBlocks = new ReferenceOpenHashSet<>();
 
     protected BlockEntityBuilder(
-                                 RegistryCore owner,
-                                 P parent,
-                                 String name,
-                                 BuilderCallback callback,
-                                 BlockEntityFactory<BE> factory) {
-        super(owner, parent, name, callback, Registries.BLOCK_ENTITY_TYPE);
+                                 RegistryCore owner, P parent, String name, BlockEntityFactory<BE> factory) {
+        super(owner, parent, name, Registries.BLOCK_ENTITY_TYPE);
         this.factory = factory;
     }
 
@@ -76,7 +68,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @SuppressWarnings("rawtypes")
     public BlockEntityBuilder<BE, P> renderer(
                                               @Nonnull Supplier<? extends BlockEntityRendererProvider> renderer) {
-        Supplier supplier = this.asSupplier();
+        Supplier supplier = valueSupplier;
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT, () -> () -> Client.registerBER(supplier, renderer.get()));
         return this;
@@ -85,7 +77,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @Override
     protected BlockEntityType<BE> createEntry(ResourceKey<BlockEntityType<?>> key) {
         Block[] blocks = validBlocks.stream().map(Supplier::get).toArray(Block[]::new);
-        var supplier = asSupplier();
+        var supplier = valueSupplier;
         return new BlockEntityType<>(
                 (pos, state) -> factory.create(supplier.get(), pos, state), blocks);
     }

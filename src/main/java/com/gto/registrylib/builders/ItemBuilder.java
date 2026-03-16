@@ -29,8 +29,6 @@ import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.function.*;
 
 import javax.annotation.Nonnull;
@@ -41,10 +39,9 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                                                                RegistryCore owner,
                                                                P parent,
                                                                String name,
-                                                               BuilderCallback callback,
                                                                Function<Item.Properties, T> factory,
                                                                boolean isComponentItem) {
-        return new ItemBuilder<>(owner, parent, name, callback, factory, isComponentItem)
+        return new ItemBuilder<>(owner, parent, name, factory, isComponentItem)
                 .defaultModel()
                 .defaultLang();
     }
@@ -54,26 +51,23 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     private Supplier<Item.Properties> initialProperties;
     private Function<Item.Properties, Item.Properties> propertiesCallback = FunctionUtil.identityFn();
 
-    private final Map<ResourceKey<CreativeModeTab>, BiConsumer<Item, CreativeModeTabModifier>> creativeModeTabs = new Reference2ReferenceOpenHashMap<>();
+    private final Reference2ReferenceOpenHashMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabs = new Reference2ReferenceOpenHashMap<>();
 
-    private final List<TooltipNodeCollector.TooltipConfig> tooltipConfigs = new ArrayList<>();
-    private final List<ItemAttachment<?>> pendingAttachments;
+    private final ArrayList<TooltipNodeCollector.TooltipConfig> tooltipConfigs = new ArrayList<>();
+    private final ArrayList<ItemAttachment<?>> pendingAttachments;
 
     protected ItemBuilder(
                           RegistryCore owner,
                           P parent,
                           String name,
-                          BuilderCallback callback,
                           Function<Item.Properties, T> factory,
                           boolean isComponentItem) {
-        super(owner, parent, name, callback, Registries.ITEM);
+        super(owner, parent, name, Registries.ITEM);
         this.factory = factory;
         pendingAttachments = isComponentItem ? new ArrayList<>() : null;
         onRegister(
                 item -> {
-                    creativeModeTabs.forEach(
-                            (creativeModeTab, consumer) -> owner.modifyCreativeModeTab(
-                                    creativeModeTab, modifier -> consumer.accept(item, modifier)));
+                    creativeModeTabs.forEach(owner::modifyCreativeModeTab);
                     creativeModeTabs.clear();
 
                     // 注册 tooltip 配置
@@ -133,23 +127,24 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     // === Configuration ===
 
     @StandardAPI
-    public ItemBuilder<T, P> tab(
-                                 @NotNull ResourceKey<CreativeModeTab> tab,
-                                 @NotNull BiConsumer<Item, CreativeModeTabModifier> modifier) {
+    public ItemBuilder<T, P> addTab(
+                                    @NotNull ResourceKey<CreativeModeTab> tab,
+                                    @NotNull Consumer<CreativeModeTabModifier> modifier) {
         creativeModeTabs.put(tab, modifier);
         return this;
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> tab(
-                                 @NotNull ResourceKey<CreativeModeTab> tab,
-                                 @NotNull Consumer<CreativeModeTabModifier> modifier) {
-        return tab(tab, ($, m) -> modifier.accept(m));
+    public ItemBuilder<T, P> addTab(@NotNull ResourceKey<CreativeModeTab> tab) {
+        creativeModeTabs.put(tab, CreativeModeTabModifier.DEFAULT);
+        return this;
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> tab(@NotNull ResourceKey<CreativeModeTab> tab) {
-        return tab(tab, (item, modifier) -> modifier.accept(item));
+    public ItemBuilder<T, P> addDefaultTab() {
+        var tab = core.getDefaultCreativeModeTab();
+        if (tab != null) creativeModeTabs.put(tab, CreativeModeTabModifier.DEFAULT);
+        return this;
     }
 
     @StandardAPI
@@ -161,7 +156,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     @StandardAPI
     public ItemBuilder<T, P> model(
                                    @NotNull Supplier<BiConsumer<DataGenContext<Item, T>, RegistryLibItemModelGenerator>> cons) {
-        if (!getOwner().doDatagen()) return this;
+        if (!core.doDatagen()) return this;
         return setData(ProviderType.ITEM_MODEL, cons.get());
     }
 
@@ -230,6 +225,21 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     @Override
     @StandardAPI
     public ItemEntry<T> register() {
-        return (ItemEntry<T>) super.register();
+        var entry = (ItemEntry<T>) super.register();
+        if (creativeModeTabs.isEmpty()) {
+            var tab = core.getDefaultCreativeModeTab();
+            if (tab != null) creativeModeTabs.put(tab, m -> m.acceptEntry(entry));
+        } else {
+            var visibility = CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS;
+            for (var it = creativeModeTabs.reference2ReferenceEntrySet().fastIterator(); it.hasNext();) {
+                var e = it.next();
+                if (e.getValue() == CreativeModeTabModifier.DEFAULT) {
+                    var finalVisibility = visibility;
+                    e.setValue(m -> m.acceptEntry(entry, finalVisibility));
+                    visibility = CreativeModeTab.TabVisibility.PARENT_TAB_ONLY;
+                }
+            }
+        }
+        return entry;
     }
 }

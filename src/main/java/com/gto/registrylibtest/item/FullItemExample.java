@@ -67,11 +67,13 @@ public class FullItemExample {
             .lang(ModRegistryCore.LANG_ZH_CN, "魔法杆")
             // --- defaultModel: 使用默认扁平物品模型 ---
             .defaultModel()
-            // --- tab: 额外加入原版工具标签页 ---
-            .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+            // --- addDefaultTab: 如果没有添加任何标签页，注册器会自动添加一个默认的，否则不会添加，如果需要添加，就需要调用此方法 ---
+            .addDefaultTab()
+            // --- addTab: 加入新的工具标签页 ---
+            .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
             // --- removeTab: 演示从某个标签页中移除（此处移除后又加回，仅展示 API） ---
             .removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-            .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+            .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
             // --- tag: 给物品添加原版标签 ---
             .tag(ItemTags.DURABILITY_ENCHANTABLE)
             // --- tooltip（快捷版）: 添加单行 Tooltip ---

@@ -19,7 +19,7 @@ public class SimpleBlockExample {
     public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
             .block(RegistryLibTest.REGISTRYLIB, "decorative_stone", Block::new)
             .langCn("装饰石") // Approach 2: ModBlockBuilder.langCn()，须最先调用
-            .initialProperties(() -> Blocks.STONE)
+            .initialProperties(Blocks.STONE)
             .lang("Decorative Stone")
             .simpleItem()
             .register();

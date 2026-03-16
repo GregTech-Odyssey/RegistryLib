@@ -1,7 +1,6 @@
 package com.gto.registrylibtest.builder;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.builders.BuilderCallback;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylibtest.ModRegistryCore;
 
@@ -20,12 +19,8 @@ import javax.annotation.Nonnull;
 public class ModFluidBuilder<T extends BaseFlowingFluid, P> extends FluidBuilder<T, P> {
 
     public static <T extends BaseFlowingFluid, P> ModFluidBuilder<T, P> create(
-                                                                               RegistryCore owner,
-                                                                               P parent,
-                                                                               String name,
-                                                                               BuilderCallback callback,
-                                                                               FluidFactory<T> fluidFactory) {
-        var builder = new ModFluidBuilder<>(owner, parent, name, callback, FluidType::new, fluidFactory);
+                                                                               RegistryCore owner, P parent, String name, FluidFactory<T> fluidFactory) {
+        var builder = new ModFluidBuilder<>(owner, parent, name, FluidType::new, fluidFactory);
         return (ModFluidBuilder<T, P>) builder.defaultLang().defaultSource().defaultBlock().defaultBucket();
     }
 
@@ -33,10 +28,9 @@ public class ModFluidBuilder<T extends BaseFlowingFluid, P> extends FluidBuilder
                               RegistryCore owner,
                               P parent,
                               String name,
-                              BuilderCallback callback,
                               FluidTypeFactory typeFactory,
                               FluidFactory<T> fluidFactory) {
-        super(owner, parent, name, callback, typeFactory, fluidFactory);
+        super(owner, parent, name, typeFactory, fluidFactory);
     }
 
     /**

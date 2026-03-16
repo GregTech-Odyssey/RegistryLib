@@ -26,7 +26,7 @@ public class FullBlockExample {
     public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB
             .block("magic_ore", Block::new)
             // --- initialProperties: 复用已有方块的属性 ---
-            .initialProperties(() -> Blocks.IRON_ORE)
+            .initialProperties(Blocks.IRON_ORE)
             // --- properties: 在已有基础上追加修改 ---
             .properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops())
             // --- lang: 设置英文显示名称 ---
@@ -53,7 +53,7 @@ public class FullBlockExample {
 
     public static final BlockEntry<TimerBlock> STANDALONE_TIMER = RegistryLibTest.REGISTRYLIB
             .block("standalone_timer", p -> new TimerBlock(p, 4))
-            .initialProperties(() -> Blocks.IRON_BLOCK)
+            .initialProperties(Blocks.IRON_BLOCK)
             .lang("Standalone Timer")
             .lang(ModRegistryCore.LANG_ZH_CN, "独立计时器")
             .defaultLoot()
@@ -71,7 +71,7 @@ public class FullBlockExample {
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP
             .block("tier_1", p -> new TimerBlock(p, 1))
-            .initialProperties(() -> Blocks.IRON_BLOCK)
+            .initialProperties(Blocks.IRON_BLOCK)
             .item(
                     item -> item.tooltip(
                             (collector, stack) -> {
@@ -84,7 +84,7 @@ public class FullBlockExample {
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_2 = TIMER_GROUP
             .block("tier_2", p -> new TimerBlock(p, 2))
-            .initialProperties(() -> Blocks.IRON_BLOCK)
+            .initialProperties(Blocks.IRON_BLOCK)
             .item(
                     item -> item.tooltip(
                             (collector, stack) -> {
@@ -97,7 +97,7 @@ public class FullBlockExample {
 
     public static final BlockEntry<TimerBlock> TIMER_TIER_3 = TIMER_GROUP
             .block("tier_3", p -> new TimerBlock(p, 3))
-            .initialProperties(() -> Blocks.IRON_BLOCK)
+            .initialProperties(Blocks.IRON_BLOCK)
             .item(
                     item -> item.tooltip(
                             (collector, stack) -> {

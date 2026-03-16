@@ -32,6 +32,8 @@ public class FluidEntry<T extends BaseFlowingFluid> extends RegistryEntry<Fluid,
 
     private final @Nullable BlockEntry<? extends Block> block;
 
+    private FluidStack readOnlyStack;
+
     public FluidEntry(RegistryCore owner, ResourceKey<Fluid> key) {
         super(key);
         BlockEntry<? extends Block> block = null;
@@ -69,6 +71,13 @@ public class FluidEntry<T extends BaseFlowingFluid> extends RegistryEntry<Fluid,
 
     public FluidResource asResource(DataComponentPatch components) {
         return FluidResource.of(value, components);
+    }
+
+    public FluidStack readOnlyStack() {
+        if (readOnlyStack == null) {
+            readOnlyStack = asStack();
+        }
+        return readOnlyStack;
     }
 
     public FluidStack asStack() {

@@ -1,7 +1,6 @@
 package com.gto.registrylibtest.builder;
 
 import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.builders.BuilderCallback;
 import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylibtest.ModRegistryCore;
 
@@ -24,10 +23,9 @@ public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
                                                                   RegistryCore owner,
                                                                   P parent,
                                                                   String name,
-                                                                  BuilderCallback callback,
                                                                   Function<Item.Properties, T> factory,
                                                                   boolean isComponentItem) {
-        var builder = new ModItemBuilder<>(owner, parent, name, callback, factory, isComponentItem);
+        var builder = new ModItemBuilder<>(owner, parent, name, factory, isComponentItem);
         return (ModItemBuilder<T, P>) builder.defaultModel().defaultLang();
     }
 
@@ -35,10 +33,9 @@ public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
                              RegistryCore owner,
                              P parent,
                              String name,
-                             BuilderCallback callback,
                              Function<Item.Properties, T> factory,
                              boolean isComponentItem) {
-        super(owner, parent, name, callback, factory, isComponentItem);
+        super(owner, parent, name, factory, isComponentItem);
     }
 
     /**

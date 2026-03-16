@@ -95,10 +95,9 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                                                                             RegistryCore owner,
                                                                             P parent,
                                                                             String name,
-                                                                            BuilderCallback callback,
                                                                             FluidTypeFactory typeFactory,
                                                                             FluidFactory<T> fluidFactory) {
-        return new FluidBuilder<>(owner, parent, name, callback, typeFactory, fluidFactory)
+        return new FluidBuilder<>(owner, parent, name, typeFactory, fluidFactory)
                 .defaultLang()
                 .defaultSource()
                 .defaultBlock()
@@ -109,10 +108,9 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                                                                             RegistryCore owner,
                                                                             P parent,
                                                                             String name,
-                                                                            BuilderCallback callback,
                                                                             Supplier<FluidType> fluidType,
                                                                             FluidFactory<T> fluidFactory) {
-        return new FluidBuilder<>(owner, parent, name, callback, fluidType, fluidFactory)
+        return new FluidBuilder<>(owner, parent, name, fluidType, fluidFactory)
                 .defaultLang()
                 .defaultSource()
                 .defaultBlock()
@@ -146,10 +144,9 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                         RegistryCore owner,
                         P parent,
                         String name,
-                        BuilderCallback callback,
                         FluidTypeFactory typeFactory,
                         FluidFactory<T> fluidFactory) {
-        super(owner, parent, "flowing_" + name, callback, Registries.FLUID);
+        super(owner, parent, "flowing_" + name, Registries.FLUID);
         this.sourceName = name;
         this.bucketName = name + "_bucket";
         this.fluidFactory = fluidFactory;
@@ -161,10 +158,9 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                         RegistryCore owner,
                         P parent,
                         String name,
-                        BuilderCallback callback,
                         Supplier<FluidType> fluidType,
                         FluidFactory<T> fluidFactory) {
-        super(owner, parent, "flowing_" + name, callback, Registries.FLUID);
+        super(owner, parent, "flowing_" + name, Registries.FLUID);
         this.sourceName = name;
         this.bucketName = name + "_bucket";
         this.fluidFactory = fluidFactory;
@@ -251,15 +247,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
         this.defaultBlock = false;
-        final Supplier<T> supplier = asSupplier();
+        final Supplier<T> supplier = valueSupplier;
         final Supplier<Integer> lightLevel = Lazy.of(() -> fluidType.get().getLightLevel());
         final ToIntFunction<BlockState> lightLevelInt = $ -> lightLevel.get();
-        final var block = getOwner()
-                .<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier.get(), p))
+        final var block = core.<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier.get(), p))
                 .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
                 .properties(p -> p.lightLevel(lightLevelInt))
                 .blockstate(() -> (ctx, prov) -> prov.createNonTemplateModelBlock(ctx.get()));
-        var blockSupplier = block.asSupplier();
+        var blockSupplier = block.valueSupplier;
         this.fluidProperties(p -> p.block(blockSupplier));
         consumer.accept(block);
         return block.build();
@@ -319,9 +314,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
             throw new IllegalStateException("Cannot create a bucket before creating a source block");
         }
         final int bucketTintColor = this.tintColor;
-        final var item = getOwner()
-                .<I, FluidBuilder<T, P>>item(
-                        this, bucketName, p -> factory.apply(source.get(), p), false)
+        final var item = core.<I, FluidBuilder<T, P>>item(
+                this, bucketName, p -> factory.apply(source.get(), p), false)
                 .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
                 .model(
                         () -> (ctx, prov) -> {
@@ -339,10 +333,10 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                                 prov.itemModelOutput.accept(ctx.get(), ItemModelUtils.plainModel(modelId));
                             }
                         });
-        var itemSupplier = item.asSupplier();
+        var itemSupplier = item.valueSupplier;
         this.fluidProperties(p -> p.bucket(itemSupplier));
         if (defaultBucketTab != null) {
-            item.tab(defaultBucketTab);
+            item.addTab(defaultBucketTab);
         }
         consumer.accept(item);
         return item.build();
@@ -375,7 +369,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     private BaseFlowingFluid.Properties makeProperties() {
         Supplier<? extends BaseFlowingFluid> source = this.source;
-        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, source, asSupplier());
+        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, source, valueSupplier);
         fluidProperties.accept(ret);
         return ret;
     }
@@ -384,7 +378,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         FluidType.Properties properties = FluidType.Properties.create();
         this.typeProperties.accept(properties);
         properties.descriptionId(
-                Identifier.fromNamespaceAndPath(getOwner().getModid(), sourceName).toLanguageKey("fluid"));
+                Identifier.fromNamespaceAndPath(core.getModid(), sourceName).toLanguageKey("fluid"));
         return properties;
     }
 
@@ -393,12 +387,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @StandardAPI
     public FluidEntry<T> register() {
         if (this.registerType) {
-            getOwner()
-                    .simple(
-                            this,
-                            this.sourceName,
-                            NeoForgeRegistries.Keys.FLUID_TYPES,
-                            _ -> this.fluidType.get());
+            core.simple(
+                    this, this.sourceName, NeoForgeRegistries.Keys.FLUID_TYPES, _ -> this.fluidType.get());
         }
 
         if (defaultSource == Boolean.TRUE) {
@@ -413,9 +403,9 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
         Supplier<? extends BaseFlowingFluid> source = this.source;
         if (source != null) {
-            getCallback().accept(sourceName, Registries.FLUID, (FluidBuilder) this, _ -> source.get());
+            registry(core, sourceName, Registries.FLUID, (FluidBuilder) this, _ -> source.get());
         } else {
-            throw new IllegalStateException("Fluid must have a source version: " + getName());
+            throw new IllegalStateException("Fluid must have a source version: " + name);
         }
 
         return (FluidEntry<T>) super.register();
@@ -428,7 +418,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @Override
     protected RegistryEntry<Fluid, T> createEntryWrapper(ResourceKey<Fluid> key) {
-        return new FluidEntry<>(getOwner(), key);
+        return new FluidEntry<>(core, key);
     }
 
     // --- DefaultFluidTypeExtension ---
