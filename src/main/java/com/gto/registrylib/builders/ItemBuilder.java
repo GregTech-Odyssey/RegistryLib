@@ -13,7 +13,6 @@ import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.FunctionUtil;
-import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
@@ -29,7 +28,6 @@ import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.*;
 
@@ -123,19 +121,15 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> texture(Supplier<BufferedImage> image) {
+    public ItemBuilder<T, P> texture(String path, Supplier<BufferedImage> image) {
         if (!core.doDatagen()) return this;
-        setData(
-                ProviderType.GENERAL_RESOURCE,
-                p -> p.addItemTexture(
-                        (path, stream) -> {
-                            try {
-                                return ImageUtil.writeToStream(name, image.get(), path, stream);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }));
-        return this;
+        return addData(
+                ProviderType.GENERAL_RESOURCE, p -> p.addItemTexture(p.simpleTexture(path, image)));
+    }
+
+    @SyntaxSugar("texture(name, image)")
+    public ItemBuilder<T, P> texture(Supplier<BufferedImage> image) {
+        return texture(name, image);
     }
 
     @StandardAPI
@@ -163,15 +157,15 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * 配置在 tooltip 渲染阶段执行，接收当前 ItemStack， 可根据 ItemStack 数据动态生成节点。
      */
     @StandardAPI
-    public ItemBuilder<T, P> tooltip(@Nonnull TooltipNodeCollector.TooltipConfig config) {
+    public ItemBuilder<T, P> addTooltip(@Nonnull TooltipNodeCollector.TooltipConfig config) {
         tooltipConfigs.add(config);
         return this;
     }
 
     /** 便捷添加一个 tooltip */
-    @SyntaxSugar("tooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)))")
-    public ItemBuilder<T, P> tooltip(@Nonnull Component component) {
-        tooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)));
+    @SyntaxSugar("addTooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)))")
+    public ItemBuilder<T, P> addTooltip(@Nonnull Component component) {
+        addTooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)));
         return this;
     }
 
@@ -185,8 +179,8 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     @SafeVarargs
     @StandardAPI
-    public final ItemBuilder<T, P> tag(@NotNull TagKey<Item>... tags) {
-        return tag(ProviderType.ITEM_TAGS, tags);
+    public final ItemBuilder<T, P> addTag(@NotNull TagKey<Item>... tags) {
+        return addTag(ProviderType.ITEM_TAGS, false, tags);
     }
 
     @Override

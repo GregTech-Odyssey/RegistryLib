@@ -99,7 +99,14 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @StandardAPI
     public <D> S setData(
                          @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
-        core.addDataGenerator(name, registryKey, type, cons);
+        core.setDataGenerator(name, registryKey, type, cons);
+        return (S) this;
+    }
+
+    @StandardAPI
+    public <D> S addData(
+                         @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
+        core.addDataGenerator(type, cons);
         return (S) this;
     }
 
@@ -125,18 +132,18 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     @SafeVarargs
     @StandardAPI
-    public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
-                                                                                 @NotNull ProviderType<? extends TP> type, @NotNull TagKey<R>... tags) {
-        return tag(type, false, tags);
+    public final <E, TP extends TagsProvider<E> & RegistryLibTagsProvider<E>> S addTag(
+                                                                                       @NotNull ProviderType<? extends TP> type, @NotNull TagKey<E>... tags) {
+        return addTag(type, false, tags);
     }
 
     @SafeVarargs
     @StandardAPI
-    public final <TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> S tag(
-                                                                                 @NotNull ProviderType<? extends TP> type, boolean isOptional, @NotNull TagKey<R>... tags) {
+    public final <E, TP extends TagsProvider<E> & RegistryLibTagsProvider<E>> S addTag(
+                                                                                       @NotNull ProviderType<? extends TP> type, boolean isOptional, @NotNull TagKey<E>... tags) {
         if (tagsByType != null) {
             var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
-            for (TagKey<R> tag : tags) {
+            for (var tag : tags) {
                 map.put(tag, isOptional);
             }
         }

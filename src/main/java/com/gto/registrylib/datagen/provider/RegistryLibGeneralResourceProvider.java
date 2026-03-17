@@ -2,6 +2,7 @@ package com.gto.registrylib.datagen.provider;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.map.NestedMultiMap;
 
 import com.google.common.hash.Hashing;
@@ -11,6 +12,7 @@ import net.minecraft.data.CachedOutput;
 import net.minecraft.data.PackOutput;
 import net.neoforged.fml.LogicalSide;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
+import java.util.function.Supplier;
 
 public class RegistryLibGeneralResourceProvider implements RegistryLibProvider {
 
@@ -47,6 +50,17 @@ public class RegistryLibGeneralResourceProvider implements RegistryLibProvider {
 
     public void add(String a, String b, BiFunction<Path, OutputStream, Path> generate) {
         generates.put(a, b, generate);
+    }
+
+    public BiFunction<Path, OutputStream, Path> simpleTexture(
+                                                              String path, Supplier<BufferedImage> image) {
+        return (p, stream) -> {
+            try {
+                return ImageUtil.writeToStream(path, image.get(), p, stream);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
     }
 
     @Override

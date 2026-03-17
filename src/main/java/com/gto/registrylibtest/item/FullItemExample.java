@@ -75,11 +75,11 @@ public class FullItemExample {
             .removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
             .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
             // --- tag: 给物品添加原版标签 ---
-            .tag(ItemTags.DURABILITY_ENCHANTABLE)
+            .addTag(ItemTags.DURABILITY_ENCHANTABLE)
             // --- tooltip（快捷版）: 添加单行 Tooltip ---
-            .tooltip(Component.literal("§5A powerful magical artifact"))
+            .addTooltip(Component.literal("§5A powerful magical artifact"))
             // --- tooltip（完整版）: 动态多行 Tooltip + 独立根节点 ---
-            .tooltip(
+            .addTooltip(
                     (collector, stack) -> {
                         collector.node(
                                 new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);

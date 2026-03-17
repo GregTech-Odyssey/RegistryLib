@@ -355,7 +355,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @SafeVarargs
     @StandardAPI
     public final FluidBuilder<T, P> tag(TagKey<Fluid>... tags) {
-        return this.tag(ProviderType.FLUID_TAGS, tags);
+        return this.addTag(ProviderType.FLUID_TAGS, tags);
     }
 
     // --- Internal helpers ---

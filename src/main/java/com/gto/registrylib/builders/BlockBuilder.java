@@ -9,7 +9,6 @@ import com.gto.registrylib.datagen.loot.RegistryLibBlockLootTables;
 import com.gto.registrylib.datagen.loot.RegistryLibLootTableProvider.LootType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.FunctionUtil;
-import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
@@ -26,10 +25,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.function.*;
 
 import javax.annotation.Nonnull;
@@ -47,6 +46,7 @@ public class BlockBuilder<T extends Block, P>
     }
 
     private final Function<BlockBehaviour.Properties, T> factory;
+    @Setter
     private Supplier<BlockBehaviour.Properties> initialProperties;
     private Function<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = FunctionUtil.identityFn();
     @Nullable
@@ -153,19 +153,15 @@ public class BlockBuilder<T extends Block, P>
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> texture(Supplier<BufferedImage> image) {
+    public BlockBuilder<T, P> texture(String path, Supplier<BufferedImage> image) {
         if (!core.doDatagen()) return this;
-        setData(
-                ProviderType.GENERAL_RESOURCE,
-                p -> p.addBlockTexture(
-                        (path, stream) -> {
-                            try {
-                                return ImageUtil.writeToStream(name, image.get(), path, stream);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }));
-        return this;
+        return addData(
+                ProviderType.GENERAL_RESOURCE, p -> p.addBlockTexture(p.simpleTexture(path, image)));
+    }
+
+    @SyntaxSugar("texture(name, image)")
+    public BlockBuilder<T, P> texture(Supplier<BufferedImage> image) {
+        return texture(name, image);
     }
 
     @StandardAPI
@@ -202,8 +198,14 @@ public class BlockBuilder<T extends Block, P>
 
     @SafeVarargs
     @StandardAPI
-    public final BlockBuilder<T, P> tag(@NotNull TagKey<Block>... tags) {
-        return tag(ProviderType.BLOCK_TAGS, tags);
+    public final BlockBuilder<T, P> addTag(@NotNull TagKey<Block>... tags) {
+        return addTag(ProviderType.BLOCK_TAGS, false, tags);
+    }
+
+    @SafeVarargs
+    @StandardAPI
+    public final BlockBuilder<T, P> addItemTag(@NotNull TagKey<Item>... tags) {
+        return addTag(ProviderType.ITEM_TAGS, false, tags);
     }
 
     @Override
