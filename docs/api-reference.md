@@ -19,14 +19,14 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 
 | What you want to do | Entry point | What usually comes next |
 | --- | --- | --- |
-| Register a regular or composite Item | `item("id", factory)` or `item("id")` | `lang`, `defaultModel`, `addTab`, `tooltip`, `attach` |
-| Register a component-driven Item with attachments | `componentItem("id")` or `componentItem("id", factory)` | `lang`, `defaultModel`, `tooltip`, `attach` |
-| Register a Block | `block("id", factory)` or `block("id")` | `initialProperties`, `simpleItem` or `item`, `loot`, `tag` |
+| Register a regular or composite Item | `item("id", factory)` or `item("id")` | `lang`, `defaultModel`, `addTab`, `addTooltip`, `attach` |
+| Register a component-driven Item with attachments | `componentItem("id")` or `componentItem("id", factory)` | `lang`, `defaultModel`, `addTooltip`, `attach` |
+| Register a Block | `block("id", factory)` or `block("id")` | `initialProperties`, `simpleItem` or `item`, `loot`, `addTag` |
 | Register a Fluid | `fluid("id", still, flow)` | `lang`, `clientExtension`, `properties`, `block`, `bucket` |
 | Register a BlockEntity | `blockEntity("id", factory)` | `validBlock` or `validBlocks`, `renderer` |
 | Register a generic object in another registry | `generic("id", registryKey, factory)` or `simple(...)` | `register` or immediate completion |
 | Register a creative tab | `creativeTab("id")` | title, icon, content population |
-| Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `blockProperties`, `itemProperties`, `blockTag`, `itemTag`, `fluidTag` |
+| Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `initialBlockProperties`, `blockProperties`, `itemProperties`, `addBlockTag`, `addItemTag`, `addFluidTag` |
 
 ## Builder Family Quick Lookup
 

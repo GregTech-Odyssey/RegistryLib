@@ -22,7 +22,7 @@ The Tooltip System is used to organize tooltip content that has outgrown vanilla
 public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
         "mymod:detail_box", 10, true);
 
-item.tooltip((collector, stack) -> {
+item.addTooltip((collector, stack) -> {
     collector.node(
             new SubNode.Basic(Component.literal("§dMagic Wand"), 0),
             true, false);
@@ -54,7 +54,7 @@ This example inserts a title line into the default tooltip area and renders an a
 The collector merges nodes from multiple sources, including the Item's tooltip callback, BlockItem tooltips, and nodes contributed by attachments.
 
 {: .note }
-> If you only need one fixed line, prefer `tooltip(Component)`. The Tooltip System is for ordering, layout, and multi-source composition, not for replacing every simple tooltip.
+> If you only need one fixed line, prefer `addTooltip(Component)`. The Tooltip System is for ordering, layout, and multi-source composition, not for replacing every simple tooltip.
 
 ## Common Combinations
 

@@ -46,9 +46,9 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
         .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
         .removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
         .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-        .tag(ItemTags.DURABILITY_ENCHANTABLE)
-        .tooltip(Component.literal("§5A powerful magical artifact"))
-        .tooltip((collector, stack) -> {
+        .addTag(ItemTags.DURABILITY_ENCHANTABLE)
+        .addTooltip(Component.literal("§5A powerful magical artifact"))
+        .addTooltip((collector, stack) -> {
             collector.node(new SubNode.Basic(Component.literal("§dMagic Wand"), 0), true, false);
             collector.node(new SubNode.Basic(
                     Component.literal("§7Durability: §f" + (stack.getMaxDamage() - stack.getDamageValue())),
@@ -65,10 +65,10 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
 1. `componentItem("magic_wand")` starts an attachment-ready `ItemBuilder` exactly as used in `FullItemExample`.
 2. `.initialProperties(...)` and `.properties(...)` show the two-layer property pattern used by the test mod.
 3. `.lang(...)` and `.lang(ModRegistryCore.LANG_ZH_CN, ...)` show the bilingual naming path the test project actually generates.
-4. `.defaultModel()`, `.addDefaultTab()`, `.addTab(...)`, `.removeTab(...)`, and `.tag(...)` demonstrate the content-organization APIs used in the runnable example.
+4. `.defaultModel()`, `.addDefaultTab()`, `.addTab(...)`, `.removeTab(...)`, and `.addTag(...)` demonstrate the content-organization APIs used in the runnable example.
    - `.addDefaultTab()` — adds the item to the `RegistryCore`-level default tab if one is set; useful when you later also add extra tabs and still want the default included.
    - `.addTab(tab)` — adds the item to the specified creative tab. Multiple calls are allowed, so the item can appear in several tabs at once.
-5. The two `.tooltip(...)` calls show both the simple overload and the collector-based overload with a separate root node.
+5. The two `.addTooltip(...)` calls show both the simple overload and the collector-based overload with a separate root node.
 6. `.attach(...)` binds a real `ItemAttachment` implementation from the test project.
 7. `.register()` submits the registration and returns `ItemEntry<ComponentItem>`.
 
@@ -114,7 +114,7 @@ When tooltips start to include multiple sections, conditional visibility, or sep
 | `addDefaultTab()` | Add the item to the `RegistryCore`-level default tab (even when other tabs are also added) |
 | `removeTab(tab)` | Remove a previously added creative tab |
 | `texture(imageSupplier)` | Supply a `BufferedImage` to generate the item texture during datagen |
-| `tooltip(...)` | Add tooltip nodes |
+| `addTooltip(...)` | Add tooltip nodes |
 | `attach(...)` | Add an attachment |
 | `register()` | Complete registration |}
 
