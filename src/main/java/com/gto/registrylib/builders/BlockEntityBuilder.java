@@ -20,7 +20,7 @@ import net.neoforged.api.distmarker.Dist;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -60,7 +60,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @SafeVarargs
     @StandardAPI
     public final BlockEntityBuilder<BE, P> validBlocks(@NotNull Supplier<? extends Block>... blocks) {
-        Arrays.stream(blocks).forEach(this::validBlock);
+        Collections.addAll(validBlocks, blocks);
         return this;
     }
 

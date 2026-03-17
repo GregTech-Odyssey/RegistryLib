@@ -5,9 +5,11 @@ import com.gto.registrylib.builders.BlockBuilder;
 import com.gto.registrylib.builders.BlockEntityBuilder;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.builders.ItemBuilder;
+import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
-import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 
+import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
@@ -19,12 +21,14 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 import javax.annotation.Nullable;
@@ -64,22 +68,30 @@ public class Group {
     protected final ResourceKey<CreativeModeTab> tab;
     @Nullable
     protected final String langPrefix;
+
+    @Nullable
+    protected final Supplier<BlockBehaviour.Properties> initialBlockProperties;
+
+    @Nullable
+    protected final Supplier<Item.Properties> initialItemProperties;
+
+    @Nullable
     protected final UnaryOperator<BlockBehaviour.Properties> blockPropertiesModifier;
+
+    @Nullable
     protected final UnaryOperator<Item.Properties> itemPropertiesModifier;
 
-    protected TagKey<Item>[] itemTags;
-    protected TagKey<Block>[] blockTags;
-    protected TagKey<Fluid>[] fluidTags;
+    protected final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
 
     protected Group(Builder builder) {
         this.core = builder.core;
         this.tab = builder.tab;
         this.langPrefix = builder.langPrefix;
+        this.initialBlockProperties = builder.initialBlockProperties;
+        this.initialItemProperties = builder.initialItemProperties;
         this.blockPropertiesModifier = builder.blockProperties;
         this.itemPropertiesModifier = builder.itemProperties;
-        this.itemTags = builder.itemTags.isEmpty() ? null : builder.itemTags.toArray(new TagKey[0]);
-        this.blockTags = builder.blockTags.isEmpty() ? null : builder.blockTags.toArray(new TagKey[0]);
-        this.fluidTags = builder.fluidTags.isEmpty() ? null : builder.fluidTags.toArray(new TagKey[0]);
+        this.tagsByType = builder.tagsByType;
     }
 
     // === Accessors ===
@@ -133,43 +145,70 @@ public class Group {
 
     private <T extends Block> BlockBuilder<T, Group> applyBlockDefaults(
                                                                         BlockBuilder<T, Group> builder) {
-        var b = builder.properties(blockPropertiesModifier);
+        if (initialBlockProperties != null) {
+            builder.setInitialProperties(initialBlockProperties);
+        }
+        if (blockPropertiesModifier != null) {
+            builder.properties(blockPropertiesModifier);
+        }
         if (tab != null) {
-            b = b.defaultItemTab(tab);
+            builder.defaultItemTab(tab);
         }
         if (langPrefix != null) {
-            b = b.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
+            builder.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
         }
-        if (blockTags != null) {
-            b.tag(blockTags);
+        if (tagsByType != null) {
+            var blockTags = tagsByType.get(ProviderType.BLOCK_TAGS);
+            if (blockTags != null) {
+                blockTags.forEach(
+                        (tag, value) -> builder.addTag(ProviderType.BLOCK_TAGS, value, (TagKey<Block>) tag));
+            }
+            var itemTags = tagsByType.get(ProviderType.ITEM_TAGS);
+            if (itemTags != null) {
+                itemTags.forEach(
+                        (tag, value) -> builder.addTag(ProviderType.ITEM_TAGS, value, (TagKey<Item>) tag));
+            }
         }
-        return b;
+        return builder;
     }
 
     private <T extends Item> ItemBuilder<T, Group> applyItemDefaults(ItemBuilder<T, Group> builder) {
-        var b = builder.properties(itemPropertiesModifier);
+        if (initialItemProperties != null) {
+            builder.initialProperties(initialItemProperties);
+        }
+        if (itemPropertiesModifier != null) {
+            builder.properties(itemPropertiesModifier);
+        }
         if (tab != null) {
-            b = b.addTab(tab);
+            builder.addTab(tab);
         }
         if (langPrefix != null) {
-            b = b.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
+            builder.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
         }
-        if (itemTags != null) {
-            b.tag(itemTags);
+        if (tagsByType != null) {
+            var itemTags = tagsByType.get(ProviderType.ITEM_TAGS);
+            if (itemTags != null) {
+                itemTags.forEach(
+                        (tag, value) -> builder.addTag(ProviderType.ITEM_TAGS, value, (TagKey<Item>) tag));
+            }
         }
-        return b;
+        return builder;
     }
 
     private <T extends BaseFlowingFluid> FluidBuilder<T, Group> applyFluidDefaults(
                                                                                    FluidBuilder<T, Group> builder) {
         if (tab != null) {
-            builder = builder.defaultBucketTab(tab);
+            builder.defaultBucketTab(tab);
         }
         if (langPrefix != null) {
-            builder = builder.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
+            builder.lang(langPrefix + " " + RegistryLibLangProvider.toEnglishName(builder.getName()));
         }
-        if (fluidTags != null) {
-            builder.tag(fluidTags);
+        if (tagsByType != null) {
+            var fluidTags = tagsByType.get(ProviderType.FLUID_TAGS);
+            if (fluidTags != null) {
+                fluidTags.forEach(
+                        (tag, value) -> builder.addTag(ProviderType.FLUID_TAGS, value, (TagKey<Fluid>) tag));
+            }
         }
         return builder;
     }
@@ -186,19 +225,35 @@ public class Group {
         @Setter
         protected ResourceKey<CreativeModeTab> tab;
 
-        @Setter
-        protected UnaryOperator<BlockBehaviour.Properties> blockProperties = FunctionUtil.identityUnaryOp();
+        protected Supplier<BlockBehaviour.Properties> initialBlockProperties;
 
         @Setter
-        protected UnaryOperator<Item.Properties> itemProperties = FunctionUtil.identityUnaryOp();
+        protected Supplier<Item.Properties> initialItemProperties;
 
-        protected List<TagKey<Item>> itemTags = new ArrayList<>();
-        protected List<TagKey<Block>> blockTags = new ArrayList<>();
-        protected List<TagKey<Fluid>> fluidTags = new ArrayList<>();
+        @Setter
+        protected UnaryOperator<BlockBehaviour.Properties> blockProperties;
+
+        @Setter
+        protected UnaryOperator<Item.Properties> itemProperties;
+
+        protected final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
 
         protected Builder(RegistryCore core, String name) {
             this.core = core;
             this.langPrefix = core.doDatagen() ? RegistryLibLangProvider.toEnglishName(name) : null;
+            this.tagsByType = core.doDatagen() ? new Reference2ReferenceOpenHashMap<>() : null;
+        }
+
+        @StandardAPI
+        public Builder initialBlockProperties(Supplier<? extends Block> block) {
+            initialBlockProperties = () -> BlockBehaviour.Properties.ofFullCopy(block.get());
+            return this;
+        }
+
+        @StandardAPI
+        public Builder initialBlockProperties(Block block) {
+            initialBlockProperties = () -> BlockBehaviour.Properties.ofFullCopy(block);
+            return this;
         }
 
         /**
@@ -214,19 +269,32 @@ public class Group {
             return this;
         }
 
-        public Builder itemTag(TagKey<Item> tag) {
-            itemTags.add(tag);
+        @SafeVarargs
+        @StandardAPI
+        public final <R, TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> Builder addTag(
+                                                                                                 @NotNull ProviderType<? extends TP> type, boolean isOptional, @NotNull TagKey<R>... tags) {
+            if (tagsByType != null) {
+                var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
+                for (TagKey<R> tag : tags) {
+                    map.put(tag, isOptional);
+                }
+            }
             return this;
         }
 
-        public Builder blockTag(TagKey<Block> tag) {
-            blockTags.add(tag);
-            return this;
+        @SafeVarargs
+        public final Builder addItemTag(TagKey<Item>... tag) {
+            return addTag(ProviderType.ITEM_TAGS, false, tag);
         }
 
-        public Builder fluidTag(TagKey<Fluid> tag) {
-            fluidTags.add(tag);
-            return this;
+        @SafeVarargs
+        public final Builder addBlockTag(TagKey<Block>... tag) {
+            return addTag(ProviderType.BLOCK_TAGS, false, tag);
+        }
+
+        @SafeVarargs
+        public final Builder addFluidTag(TagKey<Fluid>... tag) {
+            return addTag(ProviderType.FLUID_TAGS, false, tag);
         }
 
         @StandardAPI

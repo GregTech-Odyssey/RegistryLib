@@ -12,6 +12,7 @@ import com.gto.registrylibtest.item.SimpleItemExample;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
@@ -42,10 +43,10 @@ public class FullBlockExample {
             .loot(
                     (tables, b) -> tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))
             // --- tag: 给方块添加原版标签 ---
-            .tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
+            .addTag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
             // --- item: 自定义 BlockItem 配置，含 Tooltip ---
             .item(
-                    item -> item.tooltip(
+                    item -> item.addTooltip(
                             (collector, stack) -> {
                                 collector.node(
                                         new SubNode.Basic(Component.literal("§5Drops coins when mined")),
@@ -69,7 +70,7 @@ public class FullBlockExample {
                     () -> ImageUtil.generateIcon(
                             ColorUtil.generateRandomMutedColor(), ImageUtil.CIRCLE, Color.CYAN))
             .simpleItem()
-            .tag(BlockTags.MINEABLE_WITH_PICKAXE)
+            .addTag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
             .register();
 
     // ── Group 系统：批量共享配置 ────────────────────────────────────────────
@@ -77,7 +78,8 @@ public class FullBlockExample {
     public static final Group TIMER_GROUP = RegistryLibTest.REGISTRYLIB
             .group("timers")
             .langPrefix("Timer")
-            .blockTag(BlockTags.MINEABLE_WITH_PICKAXE)
+            .addBlockTag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
+            .addItemTag(ItemTags.STONE_BRICKS)
             .blockProperties(p -> p.strength(5.0F, 6.0F))
             .build();
 
@@ -85,7 +87,7 @@ public class FullBlockExample {
             .block("tier_1", p -> new TimerBlock(p, 1))
             .initialProperties(Blocks.IRON_BLOCK)
             .item(
-                    item -> item.tooltip(
+                    item -> item.addTooltip(
                             (collector, stack) -> {
                                 collector.node(
                                         new SubNode.Basic(Component.literal("§aTier 1"), 0), true, false);
@@ -101,7 +103,7 @@ public class FullBlockExample {
             .block("tier_2", p -> new TimerBlock(p, 2))
             .initialProperties(Blocks.IRON_BLOCK)
             .item(
-                    item -> item.tooltip(
+                    item -> item.addTooltip(
                             (collector, stack) -> {
                                 collector.node(
                                         new SubNode.Basic(Component.literal("§bTier 2"), 0), true, false);
@@ -117,7 +119,7 @@ public class FullBlockExample {
             .block("tier_3", p -> new TimerBlock(p, 3))
             .initialProperties(Blocks.IRON_BLOCK)
             .item(
-                    item -> item.tooltip(
+                    item -> item.addTooltip(
                             (collector, stack) -> {
                                 collector.node(
                                         new SubNode.Basic(Component.literal("§6Tier 3"), 0), true, false);

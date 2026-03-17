@@ -131,7 +131,7 @@ public class RegistryCore {
         throw new IllegalStateException("Cannot get data provider before datagen is started");
     }
 
-    public <P> void addDataGenerator(
+    public <P> void setDataGenerator(
                                      String name,
                                      ResourceKey<?> key,
                                      GeneratorType<? extends P> type,
