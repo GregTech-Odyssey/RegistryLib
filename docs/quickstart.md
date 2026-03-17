@@ -67,7 +67,7 @@ dependencyResolutionManagement {
 
 ```groovy
 dependencies {
-        implementation 'com.gto.registrylib:registrylib:1.0.0'
+        implementation 'com.gto:registrylib:1.0.0'
 }
 ```
 
