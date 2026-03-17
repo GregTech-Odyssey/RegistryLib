@@ -42,9 +42,10 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
         .lang("Magic Wand")
         .lang(ModRegistryCore.LANG_ZH_CN, "魔法杆")
         .defaultModel()
-        .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .addDefaultTab()
+        .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
         .removeTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
-        .tab(CreativeModeTabs.TOOLS_AND_UTILITIES)
+        .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
         .tag(ItemTags.DURABILITY_ENCHANTABLE)
         .tooltip(Component.literal("§5A powerful magical artifact"))
         .tooltip((collector, stack) -> {
@@ -64,7 +65,9 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
 1. `componentItem("magic_wand")` starts an attachment-ready `ItemBuilder` exactly as used in `FullItemExample`.
 2. `.initialProperties(...)` and `.properties(...)` show the two-layer property pattern used by the test mod.
 3. `.lang(...)` and `.lang(ModRegistryCore.LANG_ZH_CN, ...)` show the bilingual naming path the test project actually generates.
-4. `.defaultModel()`, `.tab(...)`, `.removeTab(...)`, and `.tag(...)` demonstrate the content-organization APIs used in the runnable example.
+4. `.defaultModel()`, `.addDefaultTab()`, `.addTab(...)`, `.removeTab(...)`, and `.tag(...)` demonstrate the content-organization APIs used in the runnable example.
+   - `.addDefaultTab()` — adds the item to the `RegistryCore`-level default tab if one is set; useful when you later also add extra tabs and still want the default included.
+   - `.addTab(tab)` — adds the item to the specified creative tab. Multiple calls are allowed, so the item can appear in several tabs at once.
 5. The two `.tooltip(...)` calls show both the simple overload and the collector-based overload with a separate root node.
 6. `.attach(...)` binds a real `ItemAttachment` implementation from the test project.
 7. `.register()` submits the registration and returns `ItemEntry<ComponentItem>`.
@@ -103,13 +106,49 @@ When tooltips start to include multiple sections, conditional visibility, or sep
 | Method | Purpose |
 | --- | --- |
 | `item(name, factory)` | Create an `ItemBuilder` |
+| `item(name)` | Create a plain `Item` builder without specifying a factory |
 | `componentItem(name)` | Create a `ComponentItem`-backed `ItemBuilder` |
 | `lang(text)` | Set the display name |
 | `defaultModel()` | Generate the default item model |
-| `tab(tab)` | Set the creative tab |
+| `addTab(tab)` | Add the item to a creative tab |
+| `addDefaultTab()` | Add the item to the `RegistryCore`-level default tab (even when other tabs are also added) |
+| `removeTab(tab)` | Remove a previously added creative tab |
+| `texture(imageSupplier)` | Supply a `BufferedImage` to generate the item texture during datagen |
 | `tooltip(...)` | Add tooltip nodes |
 | `attach(...)` | Add an attachment |
-| `register()` | Complete registration |
+| `register()` | Complete registration |}
+
+## Generating Item Textures Programmatically
+
+When the item has no hand-drawn texture and a simple procedurally-generated icon is acceptable (for example, during rapid prototyping or for automatically-colored placeholder icons), use `.texture(Supplier<BufferedImage>)` in the datagen chain:
+
+```java
+import com.gto.registrylib.util.ColorUtil;
+import com.gto.registrylib.util.ImageUtil;
+
+.texture(() -> ImageUtil.generateIcon(ColorUtil.generateRandomVibrantColor(), ImageUtil.CIRCLE))
+```
+
+The supplier is only evaluated during datagen. The generated PNG is written via `RegistryLibGeneralResourceProvider` to the `textures/item/` folder alongside normal resource providers.
+
+`ImageUtil` offers the following built-in shapes:
+
+| Constant | Description |
+| --- | --- |
+| `ImageUtil.CIRCLE` | Filled circle with a soft highlight |
+| `ImageUtil.SQUARE` | Filled rectangle |
+| `ImageUtil.STAR` | Five-pointed star |
+
+`ColorUtil` provides random color generators for quick placeholder icons:
+
+| Method | Description |
+| --- | --- |
+| `ColorUtil.generateRandomVibrantColor()` | High-saturation, medium-brightness random color |
+| `ColorUtil.generateRandomMutedColor()` | Low-saturation, medium-brightness random color |
+| `ColorUtil.generateRandomColor()` | Fully random RGB color |
+
+{: .note }
+> These utilities are datagen-only and are only invoked when `doDatagen()` returns true. They have no runtime effect on the registered item.
 
 ## Related Links
 

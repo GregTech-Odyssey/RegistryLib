@@ -19,14 +19,14 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 
 | What you want to do | Entry point | What usually comes next |
 | --- | --- | --- |
-| Register a regular or composite Item | `item("id", factory)` | `lang`, `defaultModel`, `tab`, `tooltip`, `attach` |
+| Register a regular or composite Item | `item("id", factory)` or `item("id")` | `lang`, `defaultModel`, `addTab`, `tooltip`, `attach` |
 | Register a component-driven Item with attachments | `componentItem("id")` or `componentItem("id", factory)` | `lang`, `defaultModel`, `tooltip`, `attach` |
-| Register a Block | `block("id", factory)` | `initialProperties`, `simpleItem` or `item`, `loot`, `tag` |
+| Register a Block | `block("id", factory)` or `block("id")` | `initialProperties`, `simpleItem` or `item`, `loot`, `tag` |
 | Register a Fluid | `fluid("id", still, flow)` | `lang`, `clientExtension`, `properties`, `block`, `bucket` |
 | Register a BlockEntity | `blockEntity("id", factory)` | `validBlock` or `validBlocks`, `renderer` |
 | Register a generic object in another registry | `generic("id", registryKey, factory)` or `simple(...)` | `register` or immediate completion |
 | Register a creative tab | `creativeTab("id")` | title, icon, content population |
-| Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `blockProperties`, `itemProperties` |
+| Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `blockProperties`, `itemProperties`, `blockTag`, `itemTag`, `fluidTag` |
 
 ## Builder Family Quick Lookup
 
@@ -51,12 +51,14 @@ This page is for quick lookup only, not full teaching. Full examples stay in the
 | Entry helper | What it gives you |
 | --- | --- |
 | `ItemEntry.asStack()` | A default `ItemStack` without reconstructing the item manually |
+| `ItemEntry.readOnlyStack()` | A cached read-only `ItemStack` (count 1); avoids repeated allocations in hot paths |
 | `ItemEntry.asResource()` | An `ItemResource` wrapper for transfer-related APIs |
 | `BlockEntry.getDefaultState()` | The block's default state for world placement or state configuration |
 | `FluidEntry.getSource()` | The matching source fluid instance |
 | `FluidEntry.getType()` | The `FluidType` associated with the family |
 | `FluidEntry.getBlock()` / `getBucket()` | The related fluid block or bucket when they exist |
 | `FluidEntry.asStack()` / `asResource()` | Transfer-friendly fluid values without rebuilding them by hand |
+| `FluidEntry.readOnlyStack()` | A cached read-only `FluidStack` (1000 mB); avoids repeated allocations |
 
 {: .note }
 > Several Entry wrappers now also satisfy holder-style usage directly. When another API expects a `Holder<Item>`, `Holder<Block>`, or `Holder<Fluid>`, the RegistryLib entry wrapper is often already usable as that value.

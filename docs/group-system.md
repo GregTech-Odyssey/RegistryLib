@@ -45,6 +45,9 @@ In this example, `tier_1` automatically inherits the lang prefix and the Block p
 | `tab` | BlockItems, regular Items, and fluid buckets |
 | `blockProperties` | All Blocks registered through that Group |
 | `itemProperties` | All regular Items registered through that Group |
+| `blockTag(...)` | All Blocks registered through that Group |
+| `itemTag(...)` | All Items (and BlockItems) registered through that Group |
+| `fluidTag(...)` | All Fluids registered through that Group |
 
 ### Override Order
 
@@ -55,6 +58,22 @@ Group defaults are applied when the Builder is created. Anything you continue to
 - Content families: use Group for a shared lang prefix and tab, then override only the few exceptional values on individual entries.
 - Machine tiers: use Group for hardness and drop requirements, then add special tooltips or stronger properties on higher-tier entries.
 - Large ore batches: use Group for mining requirements and creative tab, then configure each ore's drop logic separately.
+
+## Applying Tags Across a Group
+
+`Group.Builder` exposes `itemTag(...)`, `blockTag(...)`, and `fluidTag(...)` for adding shared tags to every entry of the corresponding type that is registered through the group. Multiple calls are allowed and accumulate:
+
+```java
+public static final Group ORE_GROUP = REGISTRYLIB.group("ores")
+        .langPrefix("Magic")
+        .tab(MY_TAB)
+        .blockTag(BlockTags.MINEABLE_WITH_PICKAXE)
+        .blockTag(BlockTags.NEEDS_IRON_TOOL)
+        .itemTag(ItemTags.DURABILITY_ENCHANTABLE)
+        .build();
+```
+
+The tags are injected at the same time as other defaults — before any per-entry chain. A per-entry `.tag(...)` call can always add more tags on top.
 
 ## Boundaries and Pitfalls
 

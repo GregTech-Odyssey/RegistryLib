@@ -6,10 +6,10 @@
       "request": "launch",
       "name": "Client",
       "presentation": {
-        "group": "Mod Development - RegistryLib3",
+        "group": "Mod Development - RegistryLib",
         "order": 0
       },
-      "projectName": "RegistryLib3",
+      "projectName": "RegistryLib",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
         "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\clientRunProgramArgs.txt"
@@ -28,10 +28,10 @@
       "request": "launch",
       "name": "Data",
       "presentation": {
-        "group": "Mod Development - RegistryLib3",
+        "group": "Mod Development - RegistryLib",
         "order": 1
       },
-      "projectName": "RegistryLib3",
+      "projectName": "RegistryLib",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
         "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\dataRunProgramArgs.txt"
@@ -50,10 +50,10 @@
       "request": "launch",
       "name": "GameTestServer",
       "presentation": {
-        "group": "Mod Development - RegistryLib3",
+        "group": "Mod Development - RegistryLib",
         "order": 2
       },
-      "projectName": "RegistryLib3",
+      "projectName": "RegistryLib",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
         "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\gameTestServerRunProgramArgs.txt"
@@ -72,10 +72,10 @@
       "request": "launch",
       "name": "Server",
       "presentation": {
-        "group": "Mod Development - RegistryLib3",
+        "group": "Mod Development - RegistryLib",
         "order": 3
       },
-      "projectName": "RegistryLib3",
+      "projectName": "RegistryLib",
       "mainClass": "net.neoforged.devlaunch.Main",
       "args": [
         "@D:\\vscodeProject\\RegistryLib3\\build\\moddev\\serverRunProgramArgs.txt"
