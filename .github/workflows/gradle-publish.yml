@@ -28,19 +28,23 @@ jobs:
         sed -i 's/\r$//' gradlew
         chmod +x gradlew
 
-    - name: Determine release tag
+    - name: Check version and set tag
       id: tag
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         VERSION=$(grep '^mod_version=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-        BUILD=1
-        while gh release view "v${VERSION}-build${BUILD}" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; do
-          BUILD=$((BUILD + 1))
-        done
-        TAG="v${VERSION}-build${BUILD}"
+        if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          echo "ERROR: mod_version '${VERSION}' is not a valid x.x.x version number."
+          exit 1
+        fi
+        TAG="${VERSION}"
+        if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+          echo "ERROR: Release '${TAG}' already exists. Bump mod_version in gradle.properties before publishing."
+          exit 1
+        fi
         echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-        echo "Resolved release tag: ${TAG}"
+        echo "Version check passed. Tag: ${TAG}"
 
     - name: Build JAR
       run: ./gradlew assemble --stacktrace
@@ -74,3 +78,30 @@ jobs:
           --title "$TAG" \
           --notes "Automated release $TAG" \
           $JARS
+
+    - name: Find main JAR for CurseForge
+      id: find_jar
+      run: |
+        JAR=$(find build/libs -name "*.jar" -not -name "*-dev.jar" -not -name "*-sources.jar" -not -name "*-javadoc.jar" | head -n 1)
+        if [ -z "$JAR" ]; then
+          echo "ERROR: No main JAR found"
+          exit 1
+        fi
+        echo "jar_path=${JAR}" >> "$GITHUB_OUTPUT"
+        echo "Uploading to CurseForge: ${JAR}"
+
+    - name: Upload to CurseForge
+      uses: itsmeow/curseforge-upload@v3
+      with:
+        # Required: add CURSEFORGE_API_TOKEN to repository Secrets
+        # Get your token from: https://www.curseforge.com/account/api-tokens
+        token: ${{ secrets.CURSEFORGE_API_TOKEN }}
+        # Required: add CURSEFORGE_PROJECT_ID to repository Variables (numerical ID from CurseForge project page sidebar)
+        project_id: ${{ vars.CURSEFORGE_PROJECT_ID }}
+        game_endpoint: minecraft
+        game_versions: "26.1-snapshot,NeoForge,Java 25"
+        file_path: ${{ steps.find_jar.outputs.jar_path }}
+        display_name: ${{ steps.tag.outputs.tag }}
+        release_type: release
+        changelog: "Automated release ${{ steps.tag.outputs.tag }}"
+        changelog_type: markdown
