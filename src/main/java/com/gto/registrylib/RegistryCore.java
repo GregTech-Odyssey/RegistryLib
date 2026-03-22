@@ -41,6 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -49,18 +51,22 @@ import javax.annotation.Nonnull;
 
 public class RegistryCore {
 
-    private static final PriorityQueue<RegistryCore> REGISTRY_CORES = new PriorityQueue<>(Comparator.comparingInt(RegistryCore::priority));
+    private static final ConcurrentSkipListSet<RegistryCore> REGISTRY_CORES =
+        new ConcurrentSkipListSet<>(Comparator.comparingInt(RegistryCore::priority)
+            .thenComparing(RegistryCore::getModid));
+
+    private static final ConcurrentHashMap<String, RegistryCore> CORES_BY_MODID = new ConcurrentHashMap<>();
     private static final Logger log = RegistryLib.LOGGER;
 
-    private final NestedMap<ResourceKey<? extends Registry<?>>, String, RegistryEntry<?, ?>> registryentrys = NestedMap.createIdentity(LinkedHashMap::new);
+    private final NestedMap<ResourceKey<? extends Registry<?>>, String, RegistryEntry<?, ?>> registryEntry = NestedMap.createIdentity(LinkedHashMap::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Registration<?, ?>> registrations = MultiMap.createIdentity(ArrayList::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Runnable> afterRegisterCallbacks = MultiMap.createIdentity(ArrayList::new);
     private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = new ReferenceOpenHashSet<>();
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
 
-    private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>, String>, Consumer<?>> datagensByEntry = NestedMap.createIdentity(HashMap::new);
-    private final MultiMap<GeneratorType<?>, Consumer<?>> datagens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
+    private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>, String>, Consumer<?>> dataGensByEntry = NestedMap.createIdentity(HashMap::new);
+    private final MultiMap<GeneratorType<?>, Consumer<?>> dataGens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
 
     @Getter
     protected ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
@@ -79,13 +85,19 @@ public class RegistryCore {
                     .getModContainerById(modid)
                     .ifPresent(c -> c.getEventBus().addListener(this::onGatherData));
         }
-        synchronized (REGISTRY_CORES) {
-            REGISTRY_CORES.offer(this);
+        RegistryCore existing = CORES_BY_MODID.putIfAbsent(modid, this);
+        if (existing != null) {
+            throw new IllegalStateException("Duplicate RegistryCore for mod: " + modid);
         }
+        REGISTRY_CORES.add(this);
     }
 
     public static RegistryCore create(String modid) {
         return new RegistryCore(modid);
+    }
+
+    public static Optional<RegistryCore> getCoreByModId(String modId) {
+        return Optional.ofNullable(CORES_BY_MODID.get(modId));
     }
 
     public boolean doDatagen() {
@@ -103,13 +115,13 @@ public class RegistryCore {
     @SuppressWarnings("unchecked")
     public <R, T extends R> RegistryEntry<R, T> get(
                                                     String name, ResourceKey<? extends Registry<R>> type) {
-        return (RegistryEntry<R, T>) this.registryentrys.get(type, name);
+        return (RegistryEntry<R, T>) this.registryEntry.get(type, name);
     }
 
     @SuppressWarnings("unchecked")
     public <R, T extends R> Collection<RegistryEntry<R, T>> getAll(
                                                                    ResourceKey<? extends Registry<R>> type) {
-        return (Collection) registryentrys.get(type).values();
+        return (Collection) registryEntry.get(type).values();
     }
 
     // === Callback Management ===
@@ -138,9 +150,9 @@ public class RegistryCore {
                                      Consumer<? extends P> cons) {
         if (!doDatagen()) return;
         @SuppressWarnings("null")
-        Consumer<?> existing = datagensByEntry.put(type, Pair.of(key, name), cons);
+        Consumer<?> existing = dataGensByEntry.put(type, Pair.of(key, name), cons);
         if (existing != null) {
-            datagens.remove(type, existing);
+            dataGens.remove(type, existing);
         }
         addDataGenerator(type, cons);
     }
@@ -150,7 +162,7 @@ public class RegistryCore {
             if (provider != null)
                 throw new IllegalStateException(
                         "Cannot add data generator after construction of root generator");
-            datagens.put(type, cons);
+            dataGens.put(type, cons);
         }
     }
 
@@ -196,7 +208,7 @@ public class RegistryCore {
         if (provider != null) {
             provider.putSubProvider(type, gen);
         }
-        datagens
+        dataGens
                 .get(type)
                 .forEach(
                         cons -> {
@@ -247,7 +259,7 @@ public class RegistryCore {
         reg.callbacks.addAll(callbacks);
         callbacks.clear();
         registrations.put(type, reg);
-        registryentrys.put(type, name, reg.entry);
+        registryEntry.put(type, name, reg.entry);
         return reg.entry;
     }
 
