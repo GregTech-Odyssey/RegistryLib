@@ -78,13 +78,14 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
 
 | | `item()` | `componentItem()` |
 | --- | --- | --- |
-| **Use when** | You need a plain item with no special behavior | You need tooltips, attachments, or the collector API |
+| **Use when** | You need a plain item without attachment-based behavior | You need modular attachments or attachment-driven tooltips |
 | **Produced type** | `Item` (or your custom subclass) | `ComponentItem` |
 | **Supports `.attach(...)`** | No | Yes |
-| **Supports `.addTooltip(...)`** | No | Yes |
+| **Supports `.addTooltip(...)`** | Yes | Yes |
 
 :::important
-If you call `.attach(...)` on a normal `Item`, the problem is usually the selected builder type. Attachments are designed for `ComponentItem` or another `IComponentItem` implementation. Use `componentItem()` instead.
+`.addTooltip(...)` is available on **both** `item()` and `componentItem()` — it is defined on the base `ItemBuilder` and works for any item type.
+Only `.attach(...)` requires `ComponentItem`. If you call `.attach(...)` on a plain `item()`, it will throw at runtime.
 :::
 
 ## Verify in Game
