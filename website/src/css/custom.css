@@ -1,0 +1,188 @@
+/**
+ * RegistryLib Documentation — Custom Theme
+ *
+ * Light: warm amber palette
+ * Dark : Tokyo Night inspired
+ */
+
+/* ===== Light mode ===== */
+:root {
+  --ifm-color-primary: #d97706;
+  --ifm-color-primary-dark: #b45309;
+  --ifm-color-primary-darker: #92400e;
+  --ifm-color-primary-darkest: #78350f;
+  --ifm-color-primary-light: #f59e0b;
+  --ifm-color-primary-lighter: #fbbf24;
+  --ifm-color-primary-lightest: #fcd34d;
+
+  --ifm-background-color: #fffbeb;
+  --ifm-background-surface-color: #fef3c7;
+  --ifm-heading-color: #78350f;
+  --ifm-font-color-base: #451a03;
+
+  --ifm-color-success: #059669;
+  --ifm-color-info: #2563eb;
+  --ifm-color-warning: #d97706;
+  --ifm-color-danger: #dc2626;
+
+  --ifm-code-font-size: 90%;
+  --ifm-font-family-base: 'Source Sans 3', system-ui, -apple-system, sans-serif;
+  --ifm-heading-font-family: 'DM Sans', var(--ifm-font-family-base);
+  --ifm-font-family-monospace: 'JetBrains Mono', 'Fira Code', 'Cascadia Code',
+    ui-monospace, monospace;
+
+  --docusaurus-highlighted-code-line-bg: #fef3c7;
+}
+
+/* ===== Dark mode ===== */
+[data-theme='dark'] {
+  --ifm-color-primary: #fbbf24;
+  --ifm-color-primary-dark: #f59e0b;
+  --ifm-color-primary-darker: #d97706;
+  --ifm-color-primary-darkest: #b45309;
+  --ifm-color-primary-light: #fcd34d;
+  --ifm-color-primary-lighter: #fde68a;
+  --ifm-color-primary-lightest: #fef3c7;
+
+  --ifm-background-color: #1a1b26;
+  --ifm-background-surface-color: #24283b;
+  --ifm-heading-color: #e0af68;
+  --ifm-font-color-base: #c0caf5;
+
+  --ifm-color-success: #73daca;
+  --ifm-color-info: #7aa2f7;
+  --ifm-color-warning: #e0af68;
+  --ifm-color-danger: #f7768e;
+
+  --docusaurus-highlighted-code-line-bg: #24283b;
+}
+
+/* ===== Global ===== */
+html {
+  scroll-behavior: smooth;
+}
+
+a {
+  transition: color 0.15s ease;
+}
+
+/* ===== Navbar ===== */
+.navbar {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+}
+
+[data-theme='dark'] .navbar {
+  background: #16161e;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+}
+
+/* ===== Sidebar ===== */
+.menu__link {
+  border-radius: 6px;
+  transition: background 0.15s ease;
+}
+
+.menu__link--active:not(.menu__link--sublist) {
+  background: var(--ifm-color-primary-lightest);
+  color: var(--ifm-color-primary-darkest);
+  font-weight: 600;
+}
+
+[data-theme='dark'] .menu__link--active:not(.menu__link--sublist) {
+  background: #292e42;
+  color: var(--ifm-color-primary);
+}
+
+/* ===== Code blocks ===== */
+.prism-code {
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+/* ===== Footer ===== */
+.footer {
+  background: #1a1b26;
+}
+
+/* ===== Admonition refinements ===== */
+.alert--success {
+  --ifm-alert-background-color: #ecfdf5;
+  --ifm-alert-border-color: #059669;
+}
+[data-theme='dark'] .alert--success {
+  --ifm-alert-background-color: #1a2332;
+  --ifm-alert-border-color: #73daca;
+}
+
+.alert--info {
+  --ifm-alert-background-color: #eff6ff;
+  --ifm-alert-border-color: #2563eb;
+}
+[data-theme='dark'] .alert--info {
+  --ifm-alert-background-color: #1a2332;
+  --ifm-alert-border-color: #7aa2f7;
+}
+
+.alert--warning {
+  --ifm-alert-background-color: #fffbeb;
+  --ifm-alert-border-color: #d97706;
+}
+[data-theme='dark'] .alert--warning {
+  --ifm-alert-background-color: #2a2520;
+  --ifm-alert-border-color: #e0af68;
+}
+
+.alert--danger {
+  --ifm-alert-background-color: #fef2f2;
+  --ifm-alert-border-color: #dc2626;
+}
+[data-theme='dark'] .alert--danger {
+  --ifm-alert-background-color: #2a1f1f;
+  --ifm-alert-border-color: #f7768e;
+}
+
+/* ===== Learning-path badges ===== */
+.badge--beginner {
+  background: #dcfce7;
+  color: #166534;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge--intermediate {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge--expert {
+  background: #f3e8ff;
+  color: #6b21a8;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .badge--beginner {
+  background: #16453a;
+  color: #a7f3d0;
+}
+[data-theme='dark'] .badge--intermediate {
+  background: #1e3a5f;
+  color: #bfdbfe;
+}
+[data-theme='dark'] .badge--expert {
+  background: #3b1f5e;
+  color: #e9d5ff;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 996px) {
+  :root {
+    --ifm-font-size-base: 16px;
+  }
+}
