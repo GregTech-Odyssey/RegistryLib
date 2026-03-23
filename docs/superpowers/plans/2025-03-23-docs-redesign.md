@@ -172,12 +172,15 @@ const config = {
         darkTheme: darkCodeTheme,
         additionalLanguages: ['java', 'groovy', 'gradle'],
       },
-      algolia: {
-        appId: 'YOUR_APP_ID',
-        apiKey: 'YOUR_API_KEY',
-        indexName: 'registrylib',
-        contextualSearch: true,
-      },
+      // Algolia 搜索配置（可选）
+      // 如需启用搜索，请先在 https://www.algolia.com/ 创建应用
+      // 然后取消注释以下配置并填入你的凭据：
+      // algolia: {
+      //   appId: 'YOUR_APP_ID',
+      //   apiKey: 'YOUR_API_KEY',
+      //   indexName: 'registrylib',
+      //   contextualSearch: true,
+      // },
     }),
   plugins: [
     [
@@ -1285,25 +1288,66 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 - Create: `docs-content/how-to/register-advancements.md`
 - Create: `docs-content/how-to/block-entities-renderers.md`
 
+**迁移模板格式（适用于所有 How-to 指南）：**
+
+```markdown
+---
+sidebar_position: N
+---
+
+# 📖 [任务标题]
+
+[一句话描述这个指南解决的问题]
+
+## 快速示例
+
+[最小可运行代码示例，3-5行]
+
+## 详细步骤
+
+### 步骤 1: [名称]
+
+[说明 + 代码]
+
+### 步骤 2: [名称]
+
+[说明 + 代码]
+
+## 常见选项
+
+| 方法 | 用途 |
+|------|------|
+| xxx  | ...  |
+
+## 💡 小贴士
+
+[实用建议]
+
+## 相关链接
+
+- [相关教程](链接)
+```
+
 - [ ] **Step 1: 迁移物品注册指南**
 
-从现有 `docs/register-items.md` 迁移内容到 `docs-content/how-to/register-items.md`，按照新模板格式整理。
+阅读现有 `docs/register-items.md`，按上述模板格式创建 `docs-content/how-to/register-items.md`。
+保留现有代码示例，添加友好的说明文字和表情符号。
 
 - [ ] **Step 2: 迁移方块注册指南**
 
-从现有 `docs/register-blocks.md` 迁移内容到 `docs-content/how-to/register-blocks.md`。
+阅读现有 `docs/register-blocks.md`，按模板格式创建 `docs-content/how-to/register-blocks.md`。
 
 - [ ] **Step 3: 迁移流体注册指南**
 
-从现有 `docs/register-fluids-and-buckets.md` 迁移内容到 `docs-content/how-to/register-fluids.md`。
+阅读现有 `docs/register-fluids-and-buckets.md`，按模板格式创建 `docs-content/how-to/register-fluids.md`。
 
 - [ ] **Step 4: 迁移进度注册指南**
 
-从现有 `docs/register-advancements.md` 迁移内容到 `docs-content/how-to/register-advancements.md`。
+阅读现有 `docs/register-advancements.md`，按模板格式创建 `docs-content/how-to/register-advancements.md`。
 
 - [ ] **Step 5: 迁移方块实体指南**
 
-从现有 `docs/register-block-entities-and-renderers.md` 迁移内容到 `docs-content/how-to/block-entities-renderers.md`。
+阅读现有 `docs/register-block-entities-and-renderers.md`，按模板格式创建 `docs-content/how-to/block-entities-renderers.md`。
 
 - [ ] **Step 6: 提交 How-to 指南**
 
@@ -1331,21 +1375,65 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 - Create: `docs-content/tutorials/intermediate/03-multi-language.md`
 - Create: `docs-content/tutorials/intermediate/04-recipes-tags.md`
 
+**进阶教程模板格式：**
+
+```markdown
+---
+sidebar_position: N
+---
+
+# 🎯 [教程标题]
+
+**预计时间**: X 分钟 | **难度**: 🚀 进阶
+
+## 👋 你将学到
+
+- 要点 1
+- 要点 2
+- 要点 3
+
+## 什么时候使用
+
+[解释何时需要这个功能]
+
+## 快速示例
+
+[最小可运行代码示例]
+
+## 逐步解释
+
+### 概念 1: [名称]
+
+[说明]
+
+### 概念 2: [名称]
+
+[说明]
+
+## 💡 最佳实践
+
+[实用建议]
+
+## 🚀 下一步
+
+继续学习 [下一个主题](链接)
+```
+
 - [ ] **Step 1: 迁移 Group 系统教程**
 
-从现有 `docs/group-system.md` 迁移内容。
+阅读现有 `docs/group-system.md`，按上述模板格式创建 `docs-content/tutorials/intermediate/01-group-system.md`。
 
 - [ ] **Step 2: 迁移 Tooltip 系统教程**
 
-从现有 `docs/tooltip-system.md` 迁移内容。
+阅读现有 `docs/tooltip-system.md`，按模板格式创建 `docs-content/tutorials/intermediate/02-tooltip-system.md`。
 
 - [ ] **Step 3: 迁移多语言教程**
 
-从现有 `docs/lang-system.md` 迁移内容。
+阅读现有 `docs/lang-system.md`，按模板格式创建 `docs-content/tutorials/intermediate/03-multi-language.md`。
 
 - [ ] **Step 4: 创建配方和标签教程**
 
-基于现有内容整理配方和标签相关内容。
+基于现有内容整理配方和标签相关内容，创建 `docs-content/tutorials/intermediate/04-recipes-tags.md`。
 
 - [ ] **Step 5: 提交进阶教程**
 
@@ -1375,25 +1463,98 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 - Create: `docs-content/reference/entry-types.md`
 - Create: `docs-content/reference/builder-methods.md`
 
+**专家教程模板格式：**
+
+```markdown
+---
+sidebar_position: N
+---
+
+# 🎯 [教程标题]
+
+**预计时间**: X 分钟 | **难度**: ⚡ 专家
+
+## 👋 前置要求
+
+- 已掌握进阶内容
+- 了解 Java 泛型和继承
+
+## 核心概念
+
+[深入解释]
+
+## 实现步骤
+
+### 步骤 1: [名称]
+
+[详细说明 + 代码]
+
+## 完整示例
+
+[完整代码示例]
+
+## ⚠️ 注意事项
+
+[重要警告]
+
+## 🚀 延伸阅读
+
+[相关链接]
+```
+
+**参考文档模板格式：**
+
+```markdown
+---
+sidebar_position: N
+---
+
+# 📋 [参考标题]
+
+[一句话说明]
+
+## 快速查询表
+
+| 方法/类型 | 用途 | 示例 |
+|-----------|------|------|
+| xxx       | ...  | ...  |
+
+## 详细说明
+
+### [方法名]
+
+**签名**: `method(param: type): return`
+
+**用途**: [说明]
+
+**示例**:
+\`\`\`java
+// 示例代码
+\`\`\`
+```
+
 - [ ] **Step 1: 迁移自定义 Builder 教程**
 
-从现有 `docs/override-builders.md` 迁移内容。
+阅读现有 `docs/override-builders.md`，按专家教程模板创建 `docs-content/tutorials/expert/01-custom-builder.md`。
 
 - [ ] **Step 2: 创建性能优化教程**
 
-基于现有 `docs/special-optimizations.md` 整理。
+阅读现有 `docs/special-optimizations.md`，按模板创建 `docs-content/tutorials/expert/02-performance.md`。
+只保留与 RegistryLib 直接相关的优化内容。
 
 - [ ] **Step 3: 创建架构和贡献教程**
 
-整理源码架构和贡献指南内容。
+创建 `docs-content/tutorials/expert/03-architecture.md`（源码架构概览）和 `docs-content/tutorials/expert/04-contributing.md`（贡献指南）。
+参考 `docs/development-and-maintenance.md` 的内容。
 
 - [ ] **Step 4: 迁移 API 参考**
 
-从现有 `docs/api-reference.md` 迁移内容。
+阅读现有 `docs/api-reference.md`，按参考文档模板创建 `docs-content/reference/api-quick-reference.md`。
 
 - [ ] **Step 5: 创建 Entry 类型和 Builder 方法参考**
 
-整理相关参考内容。
+创建 `docs-content/reference/entry-types.md` 和 `docs-content/reference/builder-methods.md`。
+整理现有文档中的方法表格。
 
 - [ ] **Step 6: 提交专家路径和参考内容**
 
@@ -1706,9 +1867,9 @@ jobs:
         uses: actions/deploy-pages@v4
 ```
 
-- [ ] **Step 2: 添加部署脚本**
+- [ ] **Step 2: 验证 package.json 脚本（已由 Task 1 创建）**
 
-在 `website/package.json` 中添加：
+Docusaurus 初始化（Task 1）已自动创建所需的 npm 脚本。验证 `website/package.json` 包含以下脚本：
 
 ```json
 {
@@ -1725,6 +1886,8 @@ jobs:
   }
 }
 ```
+
+如果脚本已存在，跳过此步骤。
 
 - [ ] **Step 3: 提交部署配置**
 
