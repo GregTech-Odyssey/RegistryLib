@@ -109,6 +109,7 @@ a {
   --ifm-alert-background-color: #ecfdf5;
   --ifm-alert-border-color: #059669;
 }
+
 [data-theme='dark'] .alert--success {
   --ifm-alert-background-color: #1a2332;
   --ifm-alert-border-color: #73daca;
@@ -118,6 +119,7 @@ a {
   --ifm-alert-background-color: #eff6ff;
   --ifm-alert-border-color: #2563eb;
 }
+
 [data-theme='dark'] .alert--info {
   --ifm-alert-background-color: #1a2332;
   --ifm-alert-border-color: #7aa2f7;
@@ -127,6 +129,7 @@ a {
   --ifm-alert-background-color: #fffbeb;
   --ifm-alert-border-color: #d97706;
 }
+
 [data-theme='dark'] .alert--warning {
   --ifm-alert-background-color: #2a2520;
   --ifm-alert-border-color: #e0af68;
@@ -136,6 +139,7 @@ a {
   --ifm-alert-background-color: #fef2f2;
   --ifm-alert-border-color: #dc2626;
 }
+
 [data-theme='dark'] .alert--danger {
   --ifm-alert-background-color: #2a1f1f;
   --ifm-alert-border-color: #f7768e;
@@ -150,6 +154,7 @@ a {
   font-size: 0.75rem;
   font-weight: 600;
 }
+
 .badge--intermediate {
   background: #dbeafe;
   color: #1e40af;
@@ -158,6 +163,7 @@ a {
   font-size: 0.75rem;
   font-weight: 600;
 }
+
 .badge--expert {
   background: #f3e8ff;
   color: #6b21a8;
@@ -171,10 +177,12 @@ a {
   background: #16453a;
   color: #a7f3d0;
 }
+
 [data-theme='dark'] .badge--intermediate {
   background: #1e3a5f;
   color: #bfdbfe;
 }
+
 [data-theme='dark'] .badge--expert {
   background: #3b1f5e;
   color: #e9d5ff;
