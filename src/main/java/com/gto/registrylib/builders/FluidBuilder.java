@@ -81,7 +81,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                 () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1));
     }
 
-    @StandardAPI
+    @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor))")
     public FluidBuilder<T, P> clientExtension(
                                               @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture, int tintColor) {
         this.tintColor = tintColor;

@@ -146,7 +146,7 @@ public class BlockBuilder<T extends Block, P>
         return this;
     }
 
-    @StandardAPI("Commonly used for vanilla")
+    @SyntaxSugar("initialProperties(() -> block)")
     public BlockBuilder<T, P> initialProperties(Block block) {
         initialProperties = () -> BlockBehaviour.Properties.ofFullCopy(block);
         return this;
@@ -171,7 +171,7 @@ public class BlockBuilder<T extends Block, P>
         return setData(ProviderType.BLOCKSTATE, p -> cons.get().accept(getValue(), p));
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(Block::getDescriptionId, name)")
     public BlockBuilder<T, P> lang(@NotNull String name) {
         return lang(Block::getDescriptionId, name);
     }

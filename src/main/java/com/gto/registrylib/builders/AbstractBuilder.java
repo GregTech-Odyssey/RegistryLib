@@ -2,6 +2,7 @@ package com.gto.registrylib.builders;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
+import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.datagen.*;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
@@ -171,7 +172,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return (S) this;
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, registryKey))")
     public S lang(@NotNull Function<T, String> langKeyProvider) {
         if (core.doDatagen()) {
             return lang(langKeyProvider, (p, t) -> p.getAutomaticName(t, registryKey));
@@ -179,7 +180,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return (S) this;
     }
 
-    @StandardAPI
+    @SyntaxSugar("lang(ProviderType.LANG, langKeyProvider, name)")
     public S lang(@NotNull Function<T, String> langKeyProvider, @NotNull String name) {
         if (core.doDatagen()) {
             return lang(langKeyProvider, FunctionUtil.constantBiFn(name));

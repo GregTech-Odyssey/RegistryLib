@@ -405,7 +405,7 @@ public class RegistryCore {
 
     // --- Creative Tab ---
 
-    @StandardAPI
+    @SyntaxSugar("creativeTab(name, FunctionUtil.noOpConsumer())")
     public NoConfigBuilder<CreativeModeTab, CreativeModeTab, RegistryCore> creativeTab(String name) {
         return creativeTab(name, FunctionUtil.noOpConsumer());
     }
