@@ -45,9 +45,10 @@ const sidebars = {
         'how-to/register-fluids',
         'how-to/register-block-entities',
         'how-to/register-advancements',
-        'how-to/register-recipes',
+        'how-to/register-entities',
         'how-to/register-custom-ingredients',
         'how-to/register-enchantments',
+        'how-to/register-recipes',
       ],
     },
     {
