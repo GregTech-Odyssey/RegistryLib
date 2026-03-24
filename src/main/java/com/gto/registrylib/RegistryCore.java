@@ -5,6 +5,7 @@ import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.BlockBuilder;
 import com.gto.registrylib.builders.BlockEntityBuilder;
 import com.gto.registrylib.builders.EnchantmentBuilder;
+import com.gto.registrylib.builders.EntityBuilder;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylib.builders.NoConfigBuilder;
@@ -37,6 +38,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -87,6 +93,7 @@ public class RegistryCore {
     private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = new ReferenceOpenHashSet<>();
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
+    private final List<Pair<Supplier<EntityType<?>>, Supplier<AttributeSupplier.Builder>>> entityAttributes = new ArrayList<>();
 
     private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>, String>, Consumer<?>> dataGensByEntry = NestedMap.createIdentity(HashMap::new);
     private final MultiMap<GeneratorType<?>, Consumer<?>> dataGens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
@@ -600,6 +607,31 @@ public class RegistryCore {
         return EnchantmentBuilder.create(this, parent, name);
     }
 
+    // --- Entities ---
+
+    public <T extends Entity, P> EntityBuilder<T, P> entity(
+                                                            @Nonnull P parent,
+                                                            @Nonnull String name,
+                                                            @Nonnull EntityType.EntityFactory<T> factory,
+                                                            @Nonnull MobCategory category) {
+        return EntityBuilder.create(this, parent, name, factory, category);
+    }
+
+    @StandardAPI("Returns an EntityBuilder for fluent chain configuration. Call .register() to finalise.")
+    public <T extends Entity> EntityBuilder<T, RegistryCore> entity(
+                                                                   @Nonnull String name,
+                                                                   @Nonnull EntityType.EntityFactory<T> factory,
+                                                                   @Nonnull MobCategory category) {
+        return entity(this, name, factory, category);
+    }
+
+    @SuppressWarnings("unchecked")
+    public void registerEntityAttributes(
+                                         Supplier<?> entityTypeSupplier,
+                                         Supplier<AttributeSupplier.Builder> attributesFactory) {
+        entityAttributes.add(Pair.of((Supplier<EntityType<?>>) entityTypeSupplier, attributesFactory));
+    }
+
     // --- Creative Tab ---
 
     @SyntaxSugar("creativeTab(name, FunctionUtil.noOpConsumer())")
@@ -669,9 +701,14 @@ public class RegistryCore {
                         .forEach(value -> value.accept(modifier)));
     }
 
+    @SuppressWarnings("unchecked")
     static void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
         REGISTRY_CORES.forEach(
                 core -> {
+                    core.entityAttributes.forEach(pair -> {
+                        var type = (EntityType<? extends LivingEntity>) pair.getLeft().get();
+                        event.put(type, pair.getRight().get().build());
+                    });
                     if (!core.registrations.isEmpty()) {
                         log.error("Registry {} has unregistered entries", core.registrations.getMap().keySet());
                     }

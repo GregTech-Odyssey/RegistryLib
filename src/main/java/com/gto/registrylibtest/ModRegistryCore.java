@@ -7,10 +7,14 @@ import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylibtest.builder.ModBlockBuilder;
+import com.gto.registrylibtest.builder.ModEntityBuilder;
 import com.gto.registrylibtest.builder.ModFluidBuilder;
 import com.gto.registrylibtest.builder.ModItemBuilder;
 
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -131,6 +135,23 @@ public class ModRegistryCore extends RegistryCore {
     }
 
     // ── Builder hooks ────────────────────────────────────────────────────────
+
+    @Override
+    public <T extends Entity> ModEntityBuilder<T, RegistryCore> entity(
+                                                                       @Nonnull String name,
+                                                                       @Nonnull EntityType.EntityFactory<T> factory,
+                                                                       @Nonnull MobCategory category) {
+        return entity(this, name, factory, category);
+    }
+
+    @Override
+    public <T extends Entity, P> ModEntityBuilder<T, P> entity(
+                                                               @Nonnull P parent,
+                                                               @Nonnull String name,
+                                                               @Nonnull EntityType.EntityFactory<T> factory,
+                                                               @Nonnull MobCategory category) {
+        return ModEntityBuilder.create(this, parent, name, factory, category);
+    }
 
     @Override
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(

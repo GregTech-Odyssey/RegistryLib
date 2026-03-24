@@ -76,6 +76,5 @@ Jump into **intermediate tutorials** for real-world patterns:
 | **Version** | 1.0.4 |
 | **Minecraft** | 26.1+ (NeoForge 26.1) |
 | **Java** | 25 |
-| **License** | See [LICENSE](https://github.com/GregTech-Odyssey/RegistryLib/blob/main/LICENSE) |
 | **Source** | [RegistryLib](https://github.com/GregTech-Odyssey/RegistryLib) |
 | **Organization** | [GregTech-Odyssey](https://github.com/GregTech-Odyssey) |
