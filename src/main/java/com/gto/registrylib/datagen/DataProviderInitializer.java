@@ -19,11 +19,26 @@ public class DataProviderInitializer {
 
     private final Map<ProviderType<?>, ProviderType<? extends RegistryLibLookupFillerProvider>> providerDependencies = new ConcurrentHashMap<>();
 
+    @SuppressWarnings("rawtypes")
+    private final Map<ResourceKey<? extends Registry<?>>, List<RegistrySetBuilder.RegistryBootstrap>> pendingBootstraps = new ConcurrentHashMap<>();
+
     public DataProviderInitializer() {
         addDependency(ProviderType.ITEM_TAGS, ProviderType.BLOCK_TAGS);
+        addDependency(ProviderType.ENCHANTMENT_TAGS, ProviderType.DATAPACK_REGISTRIES);
     }
 
-    protected RegistrySetBuilder getDatapackRegistryProviders() {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public RegistrySetBuilder getDatapackRegistryProviders() {
+        for (var entry : pendingBootstraps.entrySet()) {
+            ResourceKey registryKey = entry.getKey();
+            List<RegistrySetBuilder.RegistryBootstrap> bootstraps = entry.getValue();
+            datapackEntryProvider.add(registryKey, ctx -> {
+                for (var bootstrap : bootstraps) {
+                    bootstrap.run(ctx);
+                }
+            });
+        }
+        pendingBootstraps.clear();
         return datapackEntryProvider;
     }
 
@@ -48,9 +63,11 @@ public class DataProviderInitializer {
         return ans;
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public <T> void add(
                         ResourceKey<Registry<T>> registry, RegistrySetBuilder.RegistryBootstrap<T> provider) {
-        datapackEntryProvider.add(registry, provider);
+        pendingBootstraps.computeIfAbsent((ResourceKey) registry, k -> Collections.synchronizedList(new ArrayList<>()))
+                .add((RegistrySetBuilder.RegistryBootstrap) provider);
     }
 
     public void addDependency(

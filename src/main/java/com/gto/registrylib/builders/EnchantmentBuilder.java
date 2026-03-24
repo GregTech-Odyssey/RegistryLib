@@ -3,41 +3,38 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
-import com.gto.registrylib.datagen.GeneratorType;
 import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.datagen.provider.RegistryLibEnchantmentTagsProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.entry.EnchantmentEntry;
-import com.gto.registrylib.util.entry.RegistryEntry;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-import com.mojang.serialization.MapCodec;
-
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.enchantment.ConditionalEffect;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import javax.annotation.Nonnull;
 
 /**
- * 附魔 Builder，通过流畅 API 定义数据驱动附魔并自动生成 JSON + 语言条目 + 标签。
+ * 附魔 Builder，通过流畅 API 定义数据驱动附魔并自动生成附魔 JSON + 语言条目 + 标签。
  *
- * <p>Fluent builder for data-driven enchantments. Generates enchantment JSON, lang entries, and
- * enchantment tag entries during datagen.
+ * <p>Fluent builder for data-driven enchantments. Uses Minecraft's {@link Enchantment.Builder} API
+ * internally to construct enchantment definitions that are generated during datagen via
+ * {@link net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider}.
  *
  * <h3>Usage</h3>
  *
@@ -49,11 +46,9 @@ import javax.annotation.Nonnull;
  *     .weight(5).maxLevel(3)
  *     .minCost(15, 9).maxCost(65, 9)
  *     .anvilCost(4)
- *     .slots("mainhand")
- *     .vanillaEffect("minecraft:block_experience", effect -> effect
- *         .add("type", "minecraft:add")
- *         .add("value", value -> value.add("type", "minecraft:linear")
- *             .add("base", 1.0).add("per_level_above_first", 1.0)))
+ *     .slots(EquipmentSlotGroup.MAINHAND)
+ *     .withEffect(EnchantmentEffectComponents.BLOCK_EXPERIENCE,
+ *         new AddValue(LevelBasedValue.perLevel(1.0f, 1.0f)))
  *     .register();
  * }</pre>
  *
@@ -66,8 +61,8 @@ public class EnchantmentBuilder<P> {
     private final String name;
 
     // Enchantment definition fields
-    private String supportedItems;
-    private String primaryItems;
+    private TagKey<Item> supportedItems;
+    private TagKey<Item> primaryItems;
     private int weight = 5;
     private int maxLevel = 1;
     private int minCostBase = 1;
@@ -75,9 +70,11 @@ public class EnchantmentBuilder<P> {
     private int maxCostBase = 21;
     private int maxCostPerLevel = 0;
     private int anvilCost = 1;
-    private final List<String> slots = new ArrayList<>();
-    private final Map<String, List<JsonObject>> effects = new LinkedHashMap<>();
-    private final List<String> exclusiveWith = new ArrayList<>();
+    private final List<EquipmentSlotGroup> slots = new ArrayList<>();
+    private final List<ResourceKey<Enchantment>> exclusiveWith = new ArrayList<>();
+
+    // Effect callbacks — applied to Enchantment.Builder during bootstrap
+    private final List<Consumer<Enchantment.Builder>> effectCallbacks = new ArrayList<>();
 
     // Lang entries
     private String langEn;
@@ -125,24 +122,14 @@ public class EnchantmentBuilder<P> {
     // === Enchantment Definition ===
 
     /**
-     * 设置可附魔的物品（使用物品标签引用字符串，如 {@code "#minecraft:enchantable/mining"}）。
-     *
-     * <p>Sets supported items using a tag reference string (e.g. {@code "#minecraft:enchantable/mining"}).
-     */
-    @StandardAPI
-    public EnchantmentBuilder<P> supportedItems(@NotNull String tagRef) {
-        this.supportedItems = tagRef;
-        return this;
-    }
-
-    /**
      * 设置可附魔的物品（使用物品标签）。
      *
      * <p>Sets supported items using an item TagKey.
      */
-    @SyntaxSugar("supportedItems(\"#\" + tag.location())")
+    @StandardAPI
     public EnchantmentBuilder<P> supportedItems(@NotNull TagKey<Item> tag) {
-        return supportedItems("#" + tag.location());
+        this.supportedItems = tag;
+        return this;
     }
 
     /**
@@ -151,14 +138,9 @@ public class EnchantmentBuilder<P> {
      * <p>Sets primary items (items preferred by the enchanting table).
      */
     @StandardAPI
-    public EnchantmentBuilder<P> primaryItems(@NotNull String tagRef) {
-        this.primaryItems = tagRef;
-        return this;
-    }
-
-    @SyntaxSugar("primaryItems(\"#\" + tag.location())")
     public EnchantmentBuilder<P> primaryItems(@NotNull TagKey<Item> tag) {
-        return primaryItems("#" + tag.location());
+        this.primaryItems = tag;
+        return this;
     }
 
     /** 设置附魔权重（出现概率，值越大越常见）。 */
@@ -211,11 +193,11 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置附魔适用的装备槽位。
      *
-     * <p>Sets applicable equipment slot groups (e.g. "mainhand", "armor", "any").
+     * <p>Sets applicable equipment slot groups.
      */
     @StandardAPI
-    public EnchantmentBuilder<P> slots(@NotNull String... slotGroups) {
-        for (String s : slotGroups) {
+    public EnchantmentBuilder<P> slots(@NotNull EquipmentSlotGroup... slotGroups) {
+        for (var s : slotGroups) {
             slots.add(s);
         }
         return this;
@@ -230,7 +212,7 @@ public class EnchantmentBuilder<P> {
     @StandardAPI
     public final EnchantmentBuilder<P> exclusiveWith(@NotNull ResourceKey<Enchantment>... keys) {
         for (var key : keys) {
-            exclusiveWith.add(key.identifier().toString());
+            exclusiveWith.add(key);
         }
         return this;
     }
@@ -238,61 +220,125 @@ public class EnchantmentBuilder<P> {
     // === Effects ===
 
     /**
-     * 添加原版附魔效果（使用效果类型 ID 和 JSON 构建器）。
+     * 添加条件效果（包含条件列表类型的效果组件）。
      *
-     * <p>Adds an enchantment effect using a vanilla effect component type ID and a JSON builder.
+     * <p>Adds a conditional effect entry to the specified effect component type.
      *
      * <pre>{@code
-     * .vanillaEffect("minecraft:block_experience", effect -> effect
-     *     .add("type", "minecraft:add")
-     *     .add("value", value -> value
-     *         .add("type", "minecraft:linear")
-     *         .add("base", 1.0)
-     *         .add("per_level_above_first", 1.0)))
+     * .withEffect(EnchantmentEffectComponents.BLOCK_EXPERIENCE,
+     *     new AddValue(LevelBasedValue.perLevel(1.0f, 1.0f)))
      * }</pre>
      *
-     * @param effectTypeId the effect component type ID (e.g. "minecraft:block_experience")
-     * @param effectBuilder a builder that constructs the "effect" JSON object
+     * @param type the effect component type
+     * @param effect the effect instance
      */
     @StandardAPI
-    public EnchantmentBuilder<P> vanillaEffect(
-                                               @NotNull String effectTypeId,
-                                               @NotNull Consumer<JsonBuilder> effectBuilder) {
-        JsonBuilder builder = new JsonBuilder();
-        effectBuilder.accept(builder);
-        JsonObject entry = new JsonObject();
-        entry.add("effect", builder.build());
-        effects.computeIfAbsent(effectTypeId, k -> new ArrayList<>()).add(entry);
+    public <E> EnchantmentBuilder<P> withEffect(
+                                                @Nonnull DataComponentType<List<ConditionalEffect<E>>> type,
+                                                @Nonnull E effect) {
+        effectCallbacks.add(builder -> builder.withEffect(type, effect));
         return this;
     }
 
     /**
-     * 添加自定义附魔效果（使用已注册的 DataComponentType 和 JSON 构建器）。
+     * 添加条件效果，使用延迟求值的类型引用（适用于模组注册的效果组件类型）。
      *
-     * <p>Adds a custom mod effect using the mod's registered {@link DataComponentType} and a JSON builder.
+     * <p>Adds a conditional effect using a lazily-evaluated type reference. Use this when the
+     * {@link DataComponentType} is obtained from a {@link com.gto.registrylib.util.entry.RegistryEntry}
+     * that may not yet be bound at class loading time.
      *
-     * @param effectTypeId the namespaced effect component type ID (e.g. "mymod:auto_smelt")
-     * @param effectBuilder a builder that constructs the "effect" JSON object
+     * <pre>{@code
+     * .withEffect(MY_EFFECT::get, new MyEffect(1.0f))
+     * }</pre>
+     *
+     * @param typeSupplier supplier for the effect component type
+     * @param effect the effect instance
      */
     @StandardAPI
-    public EnchantmentBuilder<P> customEffect(
-                                              @NotNull String effectTypeId,
-                                              @NotNull Consumer<JsonBuilder> effectBuilder) {
-        return vanillaEffect(effectTypeId, effectBuilder);
+    public <E> EnchantmentBuilder<P> withEffect(
+                                                @Nonnull Supplier<DataComponentType<List<ConditionalEffect<E>>>> typeSupplier,
+                                                @Nonnull E effect) {
+        effectCallbacks.add(builder -> builder.withEffect(typeSupplier.get(), effect));
+        return this;
     }
 
     /**
-     * 添加自定义附魔效果（使用已注册的 DataComponentType 和原始 JSON 对象）。
+     * 添加带条件的条件效果。
      *
-     * <p>Adds a custom mod effect using a raw JsonObject as the effect data.
+     * <p>Adds a conditional effect with a loot condition.
+     *
+     * @param type the effect component type
+     * @param effect the effect instance
+     * @param condition the loot item condition
      */
     @StandardAPI
-    public EnchantmentBuilder<P> customEffect(
-                                              @NotNull String effectTypeId,
-                                              @NotNull JsonObject effectJson) {
-        JsonObject entry = new JsonObject();
-        entry.add("effect", effectJson);
-        effects.computeIfAbsent(effectTypeId, k -> new ArrayList<>()).add(entry);
+    public <E> EnchantmentBuilder<P> withEffect(
+                                                @Nonnull DataComponentType<List<ConditionalEffect<E>>> type,
+                                                @Nonnull E effect,
+                                                @Nonnull LootItemCondition.Builder condition) {
+        effectCallbacks.add(builder -> builder.withEffect(type, effect, condition));
+        return this;
+    }
+
+    /**
+     * 添加带条件的条件效果，使用延迟求值的类型引用。
+     *
+     * <p>Adds a conditional effect with a loot condition, using a lazily-evaluated type reference.
+     *
+     * @param typeSupplier supplier for the effect component type
+     * @param effect the effect instance
+     * @param condition the loot item condition
+     */
+    @StandardAPI
+    public <E> EnchantmentBuilder<P> withEffect(
+                                                @Nonnull Supplier<DataComponentType<List<ConditionalEffect<E>>>> typeSupplier,
+                                                @Nonnull E effect,
+                                                @Nonnull LootItemCondition.Builder condition) {
+        effectCallbacks.add(builder -> builder.withEffect(typeSupplier.get(), effect, condition));
+        return this;
+    }
+
+    /**
+     * 添加特殊效果（非条件列表类型的效果组件，如 prevent_equipment_drop）。
+     *
+     * <p>Adds a special (non-list) effect to the enchantment.
+     *
+     * @param type the effect component type
+     * @param effect the effect instance
+     */
+    @StandardAPI
+    public <E> EnchantmentBuilder<P> withSpecialEffect(
+                                                       @Nonnull DataComponentType<E> type,
+                                                       @Nonnull E effect) {
+        effectCallbacks.add(builder -> builder.withSpecialEffect(type, effect));
+        return this;
+    }
+
+    /**
+     * 添加特殊效果，使用延迟求值的类型引用。
+     *
+     * <p>Adds a special (non-list) effect using a lazily-evaluated type reference.
+     *
+     * @param typeSupplier supplier for the effect component type
+     * @param effect the effect instance
+     */
+    @StandardAPI
+    public <E> EnchantmentBuilder<P> withSpecialEffect(
+                                                       @Nonnull Supplier<DataComponentType<E>> typeSupplier,
+                                                       @Nonnull E effect) {
+        effectCallbacks.add(builder -> builder.withSpecialEffect(typeSupplier.get(), effect));
+        return this;
+    }
+
+    /**
+     * 直接操作底层的 {@link Enchantment.Builder}，用于高级自定义。
+     *
+     * <p>Provides direct access to the underlying {@link Enchantment.Builder} for advanced
+     * customization not covered by the fluent API.
+     */
+    @StandardAPI
+    public EnchantmentBuilder<P> configure(@Nonnull Consumer<Enchantment.Builder> configurator) {
+        effectCallbacks.add(configurator);
         return this;
     }
 
@@ -315,10 +361,10 @@ public class EnchantmentBuilder<P> {
     // === Registration ===
 
     /**
-     * 注册语言条目，生成附魔 JSON 和标签 JSON，返回 {@link EnchantmentEntry}。
+     * 注册语言条目，通过 RegistrySetBuilder 生成附魔 JSON 和标签 JSON，返回 {@link EnchantmentEntry}。
      *
-     * <p>Registers lang entries, generates enchantment JSON and tag JSON during datagen, and
-     * returns an {@link EnchantmentEntry}.
+     * <p>Registers lang entries, generates enchantment definition and tags during datagen via
+     * {@link net.minecraft.core.RegistrySetBuilder}, and returns an {@link EnchantmentEntry}.
      */
     @StandardAPI
     public EnchantmentEntry register() {
@@ -338,19 +384,65 @@ public class EnchantmentBuilder<P> {
             cb.accept(core);
         }
 
-        // Generate enchantment JSON
+        // Register enchantment via RegistrySetBuilder (datagen)
         if (core.doDatagen()) {
-            core.addDataGenerator(
-                    ProviderType.ENCHANTMENT_DATA,
-                    (RegistryLibEnchantmentDataCollector collector) -> collector.add(name, buildJson()));
+            // Capture fields for lambda
+            final TagKey<Item> capturedSupportedItems = supportedItems;
+            final TagKey<Item> capturedPrimaryItems = primaryItems;
+            final int capturedWeight = weight;
+            final int capturedMaxLevel = maxLevel;
+            final Enchantment.Cost minCost = Enchantment.dynamicCost(minCostBase, minCostPerLevel);
+            final Enchantment.Cost maxCost = Enchantment.dynamicCost(maxCostBase, maxCostPerLevel);
+            final int capturedAnvilCost = anvilCost;
+            final EquipmentSlotGroup[] capturedSlots = slots.toArray(EquipmentSlotGroup[]::new);
+            final List<ResourceKey<Enchantment>> capturedExclusive = List.copyOf(exclusiveWith);
+            final List<Consumer<Enchantment.Builder>> capturedEffects = List.copyOf(effectCallbacks);
+
+            core.getDataGenInitializer().add(Registries.ENCHANTMENT, ctx -> {
+                HolderSet<Item> supportedItemSet = ctx.lookup(Registries.ITEM).getOrThrow(capturedSupportedItems);
+
+                Enchantment.EnchantmentDefinition definition;
+                if (capturedPrimaryItems != null) {
+                    HolderSet<Item> primaryItemSet = ctx.lookup(Registries.ITEM).getOrThrow(capturedPrimaryItems);
+                    definition = Enchantment.definition(
+                            supportedItemSet, primaryItemSet,
+                            capturedWeight, capturedMaxLevel,
+                            minCost, maxCost, capturedAnvilCost,
+                            capturedSlots);
+                } else {
+                    definition = Enchantment.definition(
+                            supportedItemSet,
+                            capturedWeight, capturedMaxLevel,
+                            minCost, maxCost, capturedAnvilCost,
+                            capturedSlots);
+                }
+
+                Enchantment.Builder builder = Enchantment.enchantment(definition);
+
+                // Apply exclusive set
+                if (!capturedExclusive.isEmpty()) {
+                    var enchLookup = ctx.lookup(Registries.ENCHANTMENT);
+                    var holders = capturedExclusive.stream()
+                            .map(enchLookup::getOrThrow)
+                            .toList();
+                    builder.exclusiveWith(HolderSet.direct(holders));
+                }
+
+                // Apply effects
+                for (var cb : capturedEffects) {
+                    cb.accept(builder);
+                }
+
+                ctx.register(key, builder.build(key.identifier()));
+            });
 
             // Generate tag entries
             if (!tags.isEmpty()) {
                 core.addDataGenerator(
-                        ProviderType.ENCHANTMENT_DATA,
-                        (RegistryLibEnchantmentDataCollector collector) -> {
+                        ProviderType.ENCHANTMENT_TAGS,
+                        (RegistryLibEnchantmentTagsProvider prov) -> {
                             for (var tag : tags) {
-                                collector.addTag(tag, id);
+                                prov.tag(tag).add(key);
                             }
                         });
             }
@@ -369,144 +461,5 @@ public class EnchantmentBuilder<P> {
 
     private String langKey() {
         return "enchantment." + core.getModid() + "." + name;
-    }
-
-    private JsonObject buildJson() {
-        JsonObject json = new JsonObject();
-
-        // description
-        JsonObject desc = new JsonObject();
-        desc.addProperty("translate", langKey());
-        json.add("description", desc);
-
-        // supported_items
-        json.addProperty("supported_items", supportedItems);
-
-        // primary_items
-        if (primaryItems != null) {
-            json.addProperty("primary_items", primaryItems);
-        }
-
-        // weight
-        json.addProperty("weight", weight);
-
-        // max_level
-        json.addProperty("max_level", maxLevel);
-
-        // min_cost
-        JsonObject minCost = new JsonObject();
-        minCost.addProperty("base", minCostBase);
-        minCost.addProperty("per_level_above_first", minCostPerLevel);
-        json.add("min_cost", minCost);
-
-        // max_cost
-        JsonObject maxCost = new JsonObject();
-        maxCost.addProperty("base", maxCostBase);
-        maxCost.addProperty("per_level_above_first", maxCostPerLevel);
-        json.add("max_cost", maxCost);
-
-        // anvil_cost
-        json.addProperty("anvil_cost", anvilCost);
-
-        // slots
-        JsonArray slotsArr = new JsonArray();
-        for (String s : slots) {
-            slotsArr.add(s);
-        }
-        json.add("slots", slotsArr);
-
-        // exclusive_set
-        if (!exclusiveWith.isEmpty()) {
-            if (exclusiveWith.size() == 1) {
-                json.addProperty("exclusive_set", exclusiveWith.getFirst());
-            } else {
-                JsonArray arr = new JsonArray();
-                for (String s : exclusiveWith) {
-                    arr.add(s);
-                }
-                json.add("exclusive_set", arr);
-            }
-        }
-
-        // effects
-        if (!effects.isEmpty()) {
-            JsonObject effectsObj = new JsonObject();
-            for (var entry : effects.entrySet()) {
-                JsonArray arr = new JsonArray();
-                for (JsonObject obj : entry.getValue()) {
-                    arr.add(obj);
-                }
-                effectsObj.add(entry.getKey(), arr);
-            }
-            json.add("effects", effectsObj);
-        }
-
-        return json;
-    }
-
-    // === JSON Builder helper ===
-
-    /**
-     * 用于构建嵌套 JSON 结构的辅助类。
-     *
-     * <p>Helper class for building nested JSON structures fluently.
-     */
-    public static class JsonBuilder {
-        private final JsonObject obj = new JsonObject();
-
-        public JsonBuilder add(String key, String value) {
-            obj.addProperty(key, value);
-            return this;
-        }
-
-        public JsonBuilder add(String key, int value) {
-            obj.addProperty(key, value);
-            return this;
-        }
-
-        public JsonBuilder add(String key, float value) {
-            obj.addProperty(key, value);
-            return this;
-        }
-
-        public JsonBuilder add(String key, double value) {
-            obj.addProperty(key, value);
-            return this;
-        }
-
-        public JsonBuilder add(String key, boolean value) {
-            obj.addProperty(key, value);
-            return this;
-        }
-
-        public JsonBuilder add(String key, Consumer<JsonBuilder> nested) {
-            JsonBuilder child = new JsonBuilder();
-            nested.accept(child);
-            obj.add(key, child.build());
-            return this;
-        }
-
-        public JsonBuilder add(String key, JsonElement element) {
-            obj.add(key, element);
-            return this;
-        }
-
-        public JsonObject build() {
-            return obj;
-        }
-    }
-
-    // === Inner collector interface (used by the datagen provider) ===
-
-    /**
-     * 附魔数据收集器接口，由 datagen 提供器实现。
-     *
-     * <p>Interface for collecting enchantment definitions and tag entries during datagen.
-     */
-    public interface RegistryLibEnchantmentDataCollector {
-
-        void add(String name, JsonObject enchantmentJson);
-
-        void addTag(TagKey<Enchantment> tag, Identifier enchantmentId);
     }
 }

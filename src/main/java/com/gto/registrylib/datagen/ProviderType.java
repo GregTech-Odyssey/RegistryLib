@@ -1,10 +1,26 @@
 package com.gto.registrylib.datagen;
 
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Nonnull;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.generator.RegistryLibBlockModelGenerator;
 import com.gto.registrylib.datagen.generator.RegistryLibItemModelGenerator;
 import com.gto.registrylib.datagen.loot.RegistryLibLootTableProvider;
-import com.gto.registrylib.datagen.provider.*;
+import com.gto.registrylib.datagen.provider.RegistryLibAdvancementProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibDatapackProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibEnchantmentTagsProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibGeneralResourceProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibItemTagsProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibModelProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibRecipeRunner;
+import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
@@ -17,13 +33,6 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
-
 @FunctionalInterface
 public interface ProviderType<T extends RegistryLibProvider> extends GeneratorType<T> {
 
@@ -33,7 +42,12 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
     ProviderType<RegistryLibRecipeRunner> RECIPE = registerServerData("recipe", RegistryLibRecipeRunner::new);
     ProviderType<RegistryLibLootTableProvider> LOOT = registerServerData("loot", RegistryLibLootTableProvider::new);
     ProviderType<RegistryLibAdvancementProvider> ADVANCEMENT = registerServerData("advancement", RegistryLibAdvancementProvider::new);
-    ProviderType<RegistryLibEnchantmentProvider> ENCHANTMENT_DATA = registerServerData("enchantment", RegistryLibEnchantmentProvider::new);
+    ProviderType<RegistryLibDatapackProvider> DATAPACK_REGISTRIES = registerServerData("datapack_registries", RegistryLibDatapackProvider::new);
+    ProviderType<RegistryLibEnchantmentTagsProvider> ENCHANTMENT_TAGS = registerTag(
+            "tags/enchantment",
+            Registries.ENCHANTMENT,
+            c -> new RegistryLibEnchantmentTagsProvider(
+                    c.parent(), c.type(), c.output(), c.provider()));
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<Block>> BLOCK_TAGS = registerIntrinsicTag(
             "tags/block", "blocks", Registries.BLOCK, block -> block.builtInRegistryHolder().key());
     ProviderType<RegistryLibItemTagsProvider> ITEM_TAGS = registerTag(

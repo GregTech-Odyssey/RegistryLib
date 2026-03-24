@@ -29,7 +29,7 @@ import com.gto.registrylib.builders.EnchantmentBuilder;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylib.builders.NoConfigBuilder;
-import com.gto.registrylib.builders.RecipeBuilder;
+import com.gto.registrylib.builders.RecipeTypeBuilder;
 import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.datagen.DataProviderInitializer;
@@ -427,12 +427,12 @@ public class RegistryCore {
         return new Group.Builder(this, name);
     }
 
-    // --- Recipe Types ---
+    // --- Recipe Types (Simple) ---
 
     @SuppressWarnings("unchecked")
-    @StandardAPI("Registers a RecipeType and returns a typed RegistryEntry.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<T>> recipeType(
-                                                                                                                                                                                             @Nonnull String name) {
+    @StandardAPI("Registers a RecipeType and returns a typed RegistryEntry. Prefer recipeType(String) builder API.")
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<T>> simpleRecipeType(
+                                                                                                                                                                                                   @Nonnull String name) {
         return (RegistryEntry) simple(
                 name,
                 Registries.RECIPE_TYPE,
@@ -440,25 +440,39 @@ public class RegistryCore {
     }
 
     @SuppressWarnings("unchecked")
-    @StandardAPI("Registers a RecipeSerializer and returns a typed RegistryEntry.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeSerializer<?>, net.minecraft.world.item.crafting.RecipeSerializer<T>> recipeSerializer(
-                                                                                                                                                                                                               @Nonnull String name,
-                                                                                                                                                                                                               @Nonnull Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
+    @StandardAPI("Registers a RecipeSerializer and returns a typed RegistryEntry. Prefer recipeType(String) builder API.")
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeSerializer<?>, net.minecraft.world.item.crafting.RecipeSerializer<T>> simpleRecipeSerializer(
+                                                                                                                                                                                                                     @Nonnull String name,
+                                                                                                                                                                                                                     @Nonnull Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
         return (RegistryEntry) simple(name, Registries.RECIPE_SERIALIZER, key -> factory.get());
     }
 
-    // --- Recipes (Builder) ---
+    // --- Recipe Types (Builder) ---
 
-    @StandardAPI("Returns a RecipeBuilder for fluent chain configuration. Call .register() to finalise.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeBuilder<T, RegistryCore> recipe(
-                                                                                                         @Nonnull String name) {
-        return RecipeBuilder.create(this, this, name);
+    @StandardAPI("Returns a RecipeTypeBuilder for fluent chain configuration. Call .register() to finalise.")
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(
+                                                                                                                 @Nonnull String name) {
+        return RecipeTypeBuilder.create(this, this, name);
     }
 
     @StandardAPI
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeBuilder<T, P> recipe(
-                                                                                                 @Nonnull P parent, @Nonnull String name) {
-        return RecipeBuilder.create(this, parent, name);
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeTypeBuilder<T, P> recipeType(
+                                                                                                         @Nonnull P parent, @Nonnull String name) {
+        return RecipeTypeBuilder.create(this, parent, name);
+    }
+
+    /** @deprecated Use {@link #recipeType(String)} instead. */
+    @Deprecated(forRemoval = true)
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipe(
+                                                                                                             @Nonnull String name) {
+        return recipeType(name);
+    }
+
+    /** @deprecated Use {@link #recipeType(Object, String)} instead. */
+    @Deprecated(forRemoval = true)
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeTypeBuilder<T, P> recipe(
+                                                                                                     @Nonnull P parent, @Nonnull String name) {
+        return recipeType(parent, name);
     }
 
     // --- Enchantments (Builder) ---

@@ -6,8 +6,14 @@ import com.gto.registrylibtest.RegistryLibTest;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
+import net.minecraft.world.item.enchantment.LevelBasedValue;
+import net.minecraft.world.item.enchantment.effects.AddValue;
 
 /**
  * 最简单的附魔注册示例：矿石财运（Ore Fortune）。
@@ -25,20 +31,15 @@ public class SimpleEnchantmentExample {
             .enchantment("ore_fortune")
             .lang("Ore Fortune")
             .lang(ModRegistryCore.LANG_ZH_CN, "矿石财运")
-            .supportedItems("#minecraft:enchantable/mining")
+            .supportedItems(ItemTags.MINING_ENCHANTABLE)
             .weight(5)
             .maxLevel(3)
             .minCost(15, 9)
             .maxCost(65, 9)
             .anvilCost(4)
-            .slots("mainhand")
-            .addTag(TagKey.create(Registries.ENCHANTMENT,
-                    Identifier.fromNamespaceAndPath("minecraft", "in_enchanting_table")))
-            .vanillaEffect("minecraft:block_experience", effect -> effect
-                    .add("type", "minecraft:add")
-                    .add("value", value -> value
-                            .add("type", "minecraft:linear")
-                            .add("base", 1.0)
-                            .add("per_level_above_first", 1.0)))
+            .slots(EquipmentSlotGroup.MAINHAND)
+            .addTag(EnchantmentTags.IN_ENCHANTING_TABLE)
+            .withEffect(EnchantmentEffectComponents.BLOCK_EXPERIENCE,
+                    new AddValue(LevelBasedValue.perLevel(1.0f, 1.0f)))
             .register();
 }

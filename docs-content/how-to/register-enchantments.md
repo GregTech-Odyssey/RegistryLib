@@ -6,32 +6,34 @@ description: Quick reference for enchantment registration patterns.
 
 # Register Enchantments
 
-Enchantments in NeoForge 1.21+ are **data-driven**. RegistryLib provides an `.enchantment()` builder that generates the enchantment JSON, lang entries, and tag entries — all from code, no hand-written JSON needed.
+Enchantments in NeoForge 1.21+ are **data-driven**. RegistryLib provides an `.enchantment()` builder that generates the enchantment JSON, lang entries, and tag entries — all from code, no hand-written JSON needed. The builder uses the Minecraft `Enchantment.Builder` API with typed `DataComponentType` references.
 
 ## Simple Enchantment (Vanilla Effects)
 
-Use vanilla effect components (e.g. `minecraft:block_experience`) — no custom `DataComponentType` registration needed.
+Use vanilla effect components (e.g. `EnchantmentEffectComponents.BLOCK_EXPERIENCE`) — no custom `DataComponentType` registration needed.
 
 ```java
+import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.entity.EquipmentSlotGroup;
+import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
+import net.minecraft.world.item.enchantment.LevelBasedValue;
+import net.minecraft.world.item.enchantment.effects.AddValue;
+
 public static final EnchantmentEntry ORE_FORTUNE = REGISTRYLIB
         .enchantment("ore_fortune")
         .lang("Ore Fortune")
         .lang(LANG_ZH_CN, "矿石财运")
-        .supportedItems("#minecraft:enchantable/mining")
+        .supportedItems(ItemTags.MINING_ENCHANTABLE)
         .weight(5)
         .maxLevel(3)
         .minCost(15, 9)
         .maxCost(65, 9)
         .anvilCost(4)
-        .slots("mainhand")
-        .addTag(TagKey.create(Registries.ENCHANTMENT,
-                Identifier.fromNamespaceAndPath("minecraft", "in_enchanting_table")))
-        .vanillaEffect("minecraft:block_experience", effect -> effect
-                .add("type", "minecraft:add")
-                .add("value", value -> value
-                        .add("type", "minecraft:linear")
-                        .add("base", 1.0)
-                        .add("per_level_above_first", 1.0)))
+        .slots(EquipmentSlotGroup.MAINHAND)
+        .addTag(EnchantmentTags.IN_ENCHANTING_TABLE)
+        .withEffect(EnchantmentEffectComponents.BLOCK_EXPERIENCE,
+                new AddValue(LevelBasedValue.perLevel(1.0f, 1.0f)))
         .register();
 ```
 
@@ -43,7 +45,7 @@ This single declaration:
 
 ## Full Enchantment (Custom Effect Component)
 
-For custom behavior (e.g. auto-smelting), first register a `DataComponentType`, then use `.customEffect()` in the builder.
+For custom behavior (e.g. auto-smelting), first register a `DataComponentType`, then use `.withEffect()` in the builder.
 
 ### 1. Define the Effect Record
 
@@ -75,24 +77,28 @@ public static final RegistryEntry<DataComponentType<?>,
 
 ### 3. Register with the Enchantment Builder
 
+Use the `Supplier` overload of `withEffect()` for mod-registered `DataComponentType` entries, since the `RegistryEntry` value may not yet be available at class loading time:
+
 ```java
 public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
         .enchantment("auto_smelt")
         .lang("Auto Smelt")
         .lang(LANG_ZH_CN, "自动熔炼")
-        .supportedItems("#minecraft:enchantable/mining")
+        .supportedItems(ItemTags.MINING_ENCHANTABLE)
         .weight(2)
         .maxLevel(1)
         .minCost(25, 25)
         .maxCost(75, 25)
         .anvilCost(8)
-        .slots("mainhand")
-        .addTag(TagKey.create(Registries.ENCHANTMENT,
-                Identifier.fromNamespaceAndPath("minecraft", "in_enchanting_table")))
-        .customEffect("registrylibtest:auto_smelt", effect -> effect
-                .add("chance_per_level", 1.0f))
+        .slots(EquipmentSlotGroup.MAINHAND)
+        .addTag(EnchantmentTags.IN_ENCHANTING_TABLE)
+        .withEffect(AUTO_SMELT_EFFECT, new AutoSmeltEffect(1.0f))
         .register();
 ```
+
+:::tip
+`AUTO_SMELT_EFFECT` (a `RegistryEntry`) is passed directly — it implements `Supplier`, so the `DataComponentType` is resolved lazily at datagen time when the value is guaranteed to be available. For vanilla effect components like `EnchantmentEffectComponents.BLOCK_EXPERIENCE`, you can pass them directly since they are static constants.
+:::
 
 ## EnchantmentBuilder API
 
@@ -101,20 +107,21 @@ public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
 | `enchantment(name)` | Start enchantment builder (returns `EnchantmentBuilder`) |
 | `.lang(name)` | Set English display name |
 | `.lang(providerType, name)` | Set localized name for a specific lang provider |
-| `.supportedItems(tagRef)` | Set supported item tag (e.g. `"#minecraft:enchantable/mining"`) |
-| `.supportedItems(tagKey)` | Set supported item tag via `TagKey<Item>` |
-| `.primaryItems(tagRef)` | Set primary items (enchanting table preference) |
+| `.supportedItems(TagKey<Item>)` | Set supported item tag (e.g. `ItemTags.MINING_ENCHANTABLE`) |
+| `.primaryItems(TagKey<Item>)` | Set primary items (enchanting table preference) |
 | `.weight(n)` | Set enchantment weight (rarity) |
 | `.maxLevel(n)` | Set maximum enchantment level |
 | `.minCost(base, perLevel)` | Set minimum enchanting cost |
 | `.maxCost(base, perLevel)` | Set maximum enchanting cost |
 | `.anvilCost(n)` | Set anvil cost |
-| `.slots(groups...)` | Set equipment slots (`"mainhand"`, `"armor"`, `"any"`) |
-| `.exclusiveWith(keys...)` | Set mutually exclusive enchantments |
-| `.vanillaEffect(id, builder)` | Add a vanilla effect via JSON builder |
-| `.customEffect(id, builder)` | Add a custom mod effect via JSON builder |
-| `.customEffect(id, jsonObj)` | Add a custom mod effect via raw `JsonObject` |
-| `.addTag(tags...)` | Add to enchantment tags |
+| `.slots(EquipmentSlotGroup...)` | Set equipment slots (e.g. `EquipmentSlotGroup.MAINHAND`) |
+| `.exclusiveWith(ResourceKey<Enchantment>...)` | Set mutually exclusive enchantments |
+| `.withEffect(type, effect)` | Add a conditional effect (vanilla `DataComponentType`) |
+| `.withEffect(supplier, effect)` | Add a conditional effect (lazy `Supplier<DataComponentType>`) |
+| `.withEffect(type, effect, condition)` | Add a conditional effect with loot condition |
+| `.withSpecialEffect(type, effect)` | Add a non-list effect component |
+| `.configure(consumer)` | Direct access to `Enchantment.Builder` |
+| `.addTag(TagKey<Enchantment>...)` | Add to enchantment tags (e.g. `EnchantmentTags.IN_ENCHANTING_TABLE`) |
 | `.register()` | Register and return `EnchantmentEntry` |
 | `.build()` | Register and return parent (for chaining) |
 

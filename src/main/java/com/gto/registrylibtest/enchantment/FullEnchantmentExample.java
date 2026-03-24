@@ -12,8 +12,9 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.tags.TagKey;
+import net.minecraft.tags.EnchantmentTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.item.enchantment.ConditionalEffect;
 import net.minecraft.world.item.enchantment.Enchantment;
 
@@ -26,7 +27,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
  *   <li>Defining a custom enchantment effect record with {@link MapCodec};
  *   <li>Registering a {@link DataComponentType} for the custom effect via
  *       {@code RegistryCore.simple()};
- *   <li>Using the {@code .enchantment()} fluent builder with {@code .customEffect()};
+ *   <li>Using the {@code .enchantment()} fluent builder with {@code .withEffect()};
  *   <li>Registering lang entries for EN and ZH_CN.
  * </ul>
  *
@@ -63,23 +64,21 @@ public class FullEnchantmentExample {
                             .persistent(ConditionalEffect.codec(AutoSmeltEffect.CODEC.codec()).listOf())
                             .build());
 
-    // ── 附魔注册（JSON + lang + tag 一步完成） ─────────────────────────────
+    // ── 附魔注册（定义 + lang + tag 一步完成） ─────────────────────────────
 
     /** 附魔注册条目：自动熔炼。 */
     public static final EnchantmentEntry AUTO_SMELT = RegistryLibTest.REGISTRYLIB
             .enchantment("auto_smelt")
             .lang("Auto Smelt")
             .lang(ModRegistryCore.LANG_ZH_CN, "自动熔炼")
-            .supportedItems("#minecraft:enchantable/mining")
+            .supportedItems(ItemTags.MINING_ENCHANTABLE)
             .weight(2)
             .maxLevel(1)
             .minCost(25, 25)
             .maxCost(75, 25)
             .anvilCost(8)
-            .slots("mainhand")
-            .addTag(TagKey.create(Registries.ENCHANTMENT,
-                    Identifier.fromNamespaceAndPath("minecraft", "in_enchanting_table")))
-            .customEffect("registrylibtest:auto_smelt", effect -> effect
-                    .add("chance_per_level", 1.0f))
+            .slots(EquipmentSlotGroup.MAINHAND)
+            .addTag(EnchantmentTags.IN_ENCHANTING_TABLE)
+            .withEffect(AUTO_SMELT_EFFECT, new AutoSmeltEffect(1.0f))
             .register();
 }

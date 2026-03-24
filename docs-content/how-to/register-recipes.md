@@ -8,7 +8,7 @@ description: Quick reference for custom recipe registration patterns.
 
 ## Simple Recipe (Altar)
 
-Use the `.recipe()` builder to register a `RecipeType` + `RecipeSerializer` and add recipe datagen — all in one fluent chain.
+Use the `.recipeType()` builder to register a `RecipeType` + `RecipeSerializer`, then add recipe instances via the returned `RecipeEntry`.
 
 ### 1. Define the Recipe Class
 
@@ -66,21 +66,26 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 }
 ```
 
-### 2. Register with the Recipe Builder
+### 2. Register and Add Recipes
 
-One call registers `RecipeType`, `RecipeSerializer`, and adds recipe JSON datagen:
+Registration and recipe addition are now two separate steps:
 
 ```java
+// Step 1: Register RecipeType + RecipeSerializer
 public static final RecipeEntry<AltarRecipe> ALTAR = REGISTRYLIB
-        .<AltarRecipe>recipe("altar")
+        .<AltarRecipe>recipeType("altar")
         .serializer(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC)
-        .addRecipe("altar_cobblestone_to_stone",
-                new AltarRecipe(Ingredient.of(Items.COBBLESTONE),
-                        new ItemStackTemplate(Items.STONE), 40))
-        .addRecipe("altar_raw_iron_to_ingot",
-                new AltarRecipe(Ingredient.of(Items.RAW_IRON),
-                        new ItemStackTemplate(Items.IRON_INGOT), 80))
         .register();
+
+// Step 2: Add individual recipe instances for datagen
+static {
+    ALTAR.addRecipe("altar_cobblestone_to_stone",
+            new AltarRecipe(Ingredient.of(Items.COBBLESTONE),
+                    new ItemStackTemplate(Items.STONE), 40));
+    ALTAR.addRecipe("altar_raw_iron_to_ingot",
+            new AltarRecipe(Ingredient.of(Items.RAW_IRON),
+                    new ItemStackTemplate(Items.IRON_INGOT), 80));
+}
 ```
 
 The resulting `RecipeEntry<T>` provides:
@@ -115,16 +120,21 @@ public record InfuserInput(ItemStack item, int machineTier) implements RecipeInp
 ### Tier-Gated Registration
 
 ```java
+// Step 1: Register RecipeType + RecipeSerializer
 public static final RecipeEntry<InfuserRecipe> INFUSER = REGISTRYLIB
-        .<InfuserRecipe>recipe("infuser")
+        .<InfuserRecipe>recipeType("infuser")
         .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
-        .addRecipe("infuser_coal_to_diamond",
-                new InfuserRecipe(Ingredient.of(Items.COAL),
-                        new ItemStackTemplate(Items.DIAMOND), 200, 10.0F, 1))
-        .addRecipe("infuser_gold_to_netherite",
-                new InfuserRecipe(Ingredient.of(Items.GOLD_INGOT),
-                        new ItemStackTemplate(Items.NETHERITE_SCRAP), 400, 25.0F, 2))
         .register();
+
+// Step 2: Add recipe instances
+static {
+    INFUSER.addRecipe("infuser_coal_to_diamond",
+            new InfuserRecipe(Ingredient.of(Items.COAL),
+                    new ItemStackTemplate(Items.DIAMOND), 200, 10.0F, 1));
+    INFUSER.addRecipe("infuser_gold_to_netherite",
+            new InfuserRecipe(Ingredient.of(Items.GOLD_INGOT),
+                    new ItemStackTemplate(Items.NETHERITE_SCRAP), 400, 25.0F, 2));
+}
 ```
 
 ### Multiple Tiers with Shared BlockEntity
@@ -152,17 +162,28 @@ public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLI
         .register();
 ```
 
-## RecipeBuilder API
+## API Reference
+
+### RecipeTypeBuilder
 
 | Method | Purpose |
 |---|---|
-| `recipe(name)` | Start recipe builder (returns `RecipeBuilder`) |
+| `recipeType(name)` | Start recipe type builder (returns `RecipeTypeBuilder`) |
 | `.serializer(codec, streamCodec)` | Set the codecs for the `RecipeSerializer` |
+| `.register()` | Register and return `RecipeEntry<T>` |
+| `.build()` | Register and return parent (for chaining) |
+
+### RecipeEntry
+
+| Method | Purpose |
+|---|---|
 | `.addRecipe(name, recipe)` | Add a recipe instance for datagen |
 | `.addRecipe(name, supplier)` | Add a lazily-created recipe for datagen |
 | `.customRecipeData(consumer)` | Advanced: raw control over `RecipeProvider` |
-| `.register()` | Register and return `RecipeEntry<T>` |
-| `.build()` | Register and return parent (for chaining) |
+| `.getType()` | Get the registered `RecipeType<T>` |
+| `.getSerializer()` | Get the registered `RecipeSerializer<T>` |
+| `.getTypeKey()` | Get the `ResourceKey` of the recipe type |
+| `.getSerializerKey()` | Get the `ResourceKey` of the serializer |
 
 ## Required Recipe Interface Methods
 

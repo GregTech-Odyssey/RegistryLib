@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.Blocks;
  * {@code data/registrylibtest/recipe/infuser_*.json}。 不同等级的注入器只能处理对应等级的配方。
  *
  * <ul>
- *   <li>配方（包含 RecipeType + RecipeSerializer + 配方实例） — {@link #INFUSER}
+ *   <li>配方类型（RecipeType + RecipeSerializer） — {@link #INFUSER}
  *   <li>T1 注入器 — {@link #INFUSER_T1}
  *   <li>T2 注入器 — {@link #INFUSER_T2}
  *   <li>方块实体 — {@link #INFUSER_BE}
@@ -40,28 +40,32 @@ import net.minecraft.world.level.block.Blocks;
  */
 public class FullRecipeExample {
 
-    // ── 配方注册（RecipeType + RecipeSerializer + 配方数据生成 一步完成） ───
+    // ── 配方类型注册（RecipeType + RecipeSerializer） ──────────────────────
 
     public static final RecipeEntry<InfuserRecipe> INFUSER = RegistryLibTest.REGISTRYLIB
-            .<InfuserRecipe>recipe("infuser")
+            .<InfuserRecipe>recipeType("infuser")
             .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
-            .addRecipe(
-                    "infuser_coal_to_diamond",
-                    new InfuserRecipe(
-                            Ingredient.of(Items.COAL),
-                            new ItemStackTemplate(Items.DIAMOND),
-                            200,
-                            10.0F,
-                            1))
-            .addRecipe(
-                    "infuser_gold_to_netherite",
-                    new InfuserRecipe(
-                            Ingredient.of(Items.GOLD_INGOT),
-                            new ItemStackTemplate(Items.NETHERITE_SCRAP),
-                            400,
-                            25.0F,
-                            2))
             .register();
+
+    // ── 配方实例注册（数据生成） ────────────────────────────────────────────
+    static {
+        INFUSER.addRecipe(
+                "infuser_coal_to_diamond",
+                new InfuserRecipe(
+                        Ingredient.of(Items.COAL),
+                        new ItemStackTemplate(Items.DIAMOND),
+                        200,
+                        10.0F,
+                        1));
+        INFUSER.addRecipe(
+                "infuser_gold_to_netherite",
+                new InfuserRecipe(
+                        Ingredient.of(Items.GOLD_INGOT),
+                        new ItemStackTemplate(Items.NETHERITE_SCRAP),
+                        400,
+                        25.0F,
+                        2));
+    }
 
     // ── T1 注入器方块 ─────────────────────────────────────────────────────
 
