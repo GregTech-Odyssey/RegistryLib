@@ -22,27 +22,27 @@ REGISTRYLIB
 
 Every chain follows the same lifecycle:
 
-1. **Builder creation** �?a factory method on `RegistryCore` (like `.item()`, `.block()`, `.fluid()`) creates a typed builder.
-2. **Configuration** �?zero or more chained calls set properties, lang entries, tags, loot, models, and other attributes.
-3. **`.register()`** �?the terminal operation that submits the builder's configuration to RegistryLib's internal registry and returns an `Entry`.
+1. **Builder creation** —a factory method on `RegistryCore` (like `.item()`, `.block()`, `.fluid()`) creates a typed builder.
+2. **Configuration** —zero or more chained calls set properties, lang entries, tags, loot, models, and other attributes.
+3. **`.register()`** —the terminal operation that submits the builder's configuration to RegistryLib's internal registry and returns an `Entry`.
 
 ## The Lifecycle in Detail
 
 ```
 RegistryCore            Builder                  Entry
-    �?                    �?                       �?
-    ├─ .item(...)  ──────►│                        �?
-    �?                    ├─ .lang(...)             �?
-    �?                    ├─ .properties(...)       �?
-    �?                    ├─ .addTag(...)           �?
-    �?                    ├─ .register()  ─────────►│
-    �?                    �?                       �?
-    �?                    �?(builder is consumed)   �?(entry is returned)
+    —                    —                       —
+    ├─ .item(...)  ──────►│                        —
+    —                    ├─ .lang(...)             —
+    —                    ├─ .properties(...)       —
+    —                    ├─ .addTag(...)           —
+    —                    ├─ .register()  ─────────►│
+    —                    —                       —
+    —                    —(builder is consumed)   —(entry is returned)
 ```
 
 After `.register()` is called:
 - The builder's accumulated configuration is frozen and scheduled for registration during the appropriate NeoForge lifecycle events.
-- A typed `Entry` object is returned immediately. The `Entry` acts as a lazy supplier �?calling `.get()` on it returns the actual registered object once the registry event has fired.
+- A typed `Entry` object is returned immediately. The `Entry` acts as a lazy supplier —calling `.get()` on it returns the actual registered object once the registry event has fired.
 
 ## The Parent Type System
 
@@ -75,7 +75,7 @@ Every `.register()` call returns a typed Entry:
 | `block(...)` | `BlockEntry<T>` | `T extends Block` |
 | `fluid(...)` | `FluidEntry<T>` | `T extends FlowingFluid` |
 
-Entry objects are safe to store as `static final` fields. They are resolved lazily �?`.get()` returns the registered instance after the registry event fires.
+Entry objects are safe to store as `static final` fields. They are resolved lazily —`.get()` returns the registered instance after the registry event fires.
 
 ```java
 // Store as a constant
@@ -96,12 +96,12 @@ ResourceKey<Item> key = MY_ITEM.getKey();
 The most common mistake. Without `.register()`, the chain builds a configuration object that is never submitted:
 
 ```java
-// �?Bug: no .register() �?nothing is registered
+// —Bug: no .register() —nothing is registered
 REGISTRYLIB
         .item("forgotten_item", Item::new)
         .lang("Forgotten");
 
-// �?Correct
+// —Correct
 public static final ItemEntry<Item> MY_ITEM = REGISTRYLIB
         .item("my_item", Item::new)
         .lang("My Item")
@@ -128,10 +128,10 @@ A common pattern is to add a no-op `public static void init() {}` method to each
 Entry objects are lazy. Calling `.get()` before the registry event fires (e.g., during static initialization or in a constructor) will throw an exception or return `null`.
 
 ```java
-// �?Too early �?registry event has not fired yet
+// —Too early —registry event has not fired yet
 public static final Item RAW = MY_ITEM.get();
 
-// �?Use the Entry itself and call .get() when needed at runtime
+// —Use the Entry itself and call .get() when needed at runtime
 public void someMethod() {
     Item item = MY_ITEM.get();  // safe after registration
 }
@@ -141,7 +141,7 @@ public void someMethod() {
 
 | Concept | Key Point |
 | --- | --- |
-| Chain structure | Create �?Configure �?`.register()` |
+| Chain structure | Create —Configure —`.register()` |
 | Terminal operation | `.register()` submits and returns an Entry |
 | Nested builders | `.item(...)` on a block builder creates a child; one `.register()` submits both |
 | Entry objects | Lazy suppliers; store as `static final`, call `.get()` at runtime |
@@ -149,5 +149,5 @@ public void someMethod() {
 
 ## What's Next
 
-- [Builder Pattern (Concepts)](/concepts/builder-pattern) �?deeper dive into the builder architecture and generics
-- [Group System](/tutorials/group-system) �?organize registrations into logical groups
+- [Builder Pattern (Concepts)](/concepts/builder-pattern) —deeper dive into the builder architecture and generics
+- [Group System](/tutorials/group-system) —organize registrations into logical groups

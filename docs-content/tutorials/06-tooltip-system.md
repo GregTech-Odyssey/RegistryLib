@@ -18,7 +18,7 @@ In this tutorial, you will learn how to use RegistryLib's Tooltip System to orga
 
 Make sure you are comfortable with [registering items](/how-to/register-items) and have a working `RegistryCore` instance.
 
-## Step 1 �?Decide Whether You Need the Tooltip System
+## Step 1 —Decide Whether You Need the Tooltip System
 
 The Tooltip System's core value is ordering, partitioning, separate-box rendering, and bringing custom visual elements into one collection pipeline.
 
@@ -33,7 +33,7 @@ Use it when:
 If you only need one fixed line, prefer `addTooltip(Component)`. The Tooltip System is for ordering, layout, and multi-source composition, not for replacing every simple tooltip.
 :::
 
-## Step 2 �?Understand the Core Components
+## Step 2 —Understand the Core Components
 
 ### SubNode
 
@@ -43,7 +43,7 @@ If you only need one fixed line, prefer `addTooltip(Component)`. The Tooltip Sys
 new SubNode.Basic(Component.literal("§dMagic Wand"), 0)
 ```
 
-The second parameter is the **priority** �?lower values appear first within the same root.
+The second parameter is the **priority** —lower values appear first within the same root.
 
 ### RootNode
 
@@ -58,7 +58,7 @@ A `RootNode` decides where a set of `SubNode`s is rendered:
 
 The collector merges nodes from multiple sources, including the Item's tooltip callback, BlockItem tooltips, and nodes contributed by attachments.
 
-## Step 3 �?Register a RootNode Reference
+## Step 3 —Register a RootNode Reference
 
 Before adding nodes, register a `RootNodeRef` that defines where content will be rendered. The parameters are: a unique ID, a priority for ordering among roots, and whether it renders in a separate box:
 
@@ -69,7 +69,7 @@ public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(
 
 This creates a separate tooltip box with priority 10. Higher-priority roots appear below lower-priority ones.
 
-## Step 4 �?Add Tooltip Content to an Item
+## Step 4 —Add Tooltip Content to an Item
 
 Use `addTooltip` on your item builder to contribute nodes to the collector. You can add nodes to the default inline tooltip and to your custom separate box in the same callback:
 
@@ -89,7 +89,7 @@ item.addTooltip((collector, stack) -> {
 
 The first `collector.node(...)` call adds an inline node. The second places content into the `DETAIL_BOX` root, which renders as a separate tooltip area.
 
-## Step 5 �?Combine Multiple Tooltip Sources
+## Step 5 —Combine Multiple Tooltip Sources
 
 The collector merges nodes from multiple sources, which makes it easy to compose tooltips from different parts of your code:
 

@@ -149,13 +149,13 @@ Hooks your advancement tree into RegistryLib's datagen pipeline.
 .display(icon, title, description, background, type, showToast, announceToChat, hidden)
 ```
 
-- `background` �?only relevant for root advancements (pass `null` for children)
-- `hidden` �?keeps the advancement invisible until unlocked
+- `background` —only relevant for root advancements (pass `null` for children)
+- `hidden` —keeps the advancement invisible until unlocked
 
 ### Tree Structure
 
-- `.parent(holder)` �?set the parent advancement
-- `.save(adv, id)` �?write the JSON and return an `AdvancementHolder` for children to reference
+- `.parent(holder)` —set the parent advancement
+- `.save(adv, id)` —write the JSON and return an `AdvancementHolder` for children to reference
 
 ## AdvancementType
 

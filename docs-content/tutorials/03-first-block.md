@@ -6,7 +6,7 @@ description: Register a block with matching BlockItem, loot, and tags.
 
 # Your First Block
 
-This tutorial registers two blocks �?a simple decorative block and a fully configured ore �?so you can see how RegistryLib handles blocks, block items, loot tables, and tags in a single chain.
+This tutorial registers two blocks —a simple decorative block and a fully configured ore —so you can see how RegistryLib handles blocks, block items, loot tables, and tags in a single chain.
 
 ## What You Will Learn
 
@@ -15,14 +15,14 @@ This tutorial registers two blocks �?a simple decorative block and a fully con
 - How to define loot tables and block tags inline
 - The relationship between Block registration and BlockItem generation
 
-## Minimal Example �?Decorative Stone
+## Minimal Example —Decorative Stone
 
 The shortest path to a working block with a matching item:
 
 ```java
 public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTRYLIB
         .block(RegistryLibTest.REGISTRYLIB, "decorative_stone", Block::new)
-        .langCn("装饰�?)
+        .langCn("装饰—)
         .initialProperties(() -> Blocks.STONE)
         .lang("Decorative Stone")
         .simpleItem()
@@ -30,13 +30,13 @@ public static final BlockEntry<Block> DECORATIVE_STONE = RegistryLibTest.REGISTR
 ```
 
 That chain:
-1. **`block(..., "decorative_stone", Block::new)`** �?starts a `BlockBuilder` with the registry name and a vanilla `Block` factory.
-2. **`.initialProperties(() -> Blocks.STONE)`** �?copies properties from an existing block (hardness, sound, etc.).
-3. **`.lang("Decorative Stone")`** �?sets the English display name for datagen.
-4. **`.simpleItem()`** �?generates a default `BlockItem` so the block can appear in inventories and creative tabs.
-5. **`.register()`** �?submits the registration and returns a `BlockEntry<Block>`.
+1. **`block(..., "decorative_stone", Block::new)`** —starts a `BlockBuilder` with the registry name and a vanilla `Block` factory.
+2. **`.initialProperties(() -> Blocks.STONE)`** —copies properties from an existing block (hardness, sound, etc.).
+3. **`.lang("Decorative Stone")`** —sets the English display name for datagen.
+4. **`.simpleItem()`** —generates a default `BlockItem` so the block can appear in inventories and creative tabs.
+5. **`.register()`** —submits the registration and returns a `BlockEntry<Block>`.
 
-## Full Example �?Magic Ore
+## Full Example —Magic Ore
 
 When you need custom loot, mining tags, and a tooltip on the block item:
 
@@ -57,23 +57,23 @@ public static final BlockEntry<Block> MAGIC_ORE = RegistryLibTest.REGISTRYLIB
 
 ### Step-by-Step Breakdown
 
-1. **`block("magic_ore", Block::new)`** �?starts a `BlockBuilder` with a vanilla block factory.
-2. **`.initialProperties(() -> Blocks.IRON_ORE)`** �?copies the base properties from iron ore.
-3. **`.properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops())`** �?overrides specific properties on top of the base. This is the same two-layer pattern used by items.
-4. **`.lang(...)`** and **`.lang(ModRegistryCore.LANG_ZH_CN, ...)`** �?set English and Chinese display names.
-5. **`.loot((tables, b) -> ...)`** �?defines a custom loot table inline. Here it creates an ore drop that yields `COPPER_COIN`.
-6. **`.addTag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)`** �?marks the block as pickaxe-mineable and requiring at least an iron tool. You can pass multiple tags in a single call.
-7. **`.item(item -> ...)`** �?creates a `BlockItem` with a customization callback. Inside the callback you have access to the full item builder API, including `.addTooltip(...)`.
-8. **`.register()`** �?submits the registration and returns a `BlockEntry<Block>`.
+1. **`block("magic_ore", Block::new)`** —starts a `BlockBuilder` with a vanilla block factory.
+2. **`.initialProperties(() -> Blocks.IRON_ORE)`** —copies the base properties from iron ore.
+3. **`.properties(p -> p.strength(4.0F, 5.0F).requiresCorrectToolForDrops())`** —overrides specific properties on top of the base. This is the same two-layer pattern used by items.
+4. **`.lang(...)`** and **`.lang(ModRegistryCore.LANG_ZH_CN, ...)`** —set English and Chinese display names.
+5. **`.loot((tables, b) -> ...)`** —defines a custom loot table inline. Here it creates an ore drop that yields `COPPER_COIN`.
+6. **`.addTag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)`** —marks the block as pickaxe-mineable and requiring at least an iron tool. You can pass multiple tags in a single call.
+7. **`.item(item -> ...)`** —creates a `BlockItem` with a customization callback. Inside the callback you have access to the full item builder API, including `.addTooltip(...)`.
+8. **`.register()`** —submits the registration and returns a `BlockEntry<Block>`.
 
 ## Block vs. BlockItem
 
 :::warning
 Registering a Block does **not** automatically create a BlockItem. Whether a BlockItem is generated depends on an explicit `.simpleItem()` or `.item(...)` call in the chain.
 
-- **`.simpleItem()`** �?creates a default BlockItem with no customization.
-- **`.item(item -> ...)`** �?creates a BlockItem and lets you configure it (tooltips, tabs, tags, etc.).
-- **No item call** �?the block exists in the world but has no inventory representation.
+- **`.simpleItem()`** —creates a default BlockItem with no customization.
+- **`.item(item -> ...)`** —creates a BlockItem and lets you configure it (tooltips, tabs, tags, etc.).
+- **No item call** —the block exists in the world but has no inventory representation.
 :::
 
 ## Common Patterns
@@ -96,5 +96,5 @@ Registering a Block does **not** automatically create a BlockItem. Whether a Blo
 
 ## Related
 
-- [Register Blocks (How-To)](/how-to/register-blocks) �?full reference for all block builder options
-- [Understanding the Registration Chain](/tutorials/understanding-chain) �?how the fluent API works under the hood
+- [Register Blocks (How-To)](/how-to/register-blocks) —full reference for all block builder options
+- [Understanding the Registration Chain](/tutorials/understanding-chain) —how the fluent API works under the hood

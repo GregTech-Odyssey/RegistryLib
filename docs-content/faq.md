@@ -18,7 +18,7 @@ RegistryLib is **inspired by** [Registrate](https://github.com/tterrag1098/Regis
 
 ### Can I use RegistryLib alongside vanilla registration?
 
-Yes. RegistryLib does not replace the NeoForge registry system �?it wraps it. You can mix RegistryLib chains with `DeferredRegister` calls in the same mod without conflict.
+Yes. RegistryLib does not replace the NeoForge registry system —it wraps it. You can mix RegistryLib chains with `DeferredRegister` calls in the same mod without conflict.
 
 ---
 
@@ -43,9 +43,9 @@ See [Installation & Setup](/tutorials/installation) for the full walkthrough.
 
 ### I called `.register()` but the item does not appear in-game
 
-1. **Class not loaded** �?the field holding your `ItemEntry` must be in a class that is referenced during mod construction. A static field in an unreferenced class is never initialized.
-2. **Missing creative tab** �?call `.addDefaultTab()` or `.addTab(...)` to place it in a creative tab.
-3. **Missing model/texture** �?call `.defaultModel()`, or provide a texture via `.texture(...)` or a resource pack.
+1. **Class not loaded** —the field holding your `ItemEntry` must be in a class that is referenced during mod construction. A static field in an unreferenced class is never initialized.
+2. **Missing creative tab** —call `.addDefaultTab()` or `.addTab(...)` to place it in a creative tab.
+3. **Missing model/texture** —call `.defaultModel()`, or provide a texture via `.texture(...)` or a resource pack.
 
 ### What is the difference between `item()` and `componentItem()`?
 
@@ -53,7 +53,7 @@ See [Installation & Setup](/tutorials/installation) for the full walkthrough.
 
 ### Can I register entries conditionally?
 
-RegistryLib builders are submitted at `.register()` time. You can conditionally skip chains with normal Java control flow. However, once `.register()` is called, the entry is registered unconditionally �?there is no built-in config-gated registration.
+RegistryLib builders are submitted at `.register()` time. You can conditionally skip chains with normal Java control flow. However, once `.register()` is called, the entry is registered unconditionally —there is no built-in config-gated registration.
 
 ---
 
@@ -62,7 +62,7 @@ RegistryLib builders are submitted at `.register()` time. You can conditionally 
 ### My language file is missing entries
 
 - Ensure `.lang("Display Name")` is present on each chain, or use `.defaultLang()`.
-- Run `./gradlew runData` after any lang change �?RegistryLib generates lang files during datagen, not at runtime.
+- Run `./gradlew runData` after any lang change —RegistryLib generates lang files during datagen, not at runtime.
 
 ### How do I add recipes?
 

@@ -8,7 +8,7 @@ description: Share defaults across multiple entries with the Group system.
 
 ## What You Will Learn
 
-In this tutorial you will learn how to use `Group` to share default settings �?lang prefixes, creative tabs, block/item properties, and tags �?across a family of related entries. By the end you will be able to:
+In this tutorial you will learn how to use `Group` to share default settings —lang prefixes, creative tabs, block/item properties, and tags —across a family of related entries. By the end you will be able to:
 
 - Create a `Group` with shared defaults.
 - Register multiple blocks and items through that group.
@@ -19,7 +19,7 @@ In this tutorial you will learn how to use `Group` to share default settings �
 If you are only registering one isolated entry, using `RegistryCore` directly is usually simpler. Group adds value through **reuse**, not by replacing every entry point.
 :::
 
-## Step 1 �?Decide Whether You Need a Group
+## Step 1 —Decide Whether You Need a Group
 
 `Group` is a layer of shared defaults wrapped around `RegistryCore`. The question it solves is not "can this be registered?" but "should this content family keep repeating the same configuration?"
 
@@ -31,7 +31,7 @@ Ask yourself:
 
 If you answered **yes** to at least two, a Group will save you repetition. If not, register entries directly through `RegistryCore`.
 
-## Step 2 �?Create the Group
+## Step 2 —Create the Group
 
 Call `.group(name)` on your `RegistryCore` instance, configure the shared defaults, and finish with `.build()`:
 
@@ -44,7 +44,7 @@ public static final Group TIMER_GROUP = REGISTRYLIB.group("timers")
 
 Every block registered through `TIMER_GROUP` will now inherit the `"Timer"` lang prefix and `strength(5.0F, 6.0F)`.
 
-## Step 3 �?Register Entries Through the Group
+## Step 3 —Register Entries Through the Group
 
 Use the group instead of `RegistryCore` as the starting point:
 
@@ -58,7 +58,7 @@ public static final BlockEntry<TimerBlock> TIMER_TIER_1 = TIMER_GROUP
 
 `tier_1` automatically inherits the lang prefix and the block property modifier from the group.
 
-## Step 4 �?Understand What Gets Applied Automatically
+## Step 4 —Understand What Gets Applied Automatically
 
 Here is the full list of defaults that a Group can apply:
 
@@ -87,7 +87,7 @@ public static final BlockEntry<TimerBlock> TIMER_TIER_3 = TIMER_GROUP
         .register();
 ```
 
-## Step 5 �?Set Initial Properties Across the Group
+## Step 5 —Set Initial Properties Across the Group
 
 `Group.Builder` exposes `initialBlockProperties(...)` and `initialItemProperties(...)` for setting the base property template:
 
@@ -101,7 +101,7 @@ public static final Group MACHINE_GROUP = REGISTRYLIB.group("machines")
 
 `initialBlockProperties` accepts either a `Block` directly or a `Supplier<? extends Block>`. It is applied **before** `blockProperties` modifiers, so the modifier always has a consistent base.
 
-## Step 6 �?Apply Tags Across the Group
+## Step 6 —Apply Tags Across the Group
 
 Use `addBlockTag(...)`, `addItemTag(...)`, and `addFluidTag(...)` to tag every entry of the corresponding type. Multiple tags can be passed in a single call, and calls are cumulative:
 
@@ -114,7 +114,7 @@ public static final Group ORE_GROUP = REGISTRYLIB.group("ores")
         .build();
 ```
 
-Tags are injected at the same time as other defaults �?before any per-entry chain. A per-entry `.addTag(...)` call can always add more tags on top.
+Tags are injected at the same time as other defaults —before any per-entry chain. A per-entry `.addTag(...)` call can always add more tags on top.
 
 :::tip
 For more detail on per-entry tags and recipe datagen, see the [Recipes and Tags](./recipes-tags) tutorial.
@@ -122,9 +122,9 @@ For more detail on per-entry tags and recipe datagen, see the [Recipes and Tags]
 
 ## Common Patterns
 
-- **Content families** �?Use Group for a shared lang prefix and tab, then override only the few exceptional values on individual entries.
-- **Machine tiers** �?Use Group for hardness and drop requirements, then add special [tooltips](./tooltip-system) or stronger properties on higher-tier entries.
-- **Large ore batches** �?Use Group for mining requirements and creative tab, then configure each ore's drop logic separately.
+- **Content families** —Use Group for a shared lang prefix and tab, then override only the few exceptional values on individual entries.
+- **Machine tiers** —Use Group for hardness and drop requirements, then add special [tooltips](./tooltip-system) or stronger properties on higher-tier entries.
+- **Large ore batches** —Use Group for mining requirements and creative tab, then configure each ore's drop logic separately.
 
 ## Boundaries and Pitfalls
 
@@ -136,6 +136,6 @@ For more detail on per-entry tags and recipe datagen, see the [Recipes and Tags]
 
 ## Next Steps
 
-- [Registering Blocks](/how-to/register-blocks) �?Detailed block registration guide.
-- [Tooltip System](./tooltip-system) �?Add rich tooltip content to your grouped items.
-- [API Reference](/reference/api-overview) �?Full API surface for `Group` and `Group.Builder`.
+- [Registering Blocks](/how-to/register-blocks) —Detailed block registration guide.
+- [Tooltip System](./tooltip-system) —Add rich tooltip content to your grouped items.
+- [API Reference](/reference/api-overview) —Full API surface for `Group` and `Group.Builder`.

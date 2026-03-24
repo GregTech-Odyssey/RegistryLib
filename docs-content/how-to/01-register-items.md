@@ -68,7 +68,7 @@ import com.gto.registrylib.util.ImageUtil;
 | `ColorUtil.generateRandomColor()` | Fully random RGB color |
 
 :::note
-These utilities are datagen-only �?invoked when `doDatagen()` returns true. They have no runtime effect on the registered item.
+These utilities are datagen-only —invoked when `doDatagen()` returns true. They have no runtime effect on the registered item.
 :::
 
 ## Common API Lookup
@@ -95,7 +95,7 @@ These utilities are datagen-only �?invoked when `doDatagen()` returns true. Th
 REGISTRYLIB.item("my_item", Item::new).lang("My Item").register();
 ```
 
-**Ready-to-use stack:** `ItemEntry<T>` provides `asStack()` and `asResource()` helpers �?no need to reconstruct stacks from the raw item.
+**Ready-to-use stack:** `ItemEntry<T>` provides `asStack()` and `asResource()` helpers —no need to reconstruct stacks from the raw item.
 
 **Shared defaults via Group:** When multiple items share a creative tab, lang prefix, or property modifiers, move shared setup into the [Group System](/tutorials/group-system) instead of repeating it.
 

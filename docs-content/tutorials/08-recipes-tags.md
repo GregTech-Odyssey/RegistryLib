@@ -15,7 +15,7 @@ In this tutorial you will learn how to attach tags and generate recipes directly
 - Generate recipes through the datagen pipeline with `ProviderType.RECIPE`.
 - Combine tag and recipe datagen in a single registration flow.
 
-## Step 1 �?Add Tags to Individual Entries
+## Step 1 —Add Tags to Individual Entries
 
 Every builder provides a convenience `.addTag(...)` method that accepts one or more `TagKey` values.
 
@@ -58,7 +58,7 @@ REGISTRYLIB.block("ruby_block", Block::new)
 `.addTag(...)` on a `BlockBuilder` adds **block** tags. `.addItemTag(...)` adds **item** tags to the block's item form. They do not conflict and can be used together.
 :::
 
-## Step 2 �?Share Tags via the Group System
+## Step 2 —Share Tags via the Group System
 
 When multiple entries need the same tags, define them once on the [Group](/tutorials/group-system):
 
@@ -72,7 +72,7 @@ public static final Group ORE_GROUP = REGISTRYLIB.group("ores")
         .build();
 ```
 
-Every block registered through `ORE_GROUP` automatically receives the pickaxe and iron-tool tags. Every item (including block items) receives the durability tag. Per-entry `.addTag(...)` calls **add** to the group tags �?they do not replace them.
+Every block registered through `ORE_GROUP` automatically receives the pickaxe and iron-tool tags. Every item (including block items) receives the durability tag. Per-entry `.addTag(...)` calls **add** to the group tags —they do not replace them.
 
 ```java
 public static final BlockEntry<Block> SAPPHIRE_ORE = ORE_GROUP
@@ -82,7 +82,7 @@ public static final BlockEntry<Block> SAPPHIRE_ORE = ORE_GROUP
         .register();
 ```
 
-## Step 3 �?Use the Generic Tag Method
+## Step 3 —Use the Generic Tag Method
 
 For tag types beyond block/item/fluid (e.g. entity tags), use the full-form `addTag` with an explicit `ProviderType`:
 
@@ -94,7 +94,7 @@ REGISTRYLIB.entityType("magic_golem", MagicGolem::new)
 
 This works on any builder through the base `AbstractBuilder.addTag(ProviderType, TagKey...)` method.
 
-## Step 4 �?Generate Recipes with ProviderType.RECIPE
+## Step 4 —Generate Recipes with ProviderType.RECIPE
 
 RegistryLib integrates recipe generation into its datagen pipeline through `ProviderType.RECIPE`. Use `.addData(...)` on any builder to contribute recipes:
 
@@ -119,7 +119,7 @@ The `prov` parameter is a `RegistryLibRecipeProvider` which extends both `Recipe
 `addData(ProviderType.RECIPE, ...)` can be called on **any** builder (block, item, fluid, etc.). The recipe callback runs during datagen regardless of which entry it is attached to.
 :::
 
-## Step 5 �?Combine Tags and Recipes
+## Step 5 —Combine Tags and Recipes
 
 A typical registration chain brings tags and recipes together:
 
@@ -157,5 +157,5 @@ public static final BlockEntry<Block> RUBY_BLOCK = REGISTRYLIB
 
 ## Next Steps
 
-- [Group System](/tutorials/group-system) �?Share defaults including tags across entry families.
-- [API Reference](/reference/api-overview) �?Full API surface for `ProviderType`, `AbstractBuilder.addTag`, and `AbstractBuilder.addData`.
+- [Group System](/tutorials/group-system) —Share defaults including tags across entry families.
+- [API Reference](/reference/api-overview) —Full API surface for `ProviderType`, `AbstractBuilder.addTag`, and `AbstractBuilder.addData`.

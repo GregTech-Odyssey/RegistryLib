@@ -26,7 +26,7 @@ The code snippets on this page are short excerpts from the runnable `RegistryLib
 | Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `initialBlockProperties`, `blockProperties`, `itemProperties`, `addBlockTag`, `addItemTag`, `addFluidTag` |
 
 :::tip
-If you're unsure, start with `item(...)` or `block(...)` �?they cover the vast majority of registrations. See the [How-to guides](/how-to/register-items) for step-by-step walkthroughs.
+If you're unsure, start with `item(...)` or `block(...)` —they cover the vast majority of registrations. See the [How-to guides](/how-to/register-items) for step-by-step walkthroughs.
 :::
 
 ## Builder Family Quick Lookup
@@ -109,8 +109,8 @@ MACHINES.block("crusher", Block::new)
 
 ## See Also
 
-- [Entry Types](/reference/entry-types) �?detailed reference for each Entry wrapper
-- [Builder Methods](/reference/builder-methods) �?complete method reference for all Builder types
-- [Register Items](/how-to/register-items) �?step-by-step item registration
-- [Register Blocks](/how-to/register-blocks) �?step-by-step block registration
-- [Builder Pattern & Fluent API](/concepts/builder-pattern) �?how the chain architecture works
+- [Entry Types](/reference/entry-types) —detailed reference for each Entry wrapper
+- [Builder Methods](/reference/builder-methods) —complete method reference for all Builder types
+- [Register Items](/how-to/register-items) —step-by-step item registration
+- [Register Blocks](/how-to/register-blocks) —step-by-step block registration
+- [Builder Pattern & Fluent API](/concepts/builder-pattern) —how the chain architecture works

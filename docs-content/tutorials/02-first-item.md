@@ -6,7 +6,7 @@ description: Register your first item with RegistryLib in 5 minutes.
 
 # Your First Item
 
-This tutorial registers two items �?a minimal one-liner and a fully configured one �?so you can see the range of the RegistryLib item API.
+This tutorial registers two items —a minimal one-liner and a fully configured one —so you can see the range of the RegistryLib item API.
 
 ## What You Will Learn
 
@@ -15,7 +15,7 @@ This tutorial registers two items �?a minimal one-liner and a fully configured
 - The difference between the two builder types
 - How to verify your items in-game
 
-## Minimal Example �?Copper Coin
+## Minimal Example —Copper Coin
 
 The shortest path to a working item:
 
@@ -28,11 +28,11 @@ public static final ItemEntry<Item> COPPER_COIN = RegistryLibTest.REGISTRYLIB
 ```
 
 That single chain:
-1. **`item("copper_coin", Item::new)`** �?starts an `ItemBuilder` with the registry name `copper_coin` and the vanilla `Item` factory.
-2. **`.lang("Copper Coin")`** �?sets the English display name for datagen.
-3. **`.register()`** �?submits the registration and returns an `ItemEntry<Item>` you can reference later.
+1. **`item("copper_coin", Item::new)`** —starts an `ItemBuilder` with the registry name `copper_coin` and the vanilla `Item` factory.
+2. **`.lang("Copper Coin")`** —sets the English display name for datagen.
+3. **`.register()`** —submits the registration and returns an `ItemEntry<Item>` you can reference later.
 
-## Full Example �?Magic Wand
+## Full Example —Magic Wand
 
 When you need tooltips, creative tabs, tags, and attachments, use `componentItem()`:
 
@@ -42,7 +42,7 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
         .initialProperties(() -> new Item.Properties().stacksTo(1))
         .properties(Item.Properties::fireResistant)
         .lang("Magic Wand")
-        .lang(ModRegistryCore.LANG_ZH_CN, "魔法�?)
+        .lang(ModRegistryCore.LANG_ZH_CN, "魔法—)
         .defaultModel()
         .addDefaultTab()
         .addTab(CreativeModeTabs.TOOLS_AND_UTILITIES)
@@ -64,15 +64,15 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
 
 ### Step-by-Step Breakdown
 
-1. **`componentItem("magic_wand")`** �?starts an attachment-ready `ItemBuilder` that produces a `ComponentItem`.
-2. **`.initialProperties(...)`** and **`.properties(...)`** �?show the two-layer property pattern. `initialProperties` sets the base, and `properties` applies modifications on top.
-3. **`.lang(...)`** and **`.lang(ModRegistryCore.LANG_ZH_CN, ...)`** �?show the bilingual naming path. The first call sets the English name; the second adds a Chinese localization.
-4. **`.defaultModel()`** �?generates a standard item model pointing at `item/magic_wand`.
-5. **`.addDefaultTab()`**, **`.addTab(...)`**, **`.removeTab(...)`** �?demonstrate the creative-tab APIs. You can add, remove, and re-add tabs freely; the final state is what counts.
-6. **`.addTag(...)`** �?attaches a vanilla or modded item tag.
+1. **`componentItem("magic_wand")`** —starts an attachment-ready `ItemBuilder` that produces a `ComponentItem`.
+2. **`.initialProperties(...)`** and **`.properties(...)`** —show the two-layer property pattern. `initialProperties` sets the base, and `properties` applies modifications on top.
+3. **`.lang(...)`** and **`.lang(ModRegistryCore.LANG_ZH_CN, ...)`** —show the bilingual naming path. The first call sets the English name; the second adds a Chinese localization.
+4. **`.defaultModel()`** —generates a standard item model pointing at `item/magic_wand`.
+5. **`.addDefaultTab()`**, **`.addTab(...)`**, **`.removeTab(...)`** —demonstrate the creative-tab APIs. You can add, remove, and re-add tabs freely; the final state is what counts.
+6. **`.addTag(...)`** —attaches a vanilla or modded item tag.
 7. The two **`.addTooltip(...)`** calls show both overloads: one accepts a static `Component`, the other accepts a `BiConsumer` for dynamic tooltips built with the collector API.
-8. **`.attach(...)`** �?binds an `ItemAttachment` implementation to the item.
-9. **`.register()`** �?submits the registration and returns `ItemEntry<ComponentItem>`.
+8. **`.attach(...)`** —binds an `ItemAttachment` implementation to the item.
+9. **`.register()`** —submits the registration and returns `ItemEntry<ComponentItem>`.
 
 ## Choosing Between `item()` and `componentItem()`
 
@@ -84,7 +84,7 @@ public static final ItemEntry<ComponentItem> MAGIC_WAND = RegistryLibTest.REGIST
 | **Supports `.addTooltip(...)`** | Yes | Yes |
 
 :::important
-`.addTooltip(...)` is available on **both** `item()` and `componentItem()` �?it is defined on the base `ItemBuilder` and works for any item type.
+`.addTooltip(...)` is available on **both** `item()` and `componentItem()` —it is defined on the base `ItemBuilder` and works for any item type.
 Only `.attach(...)` requires `ComponentItem`. If you call `.attach(...)` on a plain `item()`, it will throw at runtime.
 :::
 
@@ -101,5 +101,5 @@ If the item does not appear, check:
 
 ## Related
 
-- [Your First Block](/tutorials/first-block) �?register a block with a matching item
-- [Register Items (How-To)](/how-to/register-items) �?full reference for all item builder options
+- [Your First Block](/tutorials/first-block) —register a block with a matching item
+- [Register Items (How-To)](/how-to/register-items) —full reference for all item builder options

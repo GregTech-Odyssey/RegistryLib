@@ -6,7 +6,7 @@ description: Reference for all RegistryLib entry wrapper types.
 
 # Entry Types
 
-RegistryLib provides specialized Entry types that wrap `DeferredHolder` with convenience helpers. All entry types extend `RegistryEntry<R, T>` and are lazily resolved �?the underlying object is created only when NeoForge's registration event fires.
+RegistryLib provides specialized Entry types that wrap `DeferredHolder` with convenience helpers. All entry types extend `RegistryEntry<R, T>` and are lazily resolved —the underlying object is created only when NeoForge's registration event fires.
 
 :::note
 All entry types also implement `Holder`-style interfaces. When an API expects a `Holder<Item>`, `Holder<Block>`, or `Holder<Fluid>`, you can pass the entry directly.
@@ -119,5 +119,5 @@ Bind multiple blocks with `validBlocks(block1, block2, ...)` when the same Block
 
 ## See Also
 
-- [API Overview](/reference/api-overview) �?entry point selection and common chains
-- [Builder Methods](/reference/builder-methods) �?complete method reference for all Builder types
+- [API Overview](/reference/api-overview) —entry point selection and common chains
+- [Builder Methods](/reference/builder-methods) —complete method reference for all Builder types

@@ -6,18 +6,18 @@ description: Project positioning, goals, and comparison with vanilla registratio
 
 # What is RegistryLib?
 
-RegistryLib is a **fluent registration library** for NeoForge that lets you declare game objects �?items, blocks, fluids, block entities, and more �?using a single, readable builder chain instead of scattered boilerplate.
+RegistryLib is a **fluent registration library** for NeoForge that lets you declare game objects —items, blocks, fluids, block entities, and more —using a single, readable builder chain instead of scattered boilerplate.
 
 ## The Problem
 
 In vanilla NeoForge registration, adding a single block requires touching many disconnected places:
 
-1. **DeferredRegister** �?create the registry entry
-2. **BlockStateProvider** �?generate blockstate and model JSON
-3. **LanguageProvider** �?add the English name
-4. **BlockLootSubProvider** �?define loot tables
-5. **TagsProvider** �?add block/item tags
-6. **Creative tab event** �?add to creative inventory
+1. **DeferredRegister** —create the registry entry
+2. **BlockStateProvider** —generate blockstate and model JSON
+3. **LanguageProvider** —add the English name
+4. **BlockLootSubProvider** —define loot tables
+5. **TagsProvider** —add block/item tags
+6. **Creative tab event** —add to creative inventory
 7. Possibly a separate **ItemBlock** registration
 
 These scattered calls are error-prone: forget one and you get an invisible block, a missing name, or an empty creative tab. As a mod grows, keeping all of these in sync becomes a maintenance burden.
@@ -42,8 +42,8 @@ One chain registers the block, generates its model, sets its display name, creat
 
 | Scenario | Recommendation |
 | --- | --- |
-| Typical mod with many items/blocks | **Use RegistryLib** �?saves significant boilerplate |
-| Mod with only 1�? simple items | Either works; RegistryLib still reduces file count |
+| Typical mod with many items/blocks | **Use RegistryLib** —saves significant boilerplate |
+| Mod with only 1— simple items | Either works; RegistryLib still reduces file count |
 | Library or API mod with no content | Vanilla registration is often sufficient |
 | Heavily custom registry behavior | Start with RegistryLib, extend via [custom builders](/tutorials/custom-builder) |
 | Need fine-grained control over every datagen file | Vanilla providers give you full control; RegistryLib trades some flexibility for productivity |
@@ -60,6 +60,6 @@ RegistryLib is inspired by **Registrate** (tterrag's library for Forge), but reb
 
 ## See Also
 
-- [Builder Pattern & Fluent API](/concepts/builder-pattern) �?how the chain architecture works
-- [Installation](/tutorials/installation) �?get started in your project
-- [API Overview](/reference/api-overview) �?quick lookup of entry points and builders
+- [Builder Pattern & Fluent API](/concepts/builder-pattern) —how the chain architecture works
+- [Installation](/tutorials/installation) —get started in your project
+- [API Overview](/reference/api-overview) —quick lookup of entry points and builders

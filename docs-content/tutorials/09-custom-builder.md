@@ -48,7 +48,7 @@ For Blocks and Items the public registration methods directly construct the Buil
 
 For Fluids, `RegistryCore` still exposes a single overridable factory hook:
 
-- `newFluidBuilder(parent, name, fluidFactory)` �?override this to return your `ModFluidBuilder`.
+- `newFluidBuilder(parent, name, fluidFactory)` —override this to return your `ModFluidBuilder`.
 
 :::note
 The old `newBlockBuilder(...)` and `newItemBuilder(...)` hooks and the `BuilderCallback` interface have been removed. Custom Block and Item Builders are now injected by overriding the public registration methods directly.
@@ -131,7 +131,7 @@ public <T extends Item, P> ModItemBuilder<T, P> item(
 }
 ```
 
-For Fluids, override `newFluidBuilder(...)` �?this is the one remaining protected hook:
+For Fluids, override `newFluidBuilder(...)` —this is the one remaining protected hook:
 
 ```java
 @Override

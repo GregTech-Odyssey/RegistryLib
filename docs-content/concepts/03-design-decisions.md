@@ -14,12 +14,12 @@ This page explains the reasoning behind RegistryLib's major architectural choice
 
 RegistryLib uses a fluent builder API because:
 
-1. **Discoverability** �?IDE auto-complete shows you exactly what methods are available at each point in the chain. No need to memorize annotation names or config schemas.
-2. **Type safety** �?the Java compiler catches mistakes at build time. A typo in an annotation string would only fail at runtime; a typo in a method name fails immediately.
-3. **Expressiveness** �?lambdas and method references let you inline complex logic (custom loot tables, dynamic tooltips) directly in the chain without separate config files.
-4. **No magic** �?there's no annotation processor, no reflection, no bytecode manipulation. The code you see is the code that runs.
+1. **Discoverability** —IDE auto-complete shows you exactly what methods are available at each point in the chain. No need to memorize annotation names or config schemas.
+2. **Type safety** —the Java compiler catches mistakes at build time. A typo in an annotation string would only fail at runtime; a typo in a method name fails immediately.
+3. **Expressiveness** —lambdas and method references let you inline complex logic (custom loot tables, dynamic tooltips) directly in the chain without separate config files.
+4. **No magic** —there's no annotation processor, no reflection, no bytecode manipulation. The code you see is the code that runs.
 
-The trade-off is verbosity compared to annotation-based approaches �?but in practice, the chains are concise and the IDE assistance compensates.
+The trade-off is verbosity compared to annotation-based approaches —but in practice, the chains are concise and the IDE assistance compensates.
 
 ## Why Integrate Datagen Into the Builder Chain?
 
@@ -60,10 +60,10 @@ Group MACHINES = REGISTRYLIB.group("machines")
 
 Group is a separate concept rather than builder inheritance because:
 
-1. **Orthogonal to builder type** �?a group can contain blocks, items, and fluids. Builder inheritance would require a separate base class per builder type.
-2. **Composable** �?you can switch groups mid-registration without restructuring your class hierarchy.
-3. **Runtime configurable** �?group properties can be computed programmatically, not just hardcoded.
-4. **No class explosion** �?builder inheritance would lead to `MachineBlockBuilder`, `MachineItemBuilder`, etc. Groups avoid this.
+1. **Orthogonal to builder type** —a group can contain blocks, items, and fluids. Builder inheritance would require a separate base class per builder type.
+2. **Composable** —you can switch groups mid-registration without restructuring your class hierarchy.
+3. **Runtime configurable** —group properties can be computed programmatically, not just hardcoded.
+4. **No class explosion** —builder inheritance would lead to `MachineBlockBuilder`, `MachineItemBuilder`, etc. Groups avoid this.
 
 ## Why Do Entry Types Wrap DeferredHolder?
 
@@ -77,9 +77,9 @@ Entry types (`ItemEntry`, `BlockEntry`, etc.) extend `DeferredHolder` and add co
 
 **Rationale:**
 
-1. **Lazy by default** �?wrapping `DeferredHolder` means entries are safe to declare as `static final` fields. They resolve when NeoForge is ready, not at class-load time.
-2. **Convenience without coupling** �?helper methods like `asStack()` save repeated boilerplate in gameplay code without requiring you to import RegistryLib in your game logic (since they return vanilla types).
-3. **Holder compatibility** �?because entries extend `DeferredHolder`, they work directly in APIs that expect `Holder<Block>`, `Holder<Item>`, etc.
+1. **Lazy by default** —wrapping `DeferredHolder` means entries are safe to declare as `static final` fields. They resolve when NeoForge is ready, not at class-load time.
+2. **Convenience without coupling** —helper methods like `asStack()` save repeated boilerplate in gameplay code without requiring you to import RegistryLib in your game logic (since they return vanilla types).
+3. **Holder compatibility** —because entries extend `DeferredHolder`, they work directly in APIs that expect `Holder<Block>`, `Holder<Item>`, etc.
 
 The trade-off is an extra layer of indirection, but in practice this has zero measurable performance impact.
 
@@ -102,9 +102,9 @@ public class MachineBlockBuilder<T extends MachineBlock, P>
 
 **Rationale:**
 
-1. **Java-native** �?no special framework to learn. If you know inheritance, you know how to extend builders.
-2. **Full access** �?subclasses can override `createEntry()`, `registerModel()`, and other protected methods for deep customization.
-3. **Type-safe chaining** �?the self-type parameter `S` ensures your custom methods chain correctly with inherited methods.
+1. **Java-native** —no special framework to learn. If you know inheritance, you know how to extend builders.
+2. **Full access** —subclasses can override `createEntry()`, `registerModel()`, and other protected methods for deep customization.
+3. **Type-safe chaining** —the self-type parameter `S` ensures your custom methods chain correctly with inherited methods.
 
 A plugin system would add complexity for a use case that most mods don't need. Method overriding keeps the common case simple and the advanced case possible.
 
@@ -115,7 +115,7 @@ Every design has trade-offs. Here are RegistryLib's known limitations:
 | Limitation | Why it exists | Workaround |
 | --- | --- | --- |
 | Not all registries have dedicated builders | Supporting every NeoForge registry would bloat the API | Use `generic()` or `simple()` for unsupported registries |
-| Datagen must run to generate assets | Integrated datagen means no manual JSON editing | This is intentional �?generated assets are more maintainable |
+| Datagen must run to generate assets | Integrated datagen means no manual JSON editing | This is intentional —generated assets are more maintainable |
 | Learning curve for the generic type system | `AbstractBuilder<R, T, P, S>` has four type parameters | In practice, users only see the outer API; generics are internal |
 | Custom builders require understanding of the builder hierarchy | Method overriding needs knowledge of the base classes | Most mods don't need custom builders; the built-in ones cover common cases |
 
@@ -125,6 +125,6 @@ If you're unsure whether RegistryLib's approach fits your use case, start with t
 
 ## See Also
 
-- [Builder Pattern & Fluent API](/concepts/builder-pattern) �?how the generic builder architecture works
-- [Custom Builder](/tutorials/custom-builder) �?tutorial for creating your own builder type
-- [Performance](/tutorials/performance) �?optimizations and performance considerations
+- [Builder Pattern & Fluent API](/concepts/builder-pattern) —how the generic builder architecture works
+- [Custom Builder](/tutorials/custom-builder) —tutorial for creating your own builder type
+- [Performance](/tutorials/performance) —optimizations and performance considerations

@@ -22,17 +22,17 @@ Created via `item("id", factory)`, `item("id")`, or `componentItem("id")`.
 | `properties(modifier)` | `UnaryOperator<Item.Properties>` | Modify the existing properties |
 | `lang(text)` | `String` | Set English display name |
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
-| `defaultLang()` | �?| Infer display name from the registry path (e.g. `copper_coin` �?"Copper Coin") |
-| `defaultModel()` | �?| Generate default item model during datagen |
+| `defaultLang()` | —| Infer display name from the registry path (e.g. `copper_coin` —"Copper Coin") |
+| `defaultModel()` | —| Generate default item model during datagen |
 | `addTab(tab)` | `ResourceKey<CreativeModeTab>` | Add to a creative tab |
-| `addDefaultTab()` | �?| Add to the RegistryCore default tab |
+| `addDefaultTab()` | —| Add to the RegistryCore default tab |
 | `removeTab(tab)` | `ResourceKey<CreativeModeTab>` | Remove from a creative tab |
 | `addTag(tags...)` | `TagKey<Item>...` | Add item tags |
 | `addTooltip(component)` | `Component` | Add a simple static tooltip line |
 | `addTooltip(collector)` | `BiConsumer<TooltipNodeCollector, ItemStack>` | Add a dynamic tooltip with context |
 | `attach(attachment)` | `ItemAttachment` | Add an attachment (ComponentItem only) |
 | `texture(supplier)` | `Supplier<BufferedImage>` | Generate a texture during datagen |
-| `register()` | �?| Submit and return `ItemEntry<T>` |
+| `register()` | —| Submit and return `ItemEntry<T>` |
 
 **Example:**
 
@@ -56,13 +56,13 @@ Created via `block("id", factory)` or `block("id")`.
 | `properties(modifier)` | `UnaryOperator<BlockBehaviour.Properties>` | Modify block properties |
 | `lang(text)` | `String` | Set English display name |
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
-| `defaultLang()` | �?| Infer display name from registry path |
-| `simpleItem()` | �?| Create a default BlockItem with no customization |
+| `defaultLang()` | —| Infer display name from registry path |
+| `simpleItem()` | —| Create a default BlockItem with no customization |
 | `item(configurator)` | `Consumer<ItemBuilder>` | Create and customize the associated BlockItem |
-| `defaultLoot()` | �?| Generate basic self-drop loot table |
+| `defaultLoot()` | —| Generate basic self-drop loot table |
 | `loot(configurator)` | `BiConsumer<BlockLootSubProvider, Block>` | Define a custom loot table |
 | `addTag(tags...)` | `TagKey<Block>...` | Add block tags |
-| `register()` | �?| Submit and return `BlockEntry<T>` |
+| `register()` | —| Submit and return `BlockEntry<T>` |
 
 **Example:**
 
@@ -95,7 +95,7 @@ Created via `fluid("id", still, flow)`.
 | `tag(tags...)` | `TagKey<Fluid>...` | Add fluid tags |
 | `block(configurator)` | `Consumer<BlockBuilder>` | Generate a fluid block |
 | `bucket(configurator)` | `Consumer<ItemBuilder>` | Generate a bucket item |
-| `register()` | �?| Submit and return `FluidEntry<T>` |
+| `register()` | —| Submit and return `FluidEntry<T>` |
 
 **Example:**
 
@@ -123,7 +123,7 @@ Created via `blockEntity("id", factory)`.
 | `validBlock(entry)` | `BlockEntry` | Bind a single host block |
 | `validBlocks(entries...)` | `BlockEntry...` | Bind multiple host blocks |
 | `renderer(supplier)` | `Supplier<BlockEntityRendererFactory>` | Register a renderer (lazy, client-side only) |
-| `register()` | �?| Submit and return `BlockEntityEntry<T>` |
+| `register()` | —| Submit and return `BlockEntityEntry<T>` |
 
 **Example:**
 
@@ -135,10 +135,10 @@ REGISTRYLIB.blockEntity("crusher_be", CrusherBlockEntity::new)
 ```
 
 :::note
-The renderer supplier is lazy �?the factory is only invoked on the client side. This prevents server crashes from referencing client-only classes.
+The renderer supplier is lazy —the factory is only invoked on the client side. This prevents server crashes from referencing client-only classes.
 :::
 
 ## See Also
 
-- [API Overview](/reference/api-overview) �?entry point selection and common chains
-- [Entry Types](/reference/entry-types) �?reference for all Entry wrapper types
+- [API Overview](/reference/api-overview) —entry point selection and common chains
+- [Entry Types](/reference/entry-types) —reference for all Entry wrapper types

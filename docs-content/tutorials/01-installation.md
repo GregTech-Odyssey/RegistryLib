@@ -18,7 +18,7 @@ This page walks you through dependency setup and local validation so you can sta
 
 RegistryLib is published through GitHub Packages. To resolve the dependency, you need a GitHub Personal Access Token.
 
-1. Go to **GitHub �?Settings �?Developer settings �?Personal access tokens �?Tokens (classic)**.
+1. Go to **GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)**.
 2. Click **Generate new token (classic)**.
 3. Select only the **`read:packages`** scope.
 4. Generate and copy the token.
