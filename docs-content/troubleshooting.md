@@ -87,13 +87,13 @@ public class MyMod {
 .renderer(() -> MyBlockEntityRenderer::new)
 ```
 
-The `Supplier` wrapping ensures the renderer class is only loaded on the client. See [Performance & Optimization](/tutorials/expert/performance).
+The `Supplier` wrapping ensures the renderer class is only loaded on the client. See [Performance & Optimization](/tutorials/performance).
 
 ### Tooltip box renders at the wrong position
 
 **Cause:** A custom `SubNode` implementation returns incorrect `getWidth()` or `getHeight()`.
 
-**Fix:** Ensure your node's size methods return accurate pixel dimensions. See [Tooltip System](/tutorials/intermediate/tooltip-system).
+**Fix:** Ensure your node's size methods return accurate pixel dimensions. See [Tooltip System](/tutorials/tooltip-system).
 
 ---
 

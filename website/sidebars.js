@@ -15,52 +15,16 @@ const sidebars = {
         slug: '/tutorials',
       },
       items: [
-        {
-          type: 'category',
-          label: 'Beginner',
-          link: {
-            type: 'generated-index',
-            title: 'Beginner Tutorials',
-            description: 'Get your first mod running in 15 minutes.',
-            slug: '/tutorials/beginner',
-          },
-          items: [
-            'tutorials/beginner/installation',
-            'tutorials/beginner/first-item',
-            'tutorials/beginner/first-block',
-            'tutorials/beginner/understanding-chain',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Intermediate',
-          link: {
-            type: 'generated-index',
-            title: 'Intermediate Tutorials',
-            description: 'Master efficient development patterns.',
-            slug: '/tutorials/intermediate',
-          },
-          items: [
-            'tutorials/intermediate/group-system',
-            'tutorials/intermediate/tooltip-system',
-            'tutorials/intermediate/multi-language',
-            'tutorials/intermediate/recipes-tags',
-          ],
-        },
-        {
-          type: 'category',
-          label: 'Expert',
-          link: {
-            type: 'generated-index',
-            title: 'Expert Tutorials',
-            description: 'Deep customization and extension.',
-            slug: '/tutorials/expert',
-          },
-          items: [
-            'tutorials/expert/custom-builder',
-            'tutorials/expert/performance',
-          ],
-        },
+        'tutorials/installation',
+        'tutorials/first-item',
+        'tutorials/first-block',
+        'tutorials/understanding-chain',
+        'tutorials/group-system',
+        'tutorials/tooltip-system',
+        'tutorials/multi-language',
+        'tutorials/recipes-tags',
+        'tutorials/custom-builder',
+        'tutorials/performance',
       ],
     },
     {
