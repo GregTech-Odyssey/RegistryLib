@@ -1,12 +1,5 @@
 package com.gto.registrylib.datagen;
 
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
-
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.generator.RegistryLibBlockModelGenerator;
 import com.gto.registrylib.datagen.generator.RegistryLibItemModelGenerator;
@@ -32,6 +25,13 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Nonnull;
 
 @FunctionalInterface
 public interface ProviderType<T extends RegistryLibProvider> extends GeneratorType<T> {

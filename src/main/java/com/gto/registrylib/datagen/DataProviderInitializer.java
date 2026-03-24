@@ -27,16 +27,18 @@ public class DataProviderInitializer {
         addDependency(ProviderType.ENCHANTMENT_TAGS, ProviderType.DATAPACK_REGISTRIES);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public RegistrySetBuilder getDatapackRegistryProviders() {
         for (var entry : pendingBootstraps.entrySet()) {
             ResourceKey registryKey = entry.getKey();
             List<RegistrySetBuilder.RegistryBootstrap> bootstraps = entry.getValue();
-            datapackEntryProvider.add(registryKey, ctx -> {
-                for (var bootstrap : bootstraps) {
-                    bootstrap.run(ctx);
-                }
-            });
+            datapackEntryProvider.add(
+                    registryKey,
+                    ctx -> {
+                        for (var bootstrap : bootstraps) {
+                            bootstrap.run(ctx);
+                        }
+                    });
         }
         pendingBootstraps.clear();
         return datapackEntryProvider;
@@ -63,10 +65,12 @@ public class DataProviderInitializer {
         return ans;
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public <T> void add(
                         ResourceKey<Registry<T>> registry, RegistrySetBuilder.RegistryBootstrap<T> provider) {
-        pendingBootstraps.computeIfAbsent((ResourceKey) registry, k -> Collections.synchronizedList(new ArrayList<>()))
+        pendingBootstraps
+                .computeIfAbsent(
+                        (ResourceKey) registry, k -> Collections.synchronizedList(new ArrayList<>()))
                 .add((RegistrySetBuilder.RegistryBootstrap) provider);
     }
 

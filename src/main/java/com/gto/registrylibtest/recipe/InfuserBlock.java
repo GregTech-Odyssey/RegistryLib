@@ -1,7 +1,5 @@
 package com.gto.registrylibtest.recipe;
 
-import org.jspecify.annotations.Nullable;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -12,10 +10,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 注入器方块：带等级的处理机器，检测上方掉落物并按配方转化。
  *
- * <p>Infuser block: a tiered processing machine. Detects item entities above and transforms them
+ * <p>
+ * Infuser block: a tiered processing machine. Detects item entities above and transforms them
  * according to infuser recipes. The machine tier gates which recipes can be processed.
  */
 public class InfuserBlock extends Block implements EntityBlock {

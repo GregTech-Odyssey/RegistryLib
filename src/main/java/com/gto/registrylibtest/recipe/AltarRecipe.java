@@ -21,7 +21,8 @@ import net.minecraft.world.level.Level;
 /**
  * 祭坛配方：将物品丢在祭坛上方即可转化。
  *
- * <p>Altar recipe: throw an item on top of the altar block to transform it.
+ * <p>
+ * Altar recipe: throw an item on top of the altar block to transform it.
  */
 public class AltarRecipe implements Recipe<SingleRecipeInput> {
 

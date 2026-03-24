@@ -1,7 +1,5 @@
 package com.gto.registrylibtest;
 
-import org.slf4j.Logger;
-
 import com.gto.registrylib.util.ColorUtil;
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylibtest.advancement.FullAdvancementExample;
@@ -18,12 +16,15 @@ import com.gto.registrylibtest.item.FullItemExample;
 import com.gto.registrylibtest.item.SimpleItemExample;
 import com.gto.registrylibtest.recipe.FullRecipeExample;
 import com.gto.registrylibtest.recipe.SimpleRecipeExample;
+
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+
+import org.slf4j.Logger;
 
 /**
  * Mod 入口类，仅负责：

@@ -1,10 +1,5 @@
 package com.gto.registrylibtest.recipe;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.jspecify.annotations.Nullable;
-
 import com.mojang.serialization.Codec;
 
 import net.minecraft.core.BlockPos;
@@ -21,10 +16,16 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
+import java.util.Optional;
+
 /**
  * 祭坛方块实体：每 tick 检测上方的物品实体，匹配配方后转化。
  *
- * <p>Altar block entity: scans for item entities above, matches altar recipes, and processes them.
+ * <p>
+ * Altar block entity: scans for item entities above, matches altar recipes, and processes them.
  */
 public class AltarBlockEntity extends BlockEntity {
 
@@ -75,12 +76,7 @@ public class AltarBlockEntity extends BlockEntity {
                 itemEntity.setItem(stack.copy());
             }
             // 生成结果物品
-            ItemEntity resultEntity = new ItemEntity(
-                    level,
-                    pos.getX() + 0.5,
-                    pos.getY() + 1.2,
-                    pos.getZ() + 0.5,
-                    result);
+            ItemEntity resultEntity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, result);
             resultEntity.setDeltaMovement(0, 0.15, 0);
             level.addFreshEntity(resultEntity);
             be.progress = 0;

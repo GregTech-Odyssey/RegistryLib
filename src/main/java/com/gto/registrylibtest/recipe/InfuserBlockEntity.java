@@ -1,10 +1,5 @@
 package com.gto.registrylibtest.recipe;
 
-import java.util.List;
-import java.util.Optional;
-
-import org.jspecify.annotations.Nullable;
-
 import com.mojang.serialization.Codec;
 
 import net.minecraft.core.BlockPos;
@@ -21,11 +16,17 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 
+import org.jspecify.annotations.Nullable;
+
+import java.util.List;
+import java.util.Optional;
+
 /**
  * 注入器方块实体：带机器等级的配方处理器。
  *
- * <p>Infuser block entity: a tiered recipe processor. Scans for item entities above, matches infuser
- * recipes (factoring in machine tier), processes them, awards experience on completion.
+ * <p>
+ * Infuser block entity: a tiered recipe processor. Scans for item entities above, matches
+ * infuser recipes (factoring in machine tier), processes them, awards experience on completion.
  */
 public class InfuserBlockEntity extends BlockEntity {
 
@@ -44,7 +45,8 @@ public class InfuserBlockEntity extends BlockEntity {
         return 1;
     }
 
-    public static void serverTick(Level level, BlockPos pos, BlockState state, InfuserBlockEntity be) {
+    public static void serverTick(
+                                  Level level, BlockPos pos, BlockState state, InfuserBlockEntity be) {
         if (!(level instanceof ServerLevel serverLevel)) return;
 
         AABB scanArea = new AABB(pos.above()).inflate(0.25, 0.5, 0.25);
@@ -88,12 +90,7 @@ public class InfuserBlockEntity extends BlockEntity {
             }
 
             // 生成结果物品
-            ItemEntity resultEntity = new ItemEntity(
-                    level,
-                    pos.getX() + 0.5,
-                    pos.getY() + 1.2,
-                    pos.getZ() + 0.5,
-                    result);
+            ItemEntity resultEntity = new ItemEntity(level, pos.getX() + 0.5, pos.getY() + 1.2, pos.getZ() + 0.5, result);
             resultEntity.setDeltaMovement(0, 0.15, 0);
             level.addFreshEntity(resultEntity);
 

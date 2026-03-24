@@ -14,16 +14,15 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Datagen provider for data-driven registry entries (e.g. enchantments).
  *
- * <p>Extends NeoForge's {@link DatapackBuiltinEntriesProvider} to generate JSON for all entries
+ * <p>
+ * Extends NeoForge's {@link DatapackBuiltinEntriesProvider} to generate JSON for all entries
  * added via {@link com.gto.registrylib.datagen.DataProviderInitializer#add}.
  */
 public class RegistryLibDatapackProvider extends DatapackBuiltinEntriesProvider
                                          implements RegistryLibLookupFillerProvider {
 
     public RegistryLibDatapackProvider(
-                                       RegistryCore owner,
-                                       PackOutput output,
-                                       CompletableFuture<HolderLookup.Provider> provider) {
+                                       RegistryCore owner, PackOutput output, CompletableFuture<HolderLookup.Provider> provider) {
         super(
                 output,
                 RegistryPatchGenerator.createLookup(

@@ -20,23 +20,25 @@ import javax.annotation.Nonnull;
 /**
  * 配方类型 Builder，一次性注册 {@link RecipeType} + {@link RecipeSerializer}。
  *
- * <p>Fluent builder that registers both a {@link RecipeType} and {@link RecipeSerializer} under the
+ * <p>
+ * Fluent builder that registers both a {@link RecipeType} and {@link RecipeSerializer} under the
  * same name. After registration, use the returned {@link RecipeEntry} to add individual recipes via
  * {@link RecipeEntry#addRecipe}.
  *
  * <h3>Usage</h3>
  *
  * <pre>{@code
+ * 
  * // Step 1: Register the RecipeType + RecipeSerializer
  * public static final RecipeEntry<AltarRecipe> ALTAR = REGISTRYLIB
- *     .<AltarRecipe>recipeType("altar")
- *     .serializer(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC)
- *     .register();
+ *         .<AltarRecipe>recipeType("altar")
+ *         .serializer(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC)
+ *         .register();
  *
  * // Step 2: Add individual recipes (can be done after registration)
  * static {
  *     ALTAR.addRecipe("cobblestone_to_stone",
- *         new AltarRecipe(Ingredient.of(Items.COBBLESTONE), new ItemStackTemplate(Items.STONE), 40));
+ *             new AltarRecipe(Ingredient.of(Items.COBBLESTONE), new ItemStackTemplate(Items.STONE), 40));
  * }
  * }</pre>
  *
@@ -68,12 +70,12 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
     /**
      * 设置配方的序列化器参数（MapCodec + StreamCodec）。
      *
-     * <p>Sets the codec and stream codec used to construct the {@link RecipeSerializer}.
+     * <p>
+     * Sets the codec and stream codec used to construct the {@link RecipeSerializer}.
      */
     @StandardAPI
     public RecipeTypeBuilder<T, P> serializer(
-                                              @Nonnull MapCodec<T> codec,
-                                              @Nonnull StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
+                                              @Nonnull MapCodec<T> codec, @Nonnull StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
         this.codec = codec;
         this.streamCodec = streamCodec;
         return this;
@@ -84,9 +86,10 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
     /**
      * 注册 RecipeType 和 RecipeSerializer，返回 {@link RecipeEntry}。
      *
-     * <p>Registers the {@link RecipeType} and {@link RecipeSerializer}, and returns a
-     * {@link RecipeEntry} wrapping both. Use {@link RecipeEntry#addRecipe} to add individual
-     * recipes for datagen.
+     * <p>
+     * Registers the {@link RecipeType} and {@link RecipeSerializer}, and returns a {@link
+     * RecipeEntry} wrapping both. Use {@link RecipeEntry#addRecipe} to add individual recipes for
+     * datagen.
      */
     @StandardAPI
     @SuppressWarnings("unchecked")
@@ -98,17 +101,13 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
 
         // Register RecipeType
         var typeEntry = (RegistryEntry<RecipeType<?>, RecipeType<T>>) (RegistryEntry) core.simple(
-                name,
-                Registries.RECIPE_TYPE,
-                key -> RecipeType.simple(key.identifier()));
+                name, Registries.RECIPE_TYPE, key -> RecipeType.simple(key.identifier()));
 
         // Register RecipeSerializer
         final MapCodec<T> c = codec;
         final StreamCodec<RegistryFriendlyByteBuf, T> sc = streamCodec;
         var serializerEntry = (RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>>) (RegistryEntry) core.simple(
-                name,
-                Registries.RECIPE_SERIALIZER,
-                key -> new RecipeSerializer<>(c, sc));
+                name, Registries.RECIPE_SERIALIZER, key -> new RecipeSerializer<>(c, sc));
 
         return new RecipeEntry<>(core, typeEntry, serializerEntry);
     }
@@ -116,7 +115,8 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
     /**
      * 注册并返回父对象（用于链式调用）。
      *
-     * <p>Registers and returns the parent (for builder chaining).
+     * <p>
+     * Registers and returns the parent (for builder chaining).
      */
     @SyntaxSugar("register(); return parent")
     public P build() {

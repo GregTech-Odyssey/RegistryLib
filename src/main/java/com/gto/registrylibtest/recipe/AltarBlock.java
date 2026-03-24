@@ -1,7 +1,5 @@
 package com.gto.registrylibtest.recipe;
 
-import org.jspecify.annotations.Nullable;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -12,10 +10,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 祭坛方块：检测上方掉落物并按配方转化。
  *
- * <p>Altar block: detects item entities above and transforms them according to altar recipes.
+ * <p>
+ * Altar block: detects item entities above and transforms them according to altar recipes.
  */
 public class AltarBlock extends Block implements EntityBlock {
 

@@ -22,7 +22,8 @@ import net.minecraft.world.level.Level;
 /**
  * 注入器配方：将物品丢在注入器上方进行处理，要求机器等级达到最低要求。
  *
- * <p>Infuser recipe: throw items on top of the infuser block. Requires a minimum machine tier to
+ * <p>
+ * Infuser recipe: throw items on top of the infuser block. Requires a minimum machine tier to
  * process. Provides experience on completion.
  */
 public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
@@ -116,15 +117,15 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
     /**
      * 注入器配方输入：包含物品和机器等级。
      *
-     * <p>Infuser recipe input: carries the item stack and the machine tier. The machine tier is
+     * <p>
+     * Infuser recipe input: carries the item stack and the machine tier. The machine tier is
      * checked against the recipe's required tier.
      */
     public record InfuserInput(ItemStack item, int machineTier) implements RecipeInput {
 
         @Override
         public ItemStack getItem(int slot) {
-            if (slot != 0)
-                throw new IllegalArgumentException("No item for index " + slot);
+            if (slot != 0) throw new IllegalArgumentException("No item for index " + slot);
             return item;
         }
 

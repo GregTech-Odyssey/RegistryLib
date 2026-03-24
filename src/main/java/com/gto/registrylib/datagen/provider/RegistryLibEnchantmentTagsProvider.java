@@ -19,8 +19,9 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Tag provider for data-driven enchantments.
  *
- * <p>Enchantments are data-driven and have no {@code builtInRegistryHolder}.
- * This provider extends {@link EnchantmentTagsProvider} (backed by {@code KeyTagProvider}).
+ * <p>
+ * Enchantments are data-driven and have no {@code builtInRegistryHolder}. This provider extends
+ * {@link EnchantmentTagsProvider} (backed by {@code KeyTagProvider}).
  */
 public class RegistryLibEnchantmentTagsProvider extends EnchantmentTagsProvider
                                                 implements RegistryLibTagsProvider<Enchantment> {
@@ -63,7 +64,7 @@ public class RegistryLibEnchantmentTagsProvider extends EnchantmentTagsProvider
     }
 
     @Override
-    public net.minecraft.resources.ResourceKey<? extends net.minecraft.core.Registry<Enchantment>> registry() {
+    public ResourceKey<? extends net.minecraft.core.Registry<Enchantment>> registry() {
         return registryKey;
     }
 

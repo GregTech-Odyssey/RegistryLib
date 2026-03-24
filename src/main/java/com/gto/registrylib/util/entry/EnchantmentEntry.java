@@ -6,7 +6,8 @@ import net.minecraft.world.item.enchantment.Enchantment;
 /**
  * 附魔注册条目，封装了 ResourceKey&lt;Enchantment&gt;。
  *
- * <p>Wraps a {@link ResourceKey} for a data-driven enchantment. Since enchantments in NeoForge 26.1
+ * <p>
+ * Wraps a {@link ResourceKey} for a data-driven enchantment. Since enchantments in NeoForge 26.1
  * are fully data-driven, this entry holds only the key (no code-registered object).
  */
 public class EnchantmentEntry {

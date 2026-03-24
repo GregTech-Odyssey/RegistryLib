@@ -32,24 +32,26 @@ import javax.annotation.Nonnull;
 /**
  * 附魔 Builder，通过流畅 API 定义数据驱动附魔并自动生成附魔 JSON + 语言条目 + 标签。
  *
- * <p>Fluent builder for data-driven enchantments. Uses Minecraft's {@link Enchantment.Builder} API
- * internally to construct enchantment definitions that are generated during datagen via
- * {@link net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider}.
+ * <p>
+ * Fluent builder for data-driven enchantments. Uses Minecraft's {@link Enchantment.Builder} API
+ * internally to construct enchantment definitions that are generated during datagen via {@link
+ * net.neoforged.neoforge.common.data.DatapackBuiltinEntriesProvider}.
  *
  * <h3>Usage</h3>
  *
  * <pre>{@code
+ * 
  * public static final EnchantmentEntry ORE_FORTUNE = REGISTRYLIB
- *     .enchantment("ore_fortune")
- *     .lang("Ore Fortune")
- *     .supportedItems(ItemTags.MINING_ENCHANTABLE)
- *     .weight(5).maxLevel(3)
- *     .minCost(15, 9).maxCost(65, 9)
- *     .anvilCost(4)
- *     .slots(EquipmentSlotGroup.MAINHAND)
- *     .withEffect(EnchantmentEffectComponents.BLOCK_EXPERIENCE,
- *         new AddValue(LevelBasedValue.perLevel(1.0f, 1.0f)))
- *     .register();
+ *         .enchantment("ore_fortune")
+ *         .lang("Ore Fortune")
+ *         .supportedItems(ItemTags.MINING_ENCHANTABLE)
+ *         .weight(5).maxLevel(3)
+ *         .minCost(15, 9).maxCost(65, 9)
+ *         .anvilCost(4)
+ *         .slots(EquipmentSlotGroup.MAINHAND)
+ *         .withEffect(EnchantmentEffectComponents.BLOCK_EXPERIENCE,
+ *                 new AddValue(LevelBasedValue.perLevel(1.0f, 1.0f)))
+ *         .register();
  * }</pre>
  *
  * @param <P> the parent type (for builder chaining)
@@ -98,7 +100,8 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置英文名称（同时作为附魔描述翻译键的值）。
      *
-     * <p>Sets the English display name for this enchantment.
+     * <p>
+     * Sets the English display name for this enchantment.
      */
     @StandardAPI
     public EnchantmentBuilder<P> lang(@NotNull String englishName) {
@@ -109,7 +112,8 @@ public class EnchantmentBuilder<P> {
     /**
      * 为指定的语言提供器添加翻译。
      *
-     * <p>Adds a translation for the specified lang provider type.
+     * <p>
+     * Adds a translation for the specified lang provider type.
      */
     @StandardAPI
     public EnchantmentBuilder<P> lang(
@@ -124,7 +128,8 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置可附魔的物品（使用物品标签）。
      *
-     * <p>Sets supported items using an item TagKey.
+     * <p>
+     * Sets supported items using an item TagKey.
      */
     @StandardAPI
     public EnchantmentBuilder<P> supportedItems(@NotNull TagKey<Item> tag) {
@@ -135,7 +140,8 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置主要物品（可选，附魔台优先选择）。
      *
-     * <p>Sets primary items (items preferred by the enchanting table).
+     * <p>
+     * Sets primary items (items preferred by the enchanting table).
      */
     @StandardAPI
     public EnchantmentBuilder<P> primaryItems(@NotNull TagKey<Item> tag) {
@@ -160,7 +166,7 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置最低附魔开销。
      *
-     * @param base the base cost at level 1
+     * @param base               the base cost at level 1
      * @param perLevelAboveFirst cost increase per level above 1
      */
     @StandardAPI
@@ -173,7 +179,7 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置最高附魔开销。
      *
-     * @param base the base cost at level 1
+     * @param base               the base cost at level 1
      * @param perLevelAboveFirst cost increase per level above 1
      */
     @StandardAPI
@@ -193,7 +199,8 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置附魔适用的装备槽位。
      *
-     * <p>Sets applicable equipment slot groups.
+     * <p>
+     * Sets applicable equipment slot groups.
      */
     @StandardAPI
     public EnchantmentBuilder<P> slots(@NotNull EquipmentSlotGroup... slotGroups) {
@@ -206,7 +213,8 @@ public class EnchantmentBuilder<P> {
     /**
      * 设置互斥附魔集合。
      *
-     * <p>Sets enchantments that are exclusive with this one.
+     * <p>
+     * Sets enchantments that are exclusive with this one.
      */
     @SafeVarargs
     @StandardAPI
@@ -222,20 +230,20 @@ public class EnchantmentBuilder<P> {
     /**
      * 添加条件效果（包含条件列表类型的效果组件）。
      *
-     * <p>Adds a conditional effect entry to the specified effect component type.
+     * <p>
+     * Adds a conditional effect entry to the specified effect component type.
      *
      * <pre>{@code
      * .withEffect(EnchantmentEffectComponents.BLOCK_EXPERIENCE,
      *     new AddValue(LevelBasedValue.perLevel(1.0f, 1.0f)))
      * }</pre>
      *
-     * @param type the effect component type
+     * @param type   the effect component type
      * @param effect the effect instance
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withEffect(
-                                                @Nonnull DataComponentType<List<ConditionalEffect<E>>> type,
-                                                @Nonnull E effect) {
+                                                @Nonnull DataComponentType<List<ConditionalEffect<E>>> type, @Nonnull E effect) {
         effectCallbacks.add(builder -> builder.withEffect(type, effect));
         return this;
     }
@@ -243,16 +251,17 @@ public class EnchantmentBuilder<P> {
     /**
      * 添加条件效果，使用延迟求值的类型引用（适用于模组注册的效果组件类型）。
      *
-     * <p>Adds a conditional effect using a lazily-evaluated type reference. Use this when the
-     * {@link DataComponentType} is obtained from a {@link com.gto.registrylib.util.entry.RegistryEntry}
-     * that may not yet be bound at class loading time.
+     * <p>
+     * Adds a conditional effect using a lazily-evaluated type reference. Use this when the {@link
+     * DataComponentType} is obtained from a {@link com.gto.registrylib.util.entry.RegistryEntry} that
+     * may not yet be bound at class loading time.
      *
      * <pre>{@code
      * .withEffect(MY_EFFECT::get, new MyEffect(1.0f))
      * }</pre>
      *
      * @param typeSupplier supplier for the effect component type
-     * @param effect the effect instance
+     * @param effect       the effect instance
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withEffect(
@@ -265,10 +274,11 @@ public class EnchantmentBuilder<P> {
     /**
      * 添加带条件的条件效果。
      *
-     * <p>Adds a conditional effect with a loot condition.
+     * <p>
+     * Adds a conditional effect with a loot condition.
      *
-     * @param type the effect component type
-     * @param effect the effect instance
+     * @param type      the effect component type
+     * @param effect    the effect instance
      * @param condition the loot item condition
      */
     @StandardAPI
@@ -283,11 +293,12 @@ public class EnchantmentBuilder<P> {
     /**
      * 添加带条件的条件效果，使用延迟求值的类型引用。
      *
-     * <p>Adds a conditional effect with a loot condition, using a lazily-evaluated type reference.
+     * <p>
+     * Adds a conditional effect with a loot condition, using a lazily-evaluated type reference.
      *
      * @param typeSupplier supplier for the effect component type
-     * @param effect the effect instance
-     * @param condition the loot item condition
+     * @param effect       the effect instance
+     * @param condition    the loot item condition
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withEffect(
@@ -301,15 +312,15 @@ public class EnchantmentBuilder<P> {
     /**
      * 添加特殊效果（非条件列表类型的效果组件，如 prevent_equipment_drop）。
      *
-     * <p>Adds a special (non-list) effect to the enchantment.
+     * <p>
+     * Adds a special (non-list) effect to the enchantment.
      *
-     * @param type the effect component type
+     * @param type   the effect component type
      * @param effect the effect instance
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withSpecialEffect(
-                                                       @Nonnull DataComponentType<E> type,
-                                                       @Nonnull E effect) {
+                                                       @Nonnull DataComponentType<E> type, @Nonnull E effect) {
         effectCallbacks.add(builder -> builder.withSpecialEffect(type, effect));
         return this;
     }
@@ -317,15 +328,15 @@ public class EnchantmentBuilder<P> {
     /**
      * 添加特殊效果，使用延迟求值的类型引用。
      *
-     * <p>Adds a special (non-list) effect using a lazily-evaluated type reference.
+     * <p>
+     * Adds a special (non-list) effect using a lazily-evaluated type reference.
      *
      * @param typeSupplier supplier for the effect component type
-     * @param effect the effect instance
+     * @param effect       the effect instance
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withSpecialEffect(
-                                                       @Nonnull Supplier<DataComponentType<E>> typeSupplier,
-                                                       @Nonnull E effect) {
+                                                       @Nonnull Supplier<DataComponentType<E>> typeSupplier, @Nonnull E effect) {
         effectCallbacks.add(builder -> builder.withSpecialEffect(typeSupplier.get(), effect));
         return this;
     }
@@ -333,7 +344,8 @@ public class EnchantmentBuilder<P> {
     /**
      * 直接操作底层的 {@link Enchantment.Builder}，用于高级自定义。
      *
-     * <p>Provides direct access to the underlying {@link Enchantment.Builder} for advanced
+     * <p>
+     * Provides direct access to the underlying {@link Enchantment.Builder} for advanced
      * customization not covered by the fluent API.
      */
     @StandardAPI
@@ -347,7 +359,9 @@ public class EnchantmentBuilder<P> {
     /**
      * 将此附魔添加到指定标签。
      *
-     * <p>Adds this enchantment to the specified enchantment tag (e.g. for enchanting table availability).
+     * <p>
+     * Adds this enchantment to the specified enchantment tag (e.g. for enchanting table
+     * availability).
      */
     @SafeVarargs
     @StandardAPI
@@ -363,8 +377,9 @@ public class EnchantmentBuilder<P> {
     /**
      * 注册语言条目，通过 RegistrySetBuilder 生成附魔 JSON 和标签 JSON，返回 {@link EnchantmentEntry}。
      *
-     * <p>Registers lang entries, generates enchantment definition and tags during datagen via
-     * {@link net.minecraft.core.RegistrySetBuilder}, and returns an {@link EnchantmentEntry}.
+     * <p>
+     * Registers lang entries, generates enchantment definition and tags during datagen via {@link
+     * net.minecraft.core.RegistrySetBuilder}, and returns an {@link EnchantmentEntry}.
      */
     @StandardAPI
     public EnchantmentEntry register() {
@@ -398,43 +413,51 @@ public class EnchantmentBuilder<P> {
             final List<ResourceKey<Enchantment>> capturedExclusive = List.copyOf(exclusiveWith);
             final List<Consumer<Enchantment.Builder>> capturedEffects = List.copyOf(effectCallbacks);
 
-            core.getDataGenInitializer().add(Registries.ENCHANTMENT, ctx -> {
-                HolderSet<Item> supportedItemSet = ctx.lookup(Registries.ITEM).getOrThrow(capturedSupportedItems);
+            core.getDataGenInitializer()
+                    .add(
+                            Registries.ENCHANTMENT,
+                            ctx -> {
+                                HolderSet<Item> supportedItemSet = ctx.lookup(Registries.ITEM).getOrThrow(capturedSupportedItems);
 
-                Enchantment.EnchantmentDefinition definition;
-                if (capturedPrimaryItems != null) {
-                    HolderSet<Item> primaryItemSet = ctx.lookup(Registries.ITEM).getOrThrow(capturedPrimaryItems);
-                    definition = Enchantment.definition(
-                            supportedItemSet, primaryItemSet,
-                            capturedWeight, capturedMaxLevel,
-                            minCost, maxCost, capturedAnvilCost,
-                            capturedSlots);
-                } else {
-                    definition = Enchantment.definition(
-                            supportedItemSet,
-                            capturedWeight, capturedMaxLevel,
-                            minCost, maxCost, capturedAnvilCost,
-                            capturedSlots);
-                }
+                                Enchantment.EnchantmentDefinition definition;
+                                if (capturedPrimaryItems != null) {
+                                    HolderSet<Item> primaryItemSet = ctx.lookup(Registries.ITEM).getOrThrow(capturedPrimaryItems);
+                                    definition = Enchantment.definition(
+                                            supportedItemSet,
+                                            primaryItemSet,
+                                            capturedWeight,
+                                            capturedMaxLevel,
+                                            minCost,
+                                            maxCost,
+                                            capturedAnvilCost,
+                                            capturedSlots);
+                                } else {
+                                    definition = Enchantment.definition(
+                                            supportedItemSet,
+                                            capturedWeight,
+                                            capturedMaxLevel,
+                                            minCost,
+                                            maxCost,
+                                            capturedAnvilCost,
+                                            capturedSlots);
+                                }
 
-                Enchantment.Builder builder = Enchantment.enchantment(definition);
+                                Enchantment.Builder builder = Enchantment.enchantment(definition);
 
-                // Apply exclusive set
-                if (!capturedExclusive.isEmpty()) {
-                    var enchLookup = ctx.lookup(Registries.ENCHANTMENT);
-                    var holders = capturedExclusive.stream()
-                            .map(enchLookup::getOrThrow)
-                            .toList();
-                    builder.exclusiveWith(HolderSet.direct(holders));
-                }
+                                // Apply exclusive set
+                                if (!capturedExclusive.isEmpty()) {
+                                    var enchLookup = ctx.lookup(Registries.ENCHANTMENT);
+                                    var holders = capturedExclusive.stream().map(enchLookup::getOrThrow).toList();
+                                    builder.exclusiveWith(HolderSet.direct(holders));
+                                }
 
-                // Apply effects
-                for (var cb : capturedEffects) {
-                    cb.accept(builder);
-                }
+                                // Apply effects
+                                for (var cb : capturedEffects) {
+                                    cb.accept(builder);
+                                }
 
-                ctx.register(key, builder.build(key.identifier()));
-            });
+                                ctx.register(key, builder.build(key.identifier()));
+                            });
 
             // Generate tag entries
             if (!tags.isEmpty()) {

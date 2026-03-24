@@ -1,26 +1,5 @@
 package com.gto.registrylib;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.BlockBuilder;
@@ -48,8 +27,6 @@ import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylibtest.builder.ModFluidBuilder;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import lombok.Getter;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.WritableRegistry;
@@ -73,11 +50,33 @@ import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import lombok.Getter;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Nonnull;
+
 public class RegistryCore {
 
-    private static final ConcurrentSkipListSet<RegistryCore> REGISTRY_CORES =
-        new ConcurrentSkipListSet<>(Comparator.comparingInt(RegistryCore::priority)
-            .thenComparing(RegistryCore::getModid));
+    private static final ConcurrentSkipListSet<RegistryCore> REGISTRY_CORES = new ConcurrentSkipListSet<>(
+            Comparator.comparingInt(RegistryCore::priority).thenComparing(RegistryCore::getModid));
 
     private static final ConcurrentHashMap<String, RegistryCore> CORES_BY_MODID = new ConcurrentHashMap<>();
     private static final Logger log = RegistryLib.LOGGER;
@@ -431,8 +430,7 @@ public class RegistryCore {
 
     @SuppressWarnings("unchecked")
     @StandardAPI("Registers a RecipeType and returns a typed RegistryEntry. Prefer recipeType(String) builder API.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<T>> simpleRecipeType(
-                                                                                                                                                                                                   @Nonnull String name) {
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<T>> simpleRecipeType(@Nonnull String name) {
         return (RegistryEntry) simple(
                 name,
                 Registries.RECIPE_TYPE,
@@ -442,33 +440,34 @@ public class RegistryCore {
     @SuppressWarnings("unchecked")
     @StandardAPI("Registers a RecipeSerializer and returns a typed RegistryEntry. Prefer recipeType(String) builder API.")
     public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeSerializer<?>, net.minecraft.world.item.crafting.RecipeSerializer<T>> simpleRecipeSerializer(
-                                                                                                                                                                                                                     @Nonnull String name,
-                                                                                                                                                                                                                     @Nonnull Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
+                                                                                                                                                                                                                      @Nonnull String name,
+                                                                                                                                                                                                                      @Nonnull Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
         return (RegistryEntry) simple(name, Registries.RECIPE_SERIALIZER, key -> factory.get());
     }
 
     // --- Recipe Types (Builder) ---
 
     @StandardAPI("Returns a RecipeTypeBuilder for fluent chain configuration. Call .register() to finalise.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(
-                                                                                                                 @Nonnull String name) {
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(@Nonnull String name) {
         return RecipeTypeBuilder.create(this, this, name);
     }
 
     @StandardAPI
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeTypeBuilder<T, P> recipeType(
-                                                                                                         @Nonnull P parent, @Nonnull String name) {
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeTypeBuilder<T, P> recipeType(@Nonnull P parent, @Nonnull String name) {
         return RecipeTypeBuilder.create(this, parent, name);
     }
 
-    /** @deprecated Use {@link #recipeType(String)} instead. */
+    /**
+     * @deprecated Use {@link #recipeType(String)} instead.
+     */
     @Deprecated(forRemoval = true)
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipe(
-                                                                                                             @Nonnull String name) {
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipe(@Nonnull String name) {
         return recipeType(name);
     }
 
-    /** @deprecated Use {@link #recipeType(Object, String)} instead. */
+    /**
+     * @deprecated Use {@link #recipeType(Object, String)} instead.
+     */
     @Deprecated(forRemoval = true)
     public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeTypeBuilder<T, P> recipe(
                                                                                                      @Nonnull P parent, @Nonnull String name) {

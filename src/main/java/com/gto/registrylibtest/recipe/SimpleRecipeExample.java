@@ -15,17 +15,18 @@ import net.minecraft.world.level.block.Blocks;
 /**
  * 最简单的自定义配方注册示例：祭坛（Altar）。
  *
- * <p>Simple custom recipe registration example: the Altar. Demonstrates registering a custom
- * RecipeType + RecipeSerializer via {@code .recipeType()}, then adding recipe instances via
- * {@link RecipeEntry#addRecipe}.
+ * <p>
+ * Simple custom recipe registration example: the Altar. Demonstrates registering a custom
+ * RecipeType + RecipeSerializer via {@code .recipeType()}, then adding recipe instances via {@link
+ * RecipeEntry#addRecipe}.
  *
- * <p>丢物品到祭坛上方即可转化。配方 JSON 由 datagen 自动生成到
- * {@code data/registrylibtest/recipe/altar_*.json}。
+ * <p>
+ * 丢物品到祭坛上方即可转化。配方 JSON 由 datagen 自动生成到 {@code data/registrylibtest/recipe/altar_*.json}。
  *
  * <ul>
- *   <li>配方类型（RecipeType + RecipeSerializer） — {@link #ALTAR}
- *   <li>处理方块 — {@link #ALTAR_BLOCK}
- *   <li>处理方块实体 — {@link #ALTAR_BE}
+ * <li>配方类型（RecipeType + RecipeSerializer） — {@link #ALTAR}
+ * <li>处理方块 — {@link #ALTAR_BLOCK}
+ * <li>处理方块实体 — {@link #ALTAR_BE}
  * </ul>
  */
 public class SimpleRecipeExample {
@@ -43,8 +44,7 @@ public class SimpleRecipeExample {
     static {
         ALTAR.addRecipe(
                 "altar_cobblestone_to_stone",
-                new AltarRecipe(
-                        Ingredient.of(Items.COBBLESTONE), new ItemStackTemplate(Items.STONE), 40));
+                new AltarRecipe(Ingredient.of(Items.COBBLESTONE), new ItemStackTemplate(Items.STONE), 40));
         ALTAR.addRecipe(
                 "altar_raw_iron_to_ingot",
                 new AltarRecipe(
