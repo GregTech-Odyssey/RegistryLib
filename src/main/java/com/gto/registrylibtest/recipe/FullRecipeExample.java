@@ -16,7 +16,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -108,7 +108,7 @@ public class FullRecipeExample {
                                             RegistryLibTest.MOD_ID, "infuser_coal_to_diamond")),
                             new InfuserRecipe(
                                     Ingredient.of(Items.COAL),
-                                    new ItemStack(Items.DIAMOND),
+                                    new ItemStackTemplate(Items.DIAMOND),
                                     200,
                                     10.0F,
                                     1),
@@ -121,7 +121,7 @@ public class FullRecipeExample {
                                             RegistryLibTest.MOD_ID, "infuser_gold_to_netherite")),
                             new InfuserRecipe(
                                     Ingredient.of(Items.GOLD_INGOT),
-                                    new ItemStack(Items.NETHERITE_SCRAP),
+                                    new ItemStackTemplate(Items.NETHERITE_SCRAP),
                                     400,
                                     25.0F,
                                     2),

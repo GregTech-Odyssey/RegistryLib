@@ -8,6 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
@@ -27,14 +28,14 @@ import net.minecraft.world.level.Level;
 public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
 
     private final Ingredient inputItem;
-    private final ItemStack result;
+    private final ItemStackTemplate result;
     private final int processingTime;
     private final float experience;
     private final int requiredTier;
 
     public InfuserRecipe(
                          Ingredient inputItem,
-                         ItemStack result,
+                         ItemStackTemplate result,
                          int processingTime,
                          float experience,
                          int requiredTier) {
@@ -49,7 +50,7 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
         return inputItem;
     }
 
-    public ItemStack getResult() {
+    public ItemStackTemplate getResult() {
         return result;
     }
 
@@ -72,7 +73,7 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
 
     @Override
     public ItemStack assemble(InfuserInput input) {
-        return result.copy();
+        return result.create();
     }
 
     @Override
@@ -138,7 +139,7 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
     public static final MapCodec<InfuserRecipe> CODEC = RecordCodecBuilder.mapCodec(
             inst -> inst.group(
                     Ingredient.CODEC.fieldOf("ingredient").forGetter(InfuserRecipe::getInputItem),
-                    ItemStack.CODEC.fieldOf("result").forGetter(InfuserRecipe::getResult),
+                    ItemStackTemplate.CODEC.fieldOf("result").forGetter(InfuserRecipe::getResult),
                     Codec.INT
                             .optionalFieldOf("processing_time", 100)
                             .forGetter(InfuserRecipe::getProcessingTime),
@@ -153,7 +154,7 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
     public static final StreamCodec<RegistryFriendlyByteBuf, InfuserRecipe> STREAM_CODEC = StreamCodec.composite(
             Ingredient.CONTENTS_STREAM_CODEC,
             InfuserRecipe::getInputItem,
-            ItemStack.STREAM_CODEC,
+            ItemStackTemplate.STREAM_CODEC,
             InfuserRecipe::getResult,
             ByteBufCodecs.INT,
             InfuserRecipe::getProcessingTime,

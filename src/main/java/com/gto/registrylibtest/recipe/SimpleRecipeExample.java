@@ -12,7 +12,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -82,7 +82,7 @@ public class SimpleRecipeExample {
                                             "altar_cobblestone_to_stone")),
                             new AltarRecipe(
                                     Ingredient.of(Items.COBBLESTONE),
-                                    new ItemStack(Items.STONE),
+                                    new ItemStackTemplate(Items.STONE),
                                     40),
                             null);
 
@@ -93,7 +93,7 @@ public class SimpleRecipeExample {
                                             RegistryLibTest.MOD_ID, "altar_raw_iron_to_ingot")),
                             new AltarRecipe(
                                     Ingredient.of(Items.RAW_IRON),
-                                    new ItemStack(Items.IRON_INGOT),
+                                    new ItemStackTemplate(Items.IRON_INGOT),
                                     80),
                             null);
                 });

@@ -7,6 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
@@ -25,10 +26,10 @@ import net.minecraft.world.level.Level;
 public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     private final Ingredient inputItem;
-    private final ItemStack result;
+    private final ItemStackTemplate result;
     private final int processingTime;
 
-    public AltarRecipe(Ingredient inputItem, ItemStack result, int processingTime) {
+    public AltarRecipe(Ingredient inputItem, ItemStackTemplate result, int processingTime) {
         this.inputItem = inputItem;
         this.result = result;
         this.processingTime = processingTime;
@@ -38,7 +39,7 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
         return inputItem;
     }
 
-    public ItemStack getResult() {
+    public ItemStackTemplate getResult() {
         return result;
     }
 
@@ -53,7 +54,7 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     @Override
     public ItemStack assemble(SingleRecipeInput input) {
-        return result.copy();
+        return result.create();
     }
 
     @Override
@@ -96,7 +97,7 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
     public static final MapCodec<AltarRecipe> CODEC = RecordCodecBuilder.mapCodec(
             inst -> inst.group(
                     Ingredient.CODEC.fieldOf("ingredient").forGetter(AltarRecipe::getInputItem),
-                    ItemStack.CODEC.fieldOf("result").forGetter(AltarRecipe::getResult),
+                    ItemStackTemplate.CODEC.fieldOf("result").forGetter(AltarRecipe::getResult),
                     com.mojang.serialization.Codec.INT
                             .optionalFieldOf("processing_time", 60)
                             .forGetter(AltarRecipe::getProcessingTime))
@@ -105,7 +106,7 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
     public static final StreamCodec<RegistryFriendlyByteBuf, AltarRecipe> STREAM_CODEC = StreamCodec.composite(
             Ingredient.CONTENTS_STREAM_CODEC,
             AltarRecipe::getInputItem,
-            ItemStack.STREAM_CODEC,
+            ItemStackTemplate.STREAM_CODEC,
             AltarRecipe::getResult,
             ByteBufCodecs.INT,
             AltarRecipe::getProcessingTime,
