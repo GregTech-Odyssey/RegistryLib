@@ -8,11 +8,17 @@ import com.gto.registrylib.util.entry.RecipeEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
+import net.neoforged.neoforge.common.crafting.CompoundIngredient;
+import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
+import net.neoforged.neoforge.common.crafting.DifferenceIngredient;
 
 import java.awt.Color;
 
@@ -51,6 +57,8 @@ public class FullRecipeExample {
 
     // ── 配方实例注册（数据生成） ────────────────────────────────────────────
     static {
+        // 1) 单物品 Ingredient — 基础用法
+        // Single-item Ingredient — basic usage.
         INFUSER.addRecipe(
                 "infuser_coal_to_diamond",
                 new InfuserRecipe(
@@ -62,6 +70,52 @@ public class FullRecipeExample {
                         new ItemStackTemplate(Items.NETHERITE_SCRAP),
                         40,
                         25.0F,
+                        2));
+
+        // 2) CompoundIngredient（OR 逻辑）— 匹配任意一个子 Ingredient
+        // CompoundIngredient (OR logic) — matches if ANY child ingredient matches.
+        INFUSER.addRecipe(
+                "infuser_planks_or_logs_to_stick",
+                registries -> {
+                    var items = registries.lookupOrThrow(Registries.ITEM);
+                    return new InfuserRecipe(
+                            CompoundIngredient.of(
+                                    Ingredient.of(items.getOrThrow(ItemTags.PLANKS)),
+                                    Ingredient.of(items.getOrThrow(ItemTags.LOGS))),
+                            new ItemStackTemplate(Items.STICK, 4),
+                            30,
+                            5.0F,
+                            1);
+                });
+
+        // 3) DifferenceIngredient（差集）— 匹配 A 但排除 B
+        // DifferenceIngredient (set difference) — matches A but excludes B.
+        INFUSER.addRecipe(
+                "infuser_non_white_wool_to_string",
+                registries -> new InfuserRecipe(
+                        DifferenceIngredient.of(
+                                Ingredient.of(registries.lookupOrThrow(Registries.ITEM)
+                                        .getOrThrow(ItemTags.WOOL)),
+                                Ingredient.of(Items.WHITE_WOOL)),
+                        new ItemStackTemplate(Items.STRING, 2),
+                        40,
+                        8.0F,
+                        1));
+
+        // 4) DataComponentIngredient（数据组件匹配）— 匹配带特定组件的物品
+        // DataComponentIngredient — matches items with specific data components.
+        // partial=false: 只要物品包含指定组件且值匹配即可（不要求精确匹配所有组件）
+        INFUSER.addRecipe(
+                "infuser_damaged_sword_to_iron",
+                new InfuserRecipe(
+                        DataComponentIngredient.of(
+                                false,
+                                net.minecraft.core.component.DataComponents.DAMAGE,
+                                100,
+                                Items.IRON_SWORD),
+                        new ItemStackTemplate(Items.IRON_INGOT, 2),
+                        60,
+                        15.0F,
                         2));
     }
 

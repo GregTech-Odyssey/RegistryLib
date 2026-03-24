@@ -179,6 +179,7 @@ public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLI
 |---|---|
 | `.addRecipe(name, recipe)` | Add a recipe instance for datagen |
 | `.addRecipe(name, supplier)` | Add a lazily-created recipe for datagen |
+| `.addRecipe(name, registries -> recipe)` | Add recipe with registry access (for tags) |
 | `.customRecipeData(consumer)` | Advanced: raw control over `RecipeProvider` |
 | `.getType()` | Get the registered `RecipeType<T>` |
 | `.getSerializer()` | Get the registered `RecipeSerializer<T>` |
@@ -197,6 +198,106 @@ public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLI
 | `getType()` | Return the registered type via `ENTRY.getType()` |
 | `placementInfo()` | Return `PlacementInfo.NOT_PLACEABLE` for custom recipes |
 | `recipeBookCategory()` | Return recipe book category |
+
+## Using Different Ingredient Types
+
+`Ingredient` is NeoForge's abstraction for matching input items. By using `Ingredient.CODEC` in your recipe's codec, all ingredient types (vanilla and NeoForge custom) are automatically supported — no extra code needed in your recipe class.
+
+### Vanilla Ingredients
+
+```java
+// Single item
+Ingredient.of(Items.COBBLESTONE)
+
+// Multiple items (matches any)
+Ingredient.of(Items.COAL, Items.CHARCOAL)
+
+// Tag-based (matches all items in the tag) — requires registries lookup
+registries.lookupOrThrow(Registries.ITEM).getOrThrow(ItemTags.LOGS)
+// Then: Ingredient.of(holderSet)
+```
+
+:::tip
+Tag-based ingredients need a `HolderLookup.Provider` (tags aren't available in static registries during datagen). Use the **Function overload** of `addRecipe`:
+```java
+ENTRY.addRecipe("my_recipe", registries -> new MyRecipe(
+        Ingredient.of(registries.lookupOrThrow(Registries.ITEM).getOrThrow(ItemTags.LOGS)),
+        new ItemStackTemplate(Items.CHARCOAL), 60));
+```
+:::
+
+### NeoForge Custom Ingredients
+
+NeoForge provides several `ICustomIngredient` implementations. All return a vanilla `Ingredient` from their factory methods:
+
+```java
+// CompoundIngredient (OR) — matches if ANY child matches
+CompoundIngredient.of(
+        Ingredient.of(items.getOrThrow(ItemTags.PLANKS)),
+        Ingredient.of(items.getOrThrow(ItemTags.LOGS)))
+
+// DifferenceIngredient (A minus B) — matches A but excludes B
+DifferenceIngredient.of(
+        Ingredient.of(items.getOrThrow(ItemTags.WOOL)),
+        Ingredient.of(Items.WHITE_WOOL))
+
+// IntersectionIngredient (AND) — matches only if ALL children match
+IntersectionIngredient.of(ingredientA, ingredientB)
+
+// DataComponentIngredient — matches items with specific data components
+DataComponentIngredient.of(false, DataComponents.DAMAGE, 100, Items.IRON_SWORD)
+
+// BlockTagIngredient — matches items from a block tag (use only when no item tag exists)
+new BlockTagIngredient(BlockTags.CONVERTABLE_TO_MUD).toVanilla()
+```
+
+### Complete Example
+
+```java
+static {
+    // Simple item ingredient
+    ENTRY.addRecipe("basic",
+            new MyRecipe(Ingredient.of(Items.COBBLESTONE), ...));
+
+    // Tag ingredient (via registries Function overload)
+    ENTRY.addRecipe("from_logs",
+            registries -> new MyRecipe(
+                    Ingredient.of(registries.lookupOrThrow(Registries.ITEM)
+                            .getOrThrow(ItemTags.LOGS)),
+                    ...));
+
+    // CompoundIngredient: planks OR logs
+    ENTRY.addRecipe("planks_or_logs",
+            registries -> {
+                var items = registries.lookupOrThrow(Registries.ITEM);
+                return new MyRecipe(
+                        CompoundIngredient.of(
+                                Ingredient.of(items.getOrThrow(ItemTags.PLANKS)),
+                                Ingredient.of(items.getOrThrow(ItemTags.LOGS))),
+                        ...);
+            });
+
+    // DifferenceIngredient: all wool except white
+    ENTRY.addRecipe("colored_wool",
+            registries -> new MyRecipe(
+                    DifferenceIngredient.of(
+                            Ingredient.of(registries.lookupOrThrow(Registries.ITEM)
+                                    .getOrThrow(ItemTags.WOOL)),
+                            Ingredient.of(Items.WHITE_WOOL)),
+                    ...));
+
+    // DataComponentIngredient: iron sword with damage=100
+    ENTRY.addRecipe("damaged_sword",
+            new MyRecipe(
+                    DataComponentIngredient.of(false, DataComponents.DAMAGE, 100,
+                            Items.IRON_SWORD),
+                    ...));
+}
+```
+
+:::note
+The `Ingredient.CODEC` used in recipe serialization automatically handles all ingredient types, including NeoForge custom ones. The codec dispatches based on the `"neoforge:ingredient_type"` field in JSON for custom ingredients, or uses the vanilla string/tag format for vanilla ingredients.
+:::
 
 ## See Also
 

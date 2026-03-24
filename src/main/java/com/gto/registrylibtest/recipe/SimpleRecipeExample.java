@@ -6,7 +6,9 @@ import com.gto.registrylib.util.entry.RecipeEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -42,6 +44,8 @@ public class SimpleRecipeExample {
     // ── 配方实例注册（数据生成） ────────────────────────────────────────────
     // Add individual recipes via the entry. Recipe JSON is generated during datagen.
     static {
+        // 1) 单物品 Ingredient — 最基础的用法
+        // Single-item Ingredient — the most basic usage.
         ALTAR.addRecipe(
                 "altar_cobblestone_to_stone",
                 new AltarRecipe(Ingredient.of(Items.COBBLESTONE), new ItemStackTemplate(Items.STONE), 40));
@@ -49,6 +53,22 @@ public class SimpleRecipeExample {
                 "altar_raw_iron_to_ingot",
                 new AltarRecipe(
                         Ingredient.of(Items.RAW_IRON), new ItemStackTemplate(Items.IRON_INGOT), 80));
+
+        // 2) 多物品 Ingredient — 匹配多个物品中的任意一个
+        // Multi-item Ingredient — matches any of the listed items.
+        ALTAR.addRecipe(
+                "altar_fuel_to_torch",
+                new AltarRecipe(
+                        Ingredient.of(Items.COAL, Items.CHARCOAL), new ItemStackTemplate(Items.TORCH), 30));
+
+        // 3) 标签 Ingredient — 匹配 Tag 中的所有物品（使用 registries 查找 Tag）
+        // Tag-based Ingredient — matches all items in the tag (via registries lookup).
+        ALTAR.addRecipe(
+                "altar_logs_to_charcoal",
+                registries -> new AltarRecipe(
+                        Ingredient.of(registries.lookupOrThrow(Registries.ITEM).getOrThrow(ItemTags.LOGS)),
+                        new ItemStackTemplate(Items.CHARCOAL),
+                        60));
     }
 
     // ── 方块 ───────────────────────────────────────────────────────────────

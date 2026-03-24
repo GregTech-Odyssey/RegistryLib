@@ -5,6 +5,7 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -16,6 +17,7 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -98,6 +100,42 @@ public class RecipeEntry<T extends Recipe<?>> {
                                     Registries.RECIPE,
                                     Identifier.fromNamespaceAndPath(modid, typeName + "/" + recipeName)),
                             recipeSupplier.get(),
+                            null));
+        }
+        return this;
+    }
+
+    /**
+     * 添加一条需要注册表查找的配方用于数据生成（例如基于 Tag 的 Ingredient）。
+     *
+     * <p>
+     * Adds a recipe for datagen that requires registry lookups (e.g. tag-based {@code Ingredient}s).
+     * The {@link HolderLookup.Provider} gives access to item tags and other registry data.
+     *
+     * <pre>{@code
+     * ENTRY.addRecipe("from_logs", registries ->
+     *         new MyRecipe(
+     *                 Ingredient.of(registries.lookupOrThrow(Registries.ITEM).getOrThrow(ItemTags.LOGS)),
+     *                 new ItemStackTemplate(Items.CHARCOAL), 60));
+     * }</pre>
+     *
+     * @param recipeName    the recipe file name
+     * @param recipeFactory a function that receives the registries and produces a recipe
+     * @return this entry for chaining
+     */
+    @StandardAPI
+    public RecipeEntry<T> addRecipe(@NotNull String recipeName,
+                                    @NotNull Function<HolderLookup.Provider, T> recipeFactory) {
+        if (core.doDatagen()) {
+            final String modid = core.getModid();
+            final String typeName = typeEntry.getKey().identifier().getPath();
+            core.addDataGenerator(
+                    ProviderType.RECIPE,
+                    (RegistryLibRecipeProvider prov) -> prov.accept(
+                            ResourceKey.create(
+                                    Registries.RECIPE,
+                                    Identifier.fromNamespaceAndPath(modid, typeName + "/" + recipeName)),
+                            recipeFactory.apply(prov.registries()),
                             null));
         }
         return this;
