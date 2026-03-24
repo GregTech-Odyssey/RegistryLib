@@ -5,7 +5,6 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -15,9 +14,9 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.display.SlotDisplay;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 import net.neoforged.neoforge.common.crafting.IngredientType;
+import org.jspecify.annotations.NonNull;
 
 import java.util.stream.Stream;
 
@@ -84,7 +83,7 @@ public class MinDurabilityIngredient implements ICustomIngredient {
     }
 
     @Override
-    public IngredientType<?> getType() {
+    public @NonNull IngredientType<?> getType() {
         return SimpleIngredientTypeExample.MIN_DURABILITY.get();
     }
 

@@ -293,6 +293,153 @@ public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLI
         .register();
 ```
 
+## Multi-Input Recipe with Fluid (Synthesizer)
+
+A machine recipe that requires **multiple item inputs** (with count checking) and a **fluid input** (with amount checking). This is the typical pattern for multi-input modded machines.
+
+### Key Types
+
+| Type | Purpose | Test Logic |
+|---|---|---|
+| `SizedIngredient` | Item ingredient + count | `ingredient.test(stack) && stack.getCount() >= count` |
+| `SizedFluidIngredient` | Fluid ingredient + amount (mB) | `ingredient.test(stack) && stack.getAmount() >= amount` |
+
+### Recipe Class with Multi-Input + Fluid
+
+```java
+public class SynthesizerRecipe implements Recipe<SynthesizerRecipe.SynthesizerInput> {
+
+    private final List<SizedIngredient> ingredients;
+    private final SizedFluidIngredient fluidIngredient;
+    private final ItemStackTemplate result;
+    private final int processingTime;
+    private final float experience;
+
+    // Constructor, getters omitted ...
+
+    @Override
+    public boolean matches(SynthesizerInput input, Level level) {
+        if (input.items().size() != ingredients.size()) return false;
+        for (int i = 0; i < ingredients.size(); i++) {
+            if (!ingredients.get(i).test(input.items().get(i))) return false;
+        }
+        return fluidIngredient.test(input.fluid());
+    }
+
+    @Override
+    public ItemStack assemble(SynthesizerInput input) { return result.create(); }
+
+    @Override public RecipeSerializer<? extends Recipe<SynthesizerInput>> getSerializer() {
+        return MultiInputRecipeExample.SYNTHESIZER.getSerializer();
+    }
+    @Override public RecipeType<? extends Recipe<SynthesizerInput>> getType() {
+        return MultiInputRecipeExample.SYNTHESIZER.getType();
+    }
+    // isSpecial(), showNotification(), etc. ...
+
+    // === Custom RecipeInput: multiple items + fluid ===
+    public record SynthesizerInput(List<ItemStack> items, FluidStack fluid) implements RecipeInput {
+        @Override
+        public ItemStack getItem(int slot) {
+            if (slot < 0 || slot >= items.size())
+                throw new IllegalArgumentException("No item for index " + slot);
+            return items.get(slot);
+        }
+        @Override public int size() { return items.size(); }
+    }
+
+    // === Codec ===
+    public static final MapCodec<SynthesizerRecipe> CODEC = RecordCodecBuilder.mapCodec(
+            inst -> inst.group(
+                    SizedIngredient.NESTED_CODEC.listOf().fieldOf("ingredients")
+                            .forGetter(SynthesizerRecipe::getIngredients),
+                    SizedFluidIngredient.CODEC.fieldOf("fluid")
+                            .forGetter(SynthesizerRecipe::getFluidIngredient),
+                    ItemStackTemplate.CODEC.fieldOf("result")
+                            .forGetter(SynthesizerRecipe::getResult),
+                    Codec.INT.optionalFieldOf("processing_time", 200)
+                            .forGetter(SynthesizerRecipe::getProcessingTime),
+                    Codec.FLOAT.optionalFieldOf("experience", 0.0F)
+                            .forGetter(SynthesizerRecipe::getExperience))
+                    .apply(inst, SynthesizerRecipe::new));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, SynthesizerRecipe> STREAM_CODEC =
+            StreamCodec.composite(
+                    SizedIngredient.STREAM_CODEC.apply(ByteBufCodecs.list()),
+                    SynthesizerRecipe::getIngredients,
+                    SizedFluidIngredient.STREAM_CODEC,
+                    SynthesizerRecipe::getFluidIngredient,
+                    ItemStackTemplate.STREAM_CODEC,
+                    SynthesizerRecipe::getResult,
+                    ByteBufCodecs.INT,
+                    SynthesizerRecipe::getProcessingTime,
+                    ByteBufCodecs.FLOAT,
+                    SynthesizerRecipe::getExperience,
+                    SynthesizerRecipe::new);
+}
+```
+
+:::tip Codec Cheat Sheet
+- **Items**: `SizedIngredient.NESTED_CODEC` → `{"ingredient": "minecraft:iron_ingot", "count": 3}`
+- **Items list**: `SizedIngredient.NESTED_CODEC.listOf()` → `[{"ingredient": ..., "count": ...}, ...]`
+- **Fluid**: `SizedFluidIngredient.CODEC` → `{"ingredient": "minecraft:water", "amount": 1000}`
+:::
+
+### Register and Add Multi-Input Recipes
+
+```java
+public static final RecipeEntry<SynthesizerRecipe> SYNTHESIZER = REGISTRYLIB
+        .<SynthesizerRecipe>recipeType("synthesizer")
+        .serializer(SynthesizerRecipe.CODEC, SynthesizerRecipe.STREAM_CODEC)
+        .register();
+
+static {
+    // 1) Basic: 3 iron + 2 gold + 1000mB water -> diamond
+    SYNTHESIZER.addRecipe("synthesizer_iron_gold_water_to_diamond",
+            new SynthesizerRecipe(
+                    List.of(
+                            SizedIngredient.of(Items.IRON_INGOT, 3),
+                            SizedIngredient.of(Items.GOLD_INGOT, 2)),
+                    SizedFluidIngredient.of(Fluids.WATER, 1000),
+                    new ItemStackTemplate(Items.DIAMOND), 200, 30.0F));
+
+    // 2) Custom ingredient + fluid:
+    //    1 sword (durability >= 200) + 4 emeralds + 500mB lava -> netherite ingot
+    SYNTHESIZER.addRecipe("synthesizer_durable_sword_to_netherite",
+            new SynthesizerRecipe(
+                    List.of(
+                            new SizedIngredient(
+                                    MinDurabilityIngredient.of(ItemTags.SWORDS, 200), 1),
+                            SizedIngredient.of(Items.EMERALD, 4)),
+                    SizedFluidIngredient.of(Fluids.LAVA, 500),
+                    new ItemStackTemplate(Items.NETHERITE_INGOT), 400, 50.0F));
+}
+```
+
+### Generated JSON Example
+
+```json title="synthesizer_iron_gold_water_to_diamond.json"
+{
+  "type": "registrylibtest:synthesizer",
+  "experience": 30.0,
+  "fluid": {
+    "ingredient": "minecraft:water",
+    "amount": 1000
+  },
+  "ingredients": [
+    { "ingredient": "minecraft:iron_ingot", "count": 3 },
+    { "ingredient": "minecraft:gold_ingot", "count": 2 }
+  ],
+  "result": { "id": "minecraft:diamond" }
+}
+```
+
+:::info NeoForge 26.1 FluidStack Changes
+**`FluidStack` has NOT been removed.** It is still the standard mutable fluid container (`net.neoforged.neoforge.fluids.FluidStack`) used in recipes, fluid handlers, and `SizedFluidIngredient`.
+
+NeoForge 26.1 added `FluidResource` (`net.neoforged.neoforge.transfer.fluid.FluidResource`) — an **immutable** version without an amount, used by the new Transfer API. For recipe crafting, continue using `FluidStack`, `FluidIngredient`, and `SizedFluidIngredient`.
+:::
+
 ## Using Different Ingredient Types
 
 `Ingredient` is NeoForge's abstraction for matching input items. By using `Ingredient.CODEC` in your recipe's codec, all ingredient types are automatically supported — no extra code needed in your recipe class.
@@ -314,6 +461,14 @@ public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLI
 | `IntersectionIngredient` | AND logic — matches only if **all** children match | `IntersectionIngredient.of(ingredientA, ingredientB)` |
 | `DataComponentIngredient` | Matches items with specific data components | `DataComponentIngredient.of(false, DataComponents.DAMAGE, 100, Items.IRON_SWORD)` |
 | `BlockTagIngredient` | Matches items from a block tag | `new BlockTagIngredient(BlockTags.CONVERTABLE_TO_MUD).toVanilla()` |
+
+### Sized Wrappers (for count / amount checking)
+
+| Type | Description | Example |
+|---|---|---|
+| `SizedIngredient` | Item ingredient + required count | `SizedIngredient.of(Items.IRON_INGOT, 3)` |
+| `SizedFluidIngredient` | Fluid ingredient + required amount (mB) | `SizedFluidIngredient.of(Fluids.WATER, 1000)` |
+| `FluidIngredient` | Matches a fluid (no amount check) | `FluidIngredient.of(Fluids.WATER)` |
 
 ### User-Defined Custom Ingredients
 
@@ -351,6 +506,13 @@ MinDurabilityIngredient.of(ItemTags.SWORDS, 200)
 | `.getSerializer()` | Get the registered `RecipeSerializer<T>` |
 | `.getTypeKey()` | Get the `ResourceKey` of the recipe type |
 | `.getSerializerKey()` | Get the `ResourceKey` of the serializer |
+
+### FluidIngredientType Registration
+
+| Method | Purpose |
+|---|---|
+| `fluidIngredientType(name, codec)` | Register a custom `FluidIngredientType` (auto StreamCodec) |
+| `fluidIngredientType(name, codec, streamCodec)` | Register a custom `FluidIngredientType` (explicit StreamCodec) |
 
 ## Required Recipe Interface Methods
 

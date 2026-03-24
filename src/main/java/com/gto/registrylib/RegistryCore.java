@@ -531,6 +531,63 @@ public class RegistryCore {
         return new com.gto.registrylib.util.entry.IngredientTypeEntry<>(entry);
     }
 
+    // --- Custom Fluid Ingredient Types ---
+
+    /**
+     * 注册一个自定义 {@link net.neoforged.neoforge.fluids.crafting.FluidIngredientType}（仅需 MapCodec）。
+     *
+     * <p>
+     * Registers a custom {@link net.neoforged.neoforge.fluids.crafting.FluidIngredientType} with
+     * just a {@link com.mojang.serialization.MapCodec}. A
+     * {@link net.minecraft.network.codec.StreamCodec} will be derived automatically.
+     *
+     * @param name  the fluid ingredient type registry name
+     * @param codec the MapCodec for serializing / deserializing the custom fluid ingredient
+     * @return a {@link com.gto.registrylib.util.entry.FluidIngredientTypeEntry} wrapping the registered type
+     */
+    @SuppressWarnings("unchecked")
+    @StandardAPI("Registers a custom FluidIngredientType and returns a typed FluidIngredientTypeEntry.")
+    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient>
+            com.gto.registrylib.util.entry.FluidIngredientTypeEntry<T> fluidIngredientType(
+                                                                                            @Nonnull String name,
+                                                                                            @Nonnull com.mojang.serialization.MapCodec<T> codec) {
+        var entry = (RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>,
+                net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>>) (RegistryEntry) simple(
+                        name,
+                        net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_INGREDIENT_TYPES,
+                        key -> new net.neoforged.neoforge.fluids.crafting.FluidIngredientType<>(codec));
+        return new com.gto.registrylib.util.entry.FluidIngredientTypeEntry<>(entry);
+    }
+
+    /**
+     * 注册一个自定义 {@link net.neoforged.neoforge.fluids.crafting.FluidIngredientType}（提供 MapCodec 和
+     * StreamCodec）。
+     *
+     * <p>
+     * Registers a custom {@link net.neoforged.neoforge.fluids.crafting.FluidIngredientType} with
+     * both a {@link com.mojang.serialization.MapCodec} and a
+     * {@link net.minecraft.network.codec.StreamCodec}.
+     *
+     * @param name        the fluid ingredient type registry name
+     * @param codec       the MapCodec
+     * @param streamCodec the StreamCodec for network syncing
+     * @return a {@link com.gto.registrylib.util.entry.FluidIngredientTypeEntry}
+     */
+    @SuppressWarnings("unchecked")
+    @StandardAPI("Registers a custom FluidIngredientType with explicit StreamCodec.")
+    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient>
+            com.gto.registrylib.util.entry.FluidIngredientTypeEntry<T> fluidIngredientType(
+                                                                                            @Nonnull String name,
+                                                                                            @Nonnull com.mojang.serialization.MapCodec<T> codec,
+                                                                                            @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+        var entry = (RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>,
+                net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>>) (RegistryEntry) simple(
+                        name,
+                        net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_INGREDIENT_TYPES,
+                        key -> new net.neoforged.neoforge.fluids.crafting.FluidIngredientType<>(codec, streamCodec));
+        return new com.gto.registrylib.util.entry.FluidIngredientTypeEntry<>(entry);
+    }
+
     // --- Enchantments (Builder) ---
 
     @StandardAPI("Returns an EnchantmentBuilder for fluent chain configuration. Call .register() to finalise.")

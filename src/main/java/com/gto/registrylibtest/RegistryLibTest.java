@@ -15,6 +15,7 @@ import com.gto.registrylibtest.fluid.SimpleFluidExample;
 import com.gto.registrylibtest.item.FullItemExample;
 import com.gto.registrylibtest.item.SimpleItemExample;
 import com.gto.registrylibtest.recipe.FullRecipeExample;
+import com.gto.registrylibtest.recipe.MultiInputRecipeExample;
 import com.gto.registrylibtest.recipe.SimpleIngredientTypeExample;
 import com.gto.registrylibtest.recipe.SimpleRecipeExample;
 
@@ -94,6 +95,7 @@ public class RegistryLibTest {
         // 自定义配方
         var _recipe1 = SimpleRecipeExample.ALTAR;
         var _recipe2 = FullRecipeExample.INFUSER;
+        var _recipe3 = MultiInputRecipeExample.SYNTHESIZER;
 
         // 自定义 Ingredient 类型
         var _ingredientType1 = SimpleIngredientTypeExample.MIN_DURABILITY;

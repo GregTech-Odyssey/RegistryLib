@@ -168,10 +168,12 @@ Any recipe that uses `Ingredient.CODEC` in its serializer automatically supports
 
 | Method | Purpose |
 |---|---|
-| `.ingredientType(name, codec)` | Register with auto-derived StreamCodec |
-| `.ingredientType(name, codec, streamCodec)` | Register with explicit StreamCodec |
+| `.ingredientType(name, codec)` | Register item `IngredientType` with auto-derived StreamCodec |
+| `.ingredientType(name, codec, streamCodec)` | Register item `IngredientType` with explicit StreamCodec |
+| `.fluidIngredientType(name, codec)` | Register `FluidIngredientType` with auto-derived StreamCodec |
+| `.fluidIngredientType(name, codec, streamCodec)` | Register `FluidIngredientType` with explicit StreamCodec |
 
-### IngredientTypeEntry
+### IngredientTypeEntry / FluidIngredientTypeEntry
 
 | Method | Purpose |
 |---|---|
