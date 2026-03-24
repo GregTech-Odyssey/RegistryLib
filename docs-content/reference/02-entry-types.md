@@ -117,6 +117,33 @@ BlockEntityEntry<MyBlockEntity> MY_BE = REGISTRYLIB
 Bind multiple blocks with `validBlocks(block1, block2, ...)` when the same BlockEntity type is shared across several blocks.
 :::
 
+## EntityEntry\<T\>
+
+**Extends:** `RegistryEntry<EntityType<?>, EntityType<T>>`
+
+| Method | Return type | Description |
+| --- | --- | --- |
+| `get()` | `EntityType<T>` | Get the EntityType |
+| `is(entity)` | `boolean` | Check if an Entity instance is of this type |
+
+**Usage example:**
+
+```java
+EntityEntry<CrystalGuardian> CRYSTAL_GUARDIAN = REGISTRYLIB
+        .<CrystalGuardian>entity("crystal_guardian", CrystalGuardian::new, MobCategory.MONSTER)
+        .attributes(CrystalGuardian::createAttributes)
+        .renderer(() -> CrystalGuardianRenderer::new)
+        .register();
+
+// Later in code
+EntityType<CrystalGuardian> type = CRYSTAL_GUARDIAN.get();
+boolean match = CRYSTAL_GUARDIAN.is(someEntity);
+```
+
+:::tip
+Entities with attributes (any `LivingEntity` subclass) **must** call `.attributes()` on the builder. Omitting it causes a crash at entity spawn time.
+:::
+
 ## See Also
 
 - [API Overview](/reference/api-overview) —entry point selection and common chains

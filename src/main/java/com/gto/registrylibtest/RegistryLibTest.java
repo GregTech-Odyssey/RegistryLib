@@ -10,6 +10,7 @@ import com.gto.registrylibtest.blockentity.FullBlockEntityExample;
 import com.gto.registrylibtest.blockentity.SimpleBlockEntityExample;
 import com.gto.registrylibtest.enchantment.FullEnchantmentExample;
 import com.gto.registrylibtest.enchantment.SimpleEnchantmentExample;
+import com.gto.registrylibtest.entity.FullEntityExample;
 import com.gto.registrylibtest.entity.SimpleEntityExample;
 import com.gto.registrylibtest.fluid.FullFluidExample;
 import com.gto.registrylibtest.fluid.SimpleFluidExample;
@@ -50,7 +51,7 @@ import org.slf4j.Logger;
  * <li>{@link SimpleBlockExample} / {@link FullBlockExample} — 方块注册
  * <li>{@link SimpleBlockEntityExample} / {@link FullBlockEntityExample} — BlockEntity 注册
  * <li>{@link SimpleFluidExample} / {@link FullFluidExample} — 流体注册
- * <li>{@link SimpleEntityExample} — 实体注册（晶体矿守卫者 + Brain AI）
+ * <li>{@link SimpleEntityExample} / {@link FullEntityExample} — 实体注册
  * <li>{@link SimpleAdvancementExample} / {@link FullAdvancementExample} — 成就进度
  * <li>{@link SimpleRecipeExample} / {@link FullRecipeExample} — 自定义配方
  * <li>{@link SimpleEnchantmentExample} / {@link FullEnchantmentExample} — 附魔
@@ -108,6 +109,7 @@ public class RegistryLibTest {
 
         // 实体示例
         var _entity1 = SimpleEntityExample.CRYSTAL_GUARDIAN;
+        var _entity2 = FullEntityExample.OBSIDIAN_GOLEM;
 
         // 成就进度
         SimpleAdvancementExample.register();

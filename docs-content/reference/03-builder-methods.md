@@ -138,6 +138,52 @@ REGISTRYLIB.blockEntity("crusher_be", CrusherBlockEntity::new)
 The renderer supplier is lazy —the factory is only invoked on the client side. This prevents server crashes from referencing client-only classes.
 :::
 
+## EntityBuilder
+
+Created via `entity("id", factory, category)`.
+
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `properties(modifier)` | `UnaryOperator<EntityType.Builder<T>>` | Modify the EntityType.Builder directly (escape hatch) |
+| `sized(width, height)` | `float, float` | Set collision box dimensions |
+| `clientTrackingRange(range)` | `int` | Client rendering distance in chunks |
+| `updateInterval(interval)` | `int` | Server→client position sync interval in ticks |
+| `fireImmune()` | — | Make entity immune to fire/lava damage |
+| `noSummon()` | — | Prevent `/summon` command from spawning this entity |
+| `noSave()` | — | Exclude entity from world save data |
+| `attributes(supplier)` | `Supplier<AttributeSupplier.Builder>` | Register entity attributes (required for LivingEntity) |
+| `renderer(supplier)` | `Supplier<EntityRendererProvider>` | Register client-side renderer (lazy, client-only) |
+| `spawnEgg()` | — | Create a default spawn egg item |
+| `spawnEgg(consumer)` | `Consumer<ItemBuilder>` | Create and customise the spawn egg item |
+| `lang(text)` | `String` | Set English display name |
+| `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
+| `defaultLang()` | — | Infer display name from registry path |
+| `addTag(tags...)` | `TagKey<EntityType<?>>...` | Add entity type tags |
+| `register()` | — | Submit and return `EntityEntry<T>` |
+
+**Example:**
+
+```java
+REGISTRYLIB.<MyMob>entity("my_mob", MyMob::new, MobCategory.MONSTER)
+        .sized(0.6F, 1.95F)
+        .clientTrackingRange(8)
+        .updateInterval(3)
+        .fireImmune()
+        .attributes(MyMob::createAttributes)
+        .renderer(() -> MyMobRenderer::new)
+        .spawnEgg(egg -> egg.lang("My Mob Spawn Egg"))
+        .addTag(EntityTypeTags.FALL_DAMAGE_IMMUNE)
+        .register();
+```
+
+:::warning
+`attributes()` is **mandatory** for any entity extending `LivingEntity`. The game crashes at spawn time if attributes are not registered. EntityBuilder handles the `EntityAttributeCreationEvent` subscription automatically.
+:::
+
+:::tip
+Use `spawnEgg()` for a plain spawn egg. Use `spawnEgg(egg -> { ... })` to customise the egg's name, tabs, or tooltips via the inner `ItemBuilder`.
+:::
+
 ## See Also
 
 - [API Overview](/reference/api-overview) —entry point selection and common chains
