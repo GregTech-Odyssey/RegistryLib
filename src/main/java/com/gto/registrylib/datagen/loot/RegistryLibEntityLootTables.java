@@ -6,6 +6,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.loot.EntityLootSubProvider;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.level.storage.loot.LootTable;
 
@@ -23,7 +24,8 @@ public class RegistryLibEntityLootTables extends EntityLootSubProvider
                                        HolderLookup.Provider provider,
                                        RegistryCore parent,
                                        Consumer<RegistryLibEntityLootTables> callback) {
-        super(FeatureFlags.REGISTRY.allFlags(), provider);
+        // allowed=allFlags (output loot for any entity), required=empty (don't crash for entities without .loot())
+        super(FeatureFlags.REGISTRY.allFlags(), FeatureFlagSet.of(), provider);
         this.parent = parent;
         this.callback = callback;
     }

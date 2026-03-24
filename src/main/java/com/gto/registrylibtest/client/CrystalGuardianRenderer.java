@@ -6,9 +6,6 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.resources.Identifier;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
 /**
  * 晶体守护者的 MobRenderer — 完整骨骼动画渲染流水线。
  *
@@ -30,7 +27,6 @@ import net.neoforged.api.distmarker.OnlyIn;
  *   <li>纹理 {@code registrylibtest:textures/entity/crystal_guardian.png}</li>
  * </ul>
  */
-@OnlyIn(Dist.CLIENT)
 public class CrystalGuardianRenderer
         extends MobRenderer<CrystalGuardian, LivingEntityRenderState, CrystalGuardianModel> {
 

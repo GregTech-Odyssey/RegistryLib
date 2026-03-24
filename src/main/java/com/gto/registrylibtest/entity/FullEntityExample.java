@@ -49,8 +49,6 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.LootItemKilledByPlayerCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -228,7 +226,6 @@ public class FullEntityExample {
      * <p>如需骨骼动画，应改用 {@code MobRenderer} + {@code EntityModel} + {@code ModelLayerLocation}
      * 并在 {@code EntityRenderersEvent.RegisterLayerDefinitions} 中注册模型层。
      */
-    @OnlyIn(Dist.CLIENT)
     static class ObsidianGolemRenderer extends EntityRenderer<ObsidianGolem, EntityRenderState> {
 
         private static final float SCALE = 0.667F;

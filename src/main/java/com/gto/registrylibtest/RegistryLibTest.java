@@ -139,7 +139,6 @@ public class RegistryLibTest {
                 () -> () -> modEventBus.addListener(RegistryLibTest::onRegisterLayerDefinitions));
     }
 
-    @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
     private static void onRegisterLayerDefinitions(
             net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(

@@ -12,9 +12,6 @@ import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-
 /**
  * 晶体守护者的骨骼模型 — 展示完整的 ModelPart / LayerDefinition / 骨骼动画流水线。
  *
@@ -32,7 +29,6 @@ import net.neoforged.api.distmarker.OnlyIn;
  * <p>动画在 {@link #setupAnim(LivingEntityRenderState)} 中通过直接操作 {@link ModelPart} 的
  * 旋转 / 位移字段实现。这是 Minecraft 传统的「代码驱动」动画方式。
  */
-@OnlyIn(Dist.CLIENT)
 public class CrystalGuardianModel extends EntityModel<LivingEntityRenderState> {
 
     public static final ModelLayerLocation LAYER_LOCATION =

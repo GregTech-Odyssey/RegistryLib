@@ -57,6 +57,7 @@ public class SimpleEntityExample {
             .langCn("晶体矿")
             .lang("Crystal Ore")
             .initialProperties(Blocks.DIAMOND_ORE)
+            .defaultLoot()
             .simpleItem()
             .register();
 

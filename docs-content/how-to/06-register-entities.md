@@ -180,7 +180,6 @@ public void setEnraged(boolean val) { entityData.set(IS_ENRAGED, val); }
 将实体渲染为缩放的方块模型——无需纹理文件：
 
 ```java
-@OnlyIn(Dist.CLIENT)
 public class MyMobRenderer extends EntityRenderer<MyMob, EntityRenderState> {
     @Override
     public void submit(EntityRenderState state, PoseStack poseStack,
@@ -201,7 +200,6 @@ public class MyMobRenderer extends EntityRenderer<MyMob, EntityRenderState> {
 骨骼模型的构建管线：`MeshDefinition` → `PartDefinition` → `CubeListBuilder` → `LayerDefinition` → `ModelPart`。
 
 ```java
-@OnlyIn(Dist.CLIENT)
 public class MyMobModel extends EntityModel<LivingEntityRenderState> {
     // 模型层位置——用于注册和 bakeLayer() 查找
     public static final ModelLayerLocation LAYER_LOCATION =
@@ -288,7 +286,6 @@ public class MyMobModel extends EntityModel<LivingEntityRenderState> {
 #### B-2. 创建渲染器
 
 ```java
-@OnlyIn(Dist.CLIENT)
 public class MyMobRenderer extends MobRenderer<MyMob, LivingEntityRenderState, MyMobModel> {
     private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(MOD_ID,
             "textures/entity/my_mob.png");
