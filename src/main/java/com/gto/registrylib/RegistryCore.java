@@ -1,19 +1,53 @@
 package com.gto.registrylib;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Nonnull;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
-import com.gto.registrylib.builders.*;
+import com.gto.registrylib.builders.BlockBuilder;
+import com.gto.registrylib.builders.BlockEntityBuilder;
+import com.gto.registrylib.builders.FluidBuilder;
+import com.gto.registrylib.builders.ItemBuilder;
+import com.gto.registrylib.builders.NoConfigBuilder;
 import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.IComponentItem;
-import com.gto.registrylib.datagen.*;
+import com.gto.registrylib.datagen.DataProviderInitializer;
+import com.gto.registrylib.datagen.GeneratorType;
+import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.RegistryLibDataProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
-import com.gto.registrylib.util.*;
-import com.gto.registrylib.util.entry.*;
+import com.gto.registrylib.util.CreativeModeTabModifier;
+import com.gto.registrylib.util.DebugMarkers;
+import com.gto.registrylib.util.Environment;
+import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.Lazy;
+import com.gto.registrylib.util.entry.ItemEntry;
+import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylibtest.builder.ModFluidBuilder;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import lombok.Getter;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.WritableRegistry;
@@ -22,7 +56,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.item.*;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -32,22 +70,6 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.registries.RegisterEvent;
-
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
 
 public class RegistryCore {
 
@@ -401,6 +423,26 @@ public class RegistryCore {
     @StandardAPI
     public Group.Builder group(@NotNull String name) {
         return new Group.Builder(this, name);
+    }
+
+    // --- Recipe Types ---
+
+    @SuppressWarnings("unchecked")
+    @StandardAPI("Registers a RecipeType and returns a typed RegistryEntry.")
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeType<?>, net.minecraft.world.item.crafting.RecipeType<T>> recipeType(
+                                                                                                                                                                                             @Nonnull String name) {
+        return (RegistryEntry) simple(
+                name,
+                Registries.RECIPE_TYPE,
+                key -> net.minecraft.world.item.crafting.RecipeType.simple(key.identifier()));
+    }
+
+    @SuppressWarnings("unchecked")
+    @StandardAPI("Registers a RecipeSerializer and returns a typed RegistryEntry.")
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeSerializer<?>, net.minecraft.world.item.crafting.RecipeSerializer<T>> recipeSerializer(
+                                                                                                                                                                                                               @Nonnull String name,
+                                                                                                                                                                                                               @Nonnull Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
+        return (RegistryEntry) simple(name, Registries.RECIPE_SERIALIZER, key -> factory.get());
     }
 
     // --- Creative Tab ---

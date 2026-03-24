@@ -1,5 +1,7 @@
 package com.gto.registrylibtest;
 
+import org.slf4j.Logger;
+
 import com.gto.registrylib.util.ColorUtil;
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylibtest.advancement.FullAdvancementExample;
@@ -8,19 +10,20 @@ import com.gto.registrylibtest.block.FullBlockExample;
 import com.gto.registrylibtest.block.SimpleBlockExample;
 import com.gto.registrylibtest.blockentity.FullBlockEntityExample;
 import com.gto.registrylibtest.blockentity.SimpleBlockEntityExample;
+import com.gto.registrylibtest.enchantment.FullEnchantmentExample;
+import com.gto.registrylibtest.enchantment.SimpleEnchantmentExample;
 import com.gto.registrylibtest.fluid.FullFluidExample;
 import com.gto.registrylibtest.fluid.SimpleFluidExample;
 import com.gto.registrylibtest.item.FullItemExample;
 import com.gto.registrylibtest.item.SimpleItemExample;
-
+import com.gto.registrylibtest.recipe.FullRecipeExample;
+import com.gto.registrylibtest.recipe.SimpleRecipeExample;
 import com.mojang.logging.LogUtils;
 
 import net.minecraft.core.registries.Registries;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-
-import org.slf4j.Logger;
 
 /**
  * Mod 入口类，仅负责：
@@ -44,6 +47,8 @@ import org.slf4j.Logger;
  * <li>{@link SimpleBlockEntityExample} / {@link FullBlockEntityExample} — BlockEntity 注册
  * <li>{@link SimpleFluidExample} / {@link FullFluidExample} — 流体注册
  * <li>{@link SimpleAdvancementExample} / {@link FullAdvancementExample} — 成就进度
+ * <li>{@link SimpleRecipeExample} / {@link FullRecipeExample} — 自定义配方
+ * <li>{@link SimpleEnchantmentExample} / {@link FullEnchantmentExample} — 附魔
  * </ul>
  */
 @Mod(RegistryLibTest.MOD_ID)
@@ -83,6 +88,14 @@ public class RegistryLibTest {
         // 流体示例
         var _fluid1 = SimpleFluidExample.ACID;
         var _fluid2 = FullFluidExample.MOLTEN_IRON;
+
+        // 自定义配方
+        var _recipe1 = SimpleRecipeExample.ALTAR_TYPE;
+        var _recipe2 = FullRecipeExample.INFUSER_TYPE;
+
+        // 附魔
+        SimpleEnchantmentExample.register();
+        FullEnchantmentExample.register();
 
         // 成就进度
         SimpleAdvancementExample.register();
