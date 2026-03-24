@@ -302,5 +302,6 @@ The `Ingredient.CODEC` used in recipe serialization automatically handles all in
 ## See Also
 
 - [How-To: Register Block Entities](/how-to/register-block-entities)
+- [How-To: Register Custom Ingredients](/how-to/register-custom-ingredients)
 - [Tutorial: Recipes & Tags](/tutorials/recipes-tags)
 - [Reference: API Overview](/reference/api-overview)

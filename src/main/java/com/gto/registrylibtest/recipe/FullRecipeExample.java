@@ -21,7 +21,6 @@ import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.DifferenceIngredient;
 
 import java.awt.Color;
-
 /**
  * 使用全部 Recipe API 的复杂配方注册示例：注入器（Infuser）。
  *
@@ -116,6 +115,18 @@ public class FullRecipeExample {
                         new ItemStackTemplate(Items.IRON_INGOT, 2),
                         60,
                         15.0F,
+                        2));
+
+        // 5) 自定义 Ingredient（MinDurabilityIngredient）— 匹配标签内且剩余耐久 ≥ 阈值的物品
+        // Custom Ingredient (MinDurabilityIngredient) — matches items in tag with enough durability.
+        // This uses our custom IngredientType registered via REGISTRYLIB.ingredientType().
+        INFUSER.addRecipe(
+                "infuser_durable_swords_to_diamond",
+                new InfuserRecipe(
+                        MinDurabilityIngredient.of(ItemTags.SWORDS, 200),
+                        new ItemStackTemplate(Items.DIAMOND),
+                        80,
+                        20.0F,
                         2));
     }
 

@@ -474,6 +474,63 @@ public class RegistryCore {
         return recipeType(parent, name);
     }
 
+    // --- Custom Ingredient Types ---
+
+    /**
+     * 注册一个自定义 {@link net.neoforged.neoforge.common.crafting.IngredientType}（仅需 MapCodec）。
+     *
+     * <p>
+     * Registers a custom {@link net.neoforged.neoforge.common.crafting.IngredientType} with just a
+     * {@link com.mojang.serialization.MapCodec}. A {@link net.minecraft.network.codec.StreamCodec}
+     * will be derived automatically.
+     *
+     * @param name  the ingredient type registry name
+     * @param codec the MapCodec for serializing / deserializing the custom ingredient
+     * @return an {@link com.gto.registrylib.util.entry.IngredientTypeEntry} wrapping the registered type
+     */
+    @SuppressWarnings("unchecked")
+    @StandardAPI("Registers a custom IngredientType and returns a typed IngredientTypeEntry.")
+    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient>
+            com.gto.registrylib.util.entry.IngredientTypeEntry<T> ingredientType(
+                                                                                  @Nonnull String name,
+                                                                                  @Nonnull com.mojang.serialization.MapCodec<T> codec) {
+        var entry = (RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>,
+                net.neoforged.neoforge.common.crafting.IngredientType<T>>) (RegistryEntry) simple(
+                        name,
+                        net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES,
+                        key -> new net.neoforged.neoforge.common.crafting.IngredientType<>(codec));
+        return new com.gto.registrylib.util.entry.IngredientTypeEntry<>(entry);
+    }
+
+    /**
+     * 注册一个自定义 {@link net.neoforged.neoforge.common.crafting.IngredientType}（提供 MapCodec 和
+     * StreamCodec）。
+     *
+     * <p>
+     * Registers a custom {@link net.neoforged.neoforge.common.crafting.IngredientType} with both a
+     * {@link com.mojang.serialization.MapCodec} and a
+     * {@link net.minecraft.network.codec.StreamCodec}.
+     *
+     * @param name        the ingredient type registry name
+     * @param codec       the MapCodec
+     * @param streamCodec the StreamCodec for network syncing
+     * @return an {@link com.gto.registrylib.util.entry.IngredientTypeEntry}
+     */
+    @SuppressWarnings("unchecked")
+    @StandardAPI("Registers a custom IngredientType with explicit StreamCodec.")
+    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient>
+            com.gto.registrylib.util.entry.IngredientTypeEntry<T> ingredientType(
+                                                                                  @Nonnull String name,
+                                                                                  @Nonnull com.mojang.serialization.MapCodec<T> codec,
+                                                                                  @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+        var entry = (RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>,
+                net.neoforged.neoforge.common.crafting.IngredientType<T>>) (RegistryEntry) simple(
+                        name,
+                        net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES,
+                        key -> new net.neoforged.neoforge.common.crafting.IngredientType<>(codec, streamCodec));
+        return new com.gto.registrylib.util.entry.IngredientTypeEntry<>(entry);
+    }
+
     // --- Enchantments (Builder) ---
 
     @StandardAPI("Returns an EnchantmentBuilder for fluent chain configuration. Call .register() to finalise.")
