@@ -2,6 +2,7 @@ package com.gto.registrylibtest.enchantment;
 
 import java.util.List;
 
+import com.gto.registrylib.util.entry.EnchantmentEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
@@ -12,7 +13,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.enchantment.ConditionalEffect;
 import net.minecraft.world.item.enchantment.Enchantment;
 
@@ -25,11 +26,11 @@ import net.minecraft.world.item.enchantment.Enchantment;
  *   <li>Defining a custom enchantment effect record with {@link MapCodec};
  *   <li>Registering a {@link DataComponentType} for the custom effect via
  *       {@code RegistryCore.simple()};
- *   <li>Referencing the enchantment definition via {@link ResourceKey};
+ *   <li>Using the {@code .enchantment()} fluent builder with {@code .customEffect()};
  *   <li>Registering lang entries for EN and ZH_CN.
  * </ul>
  *
- * <p>附魔定义位于 JSON 数据文件中（{@code data/registrylibtest/enchantment/auto_smelt.json}）。
+ * <p>附魔定义 JSON 由 datagen 自动生成（{@code data/registrylibtest/enchantment/auto_smelt.json}）。
  * 自定义效果组件 {@link AutoSmeltEffect} 注册到附魔效果组件类型注册表。 通过事件监听器读取附魔并将矿物掉落替换为熔炼产物。
  */
 public class FullEnchantmentExample {
@@ -62,26 +63,23 @@ public class FullEnchantmentExample {
                             .persistent(ConditionalEffect.codec(AutoSmeltEffect.CODEC.codec()).listOf())
                             .build());
 
-    // ── 附魔 ResourceKey ───────────────────────────────────────────────────
+    // ── 附魔注册（JSON + lang + tag 一步完成） ─────────────────────────────
 
-    /** 附魔的 ResourceKey，用于在代码中引用此附魔。 */
-    public static final ResourceKey<Enchantment> AUTO_SMELT = ResourceKey.create(
-            Registries.ENCHANTMENT,
-            Identifier.fromNamespaceAndPath(RegistryLibTest.MOD_ID, "auto_smelt"));
-
-    /** 触发静态初始化并注册语言条目。 */
-    public static void register() {
-        // 触发 AUTO_SMELT_EFFECT 静态初始化
-        var _effect = AUTO_SMELT_EFFECT;
-
-        // 英文
-        RegistryLibTest.REGISTRYLIB.addLang(
-                "enchantment",
-                Identifier.fromNamespaceAndPath(RegistryLibTest.MOD_ID, "auto_smelt"),
-                "Auto Smelt");
-        // 中文
-        RegistryLibTest.REGISTRYLIB.addDataGenerator(
-                ModRegistryCore.LANG_ZH_CN,
-                prov -> prov.add("enchantment.registrylibtest.auto_smelt", "自动熔炼"));
-    }
+    /** 附魔注册条目：自动熔炼。 */
+    public static final EnchantmentEntry AUTO_SMELT = RegistryLibTest.REGISTRYLIB
+            .enchantment("auto_smelt")
+            .lang("Auto Smelt")
+            .lang(ModRegistryCore.LANG_ZH_CN, "自动熔炼")
+            .supportedItems("#minecraft:enchantable/mining")
+            .weight(2)
+            .maxLevel(1)
+            .minCost(25, 25)
+            .maxCost(75, 25)
+            .anvilCost(8)
+            .slots("mainhand")
+            .addTag(TagKey.create(Registries.ENCHANTMENT,
+                    Identifier.fromNamespaceAndPath("minecraft", "in_enchanting_table")))
+            .customEffect("registrylibtest:auto_smelt", effect -> effect
+                    .add("chance_per_level", 1.0f))
+            .register();
 }

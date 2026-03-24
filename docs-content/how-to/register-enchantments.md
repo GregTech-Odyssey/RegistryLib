@@ -6,70 +6,44 @@ description: Quick reference for enchantment registration patterns.
 
 # Register Enchantments
 
-Enchantments in NeoForge 1.21+ are **data-driven**. The enchantment definition lives in a JSON file; code only needs to define `ResourceKey` references and optionally register custom effect component types.
+Enchantments in NeoForge 1.21+ are **data-driven**. RegistryLib provides an `.enchantment()` builder that generates the enchantment JSON, lang entries, and tag entries — all from code, no hand-written JSON needed.
 
 ## Simple Enchantment (Vanilla Effects)
 
-Use vanilla effect components (e.g. `minecraft:block_experience`) — no code registration needed beyond a `ResourceKey` and lang entries.
-
-### 1. Define the ResourceKey
+Use vanilla effect components (e.g. `minecraft:block_experience`) — no custom `DataComponentType` registration needed.
 
 ```java
-public static final ResourceKey<Enchantment> ORE_FORTUNE = ResourceKey.create(
-        Registries.ENCHANTMENT,
-        Identifier.fromNamespaceAndPath(MOD_ID, "ore_fortune"));
+public static final EnchantmentEntry ORE_FORTUNE = REGISTRYLIB
+        .enchantment("ore_fortune")
+        .lang("Ore Fortune")
+        .lang(LANG_ZH_CN, "矿石财运")
+        .supportedItems("#minecraft:enchantable/mining")
+        .weight(5)
+        .maxLevel(3)
+        .minCost(15, 9)
+        .maxCost(65, 9)
+        .anvilCost(4)
+        .slots("mainhand")
+        .addTag(TagKey.create(Registries.ENCHANTMENT,
+                Identifier.fromNamespaceAndPath("minecraft", "in_enchanting_table")))
+        .vanillaEffect("minecraft:block_experience", effect -> effect
+                .add("type", "minecraft:add")
+                .add("value", value -> value
+                        .add("type", "minecraft:linear")
+                        .add("base", 1.0)
+                        .add("per_level_above_first", 1.0)))
+        .register();
 ```
 
-### 2. Register Lang Entries
-
-```java
-// English
-REGISTRYLIB.addLang("enchantment",
-        Identifier.fromNamespaceAndPath(MOD_ID, "ore_fortune"),
-        "Ore Fortune");
-
-// Chinese (via LANG_ZH_CN provider)
-REGISTRYLIB.addDataGenerator(LANG_ZH_CN,
-        prov -> prov.add("enchantment.registrylibtest.ore_fortune", "矿石财运"));
-```
-
-### 3. Add Enchantment JSON
-
-```json title="data/registrylibtest/enchantment/ore_fortune.json"
-{
-  "description": { "translate": "enchantment.registrylibtest.ore_fortune" },
-  "supported_items": "#minecraft:enchantable/mining",
-  "weight": 5,
-  "max_level": 3,
-  "min_cost": { "base": 15, "per_level_above_first": 9 },
-  "max_cost": { "base": 65, "per_level_above_first": 9 },
-  "anvil_cost": 4,
-  "slots": ["mainhand"],
-  "effects": {
-    "minecraft:block_experience": [{
-      "effect": {
-        "type": "minecraft:add",
-        "value": { "type": "minecraft:linear", "base": 1.0, "per_level_above_first": 1.0 }
-      }
-    }]
-  }
-}
-```
-
-### 4. Add Enchantment Tag
-
-To make the enchantment obtainable via enchanting table:
-
-```json title="data/minecraft/tags/enchantment/in_enchanting_table.json"
-{
-  "replace": false,
-  "values": ["registrylibtest:ore_fortune"]
-}
-```
+This single declaration:
+1. Generates `data/<modid>/enchantment/ore_fortune.json` during datagen
+2. Registers English and Chinese lang entries
+3. Adds the enchantment to `minecraft:in_enchanting_table` tag
+4. Returns an `EnchantmentEntry` with `.getKey()` for code references
 
 ## Full Enchantment (Custom Effect Component)
 
-For custom behavior (e.g. auto-smelting), register a custom `DataComponentType` for the enchantment effect.
+For custom behavior (e.g. auto-smelting), first register a `DataComponentType`, then use `.customEffect()` in the builder.
 
 ### 1. Define the Effect Record
 
@@ -99,36 +73,52 @@ public static final RegistryEntry<DataComponentType<?>,
                     .build());
 ```
 
-### 3. Reference in Enchantment JSON
+### 3. Register with the Enchantment Builder
 
-```json title="data/registrylibtest/enchantment/auto_smelt.json"
-{
-  "description": { "translate": "enchantment.registrylibtest.auto_smelt" },
-  "supported_items": "#minecraft:enchantable/mining",
-  "weight": 2,
-  "max_level": 1,
-  "min_cost": { "base": 25, "per_level_above_first": 25 },
-  "max_cost": { "base": 75, "per_level_above_first": 25 },
-  "anvil_cost": 8,
-  "slots": ["mainhand"],
-  "effects": {
-    "registrylibtest:auto_smelt": [{
-      "effect": { "chance_per_level": 1.0 }
-    }]
-  }
-}
+```java
+public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
+        .enchantment("auto_smelt")
+        .lang("Auto Smelt")
+        .lang(LANG_ZH_CN, "自动熔炼")
+        .supportedItems("#minecraft:enchantable/mining")
+        .weight(2)
+        .maxLevel(1)
+        .minCost(25, 25)
+        .maxCost(75, 25)
+        .anvilCost(8)
+        .slots("mainhand")
+        .addTag(TagKey.create(Registries.ENCHANTMENT,
+                Identifier.fromNamespaceAndPath("minecraft", "in_enchanting_table")))
+        .customEffect("registrylibtest:auto_smelt", effect -> effect
+                .add("chance_per_level", 1.0f))
+        .register();
 ```
 
-## Common API Lookup
+## EnchantmentBuilder API
 
 | Method | Purpose |
 |---|---|
-| `ResourceKey.create(Registries.ENCHANTMENT, id)` | Create a reference key for the enchantment |
-| `REGISTRYLIB.simple(name, ENCHANTMENT_EFFECT_COMPONENT_TYPE, ...)` | Register a custom effect component type |
-| `REGISTRYLIB.addLang("enchantment", id, name)` | Add English lang entry |
-| `REGISTRYLIB.addDataGenerator(LANG_ZH_CN, ...)` | Add localized lang entry |
+| `enchantment(name)` | Start enchantment builder (returns `EnchantmentBuilder`) |
+| `.lang(name)` | Set English display name |
+| `.lang(providerType, name)` | Set localized name for a specific lang provider |
+| `.supportedItems(tagRef)` | Set supported item tag (e.g. `"#minecraft:enchantable/mining"`) |
+| `.supportedItems(tagKey)` | Set supported item tag via `TagKey<Item>` |
+| `.primaryItems(tagRef)` | Set primary items (enchanting table preference) |
+| `.weight(n)` | Set enchantment weight (rarity) |
+| `.maxLevel(n)` | Set maximum enchantment level |
+| `.minCost(base, perLevel)` | Set minimum enchanting cost |
+| `.maxCost(base, perLevel)` | Set maximum enchanting cost |
+| `.anvilCost(n)` | Set anvil cost |
+| `.slots(groups...)` | Set equipment slots (`"mainhand"`, `"armor"`, `"any"`) |
+| `.exclusiveWith(keys...)` | Set mutually exclusive enchantments |
+| `.vanillaEffect(id, builder)` | Add a vanilla effect via JSON builder |
+| `.customEffect(id, builder)` | Add a custom mod effect via JSON builder |
+| `.customEffect(id, jsonObj)` | Add a custom mod effect via raw `JsonObject` |
+| `.addTag(tags...)` | Add to enchantment tags |
+| `.register()` | Register and return `EnchantmentEntry` |
+| `.build()` | Register and return parent (for chaining) |
 
-## Enchantment JSON Fields
+## Enchantment JSON Fields (Generated)
 
 | Field | Description |
 |---|---|
@@ -142,7 +132,7 @@ public static final RegistryEntry<DataComponentType<?>,
 | `effects` | Map of effect component type → effect definition list |
 
 :::important
-Enchantments are data-driven in NeoForge 1.21+. You do **not** register an `Enchantment` object in code. The JSON in `data/<modid>/enchantment/` is loaded automatically by the data-driven registry system.
+Enchantments are data-driven in NeoForge 1.21+. The `.enchantment()` builder generates the JSON automatically during datagen — you do **not** need to write JSON files manually.
 :::
 
 ## See Also

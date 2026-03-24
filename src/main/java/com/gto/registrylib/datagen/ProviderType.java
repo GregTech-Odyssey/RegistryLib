@@ -33,6 +33,7 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
     ProviderType<RegistryLibRecipeRunner> RECIPE = registerServerData("recipe", RegistryLibRecipeRunner::new);
     ProviderType<RegistryLibLootTableProvider> LOOT = registerServerData("loot", RegistryLibLootTableProvider::new);
     ProviderType<RegistryLibAdvancementProvider> ADVANCEMENT = registerServerData("advancement", RegistryLibAdvancementProvider::new);
+    ProviderType<RegistryLibEnchantmentProvider> ENCHANTMENT_DATA = registerServerData("enchantment", RegistryLibEnchantmentProvider::new);
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<Block>> BLOCK_TAGS = registerIntrinsicTag(
             "tags/block", "blocks", Registries.BLOCK, block -> block.builtInRegistryHolder().key());
     ProviderType<RegistryLibItemTagsProvider> ITEM_TAGS = registerTag(

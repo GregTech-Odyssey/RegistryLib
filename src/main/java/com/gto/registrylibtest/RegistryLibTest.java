@@ -90,12 +90,12 @@ public class RegistryLibTest {
         var _fluid2 = FullFluidExample.MOLTEN_IRON;
 
         // 自定义配方
-        var _recipe1 = SimpleRecipeExample.ALTAR_TYPE;
-        var _recipe2 = FullRecipeExample.INFUSER_TYPE;
+        var _recipe1 = SimpleRecipeExample.ALTAR;
+        var _recipe2 = FullRecipeExample.INFUSER;
 
         // 附魔
-        SimpleEnchantmentExample.register();
-        FullEnchantmentExample.register();
+        var _ench1 = SimpleEnchantmentExample.ORE_FORTUNE;
+        var _ench2 = FullEnchantmentExample.AUTO_SMELT;
 
         // 成就进度
         SimpleAdvancementExample.register();

@@ -54,7 +54,7 @@ public class AltarBlockEntity extends BlockEntity {
         if (be.activeRecipe == null || !be.activeRecipe.matches(input, level)) {
             Optional<RecipeHolder<AltarRecipe>> found = serverLevel
                     .recipeAccess()
-                    .getRecipeFor(SimpleRecipeExample.ALTAR_TYPE.get(), input, serverLevel);
+                    .getRecipeFor(SimpleRecipeExample.ALTAR.getType(), input, serverLevel);
             if (found.isEmpty()) {
                 be.progress = 0;
                 be.activeRecipe = null;

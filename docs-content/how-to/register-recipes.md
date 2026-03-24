@@ -8,7 +8,7 @@ description: Quick reference for custom recipe registration patterns.
 
 ## Simple Recipe (Altar)
 
-Register a custom `RecipeType` and `RecipeSerializer` via RegistryLib's convenience methods, then create a processing block and block entity.
+Use the `.recipe()` builder to register a `RecipeType` + `RecipeSerializer` and add recipe datagen — all in one fluent chain.
 
 ### 1. Define the Recipe Class
 
@@ -16,7 +16,7 @@ Register a custom `RecipeType` and `RecipeSerializer` via RegistryLib's convenie
 public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     private final Ingredient inputItem;
-    private final ItemStack result;
+    private final ItemStackTemplate result;
     private final int processingTime;
 
     // Constructor, getters...
@@ -28,7 +28,7 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     @Override
     public ItemStack assemble(SingleRecipeInput input) {
-        return result.copy();
+        return result.create();
     }
 
     @Override
@@ -52,12 +52,12 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     @Override
     public RecipeSerializer<? extends Recipe<SingleRecipeInput>> getSerializer() {
-        return SimpleRecipeExample.ALTAR_SERIALIZER.get();
+        return SimpleRecipeExample.ALTAR.getSerializer();
     }
 
     @Override
     public RecipeType<? extends Recipe<SingleRecipeInput>> getType() {
-        return SimpleRecipeExample.ALTAR_TYPE.get();
+        return SimpleRecipeExample.ALTAR.getType();
     }
 
     // Codec & StreamCodec as static final fields
@@ -66,32 +66,31 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 }
 ```
 
-### 2. Register RecipeType and RecipeSerializer
+### 2. Register with the Recipe Builder
+
+One call registers `RecipeType`, `RecipeSerializer`, and adds recipe JSON datagen:
 
 ```java
-public static final RegistryEntry<RecipeType<?>, RecipeType<AltarRecipe>> ALTAR_TYPE =
-        REGISTRYLIB.recipeType("altar");
-
-public static final RegistryEntry<RecipeSerializer<?>, RecipeSerializer<AltarRecipe>> ALTAR_SERIALIZER =
-        REGISTRYLIB.recipeSerializer(
-                "altar", () -> new RecipeSerializer<>(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC));
+public static final RecipeEntry<AltarRecipe> ALTAR = REGISTRYLIB
+        .<AltarRecipe>recipe("altar")
+        .serializer(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC)
+        .addRecipe("altar_cobblestone_to_stone",
+                new AltarRecipe(Ingredient.of(Items.COBBLESTONE),
+                        new ItemStackTemplate(Items.STONE), 40))
+        .addRecipe("altar_raw_iron_to_ingot",
+                new AltarRecipe(Ingredient.of(Items.RAW_IRON),
+                        new ItemStackTemplate(Items.IRON_INGOT), 80))
+        .register();
 ```
 
-### 3. Add Recipe JSON
+The resulting `RecipeEntry<T>` provides:
 
-Place recipe definitions in `data/<modid>/recipe/`:
-
-```json title="data/registrylibtest/recipe/altar_cobblestone_to_stone.json"
-{
-  "type": "registrylibtest:altar",
-  "ingredient": "minecraft:cobblestone",
-  "result": { "id": "minecraft:stone", "count": 1 },
-  "processing_time": 40
-}
-```
+- `ALTAR.getType()` — the `RecipeType<AltarRecipe>`
+- `ALTAR.getSerializer()` — the `RecipeSerializer<AltarRecipe>`
+- `ALTAR.getTypeKey()` / `ALTAR.getSerializerKey()` — the `ResourceKey`s
 
 :::important
-`RecipeSerializer` in NeoForge 26.1 is a **record**, not an interface. Construct it via `new RecipeSerializer<>(mapCodec, streamCodec)`.
+`RecipeSerializer` in NeoForge 26.1 is a **record**, not an interface. The builder constructs it via `new RecipeSerializer<>(codec, streamCodec)` automatically.
 :::
 
 ## Full Recipe with Machine Tier (Infuser)
@@ -113,13 +112,19 @@ public record InfuserInput(ItemStack item, int machineTier) implements RecipeInp
 }
 ```
 
-### Tier-Gated Matching
+### Tier-Gated Registration
 
 ```java
-@Override
-public boolean matches(InfuserInput input, Level level) {
-    return input.machineTier() >= requiredTier && inputItem.test(input.item());
-}
+public static final RecipeEntry<InfuserRecipe> INFUSER = REGISTRYLIB
+        .<InfuserRecipe>recipe("infuser")
+        .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
+        .addRecipe("infuser_coal_to_diamond",
+                new InfuserRecipe(Ingredient.of(Items.COAL),
+                        new ItemStackTemplate(Items.DIAMOND), 200, 10.0F, 1))
+        .addRecipe("infuser_gold_to_netherite",
+                new InfuserRecipe(Ingredient.of(Items.GOLD_INGOT),
+                        new ItemStackTemplate(Items.NETHERITE_SCRAP), 400, 25.0F, 2))
+        .register();
 ```
 
 ### Multiple Tiers with Shared BlockEntity
@@ -147,28 +152,17 @@ public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLI
         .register();
 ```
 
-### Tier-Gated Recipe JSON
-
-```json title="data/registrylibtest/recipe/infuser_gold_to_netherite.json"
-{
-  "type": "registrylibtest:infuser",
-  "ingredient": "minecraft:gold_ingot",
-  "result": { "id": "minecraft:netherite_scrap", "count": 1 },
-  "processing_time": 400,
-  "experience": 25.0,
-  "required_tier": 2
-}
-```
-
-## Common API Lookup
+## RecipeBuilder API
 
 | Method | Purpose |
 |---|---|
-| `recipeType(name)` | Register a `RecipeType` via `simple()` |
-| `recipeSerializer(name, factory)` | Register a `RecipeSerializer` record |
-| `block(name, factory)` | Create the processing block |
-| `blockEntity(name, factory)` | Create the processing block entity |
-| `.validBlocks(...)` | Bind block entity to one or more blocks |
+| `recipe(name)` | Start recipe builder (returns `RecipeBuilder`) |
+| `.serializer(codec, streamCodec)` | Set the codecs for the `RecipeSerializer` |
+| `.addRecipe(name, recipe)` | Add a recipe instance for datagen |
+| `.addRecipe(name, supplier)` | Add a lazily-created recipe for datagen |
+| `.customRecipeData(consumer)` | Advanced: raw control over `RecipeProvider` |
+| `.register()` | Register and return `RecipeEntry<T>` |
+| `.build()` | Register and return parent (for chaining) |
 
 ## Required Recipe Interface Methods
 
@@ -178,8 +172,8 @@ public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLI
 | `assemble(input)` | Produce the result `ItemStack` |
 | `group()` | Return group string (usually `""`) |
 | `showNotification()` | Whether to show recipe unlock notification |
-| `getSerializer()` | Return the registered serializer |
-| `getType()` | Return the registered type |
+| `getSerializer()` | Return the registered serializer via `ENTRY.getSerializer()` |
+| `getType()` | Return the registered type via `ENTRY.getType()` |
 | `placementInfo()` | Return `PlacementInfo.NOT_PLACEABLE` for custom recipes |
 | `recipeBookCategory()` | Return recipe book category |
 

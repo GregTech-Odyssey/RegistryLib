@@ -84,12 +84,12 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     @Override
     public RecipeSerializer<? extends Recipe<SingleRecipeInput>> getSerializer() {
-        return SimpleRecipeExample.ALTAR_SERIALIZER.get();
+        return SimpleRecipeExample.ALTAR.getSerializer();
     }
 
     @Override
     public RecipeType<? extends Recipe<SingleRecipeInput>> getType() {
-        return SimpleRecipeExample.ALTAR_TYPE.get();
+        return SimpleRecipeExample.ALTAR.getType();
     }
 
     // === Codec & StreamCodec ===

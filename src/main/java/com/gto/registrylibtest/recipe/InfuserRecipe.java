@@ -103,12 +103,12 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
 
     @Override
     public RecipeSerializer<? extends Recipe<InfuserInput>> getSerializer() {
-        return FullRecipeExample.INFUSER_SERIALIZER.get();
+        return FullRecipeExample.INFUSER.getSerializer();
     }
 
     @Override
     public RecipeType<? extends Recipe<InfuserInput>> getType() {
-        return FullRecipeExample.INFUSER_TYPE.get();
+        return FullRecipeExample.INFUSER.getType();
     }
 
     // === Custom RecipeInput ===

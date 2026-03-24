@@ -2,25 +2,18 @@ package com.gto.registrylibtest.recipe;
 
 import java.awt.Color;
 
-import com.gto.registrylib.datagen.ProviderType;
-import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 import com.gto.registrylib.util.ColorUtil;
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntityEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
-import com.gto.registrylib.util.entry.RegistryEntry;
+import com.gto.registrylib.util.entry.RecipeEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 
 /**
@@ -29,11 +22,11 @@ import net.minecraft.world.level.block.Blocks;
  * <p>Full custom recipe registration example: the Infuser. Demonstrates a tiered processing machine
  * where the RecipeType is complex enough to query machine tier during recipe matching.
  *
- * <p>将物品丢在注入器上方即可转化。配方 JSON 位于 {@code data/registrylibtest/recipe/infuser_*.json}。 不同等级的注入器只能处理对应等级的配方。
+ * <p>将物品丢在注入器上方即可转化。配方 JSON 由 datagen 自动生成到
+ * {@code data/registrylibtest/recipe/infuser_*.json}。 不同等级的注入器只能处理对应等级的配方。
  *
  * <ul>
- *   <li>RecipeType — {@link #INFUSER_TYPE}
- *   <li>RecipeSerializer — {@link #INFUSER_SERIALIZER}
+ *   <li>配方（包含 RecipeType + RecipeSerializer + 配方实例） — {@link #INFUSER}
  *   <li>T1 注入器 — {@link #INFUSER_T1}
  *   <li>T2 注入器 — {@link #INFUSER_T2}
  *   <li>方块实体 — {@link #INFUSER_BE}
@@ -47,17 +40,28 @@ import net.minecraft.world.level.block.Blocks;
  */
 public class FullRecipeExample {
 
-    // ── RecipeType 注册 ────────────────────────────────────────────────────
+    // ── 配方注册（RecipeType + RecipeSerializer + 配方数据生成 一步完成） ───
 
-    public static final RegistryEntry<RecipeType<?>, RecipeType<InfuserRecipe>> INFUSER_TYPE =
-            RegistryLibTest.REGISTRYLIB.recipeType("infuser");
-
-    // ── RecipeSerializer 注册 ──────────────────────────────────────────────
-
-    public static final RegistryEntry<RecipeSerializer<?>, RecipeSerializer<InfuserRecipe>> INFUSER_SERIALIZER =
-            RegistryLibTest.REGISTRYLIB.recipeSerializer(
-                    "infuser",
-                    () -> new RecipeSerializer<>(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC));
+    public static final RecipeEntry<InfuserRecipe> INFUSER = RegistryLibTest.REGISTRYLIB
+            .<InfuserRecipe>recipe("infuser")
+            .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
+            .addRecipe(
+                    "infuser_coal_to_diamond",
+                    new InfuserRecipe(
+                            Ingredient.of(Items.COAL),
+                            new ItemStackTemplate(Items.DIAMOND),
+                            200,
+                            10.0F,
+                            1))
+            .addRecipe(
+                    "infuser_gold_to_netherite",
+                    new InfuserRecipe(
+                            Ingredient.of(Items.GOLD_INGOT),
+                            new ItemStackTemplate(Items.NETHERITE_SCRAP),
+                            400,
+                            25.0F,
+                            2))
+            .register();
 
     // ── T1 注入器方块 ─────────────────────────────────────────────────────
 
@@ -95,37 +99,4 @@ public class FullRecipeExample {
             .blockEntity("infuser", InfuserBlockEntity::new)
             .validBlocks(INFUSER_T1, INFUSER_T2)
             .register();
-
-    // ── 配方数据生成 ────────────────────────────────────────────────────────
-
-    static {
-        RegistryLibTest.REGISTRYLIB.addDataGenerator(
-                ProviderType.RECIPE, (RegistryLibRecipeProvider prov) -> {
-                    prov.accept(
-                            ResourceKey.create(
-                                    Registries.RECIPE,
-                                    Identifier.fromNamespaceAndPath(
-                                            RegistryLibTest.MOD_ID, "infuser_coal_to_diamond")),
-                            new InfuserRecipe(
-                                    Ingredient.of(Items.COAL),
-                                    new ItemStackTemplate(Items.DIAMOND),
-                                    200,
-                                    10.0F,
-                                    1),
-                            null);
-
-                    prov.accept(
-                            ResourceKey.create(
-                                    Registries.RECIPE,
-                                    Identifier.fromNamespaceAndPath(
-                                            RegistryLibTest.MOD_ID, "infuser_gold_to_netherite")),
-                            new InfuserRecipe(
-                                    Ingredient.of(Items.GOLD_INGOT),
-                                    new ItemStackTemplate(Items.NETHERITE_SCRAP),
-                                    400,
-                                    25.0F,
-                                    2),
-                            null);
-                });
-    }
 }

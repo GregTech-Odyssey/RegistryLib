@@ -25,9 +25,11 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.BlockBuilder;
 import com.gto.registrylib.builders.BlockEntityBuilder;
+import com.gto.registrylib.builders.EnchantmentBuilder;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylib.builders.NoConfigBuilder;
+import com.gto.registrylib.builders.RecipeBuilder;
 import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.datagen.DataProviderInitializer;
@@ -443,6 +445,32 @@ public class RegistryCore {
                                                                                                                                                                                                                @Nonnull String name,
                                                                                                                                                                                                                @Nonnull Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
         return (RegistryEntry) simple(name, Registries.RECIPE_SERIALIZER, key -> factory.get());
+    }
+
+    // --- Recipes (Builder) ---
+
+    @StandardAPI("Returns a RecipeBuilder for fluent chain configuration. Call .register() to finalise.")
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeBuilder<T, RegistryCore> recipe(
+                                                                                                         @Nonnull String name) {
+        return RecipeBuilder.create(this, this, name);
+    }
+
+    @StandardAPI
+    public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeBuilder<T, P> recipe(
+                                                                                                 @Nonnull P parent, @Nonnull String name) {
+        return RecipeBuilder.create(this, parent, name);
+    }
+
+    // --- Enchantments (Builder) ---
+
+    @StandardAPI("Returns an EnchantmentBuilder for fluent chain configuration. Call .register() to finalise.")
+    public EnchantmentBuilder<RegistryCore> enchantment(@Nonnull String name) {
+        return EnchantmentBuilder.create(this, this, name);
+    }
+
+    @StandardAPI
+    public <P> EnchantmentBuilder<P> enchantment(@Nonnull P parent, @Nonnull String name) {
+        return EnchantmentBuilder.create(this, parent, name);
     }
 
     // --- Creative Tab ---
