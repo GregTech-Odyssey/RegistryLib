@@ -55,7 +55,8 @@ public class MinDurabilityIngredient implements ICustomIngredient {
         if (!stack.is(tag)) return false;
         int maxDamage = stack.getMaxDamage();
         if (maxDamage <= 0) return false;
-        return (maxDamage - stack.getDamageValue()) >= minDurability;
+        int remaining = maxDamage - stack.getDamageValue();
+        return remaining >= minDurability;
     }
 
     @Override
@@ -135,7 +136,7 @@ MinDurabilityIngredient.of(ItemTags.SWORDS, 200)
 In recipe registration:
 
 ```java
-INFUSER.addRecipe("recycle_durable_swords",
+INFUSER.addRecipe("infuser_durable_swords_to_diamond",
         new InfuserRecipe(
                 MinDurabilityIngredient.of(ItemTags.SWORDS, 200),
                 new ItemStackTemplate(Items.DIAMOND), 80, 20.0F, 2));

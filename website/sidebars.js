@@ -46,6 +46,7 @@ const sidebars = {
         'how-to/register-block-entities',
         'how-to/register-advancements',
         'how-to/register-recipes',
+        'how-to/register-custom-ingredients',
         'how-to/register-enchantments',
       ],
     },
