@@ -14,9 +14,12 @@ import com.gto.registrylib.util.entry.EntityEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.random.Weighted;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -26,9 +29,13 @@ import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.MobSpawnSettings.SpawnerData;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.common.world.BiomeModifiers.AddSpawnsBiomeModifier;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -155,6 +162,46 @@ public class EntityBuilder<T extends Entity, P>
                                               @NotNull SpawnPlacements.SpawnPredicate<T> predicate) {
         return onRegister(entityType -> core.registerSpawnPlacement(
                 (EntityType<T>) entityType, placementType, heightmap, predicate));
+    }
+
+    // === Biome Spawn ===
+
+    /**
+     * 将此实体添加到指定生物群系标签的自然生成列表中。
+     *
+     * <p>仅调用 {@link #spawnPlacement} 只会注册生成<b>条件</b>（在哪种地形可以生成），
+     * 但不会让实体实际出现在任何生物群系的刷怪列表中。本方法通过 NeoForge 的
+     * {@code AddSpawnsBiomeModifier} 数据包注册来补全这一环节。
+     *
+     * @param biomeTag 生物群系标签（如 {@code BiomeTags.IS_OVERWORLD}）
+     * @param weight   生成权重（值越大，在同分类实体中被选中的概率越大）
+     * @param minCount 每次生成的最小数量
+     * @param maxCount 每次生成的最大数量
+     */
+    @StandardAPI
+    public EntityBuilder<T, P> spawnBiomes(
+                                           @NotNull TagKey<Biome> biomeTag,
+                                           int weight, int minCount, int maxCount) {
+        if (!core.doDatagen()) return this;
+        final TagKey<Biome> capturedTag = biomeTag;
+        final int capturedWeight = weight;
+        final int capturedMin = minCount;
+        final int capturedMax = maxCount;
+        core.getDataGenInitializer()
+                .add(
+                        NeoForgeRegistries.Keys.BIOME_MODIFIERS,
+                        ctx -> {
+                            var biomes = ctx.lookup(Registries.BIOME).getOrThrow(capturedTag);
+                            var spawner = new Weighted<>(
+                                    new SpawnerData(getValue(), capturedMin, capturedMax),
+                                    capturedWeight);
+                            var modifier = AddSpawnsBiomeModifier.singleSpawn(biomes, spawner);
+                            var key = ResourceKey.create(
+                                    NeoForgeRegistries.Keys.BIOME_MODIFIERS,
+                                    Identifier.fromNamespaceAndPath(core.getModid(), name + "_spawn"));
+                            ctx.register(key, modifier);
+                        });
+        return this;
     }
 
     // === Lang ===

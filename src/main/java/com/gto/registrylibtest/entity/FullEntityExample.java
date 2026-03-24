@@ -27,6 +27,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -65,7 +66,7 @@ import java.util.List;
  * </ul>
  *
  * <p>涵盖 API：properties / sized / clientTrackingRange / updateInterval / fireImmune / attributes /
- * renderer / spawnEgg（带消费者）/ lang / langCn / addTag / loot / spawnPlacement
+ * renderer / spawnEgg（带消费者）/ lang / langCn / addTag / loot / spawnPlacement / spawnBiomes
  *
  * @see SimpleEntityExample 使用 Brain AI 的简单示例
  */
@@ -112,6 +113,8 @@ public class FullEntityExample {
             .spawnPlacement(SpawnPlacementTypes.ON_GROUND,
                     Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                     Monster::checkMonsterSpawnRules)
+            // --- spawnBiomes: 添加到主世界生物群系的自然刷怪列表（权重 60，每次 1~2 只）---
+            .spawnBiomes(BiomeTags.IS_OVERWORLD, 60, 1, 2)
             .register();
 
     // ── 其他 EntityBuilder 方法说明 ─────────────────────────────────────────

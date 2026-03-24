@@ -16,6 +16,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -46,6 +47,7 @@ import java.util.Optional;
  *   <li>{@code spawnEgg} — 刷怪蛋</li>
  *   <li>{@code loot} — 实体战利品表</li>
  *   <li>{@code spawnPlacement} — 自然生成规则</li>
+ *   <li>{@code spawnBiomes} — 生物群系生成列表</li>
  * </ul>
  */
 public class SimpleEntityExample {
@@ -92,6 +94,7 @@ public class SimpleEntityExample {
             // --- renderer: MobRenderer 骨骼动画渲染器 ---
             .renderer(() -> CrystalGuardianRenderer::new)
             .spawnEgg()
+
             // --- loot: 实体战利品表（被玩家击杀时掉落钻石 1~2 + 经验）---
             .loot((loot, type) -> loot.add(type, LootTable.lootTable()
                     .withPool(LootPool.lootPool()
@@ -107,5 +110,7 @@ public class SimpleEntityExample {
                     SpawnPlacementTypes.ON_GROUND,
                     Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                     Monster::checkMonsterSpawnRules)
+            // --- spawnBiomes: 添加到主世界生物群系的自然刷怪列表（权重 80，每次 1~3 只）---
+            .spawnBiomes(BiomeTags.IS_OVERWORLD, 80, 1, 3)
             .register();
 }

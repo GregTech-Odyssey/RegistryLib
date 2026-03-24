@@ -20,6 +20,7 @@ description: How to register custom living entities (mobs) with AI, attributes, 
 | [Step 4: 客户端渲染器](#step-4-client-renderer) | 方块模型渲染 vs MobRenderer 骨骼动画 |
 | [Step 5: 战利品表 — loot()](#step-5-entity-loot-table) | 实体掉落物配置 |
 | [Step 6: 自然生成规则 — spawnPlacement()](#step-6-spawn-placement) | 生成条件（地形、高度图、判定函数） |
+| [Step 6.5: 生物群系生成 — spawnBiomes()](#step-65-biome-spawn-list) | 将实体添加到生物群系刷怪列表 |
 | [Step 7: 完整注册链](#step-7-register-with-entitybuilder) | 所有方法串联 |
 | [方法速查表](#entitybuilder-method-summary) | 全部 EntityBuilder 方法一览 |
 
@@ -416,6 +417,46 @@ RegistryLib 内部将 spawn placement 注册为 `RegisterSpawnPlacementsEvent` �
 
 ---
 
+## Step 6.5: Biome Spawn List
+
+仅调用 `spawnPlacement()` 只会注册实体的生成**条件**（在什么地形可以生成），但不会让它实际出现在任何生物群系的刷怪列表中。要让实体自然生成，还需要调用 `.spawnBiomes()` 将其添加到指定生物群系的生成列表。
+
+```java
+.spawnBiomes(BiomeTags.IS_OVERWORLD, 80, 1, 3)
+```
+
+**四个参数：**
+
+| Parameter | Type | Description |
+| --- | --- | --- |
+| `biomeTag` | `TagKey<Biome>` | 生物群系标签（决定在哪些生物群系中生成） |
+| `weight` | `int` | 生成权重（值越大，在同分类中被选中的概率越高）|
+| `minCount` | `int` | 每次生成的最小数量（最小群体大小）|
+| `maxCount` | `int` | 每次生成的最大数量（最大群体大小）|
+
+**常用 `BiomeTags`：**
+
+| Tag | Description |
+| --- | --- |
+| `BiomeTags.IS_OVERWORLD` | 所有主世界生物群系 |
+| `BiomeTags.IS_NETHER` | 所有下界生物群系 |
+| `BiomeTags.IS_END` | 所有末地生物群系 |
+| `BiomeTags.IS_FOREST` | 森林类生物群系 |
+| `BiomeTags.IS_OCEAN` | 海洋类生物群系 |
+| `BiomeTags.IS_MOUNTAIN` | 山地类生物群系 |
+
+:::tip 两步才能自然生成
+**`spawnPlacement()`** 定义 _在哪种地形 / 亮度下可以生成_（条件）。
+**`spawnBiomes()`** 定义 _在哪些生物群系中会尝试生成_（列表）。
+两者缺一不可。缺少 `spawnPlacement()` 时 NeoForge 会在日志中输出警告；缺少 `spawnBiomes()` 时实体根本不会出现在世界中。
+:::
+
+:::note
+RegistryLib 内部通过 NeoForge 的 `AddSpawnsBiomeModifier` 数据包注册来实现此功能。运行 Data Generation 后会输出对应的 JSON 文件到 `data/<modid>/neoforge/biome_modifier/<name>_spawn.json`。
+:::
+
+---
+
 ## Step 7: Register with EntityBuilder
 
 所有方法串联的完整注册链：
@@ -440,6 +481,7 @@ public static final EntityEntry<MyMob> MY_MOB = REGISTRYLIB
         .spawnPlacement(SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Monster::checkMonsterSpawnRules)
+        .spawnBiomes(BiomeTags.IS_OVERWORLD, 80, 1, 3)
         .register();
 ```
 
@@ -462,6 +504,7 @@ public static final EntityEntry<MyMob> MY_MOB = REGISTRYLIB
 | `addTag()` | 可选 | 添加到实体类型标签 |
 | `loot()` | 可选 | 实体战利品表（掉落物） |
 | `spawnPlacement()` | 可选 | 自然生成规则（地形/高度图/判定） |
+| `spawnBiomes()` | 可选 | 将实体添加到生物群系自然生成列表 |
 | `properties()` | 可选 | 直接访问 `EntityType.Builder`（逃逸口） |
 
 ---

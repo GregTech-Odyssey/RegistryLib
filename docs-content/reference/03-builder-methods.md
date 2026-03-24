@@ -161,6 +161,7 @@ Created via `entity("id", factory, category)`.
 | `addTag(tags...)` | `TagKey<EntityType<?>>...` | Add entity type tags |
 | `loot(configurator)` | `BiConsumer<RegistryLibEntityLootTables, EntityType<T>>` | Define entity loot table (drops on death) |
 | `spawnPlacement(type, heightmap, predicate)` | `SpawnPlacementType, Heightmap.Types, SpawnPredicate<T>` | Set natural spawn placement rules |
+| `spawnBiomes(biomeTag, weight, min, max)` | `TagKey<Biome>, int, int, int` | Add entity to biome natural spawn list |
 | `register()` | — | Submit and return `EntityEntry<T>` |
 
 **Example:**
@@ -183,6 +184,7 @@ REGISTRYLIB.<MyMob>entity("my_mob", MyMob::new, MobCategory.MONSTER)
         .spawnPlacement(SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Monster::checkMonsterSpawnRules)
+        .spawnBiomes(BiomeTags.IS_OVERWORLD, 80, 1, 3)
         .register();
 ```
 
