@@ -7,6 +7,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Tutorials',
+      collapsible: false,
       link: {
         type: 'generated-index',
         title: 'Tutorials',
@@ -30,6 +31,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'How-to Guides',
+      collapsible: false,
       link: {
         type: 'generated-index',
         title: 'How-to Guides',
@@ -48,6 +50,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Reference',
+      collapsible: false,
       link: {
         type: 'generated-index',
         title: 'API Reference',
@@ -63,6 +66,7 @@ const sidebars = {
     {
       type: 'category',
       label: 'Concepts',
+      collapsible: false,
       link: {
         type: 'generated-index',
         title: 'Core Concepts',
@@ -79,7 +83,8 @@ const sidebars = {
     {
       type: 'category',
       label: 'Help',
-      items: ['faq', 'troubleshooting', 'glossary'],
+      collapsible: false,
+      items: ['faq', 'troubleshooting', 'glossary', 'acknowledgements'],
     },
   ],
 };
