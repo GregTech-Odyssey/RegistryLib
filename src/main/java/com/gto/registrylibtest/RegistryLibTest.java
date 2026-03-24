@@ -134,5 +134,16 @@ public class RegistryLibTest {
                 "Registered {} items and {} blocks",
                 REGISTRYLIB.getAll(Registries.ITEM).size(),
                 REGISTRYLIB.getAll(Registries.BLOCK).size());
+        com.gto.registrylib.util.DistExecutor.unsafeRunWhenOn(
+                net.neoforged.api.distmarker.Dist.CLIENT,
+                () -> () -> modEventBus.addListener(RegistryLibTest::onRegisterLayerDefinitions));
+    }
+
+    @net.neoforged.api.distmarker.OnlyIn(net.neoforged.api.distmarker.Dist.CLIENT)
+    private static void onRegisterLayerDefinitions(
+            net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(
+                com.gto.registrylibtest.client.CrystalGuardianModel.LAYER_LOCATION,
+                com.gto.registrylibtest.client.CrystalGuardianModel::createBodyLayer);
     }
 }

@@ -35,6 +35,7 @@ public class RegistryLibLootTableProvider extends LootTableProvider implements R
     public interface LootType<T extends RegistryLibLootTables> {
 
         LootType<RegistryLibBlockLootTables> BLOCK = register("block", LootContextParamSets.BLOCK, RegistryLibBlockLootTables::new);
+        LootType<RegistryLibEntityLootTables> ENTITY = register("entity", LootContextParamSets.ENTITY, RegistryLibEntityLootTables::new);
 
         T getLootCreator(HolderLookup.Provider provider, RegistryCore parent, Consumer<T> callback);
 

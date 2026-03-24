@@ -5,6 +5,8 @@ import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.client.Client;
 import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.datagen.loot.RegistryLibEntityLootTables;
+import com.gto.registrylib.datagen.loot.RegistryLibLootTableProvider.LootType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.DistExecutor;
 import com.gto.registrylib.util.FunctionUtil;
@@ -19,13 +21,18 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementType;
+import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -124,6 +131,30 @@ public class EntityBuilder<T extends Entity, P>
     @SyntaxSugar("spawnEgg(FunctionUtil.noOpConsumer())")
     public EntityBuilder<T, P> spawnEgg() {
         return spawnEgg(FunctionUtil.noOpConsumer());
+    }
+
+    // === Loot ===
+
+    @StandardAPI
+    public EntityBuilder<T, P> loot(@NotNull BiConsumer<RegistryLibEntityLootTables, EntityType<T>> cons) {
+        if (!core.doDatagen()) return this;
+        return setData(
+                ProviderType.LOOT,
+                prov -> prov.addLootAction(
+                        LootType.ENTITY,
+                        tb -> cons.accept(tb, getValue())));
+    }
+
+    // === Spawn Placement ===
+
+    @StandardAPI
+    @SuppressWarnings("unchecked")
+    public EntityBuilder<T, P> spawnPlacement(
+                                              @NotNull SpawnPlacementType placementType,
+                                              @NotNull Heightmap.Types heightmap,
+                                              @NotNull SpawnPlacements.SpawnPredicate<T> predicate) {
+        return onRegister(entityType -> core.registerSpawnPlacement(
+                (EntityType<T>) entityType, placementType, heightmap, predicate));
     }
 
     // === Lang ===

@@ -27,6 +27,7 @@ public final class RegistryLib {
         modEventBus.addListener(EventPriority.LOWEST, RegistryCore::onRegisterLate);
         modEventBus.addListener(RegistryCore::onBuildCreativeModeTabContents);
         modEventBus.addListener(RegistryCore::onEntityAttributeCreation);
+        modEventBus.addListener(RegistryCore::onRegisterSpawnPlacements);
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.init(modEventBus));
     }
 }

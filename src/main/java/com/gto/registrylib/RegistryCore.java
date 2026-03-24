@@ -42,6 +42,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementType;
+import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -49,10 +51,12 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
@@ -94,6 +98,7 @@ public class RegistryCore {
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
     private final List<Pair<Supplier<EntityType<?>>, Supplier<AttributeSupplier.Builder>>> entityAttributes = new ArrayList<>();
+    private final List<Consumer<RegisterSpawnPlacementsEvent>> spawnPlacements = new ArrayList<>();
 
     private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>, String>, Consumer<?>> dataGensByEntry = NestedMap.createIdentity(HashMap::new);
     private final MultiMap<GeneratorType<?>, Consumer<?>> dataGens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
@@ -632,6 +637,16 @@ public class RegistryCore {
         entityAttributes.add(Pair.of((Supplier<EntityType<?>>) entityTypeSupplier, attributesFactory));
     }
 
+    public <T extends Entity> void registerSpawnPlacement(
+                                                          EntityType<T> entityType,
+                                                          SpawnPlacementType placementType,
+                                                          Heightmap.Types heightmap,
+                                                          SpawnPlacements.SpawnPredicate<T> predicate) {
+        spawnPlacements.add(event -> event.register(
+                entityType, placementType, heightmap, predicate,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE));
+    }
+
     // --- Creative Tab ---
 
     @SyntaxSugar("creativeTab(name, FunctionUtil.noOpConsumer())")
@@ -713,6 +728,11 @@ public class RegistryCore {
                         log.error("Registry {} has unregistered entries", core.registrations.getMap().keySet());
                     }
                 });
+    }
+
+    static void onRegisterSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        REGISTRY_CORES.forEach(
+                core -> core.spawnPlacements.forEach(action -> action.accept(event)));
     }
 
     private void onGatherData(GatherDataEvent.Client event) {

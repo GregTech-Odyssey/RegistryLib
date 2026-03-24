@@ -159,6 +159,8 @@ Created via `entity("id", factory, category)`.
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
 | `defaultLang()` | — | Infer display name from registry path |
 | `addTag(tags...)` | `TagKey<EntityType<?>>...` | Add entity type tags |
+| `loot(configurator)` | `BiConsumer<RegistryLibEntityLootTables, EntityType<T>>` | Define entity loot table (drops on death) |
+| `spawnPlacement(type, heightmap, predicate)` | `SpawnPlacementType, Heightmap.Types, SpawnPredicate<T>` | Set natural spawn placement rules |
 | `register()` | — | Submit and return `EntityEntry<T>` |
 
 **Example:**
@@ -173,6 +175,14 @@ REGISTRYLIB.<MyMob>entity("my_mob", MyMob::new, MobCategory.MONSTER)
         .renderer(() -> MyMobRenderer::new)
         .spawnEgg(egg -> egg.lang("My Mob Spawn Egg"))
         .addTag(EntityTypeTags.FALL_DAMAGE_IMMUNE)
+        .loot((tables, entityType) -> tables.add(entityType, LootTable.lootTable()
+                .withPool(LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(Items.DIAMOND))
+                        .when(LootItemKilledByPlayerCondition.killedByPlayer()))))
+        .spawnPlacement(SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Monster::checkMonsterSpawnRules)
         .register();
 ```
 

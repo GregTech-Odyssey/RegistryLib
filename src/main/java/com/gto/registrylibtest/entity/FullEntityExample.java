@@ -27,6 +27,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.SpawnPlacementTypes;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
@@ -38,9 +39,16 @@ import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.storage.loot.LootPool;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.predicates.LootItemKilledByPlayerCondition;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 
@@ -59,7 +67,7 @@ import java.util.List;
  * </ul>
  *
  * <p>涵盖 API：properties / sized / clientTrackingRange / updateInterval / fireImmune / attributes /
- * renderer / spawnEgg（带消费者）/ lang / langCn / addTag
+ * renderer / spawnEgg（带消费者）/ lang / langCn / addTag / loot / spawnPlacement
  *
  * @see SimpleEntityExample 使用 Brain AI 的简单示例
  */
@@ -93,6 +101,19 @@ public class FullEntityExample {
                     .lang(ModRegistryCore.LANG_ZH_CN, "黑曜石傀儡刷怪蛋"))
             // --- addTag: 将实体添加到标签（用于数据包条件判断）---
             .addTag(EntityTypeTags.FALL_DAMAGE_IMMUNE)
+            // --- loot: 实体战利品表（掉落物品）---
+            .loot((tables, entityType) -> tables.add(entityType, LootTable.lootTable()
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(Items.OBSIDIAN))
+                            .when(LootItemKilledByPlayerCondition.killedByPlayer()))
+                    .withPool(LootPool.lootPool()
+                            .setRolls(ConstantValue.exactly(1))
+                            .add(LootItem.lootTableItem(Items.IRON_INGOT)))))
+            // --- spawnPlacement: 刷新放置规则（生成条件）---
+            .spawnPlacement(SpawnPlacementTypes.ON_GROUND,
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    Monster::checkMonsterSpawnRules)
             .register();
 
     // ── 其他 EntityBuilder 方法说明 ─────────────────────────────────────────
