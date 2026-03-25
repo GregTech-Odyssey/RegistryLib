@@ -12,33 +12,10 @@ This page walks you through dependency setup and local validation so you can sta
 
 - A working NeoForge mod project (Minecraft 1.21.x)
 - Gradle 8+ with a Java 21 toolchain
-- A GitHub account (for package access)
 
-## Step 1: Create a Read-Only GitHub Token
+## Step 1: Add the Maven Repository
 
-RegistryLib is published through GitHub Packages. To resolve the dependency, you need a GitHub Personal Access Token.
-
-1. Go to **GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic)**.
-2. Click **Generate new token (classic)**.
-3. Select only the **`read:packages`** scope.
-4. Generate and copy the token.
-
-## Step 2: Expose Credentials to Gradle
-
-On Windows, the simplest local setup is:
-
-```cmd
-setx GITHUB_ACTOR your-github-username
-setx GITHUB_TOKEN your-token
-```
-
-Restart the terminal after setting these values.
-
-:::warning
-`setx` stores user-level environment variables in plaintext for your local account. That is acceptable for local development on a private machine, but avoid it on shared or production systems.
-:::
-
-## Step 3: Add the Package Repository
+RegistryLib is published on the Gtodyssey Maven repository. No authentication is required to download.
 
 Add the following to your `settings.gradle`:
 
@@ -46,20 +23,24 @@ Add the following to your `settings.gradle`:
 dependencyResolutionManagement {
         repositories {
                 maven {
-                        name = 'GitHubPackages-RegistryLib'
-                        url = uri('https://maven.pkg.github.com/GregTech-Odyssey/RegistryLib')
-                        credentials {
-                                username = System.getenv('GITHUB_ACTOR')
-                                                ?: settings.providers.gradleProperty('gpr.user').orNull
-                                password = System.getenv('GITHUB_TOKEN')
-                                                ?: settings.providers.gradleProperty('gpr.key').orNull
-                        }
+                        name = 'Gtodyssey'
+                        url = uri('https://maven.gtodyssey.com/releases')
                 }
         }
 }
 ```
 
-## Step 4: Add the Dependency
+Or, if you prefer to configure repositories in `build.gradle`:
+
+```groovy
+repositories {
+        maven {
+                url = 'https://maven.gtodyssey.com/releases'
+        }
+}
+```
+
+## Step 2: Add the Dependency
 
 In your `build.gradle`:
 
@@ -73,7 +54,7 @@ dependencies {
 Replace the version with the target release you are using, and keep your Minecraft, mappings, and NeoForge versions aligned with that release.
 :::
 
-## Step 5: Verify the Local Tooling Path
+## Step 3: Verify the Local Tooling Path
 
 | Command | Purpose |
 | --- | --- |

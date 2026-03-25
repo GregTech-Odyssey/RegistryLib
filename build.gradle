@@ -135,16 +135,17 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from components.java
+            groupId = mod_group_id
             artifactId = mod_id
         }
     }
     repositories {
         maven {
-            name = 'GitHubPackages'
-            url = uri("https://maven.pkg.github.com/${System.getenv('GITHUB_REPOSITORY') ?: 'OWNER/REPO'}")
-            credentials {
-                username = System.getenv('USERNAME')
-                password = System.getenv('TOKEN')
+            name = 'gtodysseyReleases'
+            url = uri('https://maven.gtodyssey.com/releases')
+            credentials(PasswordCredentials)
+            authentication {
+                basic(BasicAuthentication)
             }
         }
     }

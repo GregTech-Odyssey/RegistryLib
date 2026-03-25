@@ -10,12 +10,12 @@ description: Common errors and how to fix them.
 
 ### `Could not resolve com.gto:registrylib:x.x.x`
 
-**Cause:** Gradle cannot reach GitHub Packages.
+**Cause:** Gradle cannot reach the Maven repository.
 
 **Fix:**
-1. Verify your `GITHUB_ACTOR` and `GITHUB_TOKEN` environment variables are set correctly.
-2. Confirm the token has `read:packages` scope.
-3. Ensure the Maven repository URL in `settings.gradle` is `https://maven.pkg.github.com/GregTech-Odyssey/RegistryLib`.
+1. Ensure your `settings.gradle` or `build.gradle` includes the Gtodyssey Maven repository.
+2. Verify the URL is `https://maven.gtodyssey.com/releases`.
+3. Check your network connectivity to `maven.gtodyssey.com`.
 
 ### `NoClassDefFoundError` or `ClassNotFoundException` for RegistryLib classes
 

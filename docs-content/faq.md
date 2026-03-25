@@ -26,9 +26,9 @@ Yes. RegistryLib does not replace the NeoForge registry system —it wraps it. Y
 
 ### Gradle cannot resolve the RegistryLib dependency
 
-1. Confirm your GitHub token has the `read:packages` scope.
-2. Verify `GITHUB_ACTOR` and `GITHUB_TOKEN` environment variables are set (restart the terminal after `setx`).
-3. Ensure `settings.gradle` includes the GitHub Packages Maven repository for `GregTech-Odyssey/RegistryLib`.
+1. Ensure your `settings.gradle` (or `build.gradle`) includes the Gtodyssey Maven repository: `https://maven.gtodyssey.com/releases`.
+2. Check your network can reach `maven.gtodyssey.com`.
+3. Run `./gradlew build --refresh-dependencies` to clear cached resolution failures.
 
 See [Installation & Setup](/tutorials/installation) for the full walkthrough.
 

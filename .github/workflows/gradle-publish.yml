@@ -1,4 +1,4 @@
-name: Gradle Package
+name: Publish Release
 
 on:
   workflow_dispatch:
@@ -8,7 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: read
     outputs:
       version: ${{ steps.check.outputs.version }}
     steps:
@@ -36,22 +35,17 @@ jobs:
           fi
           echo "✓ GitHub Release '${VERSION}' is available."
 
-          # Check GitHub Packages
-          OWNER=$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f1)
+          # Check Maven Repository
           GROUP_ID=$(grep '^mod_group_id=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
           MOD_ID=$(grep '^mod_id=' gradle.properties | cut -d'=' -f2 | tr -d '[:space:]')
-          PKG_NAME="${GROUP_ID}.${MOD_ID}"
-          HTTP_STATUS=$(curl -s -o /tmp/pkg_resp.json -w "%{http_code}" \
-            -H "Authorization: Bearer ${GH_TOKEN}" \
-            -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/users/${OWNER}/packages/maven/${PKG_NAME}/versions")
+          GROUP_PATH=$(echo "$GROUP_ID" | tr '.' '/')
+          MAVEN_URL="https://maven.gtodyssey.com/releases/${GROUP_PATH}/${MOD_ID}/${VERSION}/${MOD_ID}-${VERSION}.pom"
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$MAVEN_URL")
           if [ "$HTTP_STATUS" = "200" ]; then
-            if grep -q "\"${VERSION}\"" /tmp/pkg_resp.json; then
-              echo "ERROR: GitHub Packages already has version '${VERSION}'."
-              exit 1
-            fi
+            echo "ERROR: Maven repository already has version '${VERSION}'."
+            exit 1
           fi
-          echo "✓ GitHub Packages version '${VERSION}' is available."
+          echo "✓ Maven version '${VERSION}' is available."
 
           # Check CurseForge
           CF_RESPONSE=$(curl -s \
@@ -68,7 +62,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
     steps:
       - uses: actions/checkout@v4
 
@@ -106,12 +99,11 @@ jobs:
             !build/libs/*-sources.jar
             !build/libs/*-javadoc.jar
 
-      - name: Publish to GitHub Packages
+      - name: Publish to Maven Repository
         run: ./gradlew publish --stacktrace
         env:
-          USERNAME: ${{ github.actor }}
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
+          ORG_GRADLE_PROJECT_gtodysseyReleasesUsername: ${{ vars.GTODYSSEY_MAVEN_NAME }}
+          ORG_GRADLE_PROJECT_gtodysseyReleasesPassword: ${{ secrets.GTODYSSEY_MAVEN_SECRET }}
 
   release:
     needs: [check-version, build]
