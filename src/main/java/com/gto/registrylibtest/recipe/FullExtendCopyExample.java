@@ -136,7 +136,7 @@ public class FullExtendCopyExample {
     public static final RecipeEntry<SmeltingRecipe> ADVANCED_SMELTING = RegistryLibTest.REGISTRYLIB.<SmeltingRecipe>copyRecipe("advanced_smelting", SMELTING_REF);
 
     static {
-        // 使用 addRecipe 添加配方（确保 JSON "type" 正确）
+        // 5a) addRecipe — 直接实例
         // Add recipes via addRecipe (ensures correct JSON "type" field).
         ADVANCED_SMELTING.addRecipe(
                 "nether_brick",
@@ -147,6 +147,20 @@ public class FullExtendCopyExample {
                         new ItemStackTemplate(Items.NETHER_BRICK),
                         0.1F,
                         100));
+
+        // 5b) customRecipeData — 使用 SimpleCookingRecipeBuilder 验证 "type" 字段也能正确生成
+        // customRecipeData with SimpleCookingRecipeBuilder: "type" must be
+        // "registrylibtest:advanced_smelting", NOT "minecraft:smelting".
+        ADVANCED_SMELTING.customRecipeData(
+                prov -> SimpleCookingRecipeBuilder.smelting(
+                        Ingredient.of(Items.COBBLESTONE),
+                        RecipeCategory.BUILDING_BLOCKS,
+                        CookingBookCategory.BLOCKS,
+                        Items.STONE,
+                        0.1F,
+                        100)
+                        .unlockedBy("has_cobblestone", prov.has(Items.COBBLESTONE))
+                        .save(prov, prov.safeKey(Items.STONE)));
     }
 
     // ══════════════════════════════════════════════════════════════════════
