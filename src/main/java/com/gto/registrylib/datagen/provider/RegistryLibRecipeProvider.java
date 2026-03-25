@@ -1,9 +1,5 @@
 package com.gto.registrylib.datagen.provider;
 
-import java.util.function.Supplier;
-
-import javax.annotation.Nullable;
-
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.util.DataIngredient;
 
@@ -35,6 +31,10 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.common.conditions.ICondition;
+
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
 
 public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeOutput {
 
