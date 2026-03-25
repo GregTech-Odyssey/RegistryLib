@@ -10,21 +10,21 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.level.Level;
+
 import org.jspecify.annotations.NonNull;
 
 /**
  * 晶体矿守卫者 — 一个使用 Brain AI 的怪物实体。
  *
  * <ul>
- *   <li>外形：0.5×0.5 方块，使用晶体矿方块模型在 1/3 缩放下渲染</li>
- *   <li>行为：自定义传感器发现正在挖掘晶体矿的玩家后，追踪并近战攻击</li>
- *   <li>空闲时在出生点附近随机游荡</li>
+ * <li>外形：0.5×0.5 方块，使用晶体矿方块模型在 1/3 缩放下渲染
+ * <li>行为：自定义传感器发现正在挖掘晶体矿的玩家后，追踪并近战攻击
+ * <li>空闲时在出生点附近随机游荡
  * </ul>
  */
 public class CrystalGuardian extends PathfinderMob {
 
-    private static final Brain.Provider<CrystalGuardian> BRAIN_PROVIDER =
-            CrystalGuardianAi.brainProvider();
+    private static final Brain.Provider<CrystalGuardian> BRAIN_PROVIDER = CrystalGuardianAi.brainProvider();
 
     public CrystalGuardian(EntityType<? extends CrystalGuardian> type, Level level) {
         super(type, level);

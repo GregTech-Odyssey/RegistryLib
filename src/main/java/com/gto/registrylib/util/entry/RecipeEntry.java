@@ -1,10 +1,22 @@
 package com.gto.registrylib.util.entry;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 
+import lombok.Getter;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -12,13 +24,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
-
-import lombok.Getter;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * 配方注册条目，封装了 RecipeType 和 RecipeSerializer 的引用，并提供添加配方实例的 API。
@@ -51,6 +56,10 @@ public class RecipeEntry<T extends Recipe<?>> {
     @Getter
     private final RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>> serializerEntry;
 
+    // === copy 支持：记录本 Entry 已注册的所有 (key, factory) ===
+    // 仅在 doDatagen() 为 true 时填充，运行时为空列表，零开销。
+    private final List<Map.Entry<String, Function<HolderLookup.Provider, T>>> registeredRecipes = new ArrayList<>();
+
     public RecipeEntry(
                        RegistryCore core,
                        RegistryEntry<RecipeType<?>, RecipeType<T>> typeEntry,
@@ -75,7 +84,7 @@ public class RecipeEntry<T extends Recipe<?>> {
      */
     @StandardAPI
     public RecipeEntry<T> addRecipe(@NotNull String recipeName, @NotNull T recipe) {
-        return addRecipe(recipeName, () -> recipe);
+        return addRecipe(recipeName, _reg -> recipe);
     }
 
     /**
@@ -90,33 +99,21 @@ public class RecipeEntry<T extends Recipe<?>> {
      */
     @StandardAPI
     public RecipeEntry<T> addRecipe(@NotNull String recipeName, @NotNull Supplier<T> recipeSupplier) {
-        if (core.doDatagen()) {
-            final String modid = core.getModid();
-            final String typeName = typeEntry.getKey().identifier().getPath();
-            core.addDataGenerator(
-                    ProviderType.RECIPE,
-                    (RegistryLibRecipeProvider prov) -> prov.accept(
-                            ResourceKey.create(
-                                    Registries.RECIPE,
-                                    Identifier.fromNamespaceAndPath(modid, typeName + "/" + recipeName)),
-                            recipeSupplier.get(),
-                            null));
-        }
-        return this;
+        return addRecipe(recipeName, _reg -> recipeSupplier.get());
     }
 
     /**
      * 添加一条需要注册表查找的配方用于数据生成（例如基于 Tag 的 Ingredient）。
      *
      * <p>
-     * Adds a recipe for datagen that requires registry lookups (e.g. tag-based {@code Ingredient}s).
-     * The {@link HolderLookup.Provider} gives access to item tags and other registry data.
+     * Adds a recipe for datagen that requires registry lookups (e.g. tag-based {@code
+     * Ingredient}s). The {@link HolderLookup.Provider} gives access to item tags and other registry
+     * data.
      *
      * <pre>{@code
-     * ENTRY.addRecipe("from_logs", registries ->
-     *         new MyRecipe(
-     *                 Ingredient.of(registries.lookupOrThrow(Registries.ITEM).getOrThrow(ItemTags.LOGS)),
-     *                 new ItemStackTemplate(Items.CHARCOAL), 60));
+     * ENTRY.addRecipe("from_logs", registries -> new MyRecipe(
+     *         Ingredient.of(registries.lookupOrThrow(Registries.ITEM).getOrThrow(ItemTags.LOGS)),
+     *         new ItemStackTemplate(Items.CHARCOAL), 60));
      * }</pre>
      *
      * @param recipeName    the recipe file name
@@ -124,19 +121,20 @@ public class RecipeEntry<T extends Recipe<?>> {
      * @return this entry for chaining
      */
     @StandardAPI
-    public RecipeEntry<T> addRecipe(@NotNull String recipeName,
-                                    @NotNull Function<HolderLookup.Provider, T> recipeFactory) {
+    public RecipeEntry<T> addRecipe(
+                                    @NotNull String recipeName, @NotNull Function<HolderLookup.Provider, T> recipeFactory) {
         if (core.doDatagen()) {
+            registeredRecipes.add(new AbstractMap.SimpleImmutableEntry<>(recipeName, recipeFactory));
             final String modid = core.getModid();
             final String typeName = typeEntry.getKey().identifier().getPath();
             core.addDataGenerator(
                     ProviderType.RECIPE,
-                    (RegistryLibRecipeProvider prov) -> prov.accept(
+                    (RegistryLibRecipeProvider prov) -> prov.acceptWithSerializer(
                             ResourceKey.create(
                                     Registries.RECIPE,
                                     Identifier.fromNamespaceAndPath(modid, typeName + "/" + recipeName)),
                             recipeFactory.apply(prov.registries()),
-                            null));
+                            serializerEntry.get()));
         }
         return this;
     }
@@ -159,6 +157,17 @@ public class RecipeEntry<T extends Recipe<?>> {
     }
 
     // === Accessors ===
+
+    /**
+     * 返回本 Entry 已注册的所有配方工厂（仅 datagen 时有内容）。
+     *
+     * <p>
+     * Returns all recipe factories registered on this entry. Only populated during datagen. Used
+     * internally by {@code copyRecipe} to mirror recipes.
+     */
+    public List<Map.Entry<String, Function<HolderLookup.Provider, T>>> getRegisteredRecipes() {
+        return Collections.unmodifiableList(registeredRecipes);
+    }
 
     /** Returns the registered RecipeType. */
     public RecipeType<T> getType() {

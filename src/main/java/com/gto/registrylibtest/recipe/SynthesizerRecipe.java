@@ -9,7 +9,6 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemStackTemplate;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.PlacementInfo;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeBookCategories;
@@ -28,12 +27,12 @@ import java.util.List;
  * 合成器配方：需要多个物品输入（带数量检查）和一个流体输入。
  *
  * <p>
- * Synthesizer recipe: requires multiple item inputs (with count checking via {@link SizedIngredient})
- * and one fluid input (with amount checking via {@link SizedFluidIngredient}).
+ * Synthesizer recipe: requires multiple item inputs (with count checking via {@link
+ * SizedIngredient}) and one fluid input (with amount checking via {@link SizedFluidIngredient}).
  *
  * <p>
- * 这是多输入配方的典型示例。每个物品输入通过 {@link SizedIngredient} 同时检查物品类型和数量，
- * 流体输入通过 {@link SizedFluidIngredient} 检查流体类型和数量。
+ * 这是多输入配方的典型示例。每个物品输入通过 {@link SizedIngredient} 同时检查物品类型和数量， 流体输入通过 {@link SizedFluidIngredient}
+ * 检查流体类型和数量。
  *
  * <h3>示例 JSON</h3>
  *
@@ -172,11 +171,15 @@ public class SynthesizerRecipe implements Recipe<SynthesizerRecipe.SynthesizerIn
 
     public static final MapCodec<SynthesizerRecipe> CODEC = RecordCodecBuilder.mapCodec(
             inst -> inst.group(
-                    SizedIngredient.NESTED_CODEC.listOf().fieldOf("ingredients")
+                    SizedIngredient.NESTED_CODEC
+                            .listOf()
+                            .fieldOf("ingredients")
                             .forGetter(SynthesizerRecipe::getIngredients),
-                    SizedFluidIngredient.CODEC.fieldOf("fluid")
+                    SizedFluidIngredient.CODEC
+                            .fieldOf("fluid")
                             .forGetter(SynthesizerRecipe::getFluidIngredient),
-                    ItemStackTemplate.CODEC.fieldOf("result")
+                    ItemStackTemplate.CODEC
+                            .fieldOf("result")
                             .forGetter(SynthesizerRecipe::getResult),
                     Codec.INT
                             .optionalFieldOf("processing_time", 200)

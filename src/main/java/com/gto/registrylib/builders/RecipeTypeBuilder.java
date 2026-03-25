@@ -3,7 +3,9 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
+import com.gto.registrylib.util.entry.ExtendRecipeEntry;
 import com.gto.registrylib.util.entry.RecipeEntry;
+import com.gto.registrylib.util.entry.RecipeRef;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
 import com.mojang.serialization.MapCodec;
@@ -122,5 +124,63 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
     public P build() {
         register();
         return parent;
+    }
+
+    // === extend ===
+
+    /**
+     * 直接向已有配方类型注入额外配方，不注册新的 RecipeType。
+     *
+     * <p>
+     * Creates an {@link ExtendRecipeEntry} that injects additional recipes into an existing {@link
+     * RecipeType} (vanilla, NeoForge, or third-party). No new RecipeType is registered; datagen
+     * simply emits JSON files pointing to the target type.
+     *
+     * @param core the RegistryCore instance
+     * @param ref  the target recipe type reference
+     * @param <T>  the concrete recipe type
+     * @return a new ExtendRecipeEntry for adding recipes
+     */
+    @StandardAPI
+    public static <T extends Recipe<?>> ExtendRecipeEntry<T> extend(
+                                                                    @Nonnull RegistryCore core, @Nonnull RecipeRef<T> ref) {
+        return new ExtendRecipeEntry<>(core, ref);
+    }
+
+    // === copy ===
+
+    /**
+     * 创建一个新的 RecipeType + RecipeSerializer，复用目标类型的 codec。
+     *
+     * <p>
+     * Registers a new {@link RecipeType} and {@link RecipeSerializer} under {@code newName},
+     * reusing the codec and stream codec from the target {@link RecipeRef}'s serializer. Returns a
+     * {@link RecipeEntry} that can be used to add recipes (including mirroring via {@link
+     * RecipeEntry#getRegisteredRecipes}).
+     *
+     * @param core    the RegistryCore instance
+     * @param newName the name for the new RecipeType
+     * @param ref     the source recipe type to copy codec from
+     * @param <T>     the concrete recipe type
+     * @return a new RecipeEntry wrapping the newly registered type
+     */
+    @StandardAPI
+    @SuppressWarnings("unchecked")
+    public static <T extends Recipe<?>> RecipeEntry<T> copy(
+                                                            @Nonnull RegistryCore core, @Nonnull String newName, @Nonnull RecipeRef<T> ref) {
+        // Register a new RecipeType under newName
+        var typeEntry = (RegistryEntry<RecipeType<?>, RecipeType<T>>) (RegistryEntry) core.simple(
+                newName, Registries.RECIPE_TYPE, key -> RecipeType.simple(key.identifier()));
+
+        // Register a new RecipeSerializer reusing the ref's serializer's codec
+        var serializerEntry = (RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>>) (RegistryEntry) core.simple(
+                newName,
+                Registries.RECIPE_SERIALIZER,
+                key -> {
+                    RecipeSerializer<T> src = ref.serializer();
+                    return new RecipeSerializer<>(src.codec(), src.streamCodec());
+                });
+
+        return new RecipeEntry<>(core, typeEntry, serializerEntry);
     }
 }

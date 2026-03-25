@@ -23,16 +23,15 @@ import java.util.List;
  * input (with amount checking via {@link SizedFluidIngredient}).
  *
  * <p>
- * 合成器需要多个物品槽位 + 一个流体槽位，配方定义了每个槽位所需的物品类型/数量和流体类型/数量。
- * 这是模组中常见的多输入机器配方的典型实现模式。
+ * 合成器需要多个物品槽位 + 一个流体槽位，配方定义了每个槽位所需的物品类型/数量和流体类型/数量。 这是模组中常见的多输入机器配方的典型实现模式。
  *
  * <h3>核心要点 / Key Concepts</h3>
  *
  * <ul>
- * <li>{@link SizedIngredient} — 包装 {@link Ingredient} + 数量，
- *     {@link SizedIngredient#test} 同时检查物品类型和 {@code stack.getCount() >= count}
- * <li>{@link SizedFluidIngredient} — 包装 {@link FluidIngredient} + 数量（mB），
- *     {@link SizedFluidIngredient#test} 同时检查流体类型和 {@code stack.getAmount() >= amount}
+ * <li>{@link SizedIngredient} — 包装 {@link Ingredient} + 数量， {@link SizedIngredient#test}
+ * 同时检查物品类型和 {@code stack.getCount() >= count}
+ * <li>{@link SizedFluidIngredient} — 包装 {@link FluidIngredient} + 数量（mB）， {@link
+ * SizedFluidIngredient#test} 同时检查流体类型和 {@code stack.getAmount() >= amount}
  * <li>自定义 {@link net.minecraft.world.item.crafting.RecipeInput} 携带多个物品 + 流体
  * </ul>
  */
@@ -53,23 +52,22 @@ public class MultiInputRecipeExample {
                 "synthesizer_iron_gold_water_to_diamond",
                 new SynthesizerRecipe(
                         List.of(
-                                SizedIngredient.of(Items.IRON_INGOT, 3),
-                                SizedIngredient.of(Items.GOLD_INGOT, 2)),
+                                SizedIngredient.of(Items.IRON_INGOT, 3), SizedIngredient.of(Items.GOLD_INGOT, 2)),
                         SizedFluidIngredient.of(Fluids.WATER, 1000),
                         new ItemStackTemplate(Items.DIAMOND),
                         200,
                         30.0F));
 
         // 2) 自定义 Ingredient + 多输入 + 流体
-        //    1 把耐久 ≥ 200 的剑（MinDurabilityIngredient） + 4 个绿宝石 + 500mB 熔岩 -> 下界合金锭
+        // 1 把耐久 ≥ 200 的剑（MinDurabilityIngredient） + 4 个绿宝石 + 500mB 熔岩 -> 下界合金锭
         // Custom ingredient + multi-input + fluid:
-        //    1 sword with durability >= 200 (MinDurabilityIngredient) + 4 emeralds + 500mB lava -> netherite ingot
+        // 1 sword with durability >= 200 (MinDurabilityIngredient) + 4 emeralds + 500mB lava ->
+        // netherite ingot
         SYNTHESIZER.addRecipe(
                 "synthesizer_durable_sword_to_netherite",
                 new SynthesizerRecipe(
                         List.of(
-                                new SizedIngredient(
-                                        MinDurabilityIngredient.of(ItemTags.SWORDS, 200), 1),
+                                new SizedIngredient(MinDurabilityIngredient.of(ItemTags.SWORDS, 200), 1),
                                 SizedIngredient.of(Items.EMERALD, 4)),
                         SizedFluidIngredient.of(Fluids.LAVA, 500),
                         new ItemStackTemplate(Items.NETHERITE_INGOT),

@@ -10,21 +10,25 @@ import net.minecraft.world.entity.MobCategory;
 
 import javax.annotation.Nonnull;
 
-/**
- * Extended {@link EntityBuilder} that exposes a {@code langCn(String)} convenience method.
- */
+/** Extended {@link EntityBuilder} that exposes a {@code langCn(String)} convenience method. */
 public class ModEntityBuilder<T extends Entity, P> extends EntityBuilder<T, P> {
 
     public static <T extends Entity, P> ModEntityBuilder<T, P> create(
-                                                                      RegistryCore owner, P parent, String name,
-                                                                      EntityType.EntityFactory<T> factory, MobCategory category) {
+                                                                      RegistryCore owner,
+                                                                      P parent,
+                                                                      String name,
+                                                                      EntityType.EntityFactory<T> factory,
+                                                                      MobCategory category) {
         var builder = new ModEntityBuilder<>(owner, parent, name, factory, category);
         return (ModEntityBuilder<T, P>) builder.defaultLang();
     }
 
     protected ModEntityBuilder(
-                               RegistryCore core, P parent, String name,
-                               EntityType.EntityFactory<T> factory, MobCategory category) {
+                               RegistryCore core,
+                               P parent,
+                               String name,
+                               EntityType.EntityFactory<T> factory,
+                               MobCategory category) {
         super(core, parent, name, factory, category);
     }
 

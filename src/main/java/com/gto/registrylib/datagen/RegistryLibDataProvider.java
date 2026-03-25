@@ -1,25 +1,5 @@
 package com.gto.registrylib.datagen;
 
-import com.gto.registrylib.RegistryCore;
-import com.gto.registrylib.datagen.provider.RegistryLibLookupFillerProvider;
-import com.gto.registrylib.datagen.provider.RegistryLibProvider;
-import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
-
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.common.collect.Lists;
-import com.mojang.logging.LogUtils;
-
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.Registry;
-import net.minecraft.data.CachedOutput;
-import net.minecraft.data.DataProvider;
-import net.minecraft.resources.ResourceKey;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
-
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import org.slf4j.Logger;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -28,6 +8,26 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+
+import org.slf4j.Logger;
+
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import com.google.common.collect.Lists;
+import com.gto.registrylib.RegistryCore;
+import com.gto.registrylib.datagen.provider.RegistryLibLookupFillerProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibRecipeRunner;
+import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
+import com.mojang.logging.LogUtils;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.Registry;
+import net.minecraft.data.CachedOutput;
+import net.minecraft.data.DataProvider;
+import net.minecraft.resources.ResourceKey;
+import net.neoforged.neoforge.data.event.GatherDataEvent;
 
 public class RegistryLibDataProvider implements DataProvider {
 
@@ -77,7 +77,12 @@ public class RegistryLibDataProvider implements DataProvider {
 
                     for (Map.Entry<ProviderType<?>, RegistryLibProvider> e : subProviders.entrySet()) {
                         LOGGER.debug("Generating data for type: {}", getTypeName(e.getKey()));
-                        list.add(e.getValue().run(cache));
+                        CompletableFuture<?> future = e.getValue().run(cache);
+                        // Chain deferred recipe writes after the recipe runner completes
+                        if (e.getValue() instanceof RegistryLibRecipeRunner recipeRunner) {
+                            future = future.thenCompose(v -> recipeRunner.writeDeferredRecipes(cache));
+                        }
+                        list.add(future);
                     }
 
                     return CompletableFuture.allOf(list.toArray(CompletableFuture[]::new));

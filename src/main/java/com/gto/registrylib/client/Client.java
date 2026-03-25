@@ -8,14 +8,13 @@ import com.mojang.datafixers.util.Either;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
+import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
-import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -55,8 +54,9 @@ public class Client {
         if (map != null) map.put(type, extensions);
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public void registerEntityRenderer(Supplier<EntityType<?>> type, EntityRendererProvider renderer) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void registerEntityRenderer(
+                                       Supplier<EntityType<?>> type, EntityRendererProvider renderer) {
         var map = ENTITY_RENDERERS.get();
         if (map != null) map.put(type, renderer);
     }
@@ -73,11 +73,12 @@ public class Client {
             map.forEach((type, extensions) -> event.registerFluidType(extensions, type.get()));
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private void onRegisterEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
         var map = ENTITY_RENDERERS.getAndSet(null);
         if (map != null)
-            map.forEach((type, renderer) -> event.registerEntityRenderer((EntityType) type.get(), renderer));
+            map.forEach(
+                    (type, renderer) -> event.registerEntityRenderer((EntityType) type.get(), renderer));
     }
 
     private void onRegisterTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {

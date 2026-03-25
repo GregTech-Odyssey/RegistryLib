@@ -17,6 +17,7 @@ import lombok.Getter;
  * <h3>Usage</h3>
  *
  * <pre>{@code
+ * 
  * public static final IngredientTypeEntry<MyIngredient> MY_INGREDIENT_TYPE = REGISTRYLIB
  *         .ingredientType("my_ingredient", MyIngredient.CODEC);
  * }</pre>

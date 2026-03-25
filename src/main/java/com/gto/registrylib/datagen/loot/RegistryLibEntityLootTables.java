@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class RegistryLibEntityLootTables extends EntityLootSubProvider
-                                          implements RegistryLibLootTables {
+                                         implements RegistryLibLootTables {
 
     private final RegistryCore parent;
     private final Consumer<RegistryLibEntityLootTables> callback;
@@ -24,7 +24,8 @@ public class RegistryLibEntityLootTables extends EntityLootSubProvider
                                        HolderLookup.Provider provider,
                                        RegistryCore parent,
                                        Consumer<RegistryLibEntityLootTables> callback) {
-        // allowed=allFlags (output loot for any entity), required=empty (don't crash for entities without .loot())
+        // allowed=allFlags (output loot for any entity), required=empty (don't crash for entities
+        // without .loot())
         super(FeatureFlags.REGISTRY.allFlags(), FeatureFlagSet.of(), provider);
         this.parent = parent;
         this.callback = callback;

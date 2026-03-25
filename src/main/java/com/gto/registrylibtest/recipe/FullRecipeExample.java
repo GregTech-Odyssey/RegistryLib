@@ -11,7 +11,6 @@ import com.gto.registrylibtest.RegistryLibTest;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -21,6 +20,7 @@ import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.DifferenceIngredient;
 
 import java.awt.Color;
+
 /**
  * 使用全部 Recipe API 的复杂配方注册示例：注入器（Infuser）。
  *
@@ -93,8 +93,8 @@ public class FullRecipeExample {
                 "infuser_non_white_wool_to_string",
                 registries -> new InfuserRecipe(
                         DifferenceIngredient.of(
-                                Ingredient.of(registries.lookupOrThrow(Registries.ITEM)
-                                        .getOrThrow(ItemTags.WOOL)),
+                                Ingredient.of(
+                                        registries.lookupOrThrow(Registries.ITEM).getOrThrow(ItemTags.WOOL)),
                                 Ingredient.of(Items.WHITE_WOOL)),
                         new ItemStackTemplate(Items.STRING, 2),
                         40,
@@ -108,10 +108,7 @@ public class FullRecipeExample {
                 "infuser_damaged_sword_to_iron",
                 new InfuserRecipe(
                         DataComponentIngredient.of(
-                                false,
-                                net.minecraft.core.component.DataComponents.DAMAGE,
-                                100,
-                                Items.IRON_SWORD),
+                                false, net.minecraft.core.component.DataComponents.DAMAGE, 100, Items.IRON_SWORD),
                         new ItemStackTemplate(Items.IRON_INGOT, 2),
                         60,
                         15.0F,

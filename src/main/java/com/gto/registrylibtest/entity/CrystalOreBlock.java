@@ -11,9 +11,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 晶体矿方块。当玩家左键攻击（挖掘）此方块时，记录该玩家的 UUID 和时间戳。
- * 附近的 {@link CrystalGuardian} 通过 {@link CrystalMinerSensor} 查询此记录，
- * 从而发现正在挖矿的玩家并追踪攻击。
+ * 晶体矿方块。当玩家左键攻击（挖掘）此方块时，记录该玩家的 UUID 和时间戳。 附近的 {@link CrystalGuardian} 通过 {@link CrystalMinerSensor}
+ * 查询此记录， 从而发现正在挖矿的玩家并追踪攻击。
  */
 public class CrystalOreBlock extends Block {
 

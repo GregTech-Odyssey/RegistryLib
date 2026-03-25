@@ -16,8 +16,10 @@ import com.gto.registrylibtest.fluid.FullFluidExample;
 import com.gto.registrylibtest.fluid.SimpleFluidExample;
 import com.gto.registrylibtest.item.FullItemExample;
 import com.gto.registrylibtest.item.SimpleItemExample;
+import com.gto.registrylibtest.recipe.FullExtendCopyExample;
 import com.gto.registrylibtest.recipe.FullRecipeExample;
 import com.gto.registrylibtest.recipe.MultiInputRecipeExample;
+import com.gto.registrylibtest.recipe.SimpleExtendCopyExample;
 import com.gto.registrylibtest.recipe.SimpleIngredientTypeExample;
 import com.gto.registrylibtest.recipe.SimpleRecipeExample;
 
@@ -54,6 +56,7 @@ import org.slf4j.Logger;
  * <li>{@link SimpleEntityExample} / {@link FullEntityExample} — 实体注册
  * <li>{@link SimpleAdvancementExample} / {@link FullAdvancementExample} — 成就进度
  * <li>{@link SimpleRecipeExample} / {@link FullRecipeExample} — 自定义配方
+ * <li>{@link SimpleExtendCopyExample} / {@link FullExtendCopyExample} — 配方 extend / copy
  * <li>{@link SimpleEnchantmentExample} / {@link FullEnchantmentExample} — 附魔
  * </ul>
  */
@@ -99,6 +102,8 @@ public class RegistryLibTest {
         var _recipe1 = SimpleRecipeExample.ALTAR;
         var _recipe2 = FullRecipeExample.INFUSER;
         var _recipe3 = MultiInputRecipeExample.SYNTHESIZER;
+        var _recipe4 = SimpleExtendCopyExample.EXTRA_SMELTING;
+        var _recipe5 = FullExtendCopyExample.EXTENDED_SMELTING;
 
         // 自定义 Ingredient 类型
         var _ingredientType1 = SimpleIngredientTypeExample.MIN_DURABILITY;
@@ -140,7 +145,7 @@ public class RegistryLibTest {
     }
 
     private static void onRegisterLayerDefinitions(
-            net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterLayerDefinitions event) {
+                                                   net.neoforged.neoforge.client.event.EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(
                 com.gto.registrylibtest.client.CrystalGuardianModel.LAYER_LOCATION,
                 com.gto.registrylibtest.client.CrystalGuardianModel::createBodyLayer);

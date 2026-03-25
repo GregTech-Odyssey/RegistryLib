@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.crafting.ICustomIngredient;
 import net.neoforged.neoforge.common.crafting.IngredientType;
+
 import org.jspecify.annotations.NonNull;
 
 import java.util.stream.Stream;
@@ -24,8 +25,8 @@ import java.util.stream.Stream;
  * 自定义 Ingredient：匹配指定标签中且剩余耐久 ≥ 给定阈值的物品。
  *
  * <p>
- * Custom ingredient that matches items within a given tag, whose remaining durability is at
- * or above a specified minimum threshold.
+ * Custom ingredient that matches items within a given tag, whose remaining durability is at or
+ * above a specified minimum threshold.
  *
  * <h3>JSON Format</h3>
  *
@@ -50,8 +51,7 @@ public class MinDurabilityIngredient implements ICustomIngredient {
                     Codec.INT.fieldOf("min_durability").forGetter(e -> e.minDurability))
                     .apply(inst, MinDurabilityIngredient::new));
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, MinDurabilityIngredient> STREAM_CODEC =
-            ByteBufCodecs.fromCodecWithRegistries(CODEC.codec());
+    public static final StreamCodec<RegistryFriendlyByteBuf, MinDurabilityIngredient> STREAM_CODEC = ByteBufCodecs.fromCodecWithRegistries(CODEC.codec());
 
     // ── Constructor ──────────────────────────────────────────────────────────
 

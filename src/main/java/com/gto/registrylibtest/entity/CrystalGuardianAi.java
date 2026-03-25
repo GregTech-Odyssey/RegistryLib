@@ -29,17 +29,14 @@ import java.util.Optional;
  * 晶体矿守卫者的 Brain AI 配置（NeoForge 26.1 ActivityData API）。
  *
  * <ul>
- *   <li><b>CORE</b> — 游泳、看向目标、走向目标</li>
- *   <li><b>IDLE</b> — 发现挖矿玩家后进入战斗；否则随机游荡、环视</li>
- *   <li><b>FIGHT</b> — 追踪并近战攻击挖矿玩家</li>
+ * <li><b>CORE</b> — 游泳、看向目标、走向目标
+ * <li><b>IDLE</b> — 发现挖矿玩家后进入战斗；否则随机游荡、环视
+ * <li><b>FIGHT</b> — 追踪并近战攻击挖矿玩家
  * </ul>
  */
 public class CrystalGuardianAi {
 
-    /**
-     * 创建 Brain.Provider，声明所需的额外 MemoryModuleType、SensorType
-     * 以及 ActivitySupplier。
-     */
+    /** 创建 Brain.Provider，声明所需的额外 MemoryModuleType、SensorType 以及 ActivitySupplier。 */
     public static Brain.Provider<CrystalGuardian> brainProvider() {
         return Brain.provider(
                 List.of(
@@ -51,9 +48,7 @@ public class CrystalGuardianAi {
                         MemoryModuleType.NEAREST_LIVING_ENTITIES,
                         MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
                         SimpleEntityExample.CRYSTAL_MINER_MEMORY.get()),
-                List.of(
-                        SensorType.NEAREST_LIVING_ENTITIES,
-                        SimpleEntityExample.CRYSTAL_MINER_SENSOR.get()),
+                List.of(SensorType.NEAREST_LIVING_ENTITIES, SimpleEntityExample.CRYSTAL_MINER_SENSOR.get()),
                 CrystalGuardianAi::getActivities);
     }
 
@@ -67,8 +62,7 @@ public class CrystalGuardianAi {
         return ActivityData.<CrystalGuardian>create(
                 Activity.CORE,
                 0,
-                ImmutableList.of(
-                        new Swim<>(0.8F), new LookAtTargetSink(45, 90), new MoveToTargetSink()));
+                ImmutableList.of(new Swim<>(0.8F), new LookAtTargetSink(45, 90), new MoveToTargetSink()));
     }
 
     private static ActivityData<CrystalGuardian> initIdleActivity() {
@@ -103,7 +97,8 @@ public class CrystalGuardianAi {
     }
 
     public static void updateActivity(CrystalGuardian guardian) {
-        guardian.getBrain()
+        guardian
+                .getBrain()
                 .setActiveActivityToFirstValid(ImmutableList.of(Activity.FIGHT, Activity.IDLE));
     }
 }

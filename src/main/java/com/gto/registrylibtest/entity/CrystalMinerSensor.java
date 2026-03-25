@@ -3,7 +3,6 @@ package com.gto.registrylibtest.entity;
 import com.google.common.collect.ImmutableSet;
 
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.player.Player;
@@ -12,10 +11,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * 自定义传感器：扫描附近 16 格内的玩家，检查是否有人最近挖掘了晶体矿。
- * 如果发现，将最近的挖矿玩家写入 {@code CRYSTAL_MINER_MEMORY}。
- */
+/** 自定义传感器：扫描附近 16 格内的玩家，检查是否有人最近挖掘了晶体矿。 如果发现，将最近的挖矿玩家写入 {@code CRYSTAL_MINER_MEMORY}。 */
 public class CrystalMinerSensor extends Sensor<CrystalGuardian> {
 
     public CrystalMinerSensor() {
@@ -34,7 +30,8 @@ public class CrystalMinerSensor extends Sensor<CrystalGuardian> {
                 .map(p -> (Player) p);
 
         if (nearestMiner.isPresent()) {
-            entity.getBrain()
+            entity
+                    .getBrain()
                     .setMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY.get(), nearestMiner.get());
         } else {
             entity.getBrain().eraseMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY.get());

@@ -1,5 +1,9 @@
 package com.gto.registrylib.datagen.provider;
 
+import java.util.function.Supplier;
+
+import javax.annotation.Nullable;
+
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.util.DataIngredient;
 
@@ -11,19 +15,26 @@ import net.minecraft.advancements.criterion.ItemPredicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.data.recipes.*;
+import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.data.recipes.RecipeOutput;
+import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.ShapelessRecipeBuilder;
+import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStackTemplate;
-import net.minecraft.world.item.crafting.*;
+import net.minecraft.world.item.crafting.AbstractCookingRecipe;
+import net.minecraft.world.item.crafting.BlastingRecipe;
+import net.minecraft.world.item.crafting.CookingBookCategory;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.common.conditions.ICondition;
-
-import java.util.function.Supplier;
-
-import javax.annotation.Nullable;
 
 public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeOutput {
 
@@ -52,6 +63,36 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
                        @Nullable AdvancementHolder advancement,
                        ICondition... conditions) {
         outputDelegated.accept(key, recipe, advancement, conditions);
+    }
+
+    /**
+     * Accepts a recipe using a specific {@link RecipeSerializer} for the {@code "type"} field,
+     * instead of the recipe's own {@code getSerializer()}. Used by {@code copyRecipe} to emit JSON
+     * with the correct copied type identifier.
+     *
+     * <p>
+     * Bypasses the standard {@link net.minecraft.data.recipes.RecipeOutput} pipeline because
+     * {@code Recipe.CODEC} dispatches on {@code recipe.getSerializer()} which returns the original
+     * (vanilla/source) serializer. Instead, we manually encode the recipe body using the copy
+     * serializer's codec and inject the correct {@code "type"} field.
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends Recipe<?>> void acceptWithSerializer(
+                                                           ResourceKey<Recipe<?>> key, T recipe, RecipeSerializer<T> serializer) {
+        var ops = registries.createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
+        // Encode the recipe body using the serializer's MapCodec (same codec as the original)
+        com.google.gson.JsonElement body = ((com.mojang.serialization.MapCodec<T>) serializer.codec())
+                .codec()
+                .encodeStart(ops, recipe)
+                .getOrThrow(
+                        msg -> new IllegalStateException(
+                                "Failed to encode recipe " + key.identifier() + ": " + msg));
+        // Add the "type" field with the copy serializer's registry name
+        Identifier serializerId = net.minecraft.core.registries.BuiltInRegistries.RECIPE_SERIALIZER.getKey(serializer);
+        com.google.gson.JsonObject json = body.getAsJsonObject();
+        json.addProperty("type", serializerId.toString());
+        // Store for deferred writing (CachedOutput not available here)
+        runner.deferredWrites.add(new RegistryLibRecipeRunner.DeferredRecipeWrite(key, json));
     }
 
     @Override
