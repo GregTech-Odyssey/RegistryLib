@@ -1,21 +1,24 @@
 package com.gto.registrylib.builders;
 
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Nonnull;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.util.entry.RecipeEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
-
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
-
-import javax.annotation.Nonnull;
 
 /**
  * 配方类型 Builder，一次性注册 {@link RecipeType} + {@link RecipeSerializer}。
@@ -42,6 +45,21 @@ import javax.annotation.Nonnull;
  * }
  * }</pre>
  *
+ * <h3>Custom Factories</h3>
+ *
+ * <pre>{@code
+ * // Custom RecipeType factory
+ * .<MyRecipe>recipeType("my_recipe")
+ *         .typeFactory(id -> new MyCustomRecipeType<>(id))
+ *         .serializer(MyRecipe.CODEC, MyRecipe.STREAM_CODEC)
+ *         .register();
+ *
+ * // Custom RecipeSerializer factory (alternative to serializer())
+ * .<MyRecipe>recipeType("my_recipe")
+ *         .serializerFactory(() -> MyRecipe.SERIALIZER)
+ *         .register();
+ * }</pre>
+ *
  * @param <T> the concrete recipe type
  * @param <P> the parent type (for builder chaining)
  */
@@ -53,6 +71,8 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
 
     private MapCodec<T> codec;
     private StreamCodec<RegistryFriendlyByteBuf, T> streamCodec;
+    private Function<Identifier, RecipeType<T>> typeFactory;
+    private Supplier<RecipeSerializer<T>> serializerFactory;
 
     protected RecipeTypeBuilder(RegistryCore core, P parent, String name) {
         this.core = core;
@@ -81,6 +101,46 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
         return this;
     }
 
+    /**
+     * 自定义 {@link RecipeType} 的创建工厂。默认使用 {@code RecipeType.simple(id)}。
+     *
+     * <p>
+     * Overrides how the {@link RecipeType} is created. By default, {@code RecipeType.simple(id)} is
+     * used. The function receives the registry {@link Identifier} (e.g. {@code modid:name}).
+     *
+     * <pre>{@code
+     * .<MyRecipe>recipeType("my_recipe")
+     *         .typeFactory(id -> new MyCustomRecipeType<>(id))
+     *         .serializer(MyRecipe.CODEC, MyRecipe.STREAM_CODEC)
+     *         .register();
+     * }</pre>
+     */
+    @StandardAPI
+    public RecipeTypeBuilder<T, P> typeFactory(@Nonnull Function<Identifier, RecipeType<T>> typeFactory) {
+        this.typeFactory = typeFactory;
+        return this;
+    }
+
+    /**
+     * 自定义 {@link RecipeSerializer} 的创建工厂，替代 {@link #serializer(MapCodec, StreamCodec)}。
+     *
+     * <p>
+     * Provides a custom factory for the {@link RecipeSerializer}, as an alternative to {@link
+     * #serializer(MapCodec, StreamCodec)}. Use this when you have a pre-existing serializer
+     * instance or need custom construction logic.
+     *
+     * <pre>{@code
+     * .<MyRecipe>recipeType("my_recipe")
+     *         .serializerFactory(() -> MyRecipe.SERIALIZER)
+     *         .register();
+     * }</pre>
+     */
+    @StandardAPI
+    public RecipeTypeBuilder<T, P> serializerFactory(@Nonnull Supplier<RecipeSerializer<T>> serializerFactory) {
+        this.serializerFactory = serializerFactory;
+        return this;
+    }
+
     // === Registration ===
 
     /**
@@ -94,20 +154,28 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
     @StandardAPI
     @SuppressWarnings("unchecked")
     public RecipeEntry<T> register() {
-        if (codec == null || streamCodec == null) {
+        boolean hasCodecs = codec != null && streamCodec != null;
+        if (!hasCodecs && serializerFactory == null) {
             throw new IllegalStateException(
-                    "RecipeTypeBuilder for '" + name + "' requires serializer(codec, streamCodec) before register()");
+                    "RecipeTypeBuilder for '" + name + "' requires serializer(codec, streamCodec) or serializerFactory() before register()");
         }
 
-        // Register RecipeType
+        // Register RecipeType (custom factory or default)
+        Function<Identifier, RecipeType<T>> tf = typeFactory != null ? typeFactory : RecipeType::simple;
         var typeEntry = (RegistryEntry<RecipeType<?>, RecipeType<T>>) (RegistryEntry) core.simple(
-                name, Registries.RECIPE_TYPE, key -> RecipeType.simple(key.identifier()));
+                name, Registries.RECIPE_TYPE, key -> tf.apply(key.identifier()));
 
-        // Register RecipeSerializer
-        final MapCodec<T> c = codec;
-        final StreamCodec<RegistryFriendlyByteBuf, T> sc = streamCodec;
+        // Register RecipeSerializer (custom factory or default from codec+streamCodec)
+        final Supplier<RecipeSerializer<T>> sf;
+        if (serializerFactory != null) {
+            sf = serializerFactory;
+        } else {
+            final MapCodec<T> c = codec;
+            final StreamCodec<RegistryFriendlyByteBuf, T> sc = streamCodec;
+            sf = () -> new RecipeSerializer<>(c, sc);
+        }
         var serializerEntry = (RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>>) (RegistryEntry) core.simple(
-                name, Registries.RECIPE_SERIALIZER, key -> new RecipeSerializer<>(c, sc));
+                name, Registries.RECIPE_SERIALIZER, key -> sf.get());
 
         return new RecipeEntry<>(core, typeEntry, serializerEntry);
     }

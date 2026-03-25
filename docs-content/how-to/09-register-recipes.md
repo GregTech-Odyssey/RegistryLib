@@ -126,6 +126,47 @@ ENTRY.addRecipe("name", registries -> new MyRecipe(
 `RecipeSerializer` in NeoForge 26.1 is a **record**, not an interface. The builder constructs it via `new RecipeSerializer<>(codec, streamCodec)` automatically.
 :::
 
+## Custom Factories
+
+By default, `RecipeTypeBuilder` creates `RecipeType` via `RecipeType.simple(id)` and `RecipeSerializer` via `new RecipeSerializer<>(codec, streamCodec)`. You can override either or both with custom factory functions.
+
+### Custom RecipeType Factory
+
+Use `.typeFactory()` to provide a custom `RecipeType` creation function. The function receives the registry `Identifier`.
+
+```java
+public static final RecipeEntry<MyRecipe> MY_RECIPE = REGISTRYLIB
+        .<MyRecipe>recipeType("my_recipe")
+        .typeFactory(id -> new MyCustomRecipeType<>(id))
+        .serializer(MyRecipe.CODEC, MyRecipe.STREAM_CODEC)
+        .register();
+```
+
+### Custom RecipeSerializer Factory
+
+Use `.serializerFactory()` as an alternative to `.serializer(codec, streamCodec)`. This is useful when you already have a pre-built serializer instance.
+
+```java
+public static final RecipeEntry<MyRecipe> MY_RECIPE = REGISTRYLIB
+        .<MyRecipe>recipeType("my_recipe")
+        .serializerFactory(() -> MyRecipe.SERIALIZER)
+        .register();
+```
+
+### Both Custom Factories
+
+```java
+public static final RecipeEntry<InfuserRecipe> INFUSER_CUSTOM = REGISTRYLIB
+        .<InfuserRecipe>recipeType("infuser_custom")
+        .typeFactory(id -> RecipeType.simple(id))
+        .serializerFactory(() -> new RecipeSerializer<>(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC))
+        .register();
+```
+
+:::tip
+`.serializerFactory()` and `.serializer(codec, streamCodec)` are alternatives — use one or the other. If `serializerFactory` is set, it takes priority.
+:::
+
 ## Full Recipe with Machine Tier (Infuser)
 
 For complex machines that need extra context during recipe matching (e.g. machine tier), define a custom `RecipeInput`. This example also demonstrates all supported ingredient types.
@@ -555,6 +596,8 @@ ALTAR.addRecipe("cobblestone_to_stone",
 |---|---|
 | `recipeType(name)` | Start recipe type builder (returns `RecipeTypeBuilder`) |
 | `.serializer(codec, streamCodec)` | Set the codecs for the `RecipeSerializer` |
+| `.typeFactory(function)` | Custom `RecipeType` creation factory (receives `Identifier`) |
+| `.serializerFactory(supplier)` | Custom `RecipeSerializer` factory (alternative to `.serializer()`) |
 | `.register()` | Register and return `RecipeEntry<T>` |
 | `.build()` | Register and return parent (for chaining) |
 

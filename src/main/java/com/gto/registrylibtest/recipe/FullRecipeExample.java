@@ -1,5 +1,7 @@
 package com.gto.registrylibtest.recipe;
 
+import java.awt.Color;
+
 import com.gto.registrylib.util.ColorUtil;
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntityEntry;
@@ -14,12 +16,12 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.crafting.CompoundIngredient;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.DifferenceIngredient;
-
-import java.awt.Color;
 
 /**
  * 使用全部 Recipe API 的复杂配方注册示例：注入器（Infuser）。
@@ -34,6 +36,7 @@ import java.awt.Color;
  *
  * <ul>
  * <li>配方类型（RecipeType + RecipeSerializer） — {@link #INFUSER}
+ * <li>自定义工厂配方类型 — {@link #INFUSER_CUSTOM}
  * <li>T1 注入器 — {@link #INFUSER_T1}
  * <li>T2 注入器 — {@link #INFUSER_T2}
  * <li>方块实体 — {@link #INFUSER_BE}
@@ -54,8 +57,21 @@ public class FullRecipeExample {
             .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
             .register();
 
+    // ── 自定义工厂配方类型注册 ────────────────────────────────────────────
+    // Register with custom RecipeType and RecipeSerializer factories.
+    // typeFactory: override the default RecipeType.simple(id) creation.
+    // serializerFactory: provide a pre-built RecipeSerializer instead of codec+streamCodec.
+
+    public static final RecipeEntry<InfuserRecipe> INFUSER_CUSTOM = RegistryLibTest.REGISTRYLIB
+            .<InfuserRecipe>recipeType("infuser_custom")
+            .typeFactory(id -> RecipeType.simple(id))
+            .serializerFactory(() -> new RecipeSerializer<>(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC))
+            .register();
+
     // ── 配方实例注册（数据生成） ────────────────────────────────────────────
     static {
+        // === INFUSER recipes ===
+
         // 1) 单物品 Ingredient — 基础用法
         // Single-item Ingredient — basic usage.
         INFUSER.addRecipe(
@@ -125,6 +141,18 @@ public class FullRecipeExample {
                         80,
                         20.0F,
                         2));
+
+        // === INFUSER_CUSTOM recipes (custom factory demo) ===
+        // 使用自定义工厂注册的配方类型同样可以正常添加配方。
+        // Recipe types registered with custom factories work the same way.
+        INFUSER_CUSTOM.addRecipe(
+                "custom_iron_to_gold",
+                new InfuserRecipe(
+                        Ingredient.of(Items.IRON_INGOT),
+                        new ItemStackTemplate(Items.GOLD_INGOT),
+                        30,
+                        5.0F,
+                        1));
     }
 
     // ── T1 注入器方块 ─────────────────────────────────────────────────────
