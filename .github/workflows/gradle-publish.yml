@@ -168,7 +168,7 @@ jobs:
           token: ${{ secrets.CURSEFORGE_API_TOKEN }}
           project_id: ${{ vars.CURSEFORGE_PROJECT_ID }}
           game_endpoint: minecraft
-          game_versions: "26.1-snapshot,NeoForge,Java 25"
+          game_versions: "26.1,NeoForge,Java 25"
           file_path: ${{ steps.find_jar.outputs.jar_path }}
           display_name: "registrylib-${{ needs.check-version.outputs.version }}.jar"
           release_type: release
