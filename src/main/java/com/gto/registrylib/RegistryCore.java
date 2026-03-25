@@ -22,10 +22,7 @@ import com.gto.registrylib.util.DebugMarkers;
 import com.gto.registrylib.util.Environment;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
-import com.gto.registrylib.util.entry.ExtendRecipeEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
-import com.gto.registrylib.util.entry.RecipeEntry;
-import com.gto.registrylib.util.entry.RecipeRef;
 import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
@@ -489,58 +486,65 @@ public class RegistryCore {
         return recipeType(parent, name);
     }
 
-    // --- Recipe Type: extend & copy ---
+    // --- Add Recipes (standalone, no RecipeType registration) ---
 
     /**
-     * 向已有的配方类型（原版或第三方）注入额外配方，不注册新的 RecipeType。
+     * 向数据生成器添加一条配方。配方 JSON 将生成到 {@code data/<modid>/recipe/<id>.json}。
      *
      * <p>
-     * Injects additional recipes into an existing {@link
-     * net.minecraft.world.item.crafting.RecipeType} (vanilla, NeoForge, or third-party) without
-     * registering a new type. The generated JSON files will have their {@code "type"} field pointing
-     * to the target type, and the recipe key namespace will be this mod's modid.
+     * Adds a recipe for datagen. The JSON file will be emitted at {@code
+     * data/<modid>/recipe/<id>.json}. This is the low-level API; for custom recipe types registered
+     * via {@link #recipeType}, prefer {@link com.gto.registrylib.util.entry.RecipeEntry#addRecipe}.
      *
-     * <pre>{@code
-     * public static final ExtendRecipeEntry<SmeltingRecipe> EXTRA_SMELTING =
-     *     REGISTRYLIB.extendRecipe(RecipeRef.of(RecipeType.SMELTING, SmeltingRecipe.SERIALIZER))
-     *         .addRecipe("smelt_obsidian", new SmeltingRecipe(...));
-     * }</pre>
-     *
-     * @param ref the target recipe type reference
-     * @param <T> the concrete recipe type
-     * @return an ExtendRecipeEntry for adding recipes
+     * @param id     the recipe path (e.g. {@code "altar/cobblestone_to_stone"})
+     * @param recipe the recipe instance
      */
-    @StandardAPI("Creates an ExtendRecipeEntry to inject recipes into an existing RecipeType.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> ExtendRecipeEntry<T> extendRecipe(
-                                                                                                     @Nonnull RecipeRef<T> ref) {
-        return RecipeTypeBuilder.extend(this, ref);
+    @StandardAPI("Adds a recipe instance for datagen.")
+    public void addRecipe(
+                          @Nonnull String id, @Nonnull net.minecraft.world.item.crafting.Recipe<?> recipe) {
+        addRecipe(id, _reg -> recipe);
     }
 
     /**
-     * 创建一个新的 RecipeType，复用目标类型的 codec（序列化格式相同）。
+     * 向数据生成器添加一条延迟创建的配方。
      *
      * <p>
-     * Registers a new {@link net.minecraft.world.item.crafting.RecipeType} and {@link
-     * net.minecraft.world.item.crafting.RecipeSerializer} under {@code newName}, reusing the codec
-     * from the target {@link RecipeRef}'s serializer. The returned {@link RecipeEntry} can be used to
-     * add recipes via {@link RecipeEntry#addRecipe}.
+     * Adds a lazily-created recipe for datagen.
      *
-     * <pre>{@code
-     * public static final RecipeEntry<SmeltingRecipe> ELECTRIC_FURNACE =
-     *     REGISTRYLIB.copyRecipe("electric_furnace",
-     *             RecipeRef.of(RecipeType.SMELTING, SmeltingRecipe.SERIALIZER))
-     *         .addRecipe("smelt_bedrock", new SmeltingRecipe(...));
-     * }</pre>
-     *
-     * @param newName the name for the new RecipeType
-     * @param ref     the source recipe type to copy codec from
-     * @param <T>     the concrete recipe type
-     * @return a RecipeEntry wrapping the newly registered type
+     * @param id             the recipe path
+     * @param recipeSupplier a supplier that provides the recipe instance
      */
-    @StandardAPI("Registers a new RecipeType+Serializer cloned from an existing type's codec.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeEntry<T> copyRecipe(
-                                                                                             @Nonnull String newName, @Nonnull RecipeRef<T> ref) {
-        return RecipeTypeBuilder.copy(this, newName, ref);
+    @StandardAPI("Adds a lazily-created recipe for datagen.")
+    public void addRecipe(
+                          @Nonnull String id,
+                          @Nonnull Supplier<? extends net.minecraft.world.item.crafting.Recipe<?>> recipeSupplier) {
+        addRecipe(id, _reg -> recipeSupplier.get());
+    }
+
+    /**
+     * 向数据生成器添加一条需要注册表查找的配方（例如基于 Tag 的 Ingredient）。
+     *
+     * <p>
+     * Adds a recipe for datagen that requires registry lookups.
+     *
+     * @param id            the recipe path
+     * @param recipeFactory a function that receives the registries and produces a recipe
+     */
+    @StandardAPI("Adds a recipe for datagen that requires registry lookups.")
+    public void addRecipe(
+                          @Nonnull String id,
+                          @Nonnull Function<net.minecraft.core.HolderLookup.Provider, ? extends net.minecraft.world.item.crafting.Recipe<?>> recipeFactory) {
+        if (doDatagen()) {
+            final String modid = getModid();
+            addDataGenerator(
+                    ProviderType.RECIPE,
+                    (com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider prov) -> prov.accept(
+                            net.minecraft.resources.ResourceKey.create(
+                                    net.minecraft.core.registries.Registries.RECIPE,
+                                    net.minecraft.resources.Identifier.fromNamespaceAndPath(modid, id)),
+                            recipeFactory.apply(prov.registries()),
+                            null));
+        }
     }
 
     // --- Custom Ingredient Types ---
@@ -555,18 +559,16 @@ public class RegistryCore {
      *
      * @param name  the ingredient type registry name
      * @param codec the MapCodec for serializing / deserializing the custom ingredient
-     * @return an {@link com.gto.registrylib.util.entry.IngredientTypeEntry} wrapping the registered
-     *         type
+     * @return a {@link RegistryEntry} wrapping the registered type
      */
     @SuppressWarnings("unchecked")
-    @StandardAPI("Registers a custom IngredientType and returns a typed IngredientTypeEntry.")
-    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> com.gto.registrylib.util.entry.IngredientTypeEntry<T> ingredientType(
-                                                                                                                                                     @Nonnull String name, @Nonnull com.mojang.serialization.MapCodec<T> codec) {
-        var entry = (RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>>) (RegistryEntry) simple(
+    @StandardAPI("Registers a custom IngredientType and returns a RegistryEntry.")
+    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>> ingredientType(
+                                                                                                                                                                                                                                 @Nonnull String name, @Nonnull com.mojang.serialization.MapCodec<T> codec) {
+        return (RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>>) (RegistryEntry) simple(
                 name,
                 net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES,
                 key -> new net.neoforged.neoforge.common.crafting.IngredientType<>(codec));
-        return new com.gto.registrylib.util.entry.IngredientTypeEntry<>(entry);
     }
 
     /**
@@ -581,20 +583,19 @@ public class RegistryCore {
      * @param name        the ingredient type registry name
      * @param codec       the MapCodec
      * @param streamCodec the StreamCodec for network syncing
-     * @return an {@link com.gto.registrylib.util.entry.IngredientTypeEntry}
+     * @return a {@link RegistryEntry} wrapping the registered type
      */
     @SuppressWarnings("unchecked")
     @StandardAPI("Registers a custom IngredientType with explicit StreamCodec.")
-    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> com.gto.registrylib.util.entry.IngredientTypeEntry<T> ingredientType(
-                                                                                                                                                     @Nonnull String name,
-                                                                                                                                                     @Nonnull com.mojang.serialization.MapCodec<T> codec,
-                                                                                                                                                     @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
-        var entry = (RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>>) (RegistryEntry) simple(
+    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>> ingredientType(
+                                                                                                                                                                                                                                 @Nonnull String name,
+                                                                                                                                                                                                                                 @Nonnull com.mojang.serialization.MapCodec<T> codec,
+                                                                                                                                                                                                                                 @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+        return (RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>>) (RegistryEntry) simple(
                 name,
                 net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES,
                 key -> new net.neoforged.neoforge.common.crafting.IngredientType<>(
                         codec, streamCodec));
-        return new com.gto.registrylib.util.entry.IngredientTypeEntry<>(entry);
     }
 
     // --- Custom Fluid Ingredient Types ---
@@ -609,18 +610,16 @@ public class RegistryCore {
      *
      * @param name  the fluid ingredient type registry name
      * @param codec the MapCodec for serializing / deserializing the custom fluid ingredient
-     * @return a {@link com.gto.registrylib.util.entry.FluidIngredientTypeEntry} wrapping the
-     *         registered type
+     * @return a {@link RegistryEntry} wrapping the registered type
      */
     @SuppressWarnings("unchecked")
-    @StandardAPI("Registers a custom FluidIngredientType and returns a typed FluidIngredientTypeEntry.")
-    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> com.gto.registrylib.util.entry.FluidIngredientTypeEntry<T> fluidIngredientType(
-                                                                                                                                                             @Nonnull String name, @Nonnull com.mojang.serialization.MapCodec<T> codec) {
-        var entry = (RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>>) (RegistryEntry) simple(
+    @StandardAPI("Registers a custom FluidIngredientType and returns a RegistryEntry.")
+    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>> fluidIngredientType(
+                                                                                                                                                                                                                                              @Nonnull String name, @Nonnull com.mojang.serialization.MapCodec<T> codec) {
+        return (RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>>) (RegistryEntry) simple(
                 name,
                 net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_INGREDIENT_TYPES,
                 key -> new net.neoforged.neoforge.fluids.crafting.FluidIngredientType<>(codec));
-        return new com.gto.registrylib.util.entry.FluidIngredientTypeEntry<>(entry);
     }
 
     /**
@@ -635,20 +634,19 @@ public class RegistryCore {
      * @param name        the fluid ingredient type registry name
      * @param codec       the MapCodec
      * @param streamCodec the StreamCodec for network syncing
-     * @return a {@link com.gto.registrylib.util.entry.FluidIngredientTypeEntry}
+     * @return a {@link RegistryEntry} wrapping the registered type
      */
     @SuppressWarnings("unchecked")
     @StandardAPI("Registers a custom FluidIngredientType with explicit StreamCodec.")
-    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> com.gto.registrylib.util.entry.FluidIngredientTypeEntry<T> fluidIngredientType(
-                                                                                                                                                             @Nonnull String name,
-                                                                                                                                                             @Nonnull com.mojang.serialization.MapCodec<T> codec,
-                                                                                                                                                             @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
-        var entry = (RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>>) (RegistryEntry) simple(
+    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>> fluidIngredientType(
+                                                                                                                                                                                                                                              @Nonnull String name,
+                                                                                                                                                                                                                                              @Nonnull com.mojang.serialization.MapCodec<T> codec,
+                                                                                                                                                                                                                                              @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+        return (RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>>) (RegistryEntry) simple(
                 name,
                 net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_INGREDIENT_TYPES,
                 key -> new net.neoforged.neoforge.fluids.crafting.FluidIngredientType<>(
                         codec, streamCodec));
-        return new com.gto.registrylib.util.entry.FluidIngredientTypeEntry<>(entry);
     }
 
     // --- Enchantments (Builder) ---

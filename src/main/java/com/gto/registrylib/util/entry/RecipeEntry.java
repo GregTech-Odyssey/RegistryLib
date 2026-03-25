@@ -2,12 +2,8 @@ package com.gto.registrylib.util.entry;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
-import com.gto.registrylib.datagen.ProviderType;
-import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -16,12 +12,6 @@ import net.minecraft.world.item.crafting.RecipeType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -55,10 +45,6 @@ public class RecipeEntry<T extends Recipe<?>> {
     /** -- GETTER -- Returns the RecipeSerializer RegistryEntry. */
     @Getter
     private final RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>> serializerEntry;
-
-    // === copy 支持：记录本 Entry 已注册的所有 (key, factory) ===
-    // 仅在 doDatagen() 为 true 时填充，运行时为空列表，零开销。
-    private final List<Map.Entry<String, Function<HolderLookup.Provider, T>>> registeredRecipes = new ArrayList<>();
 
     public RecipeEntry(
                        RegistryCore core,
@@ -123,62 +109,12 @@ public class RecipeEntry<T extends Recipe<?>> {
     @StandardAPI
     public RecipeEntry<T> addRecipe(
                                     @NotNull String recipeName, @NotNull Function<HolderLookup.Provider, T> recipeFactory) {
-        if (core.doDatagen()) {
-            registeredRecipes.add(new AbstractMap.SimpleImmutableEntry<>(recipeName, recipeFactory));
-            final String modid = core.getModid();
-            final String typeName = typeEntry.getKey().identifier().getPath();
-            core.addDataGenerator(
-                    ProviderType.RECIPE,
-                    (RegistryLibRecipeProvider prov) -> prov.acceptWithSerializer(
-                            ResourceKey.create(
-                                    Registries.RECIPE,
-                                    Identifier.fromNamespaceAndPath(modid, typeName + "/" + recipeName)),
-                            recipeFactory.apply(prov.registries()),
-                            serializerEntry.get()));
-        }
-        return this;
-    }
-
-    /**
-     * 添加自定义的配方数据生成回调，可直接操作 {@link RegistryLibRecipeProvider}。
-     *
-     * <p>
-     * Adds a custom datagen callback for full control over recipe output. The provider's {@code
-     * accept()} method is automatically overridden to use this entry's copy serializer, so vanilla
-     * builders like {@code SimpleCookingRecipeBuilder} will produce the correct {@code "type"} field.
-     *
-     * @param datagen the datagen callback
-     * @return this entry for chaining
-     */
-    @StandardAPI
-    public RecipeEntry<T> customRecipeData(@NotNull Consumer<RegistryLibRecipeProvider> datagen) {
-        if (core.doDatagen()) {
-            core.addDataGenerator(
-                    ProviderType.RECIPE,
-                    (RegistryLibRecipeProvider prov) -> {
-                        prov.pushSerializerOverride(serializerEntry.get());
-                        try {
-                            datagen.accept(prov);
-                        } finally {
-                            prov.popSerializerOverride();
-                        }
-                    });
-        }
+        String typeName = typeEntry.getKey().identifier().getPath();
+        core.addRecipe(typeName + "/" + recipeName, recipeFactory);
         return this;
     }
 
     // === Accessors ===
-
-    /**
-     * 返回本 Entry 已注册的所有配方工厂（仅 datagen 时有内容）。
-     *
-     * <p>
-     * Returns all recipe factories registered on this entry. Only populated during datagen. Used
-     * internally by {@code copyRecipe} to mirror recipes.
-     */
-    public List<Map.Entry<String, Function<HolderLookup.Provider, T>>> getRegisteredRecipes() {
-        return Collections.unmodifiableList(registeredRecipes);
-    }
 
     /** Returns the registered RecipeType. */
     public RecipeType<T> getType() {

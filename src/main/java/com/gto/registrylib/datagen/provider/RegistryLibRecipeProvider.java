@@ -27,7 +27,6 @@ import net.minecraft.world.item.crafting.BlastingRecipe;
 import net.minecraft.world.item.crafting.CookingBookCategory;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.common.conditions.ICondition;
@@ -41,31 +40,11 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
     private final RegistryLibRecipeRunner runner;
     private final RecipeOutput outputDelegated;
 
-    // When non-null, accept() routes through acceptWithSerializer() using this serializer.
-    // Set temporarily by RecipeEntry.customRecipeData() for copy-recipe support.
-    @Nullable
-    private RecipeSerializer<?> serializerOverride;
-
     public RegistryLibRecipeProvider(
                                      RegistryLibRecipeRunner runner, HolderLookup.Provider registries, RecipeOutput output) {
         super(registries, output);
         this.runner = runner;
         this.outputDelegated = output;
-    }
-
-    /**
-     * Temporarily overrides the serializer used by {@link #accept}. While active, all recipes
-     * accepted through this provider will be routed through {@link #acceptWithSerializer} with the
-     * given serializer, producing the correct {@code "type"} field for copy recipes.
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends Recipe<?>> void pushSerializerOverride(RecipeSerializer<T> serializer) {
-        this.serializerOverride = serializer;
-    }
-
-    /** Clears the serializer override set by {@link #pushSerializerOverride}. */
-    public void popSerializerOverride() {
-        this.serializerOverride = null;
     }
 
     @Override
@@ -76,48 +55,13 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
     }
 
     // Delegate RecipeOutput methods
-    @SuppressWarnings("unchecked")
     @Override
     public void accept(
                        ResourceKey<Recipe<?>> key,
                        Recipe<?> recipe,
                        @Nullable AdvancementHolder advancement,
                        ICondition... conditions) {
-        if (serializerOverride != null) {
-            acceptWithSerializer(key, recipe, (RecipeSerializer) serializerOverride);
-        } else {
-            outputDelegated.accept(key, recipe, advancement, conditions);
-        }
-    }
-
-    /**
-     * Accepts a recipe using a specific {@link RecipeSerializer} for the {@code "type"} field,
-     * instead of the recipe's own {@code getSerializer()}. Used by {@code copyRecipe} to emit JSON
-     * with the correct copied type identifier.
-     *
-     * <p>
-     * Bypasses the standard {@link net.minecraft.data.recipes.RecipeOutput} pipeline because
-     * {@code Recipe.CODEC} dispatches on {@code recipe.getSerializer()} which returns the original
-     * (vanilla/source) serializer. Instead, we manually encode the recipe body using the copy
-     * serializer's codec and inject the correct {@code "type"} field.
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends Recipe<?>> void acceptWithSerializer(
-                                                           ResourceKey<Recipe<?>> key, T recipe, RecipeSerializer<T> serializer) {
-        var ops = registries.createSerializationContext(com.mojang.serialization.JsonOps.INSTANCE);
-        // Encode the recipe body using the serializer's MapCodec (same codec as the original)
-        com.google.gson.JsonElement body = ((com.mojang.serialization.MapCodec<T>) serializer.codec())
-                .codec()
-                .encodeStart(ops, recipe)
-                .getOrThrow(
-                        msg -> new IllegalStateException(
-                                "Failed to encode recipe " + key.identifier() + ": " + msg));
-        // Add the "type" field with the copy serializer's registry name
-        Identifier serializerId = net.minecraft.core.registries.BuiltInRegistries.RECIPE_SERIALIZER.getKey(serializer);
-        com.google.gson.JsonObject json = body.getAsJsonObject();
-        json.addProperty("type", serializerId.toString());
-        // Store for deferred writing (CachedOutput not available here)
-        runner.deferredWrites.add(new RegistryLibRecipeRunner.DeferredRecipeWrite(key, json));
+        outputDelegated.accept(key, recipe, advancement, conditions);
     }
 
     @Override

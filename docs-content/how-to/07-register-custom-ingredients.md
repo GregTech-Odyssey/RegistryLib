@@ -100,11 +100,11 @@ Use `REGISTRYLIB.ingredientType()` to register:
 
 ```java
 // With auto-derived StreamCodec (simplest)
-public static final IngredientTypeEntry<MinDurabilityIngredient> MIN_DURABILITY =
+public static final RegistryEntry<IngredientType<?>, IngredientType<MinDurabilityIngredient>> MIN_DURABILITY =
         REGISTRYLIB.ingredientType("min_durability", MinDurabilityIngredient.CODEC);
 
 // With explicit StreamCodec (for non-simple ingredients)
-public static final IngredientTypeEntry<MinDurabilityIngredient> MIN_DURABILITY =
+public static final RegistryEntry<IngredientType<?>, IngredientType<MinDurabilityIngredient>> MIN_DURABILITY =
         REGISTRYLIB.ingredientType(
                 "min_durability",
                 MinDurabilityIngredient.CODEC,
@@ -173,12 +173,9 @@ Any recipe that uses `Ingredient.CODEC` in its serializer automatically supports
 | `.fluidIngredientType(name, codec)` | Register `FluidIngredientType` with auto-derived StreamCodec |
 | `.fluidIngredientType(name, codec, streamCodec)` | Register `FluidIngredientType` with explicit StreamCodec |
 
-### IngredientTypeEntry / FluidIngredientTypeEntry
+### RegistryEntry for IngredientType
 
-| Method | Purpose |
-|---|---|
-| `.get()` | Get the registered `IngredientType<T>` |
-| `.getEntry()` | Get the underlying `RegistryEntry` |
+The return type is `RegistryEntry<IngredientType<?>, IngredientType<T>>`. Use `.get()` to obtain the registered `IngredientType<T>`.
 
 ### ICustomIngredient Contract
 

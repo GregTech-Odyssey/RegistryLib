@@ -144,52 +144,6 @@ boolean match = CRYSTAL_GUARDIAN.is(someEntity);
 Entities with attributes (any `LivingEntity` subclass) **must** call `.attributes()` on the builder. Omitting it causes a crash at entity spawn time.
 :::
 
-## RecipeRef\<T\>
-
-A lazy reference to an existing `RecipeType<T>` + `RecipeSerializer<T>` pair. Used as input for `extendRecipe()` and `copyRecipe()`.
-
-| Factory Method | Parameters | Description |
-| --- | --- | --- |
-| `RecipeRef.of(type, serializer)` | `RecipeType<T>, RecipeSerializer<T>` | Reference a vanilla or third-party recipe type |
-| `RecipeRef.of(entry)` | `RecipeEntry<T>` | Reference your own mod's registered type (lazily resolved) |
-
-| Method | Return type | Description |
-| --- | --- | --- |
-| `type()` | `RecipeType<T>` | Get the referenced RecipeType |
-| `serializer()` | `RecipeSerializer<T>` | Get the referenced RecipeSerializer |
-
-**Usage example:**
-
-```java
-// Vanilla types — resolved eagerly
-RecipeRef<SmeltingRecipe> SMELTING_REF =
-        RecipeRef.of(RecipeType.SMELTING, SmeltingRecipe.SERIALIZER);
-
-// Mod types — resolved lazily when accessed
-RecipeRef<AltarRecipe> ALTAR_REF =
-        RecipeRef.of(SimpleRecipeExample.ALTAR);
-```
-
-## ExtendRecipeEntry\<T\>
-
-Returned by `extendRecipe()`. Injects recipes into an existing type **without registering a new `RecipeType` or `RecipeSerializer`**. All three `addRecipe` overloads and `customRecipeData` are available. Chainable.
-
-| Method | Return type | Description |
-| --- | --- | --- |
-| `addRecipe(name, recipe)` | `ExtendRecipeEntry<T>` | Add a direct recipe instance |
-| `addRecipe(name, supplier)` | `ExtendRecipeEntry<T>` | Add a lazily-created recipe |
-| `addRecipe(name, function)` | `ExtendRecipeEntry<T>` | Add a registry-aware recipe factory |
-| `customRecipeData(consumer)` | `ExtendRecipeEntry<T>` | Raw control over RecipeProvider |
-
-**Usage example:**
-
-```java
-ExtendRecipeEntry<SmeltingRecipe> EXTRA_SMELTING = REGISTRYLIB
-        .<SmeltingRecipe>extendRecipe(SMELTING_REF)
-        .customRecipeData(prov -> SimpleCookingRecipeBuilder.smelting(...)
-                .save(prov, prov.safeKey(Items.AMETHYST_SHARD)));
-```
-
 ## See Also
 
 - [API Overview](/reference/api-overview) —entry point selection and common chains

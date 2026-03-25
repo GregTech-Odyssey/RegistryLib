@@ -3,7 +3,6 @@ package com.gto.registrylib.datagen;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.provider.RegistryLibLookupFillerProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibProvider;
-import com.gto.registrylib.datagen.provider.RegistryLibRecipeRunner;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 
 import com.google.common.collect.BiMap;
@@ -78,12 +77,7 @@ public class RegistryLibDataProvider implements DataProvider {
 
                     for (Map.Entry<ProviderType<?>, RegistryLibProvider> e : subProviders.entrySet()) {
                         LOGGER.debug("Generating data for type: {}", getTypeName(e.getKey()));
-                        CompletableFuture<?> future = e.getValue().run(cache);
-                        // Chain deferred recipe writes after the recipe runner completes
-                        if (e.getValue() instanceof RegistryLibRecipeRunner recipeRunner) {
-                            future = future.thenCompose(v -> recipeRunner.writeDeferredRecipes(cache));
-                        }
-                        list.add(future);
+                        list.add(e.getValue().run(cache));
                     }
 
                     return CompletableFuture.allOf(list.toArray(CompletableFuture[]::new));

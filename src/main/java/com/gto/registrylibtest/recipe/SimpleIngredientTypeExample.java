@@ -1,7 +1,9 @@
 package com.gto.registrylibtest.recipe;
 
-import com.gto.registrylib.util.entry.IngredientTypeEntry;
+import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylibtest.RegistryLibTest;
+
+import net.neoforged.neoforge.common.crafting.IngredientType;
 
 /**
  * 最简单的自定义 Ingredient 类型注册示例。
@@ -46,6 +48,8 @@ public class SimpleIngredientTypeExample {
     // ── Ingredient Type 注册 ─────────────────────────────────────────────────
     // Register our custom IngredientType. One line is all it takes.
 
-    public static final IngredientTypeEntry<MinDurabilityIngredient> MIN_DURABILITY = RegistryLibTest.REGISTRYLIB.ingredientType(
-            "min_durability", MinDurabilityIngredient.CODEC, MinDurabilityIngredient.STREAM_CODEC);
+    public static final RegistryEntry<IngredientType<?>, IngredientType<MinDurabilityIngredient>> MIN_DURABILITY = RegistryLibTest.REGISTRYLIB.ingredientType(
+            "min_durability",
+            MinDurabilityIngredient.CODEC,
+            MinDurabilityIngredient.STREAM_CODEC);
 }

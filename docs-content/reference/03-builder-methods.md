@@ -196,31 +196,23 @@ REGISTRYLIB.<MyMob>entity("my_mob", MyMob::new, MobCategory.MONSTER)
 Use `spawnEgg()` for a plain spawn egg. Use `spawnEgg(egg -> { ... })` to customise the egg's name, tabs, or tooltips via the inner `ItemBuilder`.
 :::
 
-## RegistryCore Extend / Copy Entry Points
+## RegistryCore addRecipe Entry Points
 
-These are **static factory methods** on `RegistryCore` (your `RegistryLib` instance), not builders. They return entry objects directly.
+These are **convenience methods** on `RegistryCore` (your `RegistryLib` instance). They add recipes to any recipe type (vanilla, NeoForge, or third-party) without registering a new `RecipeType`.
 
-| Method | Parameters | Returns | Description |
-| --- | --- | --- | --- |
-| `extendRecipe(ref)` | `RecipeRef<T>` | `ExtendRecipeEntry<T>` | Inject recipes into an existing type (no new registration) |
-| `copyRecipe(name, ref)` | `String, RecipeRef<T>` | `RecipeEntry<T>` | Create a new RecipeType + RecipeSerializer reusing an existing codec |
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `addRecipe(id, recipe)` | `String, Recipe<?>` | Add a direct recipe instance |
+| `addRecipe(id, supplier)` | `String, Supplier<? extends Recipe<?>>` | Add a lazily-created recipe |
+| `addRecipe(id, function)` | `String, Function<HolderLookup.Provider, ? extends Recipe<?>>` | Add a registry-aware recipe factory |
 
 **Example:**
 
 ```java
-// Extend — no new type registered
-ExtendRecipeEntry<SmeltingRecipe> EXTRA = REGISTRYLIB
-        .<SmeltingRecipe>extendRecipe(SMELTING_REF)
-        .addRecipe("name", recipe);
-
-// Copy — registers "yourmod:name" RecipeType + RecipeSerializer
-RecipeEntry<SmeltingRecipe> COPY = REGISTRYLIB
-        .<SmeltingRecipe>copyRecipe("electric_smelting", SMELTING_REF);
+// Add a vanilla smelting recipe under your mod's namespace
+REGISTRYLIB.addRecipe("smelting/amethyst_shard",
+        new SmeltingRecipe(...));
 ```
-
-:::warning
-For copy types, use `addRecipe()` instead of `customRecipeData()` to ensure the correct `"type"` field in generated JSON.
-:::
 
 ## See Also
 

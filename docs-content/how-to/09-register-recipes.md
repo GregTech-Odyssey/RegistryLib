@@ -483,58 +483,38 @@ MinDurabilityIngredient.of(ItemTags.SWORDS, 200)
 `Ingredient.CODEC` automatically handles all ingredient types, including custom ones. The codec dispatches based on the `"neoforge:ingredient_type"` field in JSON for custom ingredients, or uses the vanilla format for vanilla ingredients.
 :::
 
-## Extend Existing Recipe Types
+## Add Recipes to Vanilla / Third-Party Types
 
-Use `extendRecipe()` to inject additional recipes into an **existing** recipe type (vanilla, NeoForge, or third-party) **without registering a new type**. The generated JSON uses the original type's `"type"` field but lives under your mod's namespace.
-
-### Step 1: Create a RecipeRef
-
-`RecipeRef` is a lazy reference to an existing `RecipeType` + `RecipeSerializer` pair:
+Use `core.addRecipe()` to inject recipes into **existing** recipe types (vanilla, NeoForge, or third-party) **without registering a new type**. The generated JSON uses the original type's `"type"` field but lives under your mod's namespace.
 
 ```java
-// Reference vanilla smelting
-private static final RecipeRef<SmeltingRecipe> SMELTING_REF =
-        RecipeRef.of(RecipeType.SMELTING, SmeltingRecipe.SERIALIZER);
+// Add a vanilla smelting recipe
+REGISTRYLIB.addRecipe("smelting/amethyst_shard",
+        new SmeltingRecipe(
+                new Recipe.CommonInfo(true),
+                new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.BLOCKS, ""),
+                Ingredient.of(Items.COBBLESTONE),
+                new ItemStackTemplate(Items.AMETHYST_SHARD),
+                0.5F, 200));
 
-// Reference your own mod's type
-private static final RecipeRef<AltarRecipe> ALTAR_REF =
-        RecipeRef.of(SimpleRecipeExample.ALTAR);
-```
+// Lazy supplier variant
+REGISTRYLIB.addRecipe("smelting/copper_from_raw",
+        () -> new SmeltingRecipe(...));
 
-### Step 2: Extend with Recipes
-
-```java
-// Extend vanilla smelting — uses customRecipeData with SimpleCookingRecipeBuilder
-public static final ExtendRecipeEntry<SmeltingRecipe> EXTRA_SMELTING = REGISTRYLIB
-        .<SmeltingRecipe>extendRecipe(SMELTING_REF)
-        .customRecipeData(prov ->
-                SimpleCookingRecipeBuilder.smelting(
-                        Ingredient.of(Items.COBBLESTONE),
-                        RecipeCategory.MISC,
-                        CookingBookCategory.BLOCKS,
-                        Items.AMETHYST_SHARD, 0.5F, 200)
-                        .unlockedBy("has_cobblestone", prov.has(Items.COBBLESTONE))
-                        .save(prov, prov.safeKey(Items.AMETHYST_SHARD)));
-
-// Extend your own mod's altar type — uses addRecipe with direct instances
-public static final ExtendRecipeEntry<AltarRecipe> EXTENDED_ALTAR = REGISTRYLIB
-        .<AltarRecipe>extendRecipe(ALTAR_REF)
-        .addRecipe("extend_altar_sand_to_glass",
-                new AltarRecipe(Ingredient.of(Items.SAND),
-                        new ItemStackTemplate(Items.GLASS), 50))
-        .addRecipe("extend_altar_gravel_to_flint",
-                () -> new AltarRecipe(Ingredient.of(Items.GRAVEL),
-                        new ItemStackTemplate(Items.FLINT), 30))
-        .addRecipe("extend_altar_planks_to_stick",
-                registries -> new AltarRecipe(
-                        Ingredient.of(registries.lookupOrThrow(Registries.ITEM)
-                                .getOrThrow(ItemTags.PLANKS)),
-                        new ItemStackTemplate(Items.STICK, 4), 40));
+// Registry-aware variant (for tag-based ingredients)
+REGISTRYLIB.addRecipe("smelting/logs_to_charcoal",
+        registries -> new SmeltingRecipe(
+                new Recipe.CommonInfo(true),
+                new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.MISC, ""),
+                Ingredient.of(registries.lookupOrThrow(Registries.ITEM)
+                        .getOrThrow(ItemTags.LOGS)),
+                new ItemStackTemplate(Items.CHARCOAL),
+                0.15F, 200));
 ```
 
 ### Generated JSON
 
-```json title="data/registrylibtest/recipe/amethyst_shard.json"
+```json title="data/registrylibtest/recipe/smelting/amethyst_shard.json"
 {
   "type": "minecraft:smelting",
   "category": "blocks",
@@ -548,181 +528,12 @@ public static final ExtendRecipeEntry<AltarRecipe> EXTENDED_ALTAR = REGISTRYLIB
 Note the `"type"` is `"minecraft:smelting"` — the recipe is injected into the vanilla type. The file lives under `data/registrylibtest/recipe/` (your mod's namespace) so it doesn't conflict with vanilla recipes.
 
 :::tip
-For vanilla cooking types (`SmeltingRecipe`, `BlastingRecipe`, etc.), use `customRecipeData` with `SimpleCookingRecipeBuilder` — it handles advancement unlocks and recipe book categories automatically.
-
-For your own recipe types, use `addRecipe()` with direct instances.
+`core.addRecipe()` works for any recipe type — vanilla, NeoForge, or third-party. For custom recipe types registered via `recipeType()`, prefer `RecipeEntry.addRecipe()` which automatically prefixes the type name.
 :::
 
-## Copy Recipe Types
+## Adding Recipes: `addRecipe` on RecipeEntry
 
-Use `copyRecipe()` to create a **new `RecipeType`** that reuses the codec of an existing type. This registers both a new `RecipeType` and `RecipeSerializer` under your mod's namespace.
-
-### When to Use Copy
-
-- You want a distinct recipe type in JSON (`"type": "yourmod:electric_smelting"`) while keeping the same data structure as an existing type
-- You want to create variants of mod recipe machines (e.g. `dark_altar` from `altar`)
-- You need the game to treat these as separate recipe types (for separate `RecipeManager` lookups)
-
-### Copy Vanilla Smelting
-
-```java
-private static final RecipeRef<SmeltingRecipe> SMELTING_REF =
-        RecipeRef.of(RecipeType.SMELTING, SmeltingRecipe.SERIALIZER);
-
-// Creates "registrylibtest:electric_smelting" RecipeType + RecipeSerializer
-public static final RecipeEntry<SmeltingRecipe> ELECTRIC_SMELTING =
-        REGISTRYLIB.<SmeltingRecipe>copyRecipe("electric_smelting", SMELTING_REF);
-
-static {
-    ELECTRIC_SMELTING.addRecipe("copper_ingot",
-            new SmeltingRecipe(
-                    new Recipe.CommonInfo(true),
-                    new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.MISC, ""),
-                    Ingredient.of(Items.RAW_COPPER),
-                    new ItemStackTemplate(Items.COPPER_INGOT),
-                    0.7F, 100));
-}
-```
-
-### Copy a Mod Recipe Type
-
-```java
-private static final RecipeRef<AltarRecipe> ALTAR_REF =
-        RecipeRef.of(SimpleRecipeExample.ALTAR);
-
-// Creates "registrylibtest:dark_altar" RecipeType + RecipeSerializer
-public static final RecipeEntry<AltarRecipe> DARK_ALTAR =
-        REGISTRYLIB.<AltarRecipe>copyRecipe("dark_altar", ALTAR_REF);
-
-static {
-    DARK_ALTAR.addRecipe("dark_altar_bone_to_wither_rose",
-            new AltarRecipe(Ingredient.of(Items.BONE_BLOCK),
-                    new ItemStackTemplate(Items.WITHER_ROSE), 100));
-    DARK_ALTAR.addRecipe("dark_altar_soul_sand_to_soul_torch",
-            () -> new AltarRecipe(Ingredient.of(Items.SOUL_SAND),
-                    new ItemStackTemplate(Items.SOUL_TORCH, 4), 60));
-    DARK_ALTAR.addRecipe("dark_altar_flowers_to_dye",
-            registries -> new AltarRecipe(
-                    Ingredient.of(registries.lookupOrThrow(Registries.ITEM)
-                            .getOrThrow(ItemTags.FLOWERS)),
-                    new ItemStackTemplate(Items.BLACK_DYE, 2), 45));
-}
-```
-
-### Generated JSON
-
-```json title="data/registrylibtest/recipe/electric_smelting/copper_ingot.json"
-{
-  "type": "registrylibtest:electric_smelting",
-  "category": "misc",
-  "cookingtime": 100,
-  "experience": 0.7,
-  "ingredient": "minecraft:raw_copper",
-  "result": { "id": "minecraft:copper_ingot" }
-}
-```
-
-```json title="data/registrylibtest/recipe/dark_altar/dark_altar_bone_to_wither_rose.json"
-{
-  "type": "registrylibtest:dark_altar",
-  "ingredient": "minecraft:bone_block",
-  "processing_time": 100,
-  "result": { "id": "minecraft:wither_rose" }
-}
-```
-
-Note that each copy type gets its own `"type"` field (`"registrylibtest:electric_smelting"`, `"registrylibtest:dark_altar"`).
-
-:::tip
-For copy types, both `addRecipe()` and `customRecipeData()` produce the correct `"type"` field automatically. Choose based on your needs — see [Adding Recipes: `addRecipe` vs `customRecipeData`](#adding-recipes-addrecipe-vs-customrecipedata) below.
-:::
-
-### getRegisteredRecipes() — Cross-Entry Mirroring
-
-`RecipeEntry.getRegisteredRecipes()` returns all recipe factories registered on an entry (datagen only). This enables mirroring recipes from one entry to another:
-
-```java
-// Get count of recipes registered on DARK_ALTAR
-int count = DARK_ALTAR.getRegisteredRecipes().size(); // 3 during datagen
-```
-
-## Data Generation Pipeline
-
-RegistryLib uses two distinct paths to write recipe JSON files during datagen, depending on whether you are extending or copying a recipe type.
-
-### Path A: Standard Pipeline (extend / new recipe types)
-
-Used by **`extendRecipe()`** and the basic **`recipeType().register()`** flow. This is the Minecraft/NeoForge native pipeline:
-
-```
-addRecipe() / customRecipeData()
-        │
-        ▼
-RegistryLibRecipeProvider.accept()
-        │
-        ▼
-outputDelegated.accept()            ← Minecraft's RecipeOutput
-        │
-        ▼
-Recipe.CODEC (dispatch codec)
-  ├─ recipe.getSerializer()         ← decides "type" field
-  └─ serializer.codec().encode()    ← encodes recipe body
-        │
-        ▼
-Minecraft writes JSON to disk       ← data/<namespace>/recipe/<name>.json
-```
-
-**`Recipe.CODEC` is a dispatch codec** — it calls `recipe.getSerializer()` to look up the registry name for the `"type"` field, then uses the serializer's `MapCodec` to encode the recipe body. Because `extendRecipe` uses the *original* recipe type, `getSerializer()` returns the correct serializer, and the standard pipeline works perfectly.
-
-### Path B: Deferred Write Pipeline (copy recipe types)
-
-Used by **`copyRecipe()`**. Bypasses the standard dispatch mechanism because the recipe instance (e.g. `SmeltingRecipe`) always returns the *original* serializer from `getSerializer()`, not the copy serializer.
-
-```
-addRecipe() / customRecipeData()
-        │
-        ▼
-RegistryLibRecipeProvider.accept()
-        │
-        │  serializerOverride is active (pushed by RecipeEntry)
-        ▼
-acceptWithSerializer(key, recipe, copySerializer)
-  ├─ copySerializer.codec().encode(recipe)   ← manual encode (same MapCodec, works fine)
-  ├─ BuiltInRegistries.RECIPE_SERIALIZER.getKey(copySerializer)  ← look up copy name
-  └─ json.addProperty("type", copyName)      ← manually inject correct "type"
-        │
-        ▼
-runner.deferredWrites.add(key, json)         ← store in memory
-        │
-        ▼
-... after RecipeRunner.run() completes ...
-        │
-        ▼
-RegistryLibDataProvider.run()
-  └─ runner.writeDeferredRecipes(cache)
-       └─ DataProvider.saveStable(cache, json, path)  ← write to disk
-```
-
-**Key insight:** The copy serializer and the original serializer share the *same* `MapCodec` — because "copy" means identical data structure. The only difference is the registry name. So we encode the recipe body using the copy serializer's codec (same result), then manually set `"type"` to the copy serializer's registry name instead of letting `Recipe.CODEC`'s dispatch use `getSerializer()`.
-
-### Why Two Paths?
-
-| | Standard (Path A) | Deferred (Path B) |
-|---|---|---|
-| **Who decides `"type"`** | `Recipe.CODEC` dispatch via `getSerializer()` | Manual: `BuiltInRegistries.getKey(copySerializer)` |
-| **Who encodes body** | `Recipe.CODEC` → `serializer.codec()` | Direct call to `serializer.codec().encode()` |
-| **Who writes file** | Minecraft's `RecipeOutput` pipeline | `RegistryLibRecipeRunner.writeDeferredRecipes()` |
-| **When used** | `extendRecipe()`, `recipeType().register()` | `copyRecipe()` |
-
-The deferred path exists solely because `SmeltingRecipe.getSerializer()` always returns `SmeltingRecipe.SERIALIZER` (= `minecraft:smelting`) — there's no way to make it return a different serializer without subclassing the recipe, which would break the codec's `RecordCodecBuilder` cast.
-
-## Adding Recipes: `addRecipe` vs `customRecipeData`
-
-Both `RecipeEntry` and `ExtendRecipeEntry` provide two ways to add recipes. Here's when to use each:
-
-### `addRecipe()` — Recommended for Most Cases
-
-Pass a recipe instance directly. Three overloads:
+`RecipeEntry.addRecipe()` is a convenience wrapper that delegates to `core.addRecipe()` with the type name prefix. Three overloads:
 
 | Overload | When to Use |
 |---|---|
@@ -730,54 +541,11 @@ Pass a recipe instance directly. Three overloads:
 | `addRecipe(name, supplier)` | Recipe construction requires deferred values |
 | `addRecipe(name, registries -> recipe)` | Recipe needs tag lookups (`Ingredient.of(tag)`) |
 
-**Pros:**
-- Simple, one line per recipe
-- Type-safe — you construct exactly what gets serialized
-- Works identically for `recipeType()`, `extendRecipe()`, and `copyRecipe()`
-
-**Use this when:** You have your own recipe class (e.g. `AltarRecipe`, `InfuserRecipe`) and can construct instances directly.
-
 ```java
 ALTAR.addRecipe("cobblestone_to_stone",
         new AltarRecipe(Ingredient.of(Items.COBBLESTONE),
                 new ItemStackTemplate(Items.STONE), 40));
 ```
-
-### `customRecipeData()` — For Vanilla Builders
-
-Gives you the full `RegistryLibRecipeProvider` (which implements `RecipeOutput`). Use vanilla recipe builder classes like `SimpleCookingRecipeBuilder`, `ShapedRecipeBuilder`, etc.
-
-**Pros:**
-- Automatic advancement/unlock generation (e.g. `unlockedBy()`)
-- Automatic recipe book category handling
-- Familiar API for vanilla recipe types
-
-**Use this when:** You're working with vanilla cooking types (`SmeltingRecipe`, `BlastingRecipe`, etc.) and want automatic advancement support, or when you need the full power of a `RecipeBuilder`.
-
-```java
-ELECTRIC_SMELTING.customRecipeData(prov ->
-        SimpleCookingRecipeBuilder.smelting(
-                Ingredient.of(Items.RAW_COPPER),
-                RecipeCategory.MISC,
-                CookingBookCategory.MISC,
-                Items.COPPER_INGOT, 0.7F, 100)
-                .unlockedBy("has_raw_copper", prov.has(Items.RAW_COPPER))
-                .save(prov, prov.safeKey(Items.COPPER_INGOT)));
-```
-
-### Summary Table
-
-| Scenario | Recommended Method | Reason |
-|---|---|---|
-| Custom recipe class (`AltarRecipe`, etc.) | `addRecipe()` | Simpler, type-safe |
-| Vanilla cooking type (smelting, blasting, etc.) | `customRecipeData()` | Auto advancements + recipe book |
-| Need `ShapedRecipeBuilder` / `ShapelessRecipeBuilder` | `customRecipeData()` | Must use builder API |
-| Tag-based ingredient | `addRecipe(name, registries -> ...)` | Provides `HolderLookup.Provider` |
-| Copy recipe with auto advancements | `customRecipeData()` | `"type"` is corrected automatically |
-
-:::note
-Both methods work correctly for all three registration modes (`recipeType`, `extendRecipe`, `copyRecipe`). For copy recipe types, RegistryLib automatically intercepts the `accept()` call and routes it through the deferred write pipeline, ensuring the correct `"type"` field regardless of which method you use.
-:::
 
 ## API Reference
 
@@ -790,35 +558,25 @@ Both methods work correctly for all three registration modes (`recipeType`, `ext
 | `.register()` | Register and return `RecipeEntry<T>` |
 | `.build()` | Register and return parent (for chaining) |
 
-### RecipeRef
+### RegistryCore.addRecipe
 
-A lazy reference to an existing `RecipeType` + `RecipeSerializer` pair. Used as input for `extendRecipe()` and `copyRecipe()`.
-
-| Factory Method | Purpose |
-|---|---|
-| `RecipeRef.of(RecipeType<T>, RecipeSerializer<T>)` | Reference a vanilla or third-party type |
-| `RecipeRef.of(RecipeEntry<T>)` | Reference your own mod's registered type |
-
-### ExtendRecipeEntry
-
-Returned by `extendRecipe()`. Injects recipes into an existing type without registering a new `RecipeType` or `RecipeSerializer`.
+Add recipes to any existing recipe type without registering a new `RecipeType`.
 
 | Method | Purpose |
 |---|---|
-| `.addRecipe(name, recipe)` | Add a recipe instance for datagen |
-| `.addRecipe(name, supplier)` | Add a lazily-created recipe |
-| `.addRecipe(name, registries -> recipe)` | Add recipe with registry access (for tags) |
-| `.customRecipeData(consumer)` | Raw control over `RecipeProvider` (e.g. `SimpleCookingRecipeBuilder`) |
+| `addRecipe(id, recipe)` | Add a recipe instance for datagen |
+| `addRecipe(id, supplier)` | Add a lazily-created recipe |
+| `addRecipe(id, registries -> recipe)` | Add recipe with registry access (for tags) |
 
-### RecipeEntry (extend/copy additions)
+### RecipeEntry
 
 | Method | Purpose |
 |---|---|
-| `.addRecipe(name, recipe)` | Add a recipe instance (for copy: ensures correct `"type"` in JSON) |
+| `.addRecipe(name, recipe)` | Add a recipe instance (convenience, delegates to `core.addRecipe`) |
 | `.addRecipe(name, supplier)` | Add a lazily-created recipe |
 | `.addRecipe(name, registries -> recipe)` | Add recipe with registry access |
-| `.customRecipeData(consumer)` | Raw control over `RecipeProvider` (e.g. `SimpleCookingRecipeBuilder`). For copy types the correct `"type"` is injected automatically |
-| `.getRegisteredRecipes()` | Get all registered recipe factories (datagen only) |
+| `.getType()` | Get the registered `RecipeType<T>` |
+| `.getSerializer()` | Get the registered `RecipeSerializer<T>` |
 
 ### FluidIngredientType Registration
 
