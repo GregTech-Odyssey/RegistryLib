@@ -633,8 +633,8 @@ static {
 
 Note that each copy type gets its own `"type"` field (`"registrylibtest:electric_smelting"`, `"registrylibtest:dark_altar"`).
 
-:::warning
-For copy types, always use `addRecipe()` instead of `customRecipeData()`. The `addRecipe()` method ensures the correct `"type"` field in the generated JSON. Using `customRecipeData()` with builders (e.g. `SimpleCookingRecipeBuilder`) will produce the **original** type's name in the `"type"` field, which is incorrect.
+:::tip
+For copy types, both `addRecipe()` and `customRecipeData()` produce the correct `"type"` field automatically. Choose based on your needs — see [Adding Recipes: `addRecipe` vs `customRecipeData`](#adding-recipes-addrecipe-vs-customrecipedata) below.
 :::
 
 ### getRegisteredRecipes() — Cross-Entry Mirroring
@@ -645,6 +645,139 @@ For copy types, always use `addRecipe()` instead of `customRecipeData()`. The `a
 // Get count of recipes registered on DARK_ALTAR
 int count = DARK_ALTAR.getRegisteredRecipes().size(); // 3 during datagen
 ```
+
+## Data Generation Pipeline
+
+RegistryLib uses two distinct paths to write recipe JSON files during datagen, depending on whether you are extending or copying a recipe type.
+
+### Path A: Standard Pipeline (extend / new recipe types)
+
+Used by **`extendRecipe()`** and the basic **`recipeType().register()`** flow. This is the Minecraft/NeoForge native pipeline:
+
+```
+addRecipe() / customRecipeData()
+        │
+        ▼
+RegistryLibRecipeProvider.accept()
+        │
+        ▼
+outputDelegated.accept()            ← Minecraft's RecipeOutput
+        │
+        ▼
+Recipe.CODEC (dispatch codec)
+  ├─ recipe.getSerializer()         ← decides "type" field
+  └─ serializer.codec().encode()    ← encodes recipe body
+        │
+        ▼
+Minecraft writes JSON to disk       ← data/<namespace>/recipe/<name>.json
+```
+
+**`Recipe.CODEC` is a dispatch codec** — it calls `recipe.getSerializer()` to look up the registry name for the `"type"` field, then uses the serializer's `MapCodec` to encode the recipe body. Because `extendRecipe` uses the *original* recipe type, `getSerializer()` returns the correct serializer, and the standard pipeline works perfectly.
+
+### Path B: Deferred Write Pipeline (copy recipe types)
+
+Used by **`copyRecipe()`**. Bypasses the standard dispatch mechanism because the recipe instance (e.g. `SmeltingRecipe`) always returns the *original* serializer from `getSerializer()`, not the copy serializer.
+
+```
+addRecipe() / customRecipeData()
+        │
+        ▼
+RegistryLibRecipeProvider.accept()
+        │
+        │  serializerOverride is active (pushed by RecipeEntry)
+        ▼
+acceptWithSerializer(key, recipe, copySerializer)
+  ├─ copySerializer.codec().encode(recipe)   ← manual encode (same MapCodec, works fine)
+  ├─ BuiltInRegistries.RECIPE_SERIALIZER.getKey(copySerializer)  ← look up copy name
+  └─ json.addProperty("type", copyName)      ← manually inject correct "type"
+        │
+        ▼
+runner.deferredWrites.add(key, json)         ← store in memory
+        │
+        ▼
+... after RecipeRunner.run() completes ...
+        │
+        ▼
+RegistryLibDataProvider.run()
+  └─ runner.writeDeferredRecipes(cache)
+       └─ DataProvider.saveStable(cache, json, path)  ← write to disk
+```
+
+**Key insight:** The copy serializer and the original serializer share the *same* `MapCodec` — because "copy" means identical data structure. The only difference is the registry name. So we encode the recipe body using the copy serializer's codec (same result), then manually set `"type"` to the copy serializer's registry name instead of letting `Recipe.CODEC`'s dispatch use `getSerializer()`.
+
+### Why Two Paths?
+
+| | Standard (Path A) | Deferred (Path B) |
+|---|---|---|
+| **Who decides `"type"`** | `Recipe.CODEC` dispatch via `getSerializer()` | Manual: `BuiltInRegistries.getKey(copySerializer)` |
+| **Who encodes body** | `Recipe.CODEC` → `serializer.codec()` | Direct call to `serializer.codec().encode()` |
+| **Who writes file** | Minecraft's `RecipeOutput` pipeline | `RegistryLibRecipeRunner.writeDeferredRecipes()` |
+| **When used** | `extendRecipe()`, `recipeType().register()` | `copyRecipe()` |
+
+The deferred path exists solely because `SmeltingRecipe.getSerializer()` always returns `SmeltingRecipe.SERIALIZER` (= `minecraft:smelting`) — there's no way to make it return a different serializer without subclassing the recipe, which would break the codec's `RecordCodecBuilder` cast.
+
+## Adding Recipes: `addRecipe` vs `customRecipeData`
+
+Both `RecipeEntry` and `ExtendRecipeEntry` provide two ways to add recipes. Here's when to use each:
+
+### `addRecipe()` — Recommended for Most Cases
+
+Pass a recipe instance directly. Three overloads:
+
+| Overload | When to Use |
+|---|---|
+| `addRecipe(name, recipe)` | Recipe has no runtime dependencies |
+| `addRecipe(name, supplier)` | Recipe construction requires deferred values |
+| `addRecipe(name, registries -> recipe)` | Recipe needs tag lookups (`Ingredient.of(tag)`) |
+
+**Pros:**
+- Simple, one line per recipe
+- Type-safe — you construct exactly what gets serialized
+- Works identically for `recipeType()`, `extendRecipe()`, and `copyRecipe()`
+
+**Use this when:** You have your own recipe class (e.g. `AltarRecipe`, `InfuserRecipe`) and can construct instances directly.
+
+```java
+ALTAR.addRecipe("cobblestone_to_stone",
+        new AltarRecipe(Ingredient.of(Items.COBBLESTONE),
+                new ItemStackTemplate(Items.STONE), 40));
+```
+
+### `customRecipeData()` — For Vanilla Builders
+
+Gives you the full `RegistryLibRecipeProvider` (which implements `RecipeOutput`). Use vanilla recipe builder classes like `SimpleCookingRecipeBuilder`, `ShapedRecipeBuilder`, etc.
+
+**Pros:**
+- Automatic advancement/unlock generation (e.g. `unlockedBy()`)
+- Automatic recipe book category handling
+- Familiar API for vanilla recipe types
+
+**Use this when:** You're working with vanilla cooking types (`SmeltingRecipe`, `BlastingRecipe`, etc.) and want automatic advancement support, or when you need the full power of a `RecipeBuilder`.
+
+```java
+ELECTRIC_SMELTING.customRecipeData(prov ->
+        SimpleCookingRecipeBuilder.smelting(
+                Ingredient.of(Items.RAW_COPPER),
+                RecipeCategory.MISC,
+                CookingBookCategory.MISC,
+                Items.COPPER_INGOT, 0.7F, 100)
+                .unlockedBy("has_raw_copper", prov.has(Items.RAW_COPPER))
+                .save(prov, prov.safeKey(Items.COPPER_INGOT)));
+```
+
+### Summary Table
+
+| Scenario | Recommended Method | Reason |
+|---|---|---|
+| Custom recipe class (`AltarRecipe`, etc.) | `addRecipe()` | Simpler, type-safe |
+| Vanilla cooking type (smelting, blasting, etc.) | `customRecipeData()` | Auto advancements + recipe book |
+| Need `ShapedRecipeBuilder` / `ShapelessRecipeBuilder` | `customRecipeData()` | Must use builder API |
+| Tag-based ingredient | `addRecipe(name, registries -> ...)` | Provides `HolderLookup.Provider` |
+| Copy recipe with auto advancements | `customRecipeData()` | `"type"` is corrected automatically |
+
+:::note
+Both methods work correctly for all three registration modes (`recipeType`, `extendRecipe`, `copyRecipe`). For copy recipe types, RegistryLib automatically intercepts the `accept()` call and routes it through the deferred write pipeline, ensuring the correct `"type"` field regardless of which method you use.
+:::
 
 ## API Reference
 
@@ -684,7 +817,7 @@ Returned by `extendRecipe()`. Injects recipes into an existing type without regi
 | `.addRecipe(name, recipe)` | Add a recipe instance (for copy: ensures correct `"type"` in JSON) |
 | `.addRecipe(name, supplier)` | Add a lazily-created recipe |
 | `.addRecipe(name, registries -> recipe)` | Add recipe with registry access |
-| `.customRecipeData(consumer)` | Advanced: raw control (⚠️ for copy types, prefer `addRecipe` to ensure correct `"type"`) |
+| `.customRecipeData(consumer)` | Raw control over `RecipeProvider` (e.g. `SimpleCookingRecipeBuilder`). For copy types the correct `"type"` is injected automatically |
 | `.getRegisteredRecipes()` | Get all registered recipe factories (datagen only) |
 
 ### FluidIngredientType Registration

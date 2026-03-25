@@ -41,11 +41,31 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
     private final RegistryLibRecipeRunner runner;
     private final RecipeOutput outputDelegated;
 
+    // When non-null, accept() routes through acceptWithSerializer() using this serializer.
+    // Set temporarily by RecipeEntry.customRecipeData() for copy-recipe support.
+    @Nullable
+    private RecipeSerializer<?> serializerOverride;
+
     public RegistryLibRecipeProvider(
                                      RegistryLibRecipeRunner runner, HolderLookup.Provider registries, RecipeOutput output) {
         super(registries, output);
         this.runner = runner;
         this.outputDelegated = output;
+    }
+
+    /**
+     * Temporarily overrides the serializer used by {@link #accept}. While active, all recipes
+     * accepted through this provider will be routed through {@link #acceptWithSerializer} with the
+     * given serializer, producing the correct {@code "type"} field for copy recipes.
+     */
+    @SuppressWarnings("unchecked")
+    public <T extends Recipe<?>> void pushSerializerOverride(RecipeSerializer<T> serializer) {
+        this.serializerOverride = serializer;
+    }
+
+    /** Clears the serializer override set by {@link #pushSerializerOverride}. */
+    public void popSerializerOverride() {
+        this.serializerOverride = null;
     }
 
     @Override
@@ -56,13 +76,18 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
     }
 
     // Delegate RecipeOutput methods
+    @SuppressWarnings("unchecked")
     @Override
     public void accept(
                        ResourceKey<Recipe<?>> key,
                        Recipe<?> recipe,
                        @Nullable AdvancementHolder advancement,
                        ICondition... conditions) {
-        outputDelegated.accept(key, recipe, advancement, conditions);
+        if (serializerOverride != null) {
+            acceptWithSerializer(key, recipe, (RecipeSerializer) serializerOverride);
+        } else {
+            outputDelegated.accept(key, recipe, advancement, conditions);
+        }
     }
 
     /**

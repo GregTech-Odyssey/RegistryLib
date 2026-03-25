@@ -143,7 +143,10 @@ public class RecipeEntry<T extends Recipe<?>> {
      * 添加自定义的配方数据生成回调，可直接操作 {@link RegistryLibRecipeProvider}。
      *
      * <p>
-     * Adds a custom datagen callback for full control over recipe output.
+     * Adds a custom datagen callback for full control over recipe output. The provider's
+     * {@code accept()} method is automatically overridden to use this entry's copy serializer, so
+     * vanilla builders like {@code SimpleCookingRecipeBuilder} will produce the correct
+     * {@code "type"} field.
      *
      * @param datagen the datagen callback
      * @return this entry for chaining
@@ -151,7 +154,14 @@ public class RecipeEntry<T extends Recipe<?>> {
     @StandardAPI
     public RecipeEntry<T> customRecipeData(@NotNull Consumer<RegistryLibRecipeProvider> datagen) {
         if (core.doDatagen()) {
-            core.addDataGenerator(ProviderType.RECIPE, datagen);
+            core.addDataGenerator(ProviderType.RECIPE, (RegistryLibRecipeProvider prov) -> {
+                prov.pushSerializerOverride(serializerEntry.get());
+                try {
+                    datagen.accept(prov);
+                } finally {
+                    prov.popSerializerOverride();
+                }
+            });
         }
         return this;
     }
