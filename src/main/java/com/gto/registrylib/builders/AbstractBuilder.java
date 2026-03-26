@@ -54,9 +54,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     protected abstract T createEntry(ResourceKey<R> key);
 
-    protected RegistryEntry<R, T> createEntryWrapper(ResourceKey<R> key) {
-        return new RegistryEntry<>(key);
-    }
+    protected abstract RegistryEntry<R, T> createEntryWrapper(ResourceKey<R> key);
 
     public T getValue() {
         return valueSupplier.get();
@@ -84,15 +82,6 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                                     (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
         }
         return core.registry(name, registryKey, callbacks, this::createEntry, this::createEntryWrapper);
-    }
-
-    public static <R, T extends R> RegistryEntry<R, T> registry(
-                                                                RegistryCore core,
-                                                                String name,
-                                                                ResourceKey<? extends Registry<R>> type,
-                                                                AbstractBuilder<R, T, ?, ?> builder,
-                                                                Function<ResourceKey<R>, ? extends T> factory) {
-        return core.registry(name, type, builder.callbacks, factory, RegistryEntry::new);
     }
 
     // === Configuration ===

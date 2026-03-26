@@ -11,10 +11,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class BlockEntityEntry<T extends BlockEntity>
-                             extends RegistryEntry<BlockEntityType<?>, BlockEntityType<T>> {
+public class BlockEntityTypeEntry<T extends BlockEntity>
+                                 extends RegistryEntry<BlockEntityType<?>, BlockEntityType<T>> {
 
-    public BlockEntityEntry(ResourceKey<BlockEntityType<?>> key) {
+    public BlockEntityTypeEntry(ResourceKey<BlockEntityType<?>> key) {
         super(key);
     }
 
@@ -36,8 +36,8 @@ public class BlockEntityEntry<T extends BlockEntity>
         return is(be) ? (T) be : null;
     }
 
-    public static <T extends BlockEntity> BlockEntityEntry<T> cast(
-                                                                   RegistryEntry<BlockEntityType<?>, BlockEntityType<T>> entry) {
-        return RegistryEntry.cast(BlockEntityEntry.class, entry);
+    public static <T extends BlockEntity> BlockEntityTypeEntry<T> cast(
+                                                                       RegistryEntry<BlockEntityType<?>, BlockEntityType<T>> entry) {
+        return RegistryEntry.cast(BlockEntityTypeEntry.class, entry);
     }
 }

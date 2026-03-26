@@ -157,14 +157,12 @@ public class EntityBuilder<T extends Entity, P>
     // === Spawn Placement ===
 
     @StandardAPI
-    @SuppressWarnings("unchecked")
     public EntityBuilder<T, P> spawnPlacement(
                                               @NotNull SpawnPlacementType placementType,
                                               @NotNull Heightmap.Types heightmap,
                                               @NotNull SpawnPlacements.SpawnPredicate<T> predicate) {
-        return onRegister(
-                entityType -> core.registerSpawnPlacement(
-                        (EntityType<T>) entityType, placementType, heightmap, predicate));
+        core.registerSpawnPlacement(valueSupplier, placementType, heightmap, predicate);
+        return this;
     }
 
     // === Biome Spawn ===

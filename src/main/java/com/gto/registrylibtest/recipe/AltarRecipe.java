@@ -90,7 +90,7 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     @Override
     public RecipeType<? extends Recipe<SingleRecipeInput>> getType() {
-        return SimpleRecipeExample.ALTAR.getType();
+        return SimpleRecipeExample.ALTAR.get();
     }
 
     // === Codec & StreamCodec ===

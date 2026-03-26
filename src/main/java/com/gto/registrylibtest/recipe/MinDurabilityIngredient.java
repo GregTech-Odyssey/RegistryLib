@@ -84,7 +84,7 @@ public class MinDurabilityIngredient implements ICustomIngredient {
 
     @Override
     public @NonNull IngredientType<?> getType() {
-        return SimpleIngredientTypeExample.MIN_DURABILITY.get();
+        return SimpleIngredientTypeExample.MIN_DURABILITY;
     }
 
     // ── Convenience factory ──────────────────────────────────────────────────

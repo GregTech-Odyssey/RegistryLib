@@ -109,7 +109,7 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
 
     @Override
     public RecipeType<? extends Recipe<InfuserInput>> getType() {
-        return FullRecipeExample.INFUSER.getType();
+        return FullRecipeExample.INFUSER.get();
     }
 
     // === Custom RecipeInput ===

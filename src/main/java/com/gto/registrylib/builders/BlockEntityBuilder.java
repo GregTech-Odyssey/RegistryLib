@@ -4,7 +4,7 @@ import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.client.Client;
 import com.gto.registrylib.util.DistExecutor;
-import com.gto.registrylib.util.entry.BlockEntityEntry;
+import com.gto.registrylib.util.entry.BlockEntityTypeEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -85,11 +85,11 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @Override
     protected RegistryEntry<BlockEntityType<?>, BlockEntityType<BE>> createEntryWrapper(
                                                                                         ResourceKey<BlockEntityType<?>> key) {
-        return new BlockEntityEntry<>(key);
+        return new BlockEntityTypeEntry<>(key);
     }
 
     @Override
-    public BlockEntityEntry<BE> register() {
-        return (BlockEntityEntry<BE>) super.register();
+    public BlockEntityTypeEntry<BE> register() {
+        return (BlockEntityTypeEntry<BE>) super.register();
     }
 }

@@ -1,6 +1,6 @@
 package com.gto.registrylibtest.recipe;
 
-import com.gto.registrylib.util.entry.BlockEntityEntry;
+import com.gto.registrylib.util.entry.BlockEntityTypeEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RecipeTypeEntry;
 import com.gto.registrylibtest.ModRegistryCore;
@@ -86,7 +86,7 @@ public class SimpleRecipeExample {
 
     // ── 方块实体 ────────────────────────────────────────────────────────────
 
-    public static final BlockEntityEntry<AltarBlockEntity> ALTAR_BE = RegistryLibTest.REGISTRYLIB
+    public static final BlockEntityTypeEntry<AltarBlockEntity> ALTAR_BE = RegistryLibTest.REGISTRYLIB
             .blockEntity("altar", AltarBlockEntity::new)
             .validBlock(ALTAR_BLOCK)
             .register();

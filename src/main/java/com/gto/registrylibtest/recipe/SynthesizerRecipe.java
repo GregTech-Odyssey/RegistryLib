@@ -140,7 +140,7 @@ public class SynthesizerRecipe implements Recipe<SynthesizerRecipe.SynthesizerIn
 
     @Override
     public RecipeType<? extends Recipe<SynthesizerInput>> getType() {
-        return MultiInputRecipeExample.SYNTHESIZER.getType();
+        return MultiInputRecipeExample.SYNTHESIZER.get();
     }
 
     // === Custom RecipeInput ===

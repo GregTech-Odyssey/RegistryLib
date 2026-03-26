@@ -47,8 +47,8 @@ public class CrystalGuardianAi {
                         MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE,
                         MemoryModuleType.NEAREST_LIVING_ENTITIES,
                         MemoryModuleType.NEAREST_VISIBLE_LIVING_ENTITIES,
-                        SimpleEntityExample.CRYSTAL_MINER_MEMORY.get()),
-                List.of(SensorType.NEAREST_LIVING_ENTITIES, SimpleEntityExample.CRYSTAL_MINER_SENSOR.get()),
+                        SimpleEntityExample.CRYSTAL_MINER_MEMORY),
+                List.of(SensorType.NEAREST_LIVING_ENTITIES, SimpleEntityExample.CRYSTAL_MINER_SENSOR),
                 CrystalGuardianAi::getActivities);
     }
 
@@ -93,7 +93,7 @@ public class CrystalGuardianAi {
 
     private static Optional<? extends LivingEntity> findTarget(
                                                                ServerLevel level, CrystalGuardian guardian) {
-        return guardian.getBrain().getMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY.get());
+        return guardian.getBrain().getMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY);
     }
 
     public static void updateActivity(CrystalGuardian guardian) {

@@ -30,16 +30,14 @@ public class CrystalMinerSensor extends Sensor<CrystalGuardian> {
                 .map(p -> (Player) p);
 
         if (nearestMiner.isPresent()) {
-            entity
-                    .getBrain()
-                    .setMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY.get(), nearestMiner.get());
+            entity.getBrain().setMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY, nearestMiner.get());
         } else {
-            entity.getBrain().eraseMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY.get());
+            entity.getBrain().eraseMemory(SimpleEntityExample.CRYSTAL_MINER_MEMORY);
         }
     }
 
     @Override
     public Set<MemoryModuleType<?>> requires() {
-        return ImmutableSet.of(SimpleEntityExample.CRYSTAL_MINER_MEMORY.get());
+        return ImmutableSet.of(SimpleEntityExample.CRYSTAL_MINER_MEMORY);
     }
 }

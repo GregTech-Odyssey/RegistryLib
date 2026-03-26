@@ -402,7 +402,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
         Supplier<? extends BaseFlowingFluid> source = this.source;
         if (source != null) {
-            registry(core, sourceName, Registries.FLUID, (FluidBuilder) this, _ -> source.get());
+            core.registry(sourceName, Registries.FLUID, _ -> source.get());
         } else {
             throw new IllegalStateException("Fluid must have a source version: " + name);
         }

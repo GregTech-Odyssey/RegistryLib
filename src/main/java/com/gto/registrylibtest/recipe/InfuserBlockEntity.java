@@ -66,7 +66,7 @@ public class InfuserBlockEntity extends BlockEntity {
         if (be.activeRecipe == null || !be.activeRecipe.matches(input, level)) {
             Optional<RecipeHolder<InfuserRecipe>> found = serverLevel
                     .recipeAccess()
-                    .getRecipeFor(FullRecipeExample.INFUSER.getType(), input, serverLevel);
+                    .getRecipeFor(FullRecipeExample.INFUSER.get(), input, serverLevel);
             if (found.isEmpty()) {
                 be.progress = 0;
                 be.activeRecipe = null;

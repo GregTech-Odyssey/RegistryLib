@@ -41,15 +41,13 @@ public class RecipeTypeEntry<T extends Recipe<?>>
 
     /** -- GETTER -- Returns the RecipeSerializer RegistryEntry. */
     @Getter
-    private final Supplier<RecipeSerializer<T>> serializerEntry;
+    private final RecipeSerializer<T> serializer;
 
     public RecipeTypeEntry(
-                           ResourceKey<RecipeType<?>> key,
-                           RegistryCore core,
-                           Supplier<RecipeSerializer<T>> serializerEntry) {
+                           ResourceKey<RecipeType<?>> key, RegistryCore core, RecipeSerializer<T> serializer) {
         super(key);
         this.core = core;
-        this.serializerEntry = serializerEntry;
+        this.serializer = serializer;
     }
 
     // === Recipe Addition ===
@@ -110,17 +108,5 @@ public class RecipeTypeEntry<T extends Recipe<?>>
         String typeName = key.identifier().getPath();
         core.addRecipe(typeName + "/" + recipeName, recipeFactory);
         return this;
-    }
-
-    // === Accessors ===
-
-    /** Returns the registered RecipeType. */
-    public RecipeType<T> getType() {
-        return value;
-    }
-
-    /** Returns the registered RecipeSerializer. */
-    public RecipeSerializer<T> getSerializer() {
-        return serializerEntry.get();
     }
 }

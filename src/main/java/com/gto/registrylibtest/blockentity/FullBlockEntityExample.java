@@ -1,6 +1,6 @@
 package com.gto.registrylibtest.blockentity;
 
-import com.gto.registrylib.util.entry.BlockEntityEntry;
+import com.gto.registrylib.util.entry.BlockEntityTypeEntry;
 import com.gto.registrylibtest.RegistryLibTest;
 import com.gto.registrylibtest.block.FullBlockExample;
 import com.gto.registrylibtest.client.TimerBlockEntityRenderer;
@@ -13,7 +13,7 @@ import com.gto.registrylibtest.client.TimerBlockEntityRenderer;
  */
 public class FullBlockEntityExample {
 
-    public static final BlockEntityEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY = RegistryLibTest.REGISTRYLIB
+    public static final BlockEntityTypeEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY = RegistryLibTest.REGISTRYLIB
             .blockEntity("timer", TimerBlockEntity::new)
             // --- validBlocks: 将一个 BlockEntity 类型绑定到多个方块 ---
             .validBlocks(

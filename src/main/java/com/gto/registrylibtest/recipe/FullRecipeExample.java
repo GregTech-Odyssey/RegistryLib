@@ -2,7 +2,7 @@ package com.gto.registrylibtest.recipe;
 
 import com.gto.registrylib.util.ColorUtil;
 import com.gto.registrylib.util.ImageUtil;
-import com.gto.registrylib.util.entry.BlockEntityEntry;
+import com.gto.registrylib.util.entry.BlockEntityTypeEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RecipeTypeEntry;
 import com.gto.registrylibtest.ModRegistryCore;
@@ -14,7 +14,6 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.crafting.CompoundIngredient;
@@ -65,8 +64,7 @@ public class FullRecipeExample {
     public static final RecipeTypeEntry<InfuserRecipe> INFUSER_CUSTOM = RegistryLibTest.REGISTRYLIB
             .<InfuserRecipe>recipeType("infuser_custom")
             .typeFactory(RecipeType::simple)
-            .serializerFactory(
-                    () -> new RecipeSerializer<>(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC))
+            .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
             .register();
 
     // ── 配方实例注册（数据生成） ────────────────────────────────────────────
@@ -184,7 +182,7 @@ public class FullRecipeExample {
 
     // ── 方块实体（共享） ────────────────────────────────────────────────────
 
-    public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = RegistryLibTest.REGISTRYLIB
+    public static final BlockEntityTypeEntry<InfuserBlockEntity> INFUSER_BE = RegistryLibTest.REGISTRYLIB
             .blockEntity("infuser", InfuserBlockEntity::new)
             .validBlocks(INFUSER_T1, INFUSER_T2)
             .register();

@@ -2,7 +2,6 @@ package com.gto.registrylibtest.entity;
 
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.EntityEntry;
-import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylibtest.client.CrystalGuardianRenderer;
 
 import net.minecraft.core.registries.Registries;
@@ -69,15 +68,15 @@ public class SimpleEntityExample {
 
     // ── Brain 组件 ────────────────────────────────────────────────────────────
 
-    public static final RegistryEntry<MemoryModuleType<?>, MemoryModuleType<Player>> CRYSTAL_MINER_MEMORY = REGISTRYLIB.registry(
+    public static final MemoryModuleType<Player> CRYSTAL_MINER_MEMORY = REGISTRYLIB.registry(
             "nearest_crystal_miner",
-            Registries.MEMORY_MODULE_TYPE,
-            key -> new MemoryModuleType<>(Optional.empty()));
+            new MemoryModuleType<>(Optional.empty()),
+            Registries.MEMORY_MODULE_TYPE);
 
-    public static final RegistryEntry<SensorType<?>, SensorType<CrystalMinerSensor>> CRYSTAL_MINER_SENSOR = REGISTRYLIB.registry(
+    public static final SensorType<CrystalMinerSensor> CRYSTAL_MINER_SENSOR = REGISTRYLIB.registry(
             "crystal_miner_sensor",
-            Registries.SENSOR_TYPE,
-            key -> new SensorType<>(CrystalMinerSensor::new));
+            new SensorType<>(CrystalMinerSensor::new),
+            Registries.SENSOR_TYPE);
 
     // ── 实体 ─────────────────────────────────────────────────────────────────
 

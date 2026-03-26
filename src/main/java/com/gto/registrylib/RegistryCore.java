@@ -16,25 +16,30 @@ import com.gto.registrylib.datagen.GeneratorType;
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.RegistryLibDataProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.DebugMarkers;
 import com.gto.registrylib.util.Environment;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
-import com.gto.registrylib.util.entry.ItemEntry;
-import com.gto.registrylib.util.entry.RecipeTypeEntry;
-import com.gto.registrylib.util.entry.RegistryEntry;
+import com.gto.registrylib.util.entry.*;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylib.util.registry.ListRegistry;
 import com.gto.registrylibtest.builder.ModFluidBuilder;
 
+import com.mojang.serialization.MapCodec;
+
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.WritableRegistry;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
@@ -49,16 +54,22 @@ import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.crafting.IngredientType;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
+import net.neoforged.neoforge.fluids.crafting.FluidIngredientType;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -277,6 +288,7 @@ public class RegistryCore {
 
     // === Core Registration ===
 
+    @StandardAPI
     public <R, T extends R> RegistryEntry<R, T> registry(
                                                          String name,
                                                          ResourceKey<? extends Registry<R>> type,
@@ -284,14 +296,19 @@ public class RegistryCore {
                                                          Function<ResourceKey<R>, ? extends T> factory,
                                                          Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
         var reg = new Registration<>(
-                type, Identifier.fromNamespaceAndPath(modid, name), factory, entryFactory);
-        if (!callbacks.isEmpty()) {
-            reg.callbacks.addAll(callbacks);
-            callbacks.clear();
-        }
+                type, Identifier.fromNamespaceAndPath(modid, name), factory, entryFactory, callbacks);
         registrations.put(type, reg);
         registryEntry.put(type, name, reg.entry);
         return reg.entry;
+    }
+
+    @SyntaxSugar("registry(...)")
+    public <R, T extends R, E extends RegistryEntry<R, T>> E registry(
+                                                                      String name,
+                                                                      ResourceKey<? extends Registry<R>> type,
+                                                                      Function<ResourceKey<R>, ? extends T> factory,
+                                                                      Function<ResourceKey<R>, E> entryFactory) {
+        return (E) registry(name, type, Collections.emptyList(), factory, entryFactory);
     }
 
     @SyntaxSugar("registry(...)")
@@ -302,14 +319,18 @@ public class RegistryCore {
         return registry(name, registryType, Collections.emptyList(), factory, RegistryEntry::new);
     }
 
-    @SyntaxSugar("registry(...)")
-    @SuppressWarnings("unchecked")
-    public <R, T extends R, E extends RegistryEntry<R, T>> E registry(
-                                                                      @NotNull String name,
-                                                                      @NotNull ResourceKey<Registry<R>> registryType,
-                                                                      @NotNull Function<ResourceKey<R>, T> factory,
-                                                                      @NotNull Function<ResourceKey<R>, E> entryFactory) {
-        return (E) registry(name, registryType, Collections.emptyList(), factory, entryFactory);
+    @StandardAPI
+    public <R, T extends R> T registry(
+                                       @NotNull String name, @NotNull T value, @NotNull ResourceKey<Registry<R>> registryType) {
+        registrations.put(
+                registryType,
+                new Registration<>(
+                        registryType,
+                        Identifier.fromNamespaceAndPath(modid, name),
+                        _ -> value,
+                        _ -> RegistryEntry.EMPTY,
+                        Collections.emptyList()));
+        return value;
     }
 
     // === Builder Factory Methods ===
@@ -419,31 +440,32 @@ public class RegistryCore {
 
     // --- Recipe Types (Simple) ---
 
-    @StandardAPI("Registers a RecipeType and returns a typed RegistryEntry. Prefer recipeType(String) builder API.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeEntry<T> simpleRecipeType(@Nonnull String name) {
+    @StandardAPI()
+    public <T extends Recipe<?>> RecipeType<T> simpleRecipeType(@Nonnull String name) {
         return registry(
                 name,
-                Registries.RECIPE_TYPE,
-                key -> net.minecraft.world.item.crafting.RecipeType.simple(key.identifier()),
-                key -> new RecipeTypeEntry<>(key, this, FunctionUtil.nullSupplier()));
+                RecipeType.simple(Identifier.fromNamespaceAndPath(getModid(), name)),
+                Registries.RECIPE_TYPE);
     }
 
-    @StandardAPI("Registers a RecipeSerializer and returns a typed RegistryEntry. Prefer recipeType(String) builder API.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RegistryEntry<net.minecraft.world.item.crafting.RecipeSerializer<?>, net.minecraft.world.item.crafting.RecipeSerializer<T>> simpleRecipeSerializer(
-                                                                                                                                                                                                                      @Nonnull String name,
-                                                                                                                                                                                                                      @Nonnull Supplier<net.minecraft.world.item.crafting.RecipeSerializer<T>> factory) {
-        return registry(name, Registries.RECIPE_SERIALIZER, key -> factory.get());
+    @StandardAPI()
+    public <T extends Recipe<?>> RecipeSerializer<T> simpleRecipeSerializer(
+                                                                            @Nonnull String name,
+                                                                            MapCodec<T> codec,
+                                                                            StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
+        return registry(name, new RecipeSerializer<>(codec, streamCodec), Registries.RECIPE_SERIALIZER);
     }
 
     // --- Recipe Types (Builder) ---
 
     @StandardAPI("Returns a RecipeTypeBuilder for fluent chain configuration. Call .register() to finalise.")
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(@Nonnull String name) {
+    public <T extends Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(@Nonnull String name) {
         return RecipeTypeBuilder.create(this, this, name);
     }
 
     @StandardAPI
-    public <T extends net.minecraft.world.item.crafting.Recipe<?>, P> RecipeTypeBuilder<T, P> recipeType(@Nonnull P parent, @Nonnull String name) {
+    public <T extends Recipe<?>, P> RecipeTypeBuilder<T, P> recipeType(
+                                                                       @Nonnull P parent, @Nonnull String name) {
         return RecipeTypeBuilder.create(this, parent, name);
     }
 
@@ -461,8 +483,7 @@ public class RegistryCore {
      * @param recipe the recipe instance
      */
     @StandardAPI("Adds a recipe instance for datagen.")
-    public void addRecipe(
-                          @Nonnull String id, @Nonnull net.minecraft.world.item.crafting.Recipe<?> recipe) {
+    public void addRecipe(@Nonnull String id, @Nonnull Recipe<?> recipe) {
         addRecipe(id, _reg -> recipe);
     }
 
@@ -476,9 +497,7 @@ public class RegistryCore {
      * @param recipeSupplier a supplier that provides the recipe instance
      */
     @StandardAPI("Adds a lazily-created recipe for datagen.")
-    public void addRecipe(
-                          @Nonnull String id,
-                          @Nonnull Supplier<? extends net.minecraft.world.item.crafting.Recipe<?>> recipeSupplier) {
+    public void addRecipe(@Nonnull String id, @Nonnull Supplier<? extends Recipe<?>> recipeSupplier) {
         addRecipe(id, _reg -> recipeSupplier.get());
     }
 
@@ -494,15 +513,13 @@ public class RegistryCore {
     @StandardAPI("Adds a recipe for datagen that requires registry lookups.")
     public void addRecipe(
                           @Nonnull String id,
-                          @Nonnull Function<net.minecraft.core.HolderLookup.Provider, ? extends net.minecraft.world.item.crafting.Recipe<?>> recipeFactory) {
+                          @Nonnull Function<net.minecraft.core.HolderLookup.Provider, ? extends Recipe<?>> recipeFactory) {
         if (doDatagen()) {
             final String modid = getModid();
             addDataGenerator(
                     ProviderType.RECIPE,
-                    (com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider prov) -> prov.accept(
-                            net.minecraft.resources.ResourceKey.create(
-                                    net.minecraft.core.registries.Registries.RECIPE,
-                                    net.minecraft.resources.Identifier.fromNamespaceAndPath(modid, id)),
+                    (RegistryLibRecipeProvider prov) -> prov.accept(
+                            ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(modid, id)),
                             recipeFactory.apply(prov.registries()),
                             null));
         }
@@ -523,12 +540,8 @@ public class RegistryCore {
      * @return a {@link RegistryEntry} wrapping the registered type
      */
     @StandardAPI("Registers a custom IngredientType and returns a RegistryEntry.")
-    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>> ingredientType(
-                                                                                                                                                                                                                                 @Nonnull String name, @Nonnull com.mojang.serialization.MapCodec<T> codec) {
-        return registry(
-                name,
-                net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES,
-                key -> new net.neoforged.neoforge.common.crafting.IngredientType<>(codec));
+    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> IngredientType<T> ingredientType(@Nonnull String name, @Nonnull MapCodec<T> codec) {
+        return ingredientType(name, codec, ByteBufCodecs.fromCodecWithRegistries(codec.codec()));
     }
 
     /**
@@ -546,37 +559,19 @@ public class RegistryCore {
      * @return a {@link RegistryEntry} wrapping the registered type
      */
     @StandardAPI("Registers a custom IngredientType with explicit StreamCodec.")
-    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> RegistryEntry<net.neoforged.neoforge.common.crafting.IngredientType<?>, net.neoforged.neoforge.common.crafting.IngredientType<T>> ingredientType(
-                                                                                                                                                                                                                                 @Nonnull String name,
-                                                                                                                                                                                                                                 @Nonnull com.mojang.serialization.MapCodec<T> codec,
-                                                                                                                                                                                                                                 @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> IngredientType<T> ingredientType(
+                                                                                                                 @Nonnull String name,
+                                                                                                                 @Nonnull MapCodec<T> codec,
+                                                                                                                 @Nonnull StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
         return registry(
-                name,
-                net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.INGREDIENT_TYPES,
-                key -> new net.neoforged.neoforge.common.crafting.IngredientType<>(codec, streamCodec));
+                name, new IngredientType<>(codec, streamCodec), NeoForgeRegistries.Keys.INGREDIENT_TYPES);
     }
 
     // --- Custom Fluid Ingredient Types ---
 
-    /**
-     * 注册一个自定义 {@link net.neoforged.neoforge.fluids.crafting.FluidIngredientType}（仅需 MapCodec）。
-     *
-     * <p>
-     * Registers a custom {@link net.neoforged.neoforge.fluids.crafting.FluidIngredientType} with
-     * just a {@link com.mojang.serialization.MapCodec}. A {@link
-     * net.minecraft.network.codec.StreamCodec} will be derived automatically.
-     *
-     * @param name  the fluid ingredient type registry name
-     * @param codec the MapCodec for serializing / deserializing the custom fluid ingredient
-     * @return a {@link RegistryEntry} wrapping the registered type
-     */
-    @StandardAPI("Registers a custom FluidIngredientType and returns a RegistryEntry.")
-    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>> fluidIngredientType(
-                                                                                                                                                                                                                                              @Nonnull String name, @Nonnull com.mojang.serialization.MapCodec<T> codec) {
-        return registry(
-                name,
-                net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_INGREDIENT_TYPES,
-                key -> new net.neoforged.neoforge.fluids.crafting.FluidIngredientType<>(codec));
+    @SyntaxSugar()
+    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> FluidIngredientType<T> fluidIngredientType(@Nonnull String name, @Nonnull MapCodec<T> codec) {
+        return fluidIngredientType(name, codec, ByteBufCodecs.fromCodecWithRegistries(codec.codec()));
     }
 
     /**
@@ -594,14 +589,32 @@ public class RegistryCore {
      * @return a {@link RegistryEntry} wrapping the registered type
      */
     @StandardAPI("Registers a custom FluidIngredientType with explicit StreamCodec.")
-    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> RegistryEntry<net.neoforged.neoforge.fluids.crafting.FluidIngredientType<?>, net.neoforged.neoforge.fluids.crafting.FluidIngredientType<T>> fluidIngredientType(
-                                                                                                                                                                                                                                              @Nonnull String name,
-                                                                                                                                                                                                                                              @Nonnull com.mojang.serialization.MapCodec<T> codec,
-                                                                                                                                                                                                                                              @Nonnull net.minecraft.network.codec.StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> FluidIngredientType<T> fluidIngredientType(
+                                                                                                                         @Nonnull String name,
+                                                                                                                         @Nonnull MapCodec<T> codec,
+                                                                                                                         @Nonnull StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
         return registry(
                 name,
-                net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_INGREDIENT_TYPES,
-                key -> new net.neoforged.neoforge.fluids.crafting.FluidIngredientType<>(codec, streamCodec));
+                new FluidIngredientType<>(codec, streamCodec),
+                net.neoforged.neoforge.registries.NeoForgeRegistries.Keys.FLUID_INGREDIENT_TYPES);
+    }
+
+    // --- DataComponentType ---
+
+    @SyntaxSugar("dataComponentType(name, Registries.DATA_COMPONENT_TYPE, builder)")
+    public <T> DataComponentType<T> dataComponentType(
+                                                      @Nonnull String name, Consumer<DataComponentType.Builder<T>> builder) {
+        return dataComponentType(name, Registries.DATA_COMPONENT_TYPE, builder);
+    }
+
+    @StandardAPI("Registers a custom DataComponentType.")
+    public <T> DataComponentType<T> dataComponentType(
+                                                      @Nonnull String name,
+                                                      ResourceKey<Registry<DataComponentType<?>>> registriesKey,
+                                                      Consumer<DataComponentType.Builder<T>> builder) {
+        DataComponentType.Builder<T> b = new DataComponentType.Builder<>();
+        builder.accept(b);
+        return registry(name, b.build(), registriesKey);
     }
 
     // --- Enchantments (Builder) ---
@@ -641,13 +654,13 @@ public class RegistryCore {
     }
 
     public <T extends Entity> void registerSpawnPlacement(
-                                                          EntityType<T> entityType,
+                                                          Supplier<EntityType<T>> entityType,
                                                           SpawnPlacementType placementType,
                                                           Heightmap.Types heightmap,
                                                           SpawnPlacements.SpawnPredicate<T> predicate) {
         spawnPlacements.add(
                 event -> event.register(
-                        entityType,
+                        entityType.get(),
                         placementType,
                         heightmap,
                         predicate,
@@ -755,16 +768,18 @@ public class RegistryCore {
         private final ResourceKey<R> key;
         private final RegistryEntry<R, T> entry;
         private final Function<ResourceKey<R>, ? extends T> creator;
-        private final List<Consumer<? super T>> callbacks = new ArrayList<>();
+        private final List<Consumer<? super T>> callbacks;
 
         private Registration(
                              ResourceKey<? extends Registry<R>> type,
                              Identifier name,
                              Function<ResourceKey<R>, ? extends T> creator,
-                             Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
+                             Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory,
+                             List<Consumer<? super T>> callbacks) {
             this.key = ResourceKey.create(type, name);
             this.creator = creator;
             this.entry = entryFactory.apply(this.key);
+            this.callbacks = callbacks;
         }
 
         @SuppressWarnings("all")
