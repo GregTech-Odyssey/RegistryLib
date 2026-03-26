@@ -1,5 +1,16 @@
 package com.gto.registrylib.builders;
 
+import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
@@ -16,6 +27,7 @@ import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -23,15 +35,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.function.*;
-
-import javax.annotation.Nonnull;
 
 public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, ItemBuilder<T, P>> {
 
@@ -51,9 +54,9 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     private Supplier<Item.Properties> initialProperties;
     private Function<Item.Properties, Item.Properties> propertiesCallback = FunctionUtil.identityFn();
 
-    private final Reference2ReferenceOpenHashMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabs = new Reference2ReferenceOpenHashMap<>();
+    private @Nullable Reference2ReferenceOpenHashMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabs;
 
-    private final ArrayList<TooltipNodeCollector.TooltipConfig> tooltipConfigs = new ArrayList<>();
+    private @Nullable ArrayList<TooltipNodeCollector.TooltipConfig> tooltipConfigs;
     private final ArrayList<ItemAttachment<?>> pendingAttachments;
 
     protected ItemBuilder(
@@ -93,30 +96,36 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     // === Configuration ===
 
+    private Reference2ReferenceOpenHashMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> getLazyCreativeModeTabs() {
+        var m = creativeModeTabs;
+        if (m == null) creativeModeTabs = m = new Reference2ReferenceOpenHashMap<>(2);
+        return m;
+    }
+
     @StandardAPI
     public ItemBuilder<T, P> addTab(
                                     @NotNull ResourceKey<CreativeModeTab> tab,
                                     @NotNull Consumer<CreativeModeTabModifier> modifier) {
-        creativeModeTabs.put(tab, modifier);
+        getLazyCreativeModeTabs().put(tab, modifier);
         return this;
     }
 
     @StandardAPI
     public ItemBuilder<T, P> addTab(@NotNull ResourceKey<CreativeModeTab> tab) {
-        creativeModeTabs.put(tab, CreativeModeTabModifier.DEFAULT);
+        getLazyCreativeModeTabs().put(tab, CreativeModeTabModifier.DEFAULT);
         return this;
     }
 
     @StandardAPI
     public ItemBuilder<T, P> addDefaultTab() {
         var tab = core.getDefaultCreativeModeTab();
-        if (tab != null) creativeModeTabs.put(tab, CreativeModeTabModifier.DEFAULT);
+        if (tab != null) getLazyCreativeModeTabs().put(tab, CreativeModeTabModifier.DEFAULT);
         return this;
     }
 
     @StandardAPI
     public ItemBuilder<T, P> removeTab(@NotNull ResourceKey<CreativeModeTab> tab) {
-        creativeModeTabs.remove(tab);
+        if (creativeModeTabs != null) creativeModeTabs.remove(tab);
         return this;
     }
 
@@ -140,13 +149,13 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")
-    public ItemBuilder<T, P> lang(@Nonnull String name) {
+    public ItemBuilder<T, P> lang(@NotNull String name) {
         return lang(Item::getDescriptionId, name);
     }
 
     @SyntaxSugar("lang(type, Item::getDescriptionId, name)")
     public ItemBuilder<T, P> lang(
-                                  @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+                                  @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
         return lang(type, Item::getDescriptionId, name);
     }
 
@@ -157,21 +166,22 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * 配置在 tooltip 渲染阶段执行，接收当前 ItemStack， 可根据 ItemStack 数据动态生成节点。
      */
     @StandardAPI
-    public ItemBuilder<T, P> addTooltip(@Nonnull TooltipNodeCollector.TooltipConfig config) {
+    public ItemBuilder<T, P> addTooltip(@NotNull TooltipNodeCollector.TooltipConfig config) {
+        if (tooltipConfigs == null) tooltipConfigs = new ArrayList<>();
         tooltipConfigs.add(config);
         return this;
     }
 
     /** 便捷添加一个 tooltip */
     @SyntaxSugar("addTooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)))")
-    public ItemBuilder<T, P> addTooltip(@Nonnull Component component) {
+    public ItemBuilder<T, P> addTooltip(@NotNull Component component) {
         addTooltip((collector, stack) -> collector.node(new SubNode.Basic(component, 0)));
         return this;
     }
 
     /** 为此物品添加一个组合附件（仅当 Item 为 {@link IComponentItem} 或其子类时有效）。 */
     @StandardAPI
-    public ItemBuilder<T, P> attach(@Nonnull ItemAttachment<?> attachment) {
+    public ItemBuilder<T, P> attach(@NotNull ItemAttachment<?> attachment) {
         if (pendingAttachments == null) throw new IllegalStateException("Item is not a component item");
         pendingAttachments.add(attachment);
         return this;
@@ -195,21 +205,30 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         properties = propertiesCallback.apply(properties);
         var item = factory.apply(properties.setId(key));
         // 注册 tooltip 配置
-        for (var config : tooltipConfigs) {
-            TooltipRegistry.register(item, config);
+        if (tooltipConfigs != null) {
+            for (var config : tooltipConfigs) {
+                TooltipRegistry.register(item, config);
+            }
+            tooltipConfigs = null;
         }
-        tooltipConfigs.clear();
 
         // 挂载组合附件
         if (pendingAttachments != null) {
             if (!(item instanceof IComponentItem<?> componentItem))
-                throw new RuntimeException("Item is not a component item");
+                throw new IllegalStateException(
+                        "attach() requires IComponentItem, got: " + item.getClass().getName());
             for (var attachment : pendingAttachments) {
                 componentItem.attachAttachment(attachment.self());
             }
             // 自动注册附件的 tooltip 收集
-            if (componentItem.getAttachments().stream()
-                    .anyMatch(att -> (att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) != 0)) {
+            boolean hasTooltipAttachment = false;
+            for (var att : componentItem.getAttachments()) {
+                if ((att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) != 0) {
+                    hasTooltipAttachment = true;
+                    break;
+                }
+            }
+            if (hasTooltipAttachment) {
                 TooltipRegistry.register(
                         item,
                         (collector, stack) -> {
@@ -233,12 +252,13 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     @StandardAPI
     public ItemEntry<T> register() {
         var entry = (ItemEntry<T>) super.register();
-        if (creativeModeTabs.isEmpty()) {
+        var tabs = creativeModeTabs;
+        if (tabs == null || tabs.isEmpty()) {
             var tab = core.getDefaultCreativeModeTab();
             if (tab != null) core.modifyCreativeModeTab(tab, m -> m.acceptEntry(entry));
         } else {
             var visibility = CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS;
-            for (var it = creativeModeTabs.reference2ReferenceEntrySet().fastIterator(); it.hasNext();) {
+            for (var it = tabs.reference2ReferenceEntrySet().fastIterator(); it.hasNext();) {
                 var e = it.next();
                 var key = e.getKey();
                 var value = e.getValue();
@@ -250,7 +270,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                     core.modifyCreativeModeTab(key, value);
                 }
             }
-            creativeModeTabs.clear();
+            creativeModeTabs = null;
         }
         return entry;
     }

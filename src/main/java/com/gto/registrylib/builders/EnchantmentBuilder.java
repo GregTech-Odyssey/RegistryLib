@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import javax.annotation.Nonnull;
 
 /**
  * 附魔 Builder，通过流畅 API 定义数据驱动附魔并自动生成附魔 JSON + 语言条目 + 标签。
@@ -243,7 +242,7 @@ public class EnchantmentBuilder<P> {
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withEffect(
-                                                @Nonnull DataComponentType<List<ConditionalEffect<E>>> type, @Nonnull E effect) {
+                                                @NotNull DataComponentType<List<ConditionalEffect<E>>> type, @NotNull E effect) {
         effectCallbacks.add(builder -> builder.withEffect(type, effect));
         return this;
     }
@@ -265,8 +264,8 @@ public class EnchantmentBuilder<P> {
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withEffect(
-                                                @Nonnull Supplier<DataComponentType<List<ConditionalEffect<E>>>> typeSupplier,
-                                                @Nonnull E effect) {
+                                                @NotNull Supplier<DataComponentType<List<ConditionalEffect<E>>>> typeSupplier,
+                                                @NotNull E effect) {
         effectCallbacks.add(builder -> builder.withEffect(typeSupplier.get(), effect));
         return this;
     }
@@ -283,9 +282,9 @@ public class EnchantmentBuilder<P> {
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withEffect(
-                                                @Nonnull DataComponentType<List<ConditionalEffect<E>>> type,
-                                                @Nonnull E effect,
-                                                @Nonnull LootItemCondition.Builder condition) {
+                                                @NotNull DataComponentType<List<ConditionalEffect<E>>> type,
+                                                @NotNull E effect,
+                                                @NotNull LootItemCondition.Builder condition) {
         effectCallbacks.add(builder -> builder.withEffect(type, effect, condition));
         return this;
     }
@@ -302,9 +301,9 @@ public class EnchantmentBuilder<P> {
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withEffect(
-                                                @Nonnull Supplier<DataComponentType<List<ConditionalEffect<E>>>> typeSupplier,
-                                                @Nonnull E effect,
-                                                @Nonnull LootItemCondition.Builder condition) {
+                                                @NotNull Supplier<DataComponentType<List<ConditionalEffect<E>>>> typeSupplier,
+                                                @NotNull E effect,
+                                                @NotNull LootItemCondition.Builder condition) {
         effectCallbacks.add(builder -> builder.withEffect(typeSupplier.get(), effect, condition));
         return this;
     }
@@ -320,7 +319,7 @@ public class EnchantmentBuilder<P> {
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withSpecialEffect(
-                                                       @Nonnull DataComponentType<E> type, @Nonnull E effect) {
+                                                       @NotNull DataComponentType<E> type, @NotNull E effect) {
         effectCallbacks.add(builder -> builder.withSpecialEffect(type, effect));
         return this;
     }
@@ -336,7 +335,7 @@ public class EnchantmentBuilder<P> {
      */
     @StandardAPI
     public <E> EnchantmentBuilder<P> withSpecialEffect(
-                                                       @Nonnull Supplier<DataComponentType<E>> typeSupplier, @Nonnull E effect) {
+                                                       @NotNull Supplier<DataComponentType<E>> typeSupplier, @NotNull E effect) {
         effectCallbacks.add(builder -> builder.withSpecialEffect(typeSupplier.get(), effect));
         return this;
     }
@@ -349,7 +348,7 @@ public class EnchantmentBuilder<P> {
      * customization not covered by the fluent API.
      */
     @StandardAPI
-    public EnchantmentBuilder<P> configure(@Nonnull Consumer<Enchantment.Builder> configurator) {
+    public EnchantmentBuilder<P> configure(@NotNull Consumer<Enchantment.Builder> configurator) {
         effectCallbacks.add(configurator);
         return this;
     }

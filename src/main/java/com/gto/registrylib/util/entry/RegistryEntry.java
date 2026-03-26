@@ -1,23 +1,16 @@
 package com.gto.registrylib.util.entry;
 
+import java.util.Locale;
+import java.util.function.Supplier;
+
 import com.gto.registrylib.RegistryCore;
 
+import lombok.Getter;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 
-import lombok.Getter;
-
-import java.util.Locale;
-import java.util.function.Supplier;
-
 public class RegistryEntry<T, S extends T> implements Supplier<S> {
-
-    public static final RegistryEntry EMPTY = new RegistryEntry<>(null) {
-
-        @Override
-        public void bound(Object value) {}
-    };
 
     @Getter
     protected final ResourceKey<T> key;

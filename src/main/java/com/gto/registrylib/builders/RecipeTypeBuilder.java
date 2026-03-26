@@ -17,7 +17,7 @@ import net.minecraft.world.item.crafting.RecipeType;
 
 import java.util.function.Function;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * 配方类型 Builder，一次性注册 {@link RecipeType} + {@link RecipeSerializer}。
@@ -93,7 +93,7 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      */
     @StandardAPI
     public RecipeTypeBuilder<T, P> serializer(
-                                              @Nonnull MapCodec<T> codec, @Nonnull StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
+                                              @NotNull MapCodec<T> codec, @NotNull StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
         this.codec = codec;
         this.streamCodec = streamCodec;
         return this;
@@ -115,7 +115,7 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      */
     @StandardAPI
     public RecipeTypeBuilder<T, P> typeFactory(
-                                               @Nonnull Function<Identifier, RecipeType<T>> typeFactory) {
+                                               @NotNull Function<Identifier, RecipeType<T>> typeFactory) {
         this.typeFactory = typeFactory;
         return this;
     }

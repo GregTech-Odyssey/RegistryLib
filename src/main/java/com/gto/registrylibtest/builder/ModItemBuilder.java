@@ -1,21 +1,22 @@
 package com.gto.registrylibtest.builder;
 
+import java.util.function.Function;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylibtest.ModRegistryCore;
 
 import net.minecraft.world.item.Item;
 
-import java.util.function.Function;
-
-import javax.annotation.Nonnull;
-
 /**
  * Extended {@link ItemBuilder} that exposes a {@code langCn(String)} convenience method.
  *
  * <p>
- * Returned by {@link ModRegistryCore#newItemBuilder} so that every {@code .item(...)} call on a
- * {@code ModRegistryCore} instance automatically has access to {@code .langCn("中文名")}.
+ * Returned by {@link ModRegistryCore#item(Object, String, Function, boolean)} so that every
+ * {@code .item(...)} call on a {@code ModRegistryCore} instance automatically has access to
+ * {@code .langCn("中文名")}.
  */
 public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
 
@@ -42,7 +43,7 @@ public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
      * Adds a Simplified-Chinese translation to {@code zh_cn.json}. Sugar for {@code
      * lang(ModRegistryCore.LANG_ZH_CN, name)}.
      */
-    public ModItemBuilder<T, P> langCn(@Nonnull String name) {
+    public ModItemBuilder<T, P> langCn(@NotNull String name) {
         lang(ModRegistryCore.LANG_ZH_CN, name);
         return this;
     }

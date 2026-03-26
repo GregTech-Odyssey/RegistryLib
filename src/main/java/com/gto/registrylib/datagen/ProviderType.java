@@ -31,7 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
 public interface ProviderType<T extends RegistryLibProvider> extends GeneratorType<T> {
@@ -120,20 +120,20 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
         }
     }
 
-    @Nonnull
+    @NotNull
     static <T extends RegistryLibProvider> ProviderType<T> registerServerData(
                                                                               String name, SimpleServerDataFactory<T> factory) {
         return registerProvider(name, factory.asProvider());
     }
 
-    @Nonnull
+    @NotNull
     static <T extends RegistryLibProvider> ProviderType<T> registerProvider(
                                                                             String name, ProviderType<T> type) {
         RegistryLibDataProvider.TYPES.put(name, type);
         return type;
     }
 
-    @Nonnull
+    @NotNull
     static <T extends RegistryLibProvider> ProviderType<T> registerClientProvider(
                                                                                   String name, Supplier<ProviderType<T>> supplier) {
         if (!DatagenModLoader.isRunningDataGen()) return NULL;
@@ -142,7 +142,7 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
         return type;
     }
 
-    @Nonnull
+    @NotNull
     @SuppressWarnings("unchecked")
     static <T, R extends RegistryLibTagsProvider<T>> ProviderType<R> registerTag(
                                                                                  String name, ResourceKey<? extends Registry<T>> key, ProviderType<R> type) {
@@ -154,7 +154,7 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
         return type;
     }
 
-    @Nonnull
+    @NotNull
     static <T> ProviderType<RegistryLibTagsProvider.IntrinsicImpl<T>> registerIntrinsicTag(
                                                                                            String providerName,
                                                                                            String typeName,

@@ -41,7 +41,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
-import javax.annotation.Nonnull;
 
 public class EntityBuilder<T extends Entity, P>
                           extends AbstractBuilder<EntityType<?>, EntityType<T>, P, EntityBuilder<T, P>> {
@@ -111,14 +110,14 @@ public class EntityBuilder<T extends Entity, P>
 
     @StandardAPI
     @SuppressWarnings("unchecked")
-    public EntityBuilder<T, P> attributes(@Nonnull Supplier<AttributeSupplier.Builder> attributes) {
+    public EntityBuilder<T, P> attributes(@NotNull Supplier<AttributeSupplier.Builder> attributes) {
         this.attributesFactory = attributes;
         return this;
     }
 
     @StandardAPI
     @SuppressWarnings("rawtypes")
-    public EntityBuilder<T, P> renderer(@Nonnull Supplier<EntityRendererProvider> renderer) {
+    public EntityBuilder<T, P> renderer(@NotNull Supplier<EntityRendererProvider> renderer) {
         Supplier supplier = valueSupplier;
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT, () -> () -> Client.registerEntityRenderer(supplier, renderer.get()));
@@ -127,7 +126,7 @@ public class EntityBuilder<T extends Entity, P>
 
     @StandardAPI
     public EntityBuilder<T, P> spawnEgg(
-                                        @Nonnull Consumer<ItemBuilder<SpawnEggItem, EntityBuilder<T, P>>> consumer) {
+                                        @NotNull Consumer<ItemBuilder<SpawnEggItem, EntityBuilder<T, P>>> consumer) {
         var eggBuilder = core.<SpawnEggItem, EntityBuilder<T, P>>item(
                 this,
                 name + "_spawn_egg",
@@ -218,7 +217,7 @@ public class EntityBuilder<T extends Entity, P>
 
     @SyntaxSugar("lang(type, t -> t.getDescriptionId(), name)")
     public EntityBuilder<T, P> lang(
-                                    @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+                                    @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
         return lang(type, t -> t.getDescriptionId(), name);
     }
 

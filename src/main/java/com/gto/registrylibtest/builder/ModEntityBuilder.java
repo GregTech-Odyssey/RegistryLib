@@ -8,7 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 /** Extended {@link EntityBuilder} that exposes a {@code langCn(String)} convenience method. */
 public class ModEntityBuilder<T extends Entity, P> extends EntityBuilder<T, P> {
@@ -32,7 +32,7 @@ public class ModEntityBuilder<T extends Entity, P> extends EntityBuilder<T, P> {
         super(core, parent, name, factory, category);
     }
 
-    public ModEntityBuilder<T, P> langCn(@Nonnull String name) {
+    public ModEntityBuilder<T, P> langCn(@NotNull String name) {
         lang(ModRegistryCore.LANG_ZH_CN, name);
         return this;
     }

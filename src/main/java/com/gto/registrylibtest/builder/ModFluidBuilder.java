@@ -7,7 +7,7 @@ import com.gto.registrylibtest.ModRegistryCore;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 
-import javax.annotation.Nonnull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Extended {@link FluidBuilder} that exposes a {@code langCn(String)} convenience method.
@@ -37,7 +37,7 @@ public class ModFluidBuilder<T extends BaseFlowingFluid, P> extends FluidBuilder
      * Adds a Simplified-Chinese translation for the fluid type to {@code zh_cn.json}. Sugar for
      * {@code lang(ModRegistryCore.LANG_ZH_CN, name)}.
      */
-    public ModFluidBuilder<T, P> langCn(@Nonnull String name) {
+    public ModFluidBuilder<T, P> langCn(@NotNull String name) {
         lang(ModRegistryCore.LANG_ZH_CN, name);
         return this;
     }

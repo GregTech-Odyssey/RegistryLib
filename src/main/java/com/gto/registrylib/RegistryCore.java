@@ -1,5 +1,25 @@
 package com.gto.registrylib;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.BlockBuilder;
@@ -22,14 +42,17 @@ import com.gto.registrylib.util.DebugMarkers;
 import com.gto.registrylib.util.Environment;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
-import com.gto.registrylib.util.entry.*;
+import com.gto.registrylib.util.entry.ItemEntry;
+import com.gto.registrylib.util.entry.RecipeTypeEntry;
+import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylib.util.registry.ListRegistry;
 import com.gto.registrylibtest.builder.ModFluidBuilder;
-
 import com.mojang.serialization.MapCodec;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import lombok.Getter;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.WritableRegistry;
@@ -72,21 +95,6 @@ import net.neoforged.neoforge.fluids.crafting.FluidIngredientType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
 
 public class RegistryCore {
 
@@ -328,7 +336,7 @@ public class RegistryCore {
                         registryType,
                         Identifier.fromNamespaceAndPath(modid, name),
                         _ -> value,
-                        _ -> RegistryEntry.EMPTY,
+                        RegistryEntry::new,
                         Collections.emptyList()));
         return value;
     }
@@ -338,95 +346,95 @@ public class RegistryCore {
 
     @StandardAPI
     public <T extends Item, P> ItemBuilder<T, P> item(
-                                                      @Nonnull P parent,
-                                                      @Nonnull String name,
-                                                      @Nonnull Function<Item.Properties, T> factory,
+                                                      @NotNull P parent,
+                                                      @NotNull String name,
+                                                      @NotNull Function<Item.Properties, T> factory,
                                                       boolean isComponentItem) {
         return ItemBuilder.create(this, parent, name, factory, isComponentItem);
     }
 
     @StandardAPI("Returns an ItemBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Item> ItemBuilder<T, RegistryCore> item(
-                                                              @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+                                                              @NotNull String name, @NotNull Function<Item.Properties, T> factory) {
         return item(this, name, factory, false);
     }
 
-    public ItemBuilder<Item, RegistryCore> item(@Nonnull String name) {
+    public ItemBuilder<Item, RegistryCore> item(@NotNull String name) {
         return item(this, name, Item::new, false);
     }
 
     public <T extends Item & IComponentItem<T>> ItemBuilder<T, RegistryCore> componentItem(
-                                                                                           @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+                                                                                           @NotNull String name, @NotNull Function<Item.Properties, T> factory) {
         return item(this, name, factory, true);
     }
 
-    public ItemBuilder<ComponentItem, RegistryCore> componentItem(@Nonnull String name) {
+    public ItemBuilder<ComponentItem, RegistryCore> componentItem(@NotNull String name) {
         return item(this, name, ComponentItem::new, true);
     }
 
     // --- Blocks ---
 
     public <T extends Block, P> BlockBuilder<T, P> block(
-                                                         @Nonnull P parent,
-                                                         @Nonnull String name,
-                                                         @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+                                                         @NotNull P parent,
+                                                         @NotNull String name,
+                                                         @NotNull Function<BlockBehaviour.Properties, T> factory) {
         return BlockBuilder.create(this, parent, name, factory);
     }
 
     @StandardAPI("Returns a BlockBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Block> BlockBuilder<T, RegistryCore> block(
-                                                                 @Nonnull String name, @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+                                                                 @NotNull String name, @NotNull Function<BlockBehaviour.Properties, T> factory) {
         return block(this, name, factory);
     }
 
-    public BlockBuilder<Block, RegistryCore> block(@Nonnull String name) {
+    public BlockBuilder<Block, RegistryCore> block(@NotNull String name) {
         return block(this, name, Block::new);
     }
 
     // --- Block Entities ---
 
     public <T extends BlockEntity, P> BlockEntityBuilder<T, P> blockEntity(
-                                                                           @Nonnull P parent,
-                                                                           @Nonnull String name,
-                                                                           @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
+                                                                           @NotNull P parent,
+                                                                           @NotNull String name,
+                                                                           @NotNull BlockEntityBuilder.BlockEntityFactory<T> factory) {
         return BlockEntityBuilder.create(this, parent, name, factory);
     }
 
     @StandardAPI("Returns a BlockEntityBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends BlockEntity> BlockEntityBuilder<T, RegistryCore> blockEntity(
-                                                                                   @Nonnull String name, @Nonnull BlockEntityBuilder.BlockEntityFactory<T> factory) {
+                                                                                   @NotNull String name, @NotNull BlockEntityBuilder.BlockEntityFactory<T> factory) {
         return blockEntity(this, name, factory);
     }
 
     // --- Fluids ---
 
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
-                                                                                 @Nonnull P parent, @Nonnull String name, @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                                 @NotNull P parent, @NotNull String name, @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
         return ModFluidBuilder.create(this, parent, name, fluidFactory);
     }
 
     @StandardAPI("Returns a FluidBuilder for fluent chain configuration. Call .register() to finalise.")
     public FluidBuilder<BaseFlowingFluid.Flowing, RegistryCore> fluid(
-                                                                      @Nonnull String name, @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture) {
+                                                                      @NotNull String name, @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture) {
         return fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new);
     }
 
     @StandardAPI("Returns a FluidBuilder with custom FluidFactory for fluent chain configuration. Call .register() to finalise.")
     public <T extends BaseFlowingFluid> FluidBuilder<T, RegistryCore> fluid(
-                                                                            @Nonnull String name,
-                                                                            @Nonnull Identifier stillTexture,
-                                                                            @Nonnull Identifier flowingTexture,
-                                                                            @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                            @NotNull String name,
+                                                                            @NotNull Identifier stillTexture,
+                                                                            @NotNull Identifier flowingTexture,
+                                                                            @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
         return fluid(this, name, stillTexture, flowingTexture, fluidFactory);
     }
 
     @StandardAPI
     public <T extends BaseFlowingFluid, P> FluidBuilder<T, P> fluid(
-                                                                    @Nonnull P parent,
-                                                                    @Nonnull String name,
-                                                                    @Nonnull Identifier stillTexture,
-                                                                    @Nonnull Identifier flowingTexture,
-                                                                    @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                    @NotNull P parent,
+                                                                    @NotNull String name,
+                                                                    @NotNull Identifier stillTexture,
+                                                                    @NotNull Identifier flowingTexture,
+                                                                    @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
         return newFluidBuilder(parent, name, fluidFactory)
                 .clientExtension(stillTexture, flowingTexture);
     }
@@ -441,7 +449,7 @@ public class RegistryCore {
     // --- Recipe Types (Simple) ---
 
     @StandardAPI()
-    public <T extends Recipe<?>> RecipeType<T> simpleRecipeType(@Nonnull String name) {
+    public <T extends Recipe<?>> RecipeType<T> simpleRecipeType(@NotNull String name) {
         return registry(
                 name,
                 RecipeType.simple(Identifier.fromNamespaceAndPath(getModid(), name)),
@@ -450,7 +458,7 @@ public class RegistryCore {
 
     @StandardAPI()
     public <T extends Recipe<?>> RecipeSerializer<T> simpleRecipeSerializer(
-                                                                            @Nonnull String name,
+                                                                            @NotNull String name,
                                                                             MapCodec<T> codec,
                                                                             StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
         return registry(name, new RecipeSerializer<>(codec, streamCodec), Registries.RECIPE_SERIALIZER);
@@ -459,13 +467,13 @@ public class RegistryCore {
     // --- Recipe Types (Builder) ---
 
     @StandardAPI("Returns a RecipeTypeBuilder for fluent chain configuration. Call .register() to finalise.")
-    public <T extends Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(@Nonnull String name) {
+    public <T extends Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(@NotNull String name) {
         return RecipeTypeBuilder.create(this, this, name);
     }
 
     @StandardAPI
     public <T extends Recipe<?>, P> RecipeTypeBuilder<T, P> recipeType(
-                                                                       @Nonnull P parent, @Nonnull String name) {
+                                                                       @NotNull P parent, @NotNull String name) {
         return RecipeTypeBuilder.create(this, parent, name);
     }
 
@@ -483,7 +491,7 @@ public class RegistryCore {
      * @param recipe the recipe instance
      */
     @StandardAPI("Adds a recipe instance for datagen.")
-    public void addRecipe(@Nonnull String id, @Nonnull Recipe<?> recipe) {
+    public void addRecipe(@NotNull String id, @NotNull Recipe<?> recipe) {
         addRecipe(id, _reg -> recipe);
     }
 
@@ -497,7 +505,7 @@ public class RegistryCore {
      * @param recipeSupplier a supplier that provides the recipe instance
      */
     @StandardAPI("Adds a lazily-created recipe for datagen.")
-    public void addRecipe(@Nonnull String id, @Nonnull Supplier<? extends Recipe<?>> recipeSupplier) {
+    public void addRecipe(@NotNull String id, @NotNull Supplier<? extends Recipe<?>> recipeSupplier) {
         addRecipe(id, _reg -> recipeSupplier.get());
     }
 
@@ -512,8 +520,8 @@ public class RegistryCore {
      */
     @StandardAPI("Adds a recipe for datagen that requires registry lookups.")
     public void addRecipe(
-                          @Nonnull String id,
-                          @Nonnull Function<net.minecraft.core.HolderLookup.Provider, ? extends Recipe<?>> recipeFactory) {
+                          @NotNull String id,
+                          @NotNull Function<net.minecraft.core.HolderLookup.Provider, ? extends Recipe<?>> recipeFactory) {
         if (doDatagen()) {
             final String modid = getModid();
             addDataGenerator(
@@ -540,7 +548,7 @@ public class RegistryCore {
      * @return a {@link RegistryEntry} wrapping the registered type
      */
     @StandardAPI("Registers a custom IngredientType and returns a RegistryEntry.")
-    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> IngredientType<T> ingredientType(@Nonnull String name, @Nonnull MapCodec<T> codec) {
+    public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> IngredientType<T> ingredientType(@NotNull String name, @NotNull MapCodec<T> codec) {
         return ingredientType(name, codec, ByteBufCodecs.fromCodecWithRegistries(codec.codec()));
     }
 
@@ -560,9 +568,9 @@ public class RegistryCore {
      */
     @StandardAPI("Registers a custom IngredientType with explicit StreamCodec.")
     public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> IngredientType<T> ingredientType(
-                                                                                                                 @Nonnull String name,
-                                                                                                                 @Nonnull MapCodec<T> codec,
-                                                                                                                 @Nonnull StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+                                                                                                                 @NotNull String name,
+                                                                                                                 @NotNull MapCodec<T> codec,
+                                                                                                                 @NotNull StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
         return registry(
                 name, new IngredientType<>(codec, streamCodec), NeoForgeRegistries.Keys.INGREDIENT_TYPES);
     }
@@ -570,7 +578,7 @@ public class RegistryCore {
     // --- Custom Fluid Ingredient Types ---
 
     @SyntaxSugar()
-    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> FluidIngredientType<T> fluidIngredientType(@Nonnull String name, @Nonnull MapCodec<T> codec) {
+    public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> FluidIngredientType<T> fluidIngredientType(@NotNull String name, @NotNull MapCodec<T> codec) {
         return fluidIngredientType(name, codec, ByteBufCodecs.fromCodecWithRegistries(codec.codec()));
     }
 
@@ -590,9 +598,9 @@ public class RegistryCore {
      */
     @StandardAPI("Registers a custom FluidIngredientType with explicit StreamCodec.")
     public <T extends net.neoforged.neoforge.fluids.crafting.FluidIngredient> FluidIngredientType<T> fluidIngredientType(
-                                                                                                                         @Nonnull String name,
-                                                                                                                         @Nonnull MapCodec<T> codec,
-                                                                                                                         @Nonnull StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
+                                                                                                                         @NotNull String name,
+                                                                                                                         @NotNull MapCodec<T> codec,
+                                                                                                                         @NotNull StreamCodec<? super net.minecraft.network.RegistryFriendlyByteBuf, T> streamCodec) {
         return registry(
                 name,
                 new FluidIngredientType<>(codec, streamCodec),
@@ -603,13 +611,13 @@ public class RegistryCore {
 
     @SyntaxSugar("dataComponentType(name, Registries.DATA_COMPONENT_TYPE, builder)")
     public <T> DataComponentType<T> dataComponentType(
-                                                      @Nonnull String name, Consumer<DataComponentType.Builder<T>> builder) {
+                                                      @NotNull String name, Consumer<DataComponentType.Builder<T>> builder) {
         return dataComponentType(name, Registries.DATA_COMPONENT_TYPE, builder);
     }
 
     @StandardAPI("Registers a custom DataComponentType.")
     public <T> DataComponentType<T> dataComponentType(
-                                                      @Nonnull String name,
+                                                      @NotNull String name,
                                                       ResourceKey<Registry<DataComponentType<?>>> registriesKey,
                                                       Consumer<DataComponentType.Builder<T>> builder) {
         DataComponentType.Builder<T> b = new DataComponentType.Builder<>();
@@ -620,30 +628,30 @@ public class RegistryCore {
     // --- Enchantments (Builder) ---
 
     @StandardAPI("Returns an EnchantmentBuilder for fluent chain configuration. Call .register() to finalise.")
-    public EnchantmentBuilder<RegistryCore> enchantment(@Nonnull String name) {
+    public EnchantmentBuilder<RegistryCore> enchantment(@NotNull String name) {
         return EnchantmentBuilder.create(this, this, name);
     }
 
     @StandardAPI
-    public <P> EnchantmentBuilder<P> enchantment(@Nonnull P parent, @Nonnull String name) {
+    public <P> EnchantmentBuilder<P> enchantment(@NotNull P parent, @NotNull String name) {
         return EnchantmentBuilder.create(this, parent, name);
     }
 
     // --- Entities ---
 
     public <T extends Entity, P> EntityBuilder<T, P> entity(
-                                                            @Nonnull P parent,
-                                                            @Nonnull String name,
-                                                            @Nonnull EntityType.EntityFactory<T> factory,
-                                                            @Nonnull MobCategory category) {
+                                                            @NotNull P parent,
+                                                            @NotNull String name,
+                                                            @NotNull EntityType.EntityFactory<T> factory,
+                                                            @NotNull MobCategory category) {
         return EntityBuilder.create(this, parent, name, factory, category);
     }
 
     @StandardAPI("Returns an EntityBuilder for fluent chain configuration. Call .register() to finalise.")
     public <T extends Entity> EntityBuilder<T, RegistryCore> entity(
-                                                                    @Nonnull String name,
-                                                                    @Nonnull EntityType.EntityFactory<T> factory,
-                                                                    @Nonnull MobCategory category) {
+                                                                    @NotNull String name,
+                                                                    @NotNull EntityType.EntityFactory<T> factory,
+                                                                    @NotNull MobCategory category) {
         return entity(this, name, factory, category);
     }
 

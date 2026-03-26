@@ -31,8 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.image.BufferedImage;
 import java.util.function.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockBuilder<T extends Block, P>
                          extends AbstractBuilder<Block, T, P, BlockBuilder<T, P>> {
@@ -61,14 +60,14 @@ public class BlockBuilder<T extends Block, P>
     // === Sub-resource Configuration (Consumer-scoped, returns this BlockBuilder) ===
     @StandardAPI("Configures an ItemBuilder for the BlockItem sub-entry via lambda.")
     public BlockBuilder<T, P> item(
-                                   @Nonnull Consumer<ItemBuilder<BlockItem, BlockBuilder<T, P>>> consumer) {
+                                   @NotNull Consumer<ItemBuilder<BlockItem, BlockBuilder<T, P>>> consumer) {
         return item(BlockItem::new, consumer);
     }
 
     @StandardAPI("Configures an ItemBuilder with a custom item factory via lambda.")
     public <I extends Item> BlockBuilder<T, P> item(
-                                                    @Nonnull BiFunction<? super T, Item.Properties, ? extends I> factory,
-                                                    @Nonnull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> consumer) {
+                                                    @NotNull BiFunction<? super T, Item.Properties, ? extends I> factory,
+                                                    @NotNull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> consumer) {
         var builder = core.<I, BlockBuilder<T, P>>item(
                 this, name, p -> factory.apply(getValue(), p.useBlockDescriptionPrefix()), false)
                 .setData(ProviderType.LANG, FunctionUtil.noOpConsumer())
@@ -96,15 +95,15 @@ public class BlockBuilder<T extends Block, P>
      * Sets a default creative tab that will be applied to any BlockItem created via {@link #item}.
      */
     @StandardAPI
-    public BlockBuilder<T, P> defaultItemTab(@Nonnull ResourceKey<CreativeModeTab> tab) {
+    public BlockBuilder<T, P> defaultItemTab(@NotNull ResourceKey<CreativeModeTab> tab) {
         this.defaultItemTab = tab;
         return this;
     }
 
     @StandardAPI("Configures a BlockEntityBuilder for the block entity sub-entry via lambda.")
     public <BE extends BlockEntity> BlockBuilder<T, P> blockEntity(
-                                                                   @Nonnull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
-                                                                   @Nonnull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> consumer) {
+                                                                   @NotNull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
+                                                                   @NotNull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> consumer) {
         var builder = core.blockEntity(this, name, beFactory).validBlock(this::getValue);
         consumer.accept(builder);
         return builder.build();
@@ -178,7 +177,7 @@ public class BlockBuilder<T extends Block, P>
 
     @SyntaxSugar("lang(type, Block::getDescriptionId, name)")
     public BlockBuilder<T, P> lang(
-                                   @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+                                   @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
         return lang(type, Block::getDescriptionId, name);
     }
 

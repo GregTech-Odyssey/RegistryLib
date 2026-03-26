@@ -1,33 +1,37 @@
 package com.gto.registrylib.builders;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
-import com.gto.registrylib.datagen.*;
+import com.gto.registrylib.datagen.GeneratorType;
+import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import lombok.Getter;
 import net.minecraft.core.Registry;
 import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
-
-import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import lombok.Getter;
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.*;
-
-import javax.annotation.Nonnull;
 
 @SuppressWarnings("unchecked")
 public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuilder<R, T, P, S>> {
@@ -38,9 +42,10 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     protected final String name;
     protected final ResourceKey<? extends Registry<R>> registryKey;
 
-    protected final List<Consumer<? super T>> callbacks = new ArrayList<>();
+    protected @Nullable List<Consumer<? super T>> callbacks;
     protected final Supplier<T> valueSupplier;
     protected final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
+    private boolean registered;
 
     protected AbstractBuilder(
                               RegistryCore core, P parent, String name, ResourceKey<? extends Registry<R>> registryKey) {
@@ -74,6 +79,8 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @StandardAPI
     @MustBeInvokedByOverriders
     public RegistryEntry<R, T> register() {
+        if (registered) throw new IllegalStateException("Builder already registered: " + name);
+        registered = true;
         if (tagsByType != null) {
             tagsByType.forEach(
                     (type, tags) -> setData(
@@ -81,7 +88,8 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                             prov -> tags.forEach(
                                     (tag, isOptional) -> prov.rawBuilder((TagKey) tag).add(asTag(isOptional)))));
         }
-        return core.registry(name, registryKey, callbacks, this::createEntry, this::createEntryWrapper);
+        var cbs = callbacks != null ? callbacks : Collections.<Consumer<? super T>>emptyList();
+        return core.registry(name, registryKey, cbs, this::createEntry, this::createEntryWrapper);
     }
 
     // === Configuration ===
@@ -102,6 +110,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     @StandardAPI
     public S onRegister(@NotNull Consumer<? super T> callback) {
+        if (callbacks == null) callbacks = new ArrayList<>();
         callbacks.add(callback);
         return (S) this;
     }
@@ -179,9 +188,9 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     @StandardAPI
     public S lang(
-                  @Nonnull ProviderType<? extends RegistryLibLangProvider> type,
-                  @Nonnull Function<T, String> langKeyProvider,
-                  @Nonnull String name) {
+                  @NotNull ProviderType<? extends RegistryLibLangProvider> type,
+                  @NotNull Function<T, String> langKeyProvider,
+                  @NotNull String name) {
         if (core.doDatagen()) {
             return setData(type, prov -> prov.add(langKeyProvider.apply(getValue()), name));
         }

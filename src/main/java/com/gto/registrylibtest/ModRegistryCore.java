@@ -1,5 +1,9 @@
 package com.gto.registrylibtest;
 
+import java.util.function.Function;
+
+import org.jetbrains.annotations.NotNull;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.composite.ComponentItem;
@@ -20,10 +24,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
-import java.util.function.Function;
-
-import javax.annotation.Nonnull;
-
 /**
  * A subclass of {@link RegistryCore} that adds first-class Simplified-Chinese lang support.
  *
@@ -33,9 +33,9 @@ import javax.annotation.Nonnull;
  * <ul>
  * <li>Declares the shared {@link #LANG_ZH_CN} {@link ProviderType} and the {@link
  * ZhCnLangProvider} that backs it.
- * <li>Overrides {@link #newBlockBuilder}, {@link #newItemBuilder}, and {@link #newFluidBuilder}
- * to return {@link ModBlockBuilder}, {@link ModItemBuilder}, and {@link ModFluidBuilder}
- * respectively — each of which carries a {@code .langCn(String)} convenience method.
+ * <li>Overrides {@link #block}, {@link #item}, and {@link #fluid} to return
+ * {@link ModBlockBuilder}, {@link ModItemBuilder}, and {@link ModFluidBuilder} respectively
+ * — each of which carries a {@code .langCn(String)} convenience method.
  * </ul>
  *
  * <h3>Usage</h3>
@@ -87,50 +87,50 @@ public class ModRegistryCore extends RegistryCore {
 
     @Override
     public <T extends Block, P> ModBlockBuilder<T, P> block(
-                                                            @Nonnull P parent,
-                                                            @Nonnull String name,
-                                                            @Nonnull Function<BlockBehaviour.Properties, T> factory) {
+                                                            @NotNull P parent,
+                                                            @NotNull String name,
+                                                            @NotNull Function<BlockBehaviour.Properties, T> factory) {
         return ModBlockBuilder.create(this, parent, name, factory);
     }
 
     @Override
     public <T extends Item> ModItemBuilder<T, RegistryCore> item(
-                                                                 @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+                                                                 @NotNull String name, @NotNull Function<Item.Properties, T> factory) {
         return item(this, name, factory, false);
     }
 
     @Override
-    public ModItemBuilder<Item, RegistryCore> item(@Nonnull String name) {
+    public ModItemBuilder<Item, RegistryCore> item(@NotNull String name) {
         return item(this, name, Item::new, false);
     }
 
     @Override
     public <T extends Item & IComponentItem<T>> ModItemBuilder<T, RegistryCore> componentItem(
-                                                                                              @Nonnull String name, @Nonnull Function<Item.Properties, T> factory) {
+                                                                                              @NotNull String name, @NotNull Function<Item.Properties, T> factory) {
         return item(this, name, factory, true);
     }
 
     @Override
-    public ModItemBuilder<ComponentItem, RegistryCore> componentItem(@Nonnull String name) {
+    public ModItemBuilder<ComponentItem, RegistryCore> componentItem(@NotNull String name) {
         return componentItem(name, ComponentItem::new);
     }
 
     @Override
     public <T extends Item, P> ModItemBuilder<T, P> item(
-                                                         @Nonnull P parent,
-                                                         @Nonnull String name,
-                                                         @Nonnull Function<Item.Properties, T> factory,
+                                                         @NotNull P parent,
+                                                         @NotNull String name,
+                                                         @NotNull Function<Item.Properties, T> factory,
                                                          boolean isComponentItem) {
         return ModItemBuilder.create(this, parent, name, factory, isComponentItem);
     }
 
     @Override
     public <T extends BaseFlowingFluid, P> ModFluidBuilder<T, P> fluid(
-                                                                       @Nonnull P parent,
-                                                                       @Nonnull String name,
-                                                                       @Nonnull Identifier stillTexture,
-                                                                       @Nonnull Identifier flowingTexture,
-                                                                       @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                       @NotNull P parent,
+                                                                       @NotNull String name,
+                                                                       @NotNull Identifier stillTexture,
+                                                                       @NotNull Identifier flowingTexture,
+                                                                       @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
         return (ModFluidBuilder<T, P>) super.fluid(parent, name, stillTexture, flowingTexture, fluidFactory);
     }
 
@@ -138,24 +138,24 @@ public class ModRegistryCore extends RegistryCore {
 
     @Override
     public <T extends Entity> ModEntityBuilder<T, RegistryCore> entity(
-                                                                       @Nonnull String name,
-                                                                       @Nonnull EntityType.EntityFactory<T> factory,
-                                                                       @Nonnull MobCategory category) {
+                                                                       @NotNull String name,
+                                                                       @NotNull EntityType.EntityFactory<T> factory,
+                                                                       @NotNull MobCategory category) {
         return entity(this, name, factory, category);
     }
 
     @Override
     public <T extends Entity, P> ModEntityBuilder<T, P> entity(
-                                                               @Nonnull P parent,
-                                                               @Nonnull String name,
-                                                               @Nonnull EntityType.EntityFactory<T> factory,
-                                                               @Nonnull MobCategory category) {
+                                                               @NotNull P parent,
+                                                               @NotNull String name,
+                                                               @NotNull EntityType.EntityFactory<T> factory,
+                                                               @NotNull MobCategory category) {
         return ModEntityBuilder.create(this, parent, name, factory, category);
     }
 
     @Override
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
-                                                                                 @Nonnull P parent, @Nonnull String name, @Nonnull FluidBuilder.FluidFactory<T> fluidFactory) {
+                                                                                 @NotNull P parent, @NotNull String name, @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
         return ModFluidBuilder.create(this, parent, name, fluidFactory);
     }
 }

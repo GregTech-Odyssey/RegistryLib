@@ -44,8 +44,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FluidBuilder<T extends BaseFlowingFluid, P>
                          extends AbstractBuilder<Fluid, T, P, FluidBuilder<T, P>> {
@@ -67,7 +67,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @StandardAPI
     public FluidBuilder<T, P> clientExtension(
-                                              @Nonnull Supplier<Supplier<IClientFluidTypeExtensions>> clientExtension) {
+                                              @NotNull Supplier<Supplier<IClientFluidTypeExtensions>> clientExtension) {
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
                 () -> () -> Client.registerFluidTypeExtensions(fluidType, clientExtension.get().get()));
@@ -76,14 +76,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1))")
     public FluidBuilder<T, P> clientExtension(
-                                              @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture) {
+                                              @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture) {
         return clientExtension(
                 () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1));
     }
 
     @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor))")
     public FluidBuilder<T, P> clientExtension(
-                                              @Nonnull Identifier stillTexture, @Nonnull Identifier flowingTexture, int tintColor) {
+                                              @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture, int tintColor) {
         this.tintColor = tintColor;
         return clientExtension(
                 () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor));
@@ -171,13 +171,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     // === Configuration ===
 
     @StandardAPI
-    public FluidBuilder<T, P> properties(@Nonnull Consumer<FluidType.Properties> cons) {
+    public FluidBuilder<T, P> properties(@NotNull Consumer<FluidType.Properties> cons) {
         typeProperties = typeProperties.andThen(cons);
         return this;
     }
 
     @StandardAPI
-    public FluidBuilder<T, P> fluidProperties(@Nonnull Consumer<BaseFlowingFluid.Properties> cons) {
+    public FluidBuilder<T, P> fluidProperties(@NotNull Consumer<BaseFlowingFluid.Properties> cons) {
         fluidProperties = fluidProperties.andThen(cons);
         return this;
     }
@@ -191,13 +191,13 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     }
 
     @SyntaxSugar("lang(f -> f.getFluidType().getDescriptionId(), name)")
-    public FluidBuilder<T, P> lang(@Nonnull String name) {
+    public FluidBuilder<T, P> lang(@NotNull String name) {
         return lang(ProviderType.LANG, f -> f.getFluidType().getDescriptionId(), name);
     }
 
     @SyntaxSugar("lang(type, f -> f.getFluidType().getDescriptionId(), name)")
     public FluidBuilder<T, P> lang(
-                                   @Nonnull ProviderType<? extends RegistryLibLangProvider> type, @Nonnull String name) {
+                                   @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
         return lang(type, f -> f.getFluidType().getDescriptionId(), name);
     }
 
@@ -215,7 +215,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @StandardAPI
     public FluidBuilder<T, P> source(
-                                     @Nonnull Function<BaseFlowingFluid.Properties, ? extends BaseFlowingFluid> factory) {
+                                     @NotNull Function<BaseFlowingFluid.Properties, ? extends BaseFlowingFluid> factory) {
         this.defaultSource = false;
         this.source = Lazy.of(() -> factory.apply(makeProperties()));
         return this;
@@ -235,14 +235,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @StandardAPI("Configures a BlockBuilder for the fluid block sub-entry via lambda.")
     public FluidBuilder<T, P> block(
-                                    @Nonnull Consumer<BlockBuilder<LiquidBlock, FluidBuilder<T, P>>> consumer) {
+                                    @NotNull Consumer<BlockBuilder<LiquidBlock, FluidBuilder<T, P>>> consumer) {
         return block(LiquidBlock::new, consumer);
     }
 
     @StandardAPI("Configures a BlockBuilder with a custom block factory via lambda.")
     public <B extends LiquidBlock> FluidBuilder<T, P> block(
-                                                            @Nonnull BiFunction<T, BlockBehaviour.Properties, ? extends B> factory,
-                                                            @Nonnull Consumer<BlockBuilder<B, FluidBuilder<T, P>>> consumer) {
+                                                            @NotNull BiFunction<T, BlockBehaviour.Properties, ? extends B> factory,
+                                                            @NotNull Consumer<BlockBuilder<B, FluidBuilder<T, P>>> consumer) {
         if (this.defaultBlock == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
@@ -286,21 +286,21 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
      * #bucket}.
      */
     @StandardAPI
-    public FluidBuilder<T, P> defaultBucketTab(@Nonnull ResourceKey<CreativeModeTab> tab) {
+    public FluidBuilder<T, P> defaultBucketTab(@NotNull ResourceKey<CreativeModeTab> tab) {
         this.defaultBucketTab = tab;
         return this;
     }
 
     @StandardAPI("Configures an ItemBuilder for the bucket sub-entry via lambda.")
     public FluidBuilder<T, P> bucket(
-                                     @Nonnull Consumer<ItemBuilder<BucketItem, FluidBuilder<T, P>>> consumer) {
+                                     @NotNull Consumer<ItemBuilder<BucketItem, FluidBuilder<T, P>>> consumer) {
         return bucket(BucketItem::new, consumer);
     }
 
     @StandardAPI("Configures an ItemBuilder with a custom bucket factory via lambda.")
     public <I extends BucketItem> FluidBuilder<T, P> bucket(
-                                                            @Nonnull BiFunction<BaseFlowingFluid, Item.Properties, ? extends I> factory,
-                                                            @Nonnull Consumer<ItemBuilder<I, FluidBuilder<T, P>>> consumer) {
+                                                            @NotNull BiFunction<BaseFlowingFluid, Item.Properties, ? extends I> factory,
+                                                            @NotNull Consumer<ItemBuilder<I, FluidBuilder<T, P>>> consumer) {
         if (this.defaultBucket == Boolean.FALSE) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }

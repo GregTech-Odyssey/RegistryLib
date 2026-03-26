@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import javax.annotation.Nonnull;
 
 public class BlockEntityBuilder<BE extends BlockEntity, P>
                                extends AbstractBuilder<BlockEntityType<?>, BlockEntityType<BE>, P, BlockEntityBuilder<BE, P>> {
@@ -67,7 +66,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @StandardAPI
     @SuppressWarnings("rawtypes")
     public BlockEntityBuilder<BE, P> renderer(
-                                              @Nonnull Supplier<? extends BlockEntityRendererProvider> renderer) {
+                                              @NotNull Supplier<? extends BlockEntityRendererProvider> renderer) {
         Supplier supplier = valueSupplier;
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT, () -> () -> Client.registerBER(supplier, renderer.get()));
