@@ -1,12 +1,10 @@
 package com.gto.registrylibtest.recipe;
 
-import java.awt.Color;
-
 import com.gto.registrylib.util.ColorUtil;
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntityEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
-import com.gto.registrylib.util.entry.RecipeEntry;
+import com.gto.registrylib.util.entry.RecipeTypeEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 
@@ -22,6 +20,8 @@ import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.common.crafting.CompoundIngredient;
 import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 import net.neoforged.neoforge.common.crafting.DifferenceIngredient;
+
+import java.awt.Color;
 
 /**
  * 使用全部 Recipe API 的复杂配方注册示例：注入器（Infuser）。
@@ -52,7 +52,7 @@ public class FullRecipeExample {
 
     // ── 配方类型注册（RecipeType + RecipeSerializer） ──────────────────────
 
-    public static final RecipeEntry<InfuserRecipe> INFUSER = RegistryLibTest.REGISTRYLIB
+    public static final RecipeTypeEntry<InfuserRecipe> INFUSER = RegistryLibTest.REGISTRYLIB
             .<InfuserRecipe>recipeType("infuser")
             .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
             .register();
@@ -62,10 +62,11 @@ public class FullRecipeExample {
     // typeFactory: override the default RecipeType.simple(id) creation.
     // serializerFactory: provide a pre-built RecipeSerializer instead of codec+streamCodec.
 
-    public static final RecipeEntry<InfuserRecipe> INFUSER_CUSTOM = RegistryLibTest.REGISTRYLIB
+    public static final RecipeTypeEntry<InfuserRecipe> INFUSER_CUSTOM = RegistryLibTest.REGISTRYLIB
             .<InfuserRecipe>recipeType("infuser_custom")
-            .typeFactory(id -> RecipeType.simple(id))
-            .serializerFactory(() -> new RecipeSerializer<>(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC))
+            .typeFactory(RecipeType::simple)
+            .serializerFactory(
+                    () -> new RecipeSerializer<>(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC))
             .register();
 
     // ── 配方实例注册（数据生成） ────────────────────────────────────────────
@@ -148,11 +149,7 @@ public class FullRecipeExample {
         INFUSER_CUSTOM.addRecipe(
                 "custom_iron_to_gold",
                 new InfuserRecipe(
-                        Ingredient.of(Items.IRON_INGOT),
-                        new ItemStackTemplate(Items.GOLD_INGOT),
-                        30,
-                        5.0F,
-                        1));
+                        Ingredient.of(Items.IRON_INGOT), new ItemStackTemplate(Items.GOLD_INGOT), 30, 5.0F, 1));
     }
 
     // ── T1 注入器方块 ─────────────────────────────────────────────────────

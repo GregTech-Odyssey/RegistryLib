@@ -34,24 +34,21 @@ import java.util.function.Supplier;
  *
  * @param <T> the concrete recipe type
  */
-public class RecipeEntry<T extends Recipe<?>> {
+public class RecipeTypeEntry<T extends Recipe<?>>
+                            extends RegistryEntry<RecipeType<?>, RecipeType<T>> {
 
     private final RegistryCore core;
 
-    /** -- GETTER -- Returns the RecipeType RegistryEntry. */
-    @Getter
-    private final RegistryEntry<RecipeType<?>, RecipeType<T>> typeEntry;
-
     /** -- GETTER -- Returns the RecipeSerializer RegistryEntry. */
     @Getter
-    private final RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>> serializerEntry;
+    private final Supplier<RecipeSerializer<T>> serializerEntry;
 
-    public RecipeEntry(
-                       RegistryCore core,
-                       RegistryEntry<RecipeType<?>, RecipeType<T>> typeEntry,
-                       RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>> serializerEntry) {
+    public RecipeTypeEntry(
+                           ResourceKey<RecipeType<?>> key,
+                           RegistryCore core,
+                           Supplier<RecipeSerializer<T>> serializerEntry) {
+        super(key);
         this.core = core;
-        this.typeEntry = typeEntry;
         this.serializerEntry = serializerEntry;
     }
 
@@ -69,7 +66,7 @@ public class RecipeEntry<T extends Recipe<?>> {
      * @return this entry for chaining
      */
     @StandardAPI
-    public RecipeEntry<T> addRecipe(@NotNull String recipeName, @NotNull T recipe) {
+    public RecipeTypeEntry<T> addRecipe(@NotNull String recipeName, @NotNull T recipe) {
         return addRecipe(recipeName, _reg -> recipe);
     }
 
@@ -84,7 +81,8 @@ public class RecipeEntry<T extends Recipe<?>> {
      * @return this entry for chaining
      */
     @StandardAPI
-    public RecipeEntry<T> addRecipe(@NotNull String recipeName, @NotNull Supplier<T> recipeSupplier) {
+    public RecipeTypeEntry<T> addRecipe(
+                                        @NotNull String recipeName, @NotNull Supplier<T> recipeSupplier) {
         return addRecipe(recipeName, _reg -> recipeSupplier.get());
     }
 
@@ -107,9 +105,9 @@ public class RecipeEntry<T extends Recipe<?>> {
      * @return this entry for chaining
      */
     @StandardAPI
-    public RecipeEntry<T> addRecipe(
-                                    @NotNull String recipeName, @NotNull Function<HolderLookup.Provider, T> recipeFactory) {
-        String typeName = typeEntry.getKey().identifier().getPath();
+    public RecipeTypeEntry<T> addRecipe(
+                                        @NotNull String recipeName, @NotNull Function<HolderLookup.Provider, T> recipeFactory) {
+        String typeName = key.identifier().getPath();
         core.addRecipe(typeName + "/" + recipeName, recipeFactory);
         return this;
     }
@@ -118,21 +116,11 @@ public class RecipeEntry<T extends Recipe<?>> {
 
     /** Returns the registered RecipeType. */
     public RecipeType<T> getType() {
-        return typeEntry.get();
+        return value;
     }
 
     /** Returns the registered RecipeSerializer. */
     public RecipeSerializer<T> getSerializer() {
         return serializerEntry.get();
-    }
-
-    /** Returns the ResourceKey of the RecipeType. */
-    public ResourceKey<RecipeType<?>> getTypeKey() {
-        return typeEntry.getKey();
-    }
-
-    /** Returns the ResourceKey of the RecipeSerializer. */
-    public ResourceKey<RecipeSerializer<?>> getSerializerKey() {
-        return serializerEntry.getKey();
     }
 }

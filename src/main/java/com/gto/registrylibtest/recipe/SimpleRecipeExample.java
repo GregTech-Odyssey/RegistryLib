@@ -2,7 +2,7 @@ package com.gto.registrylibtest.recipe;
 
 import com.gto.registrylib.util.entry.BlockEntityEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
-import com.gto.registrylib.util.entry.RecipeEntry;
+import com.gto.registrylib.util.entry.RecipeTypeEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
 
@@ -20,7 +20,7 @@ import net.minecraft.world.level.block.Blocks;
  * <p>
  * Simple custom recipe registration example: the Altar. Demonstrates registering a custom
  * RecipeType + RecipeSerializer via {@code .recipeType()}, then adding recipe instances via {@link
- * RecipeEntry#addRecipe}.
+ * RecipeTypeEntry#addRecipe}.
  *
  * <p>
  * 丢物品到祭坛上方即可转化。配方 JSON 由 datagen 自动生成到 {@code data/registrylibtest/recipe/altar_*.json}。
@@ -36,7 +36,7 @@ public class SimpleRecipeExample {
     // ── 配方类型注册（RecipeType + RecipeSerializer） ──────────────────────
     // Register RecipeType and RecipeSerializer.
 
-    public static final RecipeEntry<AltarRecipe> ALTAR = RegistryLibTest.REGISTRYLIB
+    public static final RecipeTypeEntry<AltarRecipe> ALTAR = RegistryLibTest.REGISTRYLIB
             .<AltarRecipe>recipeType("altar")
             .serializer(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC)
             .register();

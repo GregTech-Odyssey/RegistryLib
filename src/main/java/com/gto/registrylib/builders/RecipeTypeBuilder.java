@@ -1,15 +1,10 @@
 package com.gto.registrylib.builders;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import javax.annotation.Nonnull;
-
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
-import com.gto.registrylib.util.entry.RecipeEntry;
-import com.gto.registrylib.util.entry.RegistryEntry;
+import com.gto.registrylib.util.entry.RecipeTypeEntry;
+
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.registries.Registries;
@@ -20,20 +15,25 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import javax.annotation.Nonnull;
+
 /**
  * 配方类型 Builder，一次性注册 {@link RecipeType} + {@link RecipeSerializer}。
  *
  * <p>
  * Fluent builder that registers both a {@link RecipeType} and {@link RecipeSerializer} under the
- * same name. After registration, use the returned {@link RecipeEntry} to add individual recipes via
- * {@link RecipeEntry#addRecipe}.
+ * same name. After registration, use the returned {@link RecipeTypeEntry} to add individual recipes
+ * via {@link RecipeTypeEntry#addRecipe}.
  *
  * <h3>Usage</h3>
  *
  * <pre>{@code
  * 
  * // Step 1: Register the RecipeType + RecipeSerializer
- * public static final RecipeEntry<AltarRecipe> ALTAR = REGISTRYLIB
+ * public static final RecipeTypeEntry<AltarRecipe> ALTAR = REGISTRYLIB
  *         .<AltarRecipe>recipeType("altar")
  *         .serializer(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC)
  *         .register();
@@ -105,8 +105,8 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      * 自定义 {@link RecipeType} 的创建工厂。默认使用 {@code RecipeType.simple(id)}。
      *
      * <p>
-     * Overrides how the {@link RecipeType} is created. By default, {@code RecipeType.simple(id)} is
-     * used. The function receives the registry {@link Identifier} (e.g. {@code modid:name}).
+     * Overrides how the {@link RecipeType} is created. By default, {@code RecipeType.simple(id)}
+     * is used. The function receives the registry {@link Identifier} (e.g. {@code modid:name}).
      *
      * <pre>{@code
      * .<MyRecipe>recipeType("my_recipe")
@@ -116,7 +116,8 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      * }</pre>
      */
     @StandardAPI
-    public RecipeTypeBuilder<T, P> typeFactory(@Nonnull Function<Identifier, RecipeType<T>> typeFactory) {
+    public RecipeTypeBuilder<T, P> typeFactory(
+                                               @Nonnull Function<Identifier, RecipeType<T>> typeFactory) {
         this.typeFactory = typeFactory;
         return this;
     }
@@ -126,8 +127,8 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      *
      * <p>
      * Provides a custom factory for the {@link RecipeSerializer}, as an alternative to {@link
-     * #serializer(MapCodec, StreamCodec)}. Use this when you have a pre-existing serializer
-     * instance or need custom construction logic.
+     * #serializer(MapCodec, StreamCodec)}. Use this when you have a pre-existing serializer instance
+     * or need custom construction logic.
      *
      * <pre>{@code
      * .<MyRecipe>recipeType("my_recipe")
@@ -136,7 +137,8 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      * }</pre>
      */
     @StandardAPI
-    public RecipeTypeBuilder<T, P> serializerFactory(@Nonnull Supplier<RecipeSerializer<T>> serializerFactory) {
+    public RecipeTypeBuilder<T, P> serializerFactory(
+                                                     @Nonnull Supplier<RecipeSerializer<T>> serializerFactory) {
         this.serializerFactory = serializerFactory;
         return this;
     }
@@ -144,16 +146,15 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
     // === Registration ===
 
     /**
-     * 注册 RecipeType 和 RecipeSerializer，返回 {@link RecipeEntry}。
+     * 注册 RecipeType 和 RecipeSerializer，返回 {@link RecipeTypeEntry}。
      *
      * <p>
      * Registers the {@link RecipeType} and {@link RecipeSerializer}, and returns a {@link
-     * RecipeEntry} wrapping both. Use {@link RecipeEntry#addRecipe} to add individual recipes for
-     * datagen.
+     * RecipeTypeEntry} wrapping both. Use {@link RecipeTypeEntry#addRecipe} to add individual recipes
+     * for datagen.
      */
     @StandardAPI
-    @SuppressWarnings("unchecked")
-    public RecipeEntry<T> register() {
+    public RecipeTypeEntry<T> register() {
         boolean hasCodecs = codec != null && streamCodec != null;
         if (!hasCodecs && serializerFactory == null) {
             throw new IllegalStateException(
@@ -162,8 +163,6 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
 
         // Register RecipeType (custom factory or default)
         Function<Identifier, RecipeType<T>> tf = typeFactory != null ? typeFactory : RecipeType::simple;
-        var typeEntry = (RegistryEntry<RecipeType<?>, RecipeType<T>>) (RegistryEntry) core.simple(
-                name, Registries.RECIPE_TYPE, key -> tf.apply(key.identifier()));
 
         // Register RecipeSerializer (custom factory or default from codec+streamCodec)
         final Supplier<RecipeSerializer<T>> sf;
@@ -174,10 +173,13 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
             final StreamCodec<RegistryFriendlyByteBuf, T> sc = streamCodec;
             sf = () -> new RecipeSerializer<>(c, sc);
         }
-        var serializerEntry = (RegistryEntry<RecipeSerializer<?>, RecipeSerializer<T>>) (RegistryEntry) core.simple(
-                name, Registries.RECIPE_SERIALIZER, key -> sf.get());
+        Supplier<RecipeSerializer<T>> serializerEntry = core.registry(name, Registries.RECIPE_SERIALIZER, key -> sf.get());
 
-        return new RecipeEntry<>(core, typeEntry, serializerEntry);
+        return core.registry(
+                name,
+                Registries.RECIPE_TYPE,
+                key -> tf.apply(key.identifier()),
+                key -> new RecipeTypeEntry<>(key, core, serializerEntry));
     }
 
     /**

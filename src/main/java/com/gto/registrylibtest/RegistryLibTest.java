@@ -73,7 +73,7 @@ public class RegistryLibTest {
 
     // === Creative Tab ===
     static {
-        var tab = REGISTRYLIB.creativeTab("test_tab").register();
+        var tab = REGISTRYLIB.creativeTab("test_tab");
         REGISTRYLIB.defaultCreativeTab(tab.getKey());
     }
 

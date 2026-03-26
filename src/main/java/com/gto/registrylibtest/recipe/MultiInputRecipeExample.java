@@ -1,6 +1,6 @@
 package com.gto.registrylibtest.recipe;
 
-import com.gto.registrylib.util.entry.RecipeEntry;
+import com.gto.registrylib.util.entry.RecipeTypeEntry;
 import com.gto.registrylibtest.RegistryLibTest;
 
 import net.minecraft.tags.ItemTags;
@@ -39,7 +39,7 @@ public class MultiInputRecipeExample {
 
     // ── 配方类型注册（RecipeType + RecipeSerializer） ──────────────────────
 
-    public static final RecipeEntry<SynthesizerRecipe> SYNTHESIZER = RegistryLibTest.REGISTRYLIB
+    public static final RecipeTypeEntry<SynthesizerRecipe> SYNTHESIZER = RegistryLibTest.REGISTRYLIB
             .<SynthesizerRecipe>recipeType("synthesizer")
             .serializer(SynthesizerRecipe.CODEC, SynthesizerRecipe.STREAM_CODEC)
             .register();

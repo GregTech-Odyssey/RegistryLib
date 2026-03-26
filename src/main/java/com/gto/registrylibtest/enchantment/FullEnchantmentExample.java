@@ -58,12 +58,11 @@ public class FullEnchantmentExample {
     // ── 自定义效果组件类型注册 ─────────────────────────────────────────────
 
     @SuppressWarnings("unchecked")
-    public static final RegistryEntry<DataComponentType<?>, DataComponentType<List<ConditionalEffect<AutoSmeltEffect>>>> AUTO_SMELT_EFFECT = (RegistryEntry) RegistryLibTest.REGISTRYLIB.simple(
+    public static final RegistryEntry<DataComponentType<?>, DataComponentType<List<ConditionalEffect<AutoSmeltEffect>>>> AUTO_SMELT_EFFECT = RegistryLibTest.REGISTRYLIB.registry(
             "auto_smelt",
             Registries.ENCHANTMENT_EFFECT_COMPONENT_TYPE,
             key -> DataComponentType.<List<ConditionalEffect<AutoSmeltEffect>>>builder()
-                    .persistent(
-                            ConditionalEffect.codec(AutoSmeltEffect.CODEC.codec()).listOf())
+                    .persistent(ConditionalEffect.codec(AutoSmeltEffect.CODEC.codec()).listOf())
                     .build());
 
     // ── 附魔注册（定义 + lang + tag 一步完成） ─────────────────────────────

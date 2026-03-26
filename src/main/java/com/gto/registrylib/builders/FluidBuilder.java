@@ -386,8 +386,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     @StandardAPI
     public FluidEntry<T> register() {
         if (this.registerType) {
-            core.simple(
-                    this, this.sourceName, NeoForgeRegistries.Keys.FLUID_TYPES, _ -> this.fluidType.get());
+            core.registry(
+                    this.sourceName, NeoForgeRegistries.Keys.FLUID_TYPES, _ -> this.fluidType.get());
         }
 
         if (defaultSource == Boolean.TRUE) {
