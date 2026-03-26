@@ -36,7 +36,7 @@ If you're unsure, start with `item(...)` or `block(...)` —they cover the vast 
 | `ItemBuilder` | Item properties, model, tooltip, tab, recipe, tag | `ItemEntry` |
 | `BlockBuilder` | Block properties, drops, block item, recipe, tag | `BlockEntry` |
 | `FluidBuilder` | Fluid type, rendering, block, bucket, tag | `FluidEntry` |
-| `BlockEntityBuilder` | Host block binding and renderer | `BlockEntityEntry` |
+| `BlockEntityBuilder` | Host block binding and renderer | `BlockEntityTypeEntry` |
 
 ## Entry Type Quick Lookup
 
@@ -45,7 +45,7 @@ If you're unsure, start with `item(...)` or `block(...)` —they cover the vast 
 | `ItemEntry<T>` | Reference an Item; create `ItemStack` and `ItemResource` values directly |
 | `BlockEntry<T>` | Reference a Block, its default state, and holder-style APIs expecting `Holder<Block>` |
 | `FluidEntry<T>` | Access source, type, block, bucket, `FluidStack`, and `FluidResource` together |
-| `BlockEntityEntry<T>` | Reference a `BlockEntityType` with host binding |
+| `BlockEntityTypeEntry<T>` | Reference a `BlockEntityType` with host binding |
 
 ## Entry Helper Quick Lookup
 

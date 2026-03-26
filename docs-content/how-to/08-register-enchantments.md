@@ -62,17 +62,12 @@ public record AutoSmeltEffect(float chancePerLevel) {
 ### 2. Register the DataComponentType
 
 ```java
-@SuppressWarnings("unchecked")
-public static final RegistryEntry<DataComponentType<?>,
-        DataComponentType<List<ConditionalEffect<AutoSmeltEffect>>>>
-    AUTO_SMELT_EFFECT = (RegistryEntry) REGISTRYLIB.simple(
+public static final DataComponentType<List<ConditionalEffect<AutoSmeltEffect>>>
+    AUTO_SMELT_EFFECT = REGISTRYLIB.dataComponentType(
             "auto_smelt",
             Registries.ENCHANTMENT_EFFECT_COMPONENT_TYPE,
-            key -> DataComponentType
-                    .<List<ConditionalEffect<AutoSmeltEffect>>>builder()
-                    .persistent(ConditionalEffect.codec(
-                            AutoSmeltEffect.CODEC.codec()).listOf())
-                    .build());
+            builder -> builder.persistent(
+                    ConditionalEffect.codec(AutoSmeltEffect.CODEC.codec()).listOf()));
 ```
 
 ### 3. Register with the Enchantment Builder
@@ -97,7 +92,7 @@ public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
 ```
 
 :::tip
-`AUTO_SMELT_EFFECT` (a `RegistryEntry`) is passed directly — it implements `Supplier`, so the `DataComponentType` is resolved lazily at datagen time when the value is guaranteed to be available. For vanilla effect components like `EnchantmentEffectComponents.BLOCK_EXPERIENCE`, you can pass them directly since they are static constants.
+`AUTO_SMELT_EFFECT` is a `DataComponentType` instance returned directly by `dataComponentType()`. For vanilla effect components like `EnchantmentEffectComponents.BLOCK_EXPERIENCE`, you can pass them directly since they are static constants.
 :::
 
 ## EnchantmentBuilder API

@@ -9,7 +9,7 @@ description: Quick reference for block entity and renderer registration.
 ## Simple Block Entity
 
 ```java
-public static final BlockEntityEntry<TimerBlockEntity> SIMPLE_TIMER_BE = REGISTRYLIB
+public static final BlockEntityTypeEntry<TimerBlockEntity> SIMPLE_TIMER_BE = REGISTRYLIB
         .blockEntity("simple_timer", TimerBlockEntity::new)
         .validBlock(FullBlockExample.STANDALONE_TIMER)
         .register();
@@ -18,7 +18,7 @@ public static final BlockEntityEntry<TimerBlockEntity> SIMPLE_TIMER_BE = REGISTR
 ## Block Entity with Renderer
 
 ```java
-public static final BlockEntityEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY = REGISTRYLIB
+public static final BlockEntityTypeEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY = REGISTRYLIB
         .blockEntity("timer", TimerBlockEntity::new)
         .validBlocks(
                 FullBlockExample.TIMER_TIER_1,
@@ -40,7 +40,7 @@ Renderer classes are client-only. Always wrap the renderer factory in a `Supplie
 | `validBlock(entry)` | Bind a single host block |
 | `validBlocks(...)` | Bind multiple host blocks |
 | `renderer(supplier)` | Register the renderer factory (lazy-loaded) |
-| `register()` | Complete registration and return `BlockEntityEntry<T>` |
+| `register()` | Complete registration and return `BlockEntityTypeEntry<T>` |
 
 ## Common Patterns
 

@@ -8,7 +8,7 @@ description: Quick reference for custom recipe registration patterns.
 
 ## Simple Recipe (Altar)
 
-Use the `.recipeType()` builder to register a `RecipeType` + `RecipeSerializer`, then add recipe instances via the returned `RecipeEntry`.
+Use the `.recipeType()` builder to register a `RecipeType` + `RecipeSerializer`, then add recipe instances via the returned `RecipeTypeEntry`.
 
 ### 1. Define the Recipe Class
 
@@ -52,7 +52,7 @@ public class AltarRecipe implements Recipe<SingleRecipeInput> {
 
     @Override
     public RecipeType<? extends Recipe<SingleRecipeInput>> getType() {
-        return SimpleRecipeExample.ALTAR.getType();
+        return SimpleRecipeExample.ALTAR.get();
     }
 
     public static final MapCodec<AltarRecipe> CODEC = RecordCodecBuilder.mapCodec(
@@ -78,7 +78,7 @@ Registration and recipe addition are two separate steps:
 
 ```java
 // Step 1: Register RecipeType + RecipeSerializer
-public static final RecipeEntry<AltarRecipe> ALTAR = REGISTRYLIB
+public static final RecipeTypeEntry<AltarRecipe> ALTAR = REGISTRYLIB
         .<AltarRecipe>recipeType("altar")
         .serializer(AltarRecipe.CODEC, AltarRecipe.STREAM_CODEC)
         .register();
@@ -107,11 +107,11 @@ static {
 }
 ```
 
-The resulting `RecipeEntry<T>` provides:
+The resulting `RecipeTypeEntry<T>` provides:
 
-- `ALTAR.getType()` — the `RecipeType<AltarRecipe>`
+- `ALTAR.get()` — the `RecipeType<AltarRecipe>` (inherited from `RegistryEntry`)
 - `ALTAR.getSerializer()` — the `RecipeSerializer<AltarRecipe>`
-- `ALTAR.getTypeKey()` / `ALTAR.getSerializerKey()` — the `ResourceKey`s
+- `ALTAR.getKey()` — the `ResourceKey<RecipeType<?>>`
 
 :::tip
 Tag-based ingredients need a `HolderLookup.Provider` (tags aren't available in static registries during datagen). Use the **Function overload** of `addRecipe`:
@@ -128,44 +128,19 @@ ENTRY.addRecipe("name", registries -> new MyRecipe(
 
 ## Custom Factories
 
-By default, `RecipeTypeBuilder` creates `RecipeType` via `RecipeType.simple(id)` and `RecipeSerializer` via `new RecipeSerializer<>(codec, streamCodec)`. You can override either or both with custom factory functions.
+By default, `RecipeTypeBuilder` creates `RecipeType` via `RecipeType.simple(id)` and `RecipeSerializer` via `new RecipeSerializer<>(codec, streamCodec)`. You can override the `RecipeType` creation with a custom factory function.
 
 ### Custom RecipeType Factory
 
 Use `.typeFactory()` to provide a custom `RecipeType` creation function. The function receives the registry `Identifier`.
 
 ```java
-public static final RecipeEntry<MyRecipe> MY_RECIPE = REGISTRYLIB
-        .<MyRecipe>recipeType("my_recipe")
-        .typeFactory(id -> new MyCustomRecipeType<>(id))
-        .serializer(MyRecipe.CODEC, MyRecipe.STREAM_CODEC)
-        .register();
-```
-
-### Custom RecipeSerializer Factory
-
-Use `.serializerFactory()` as an alternative to `.serializer(codec, streamCodec)`. This is useful when you already have a pre-built serializer instance.
-
-```java
-public static final RecipeEntry<MyRecipe> MY_RECIPE = REGISTRYLIB
-        .<MyRecipe>recipeType("my_recipe")
-        .serializerFactory(() -> MyRecipe.SERIALIZER)
-        .register();
-```
-
-### Both Custom Factories
-
-```java
-public static final RecipeEntry<InfuserRecipe> INFUSER_CUSTOM = REGISTRYLIB
+public static final RecipeTypeEntry<InfuserRecipe> INFUSER_CUSTOM = REGISTRYLIB
         .<InfuserRecipe>recipeType("infuser_custom")
-        .typeFactory(id -> RecipeType.simple(id))
-        .serializerFactory(() -> new RecipeSerializer<>(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC))
+        .typeFactory(RecipeType::simple)
+        .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
         .register();
 ```
-
-:::tip
-`.serializerFactory()` and `.serializer(codec, streamCodec)` are alternatives — use one or the other. If `serializerFactory` is set, it takes priority.
-:::
 
 ## Full Recipe with Machine Tier (Infuser)
 
@@ -215,7 +190,7 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
 
     @Override
     public RecipeType<? extends Recipe<InfuserInput>> getType() {
-        return FullRecipeExample.INFUSER.getType();
+        return FullRecipeExample.INFUSER.get();
     }
 
     // Custom RecipeInput as inner record
@@ -255,7 +230,7 @@ public class InfuserRecipe implements Recipe<InfuserRecipe.InfuserInput> {
 
 ```java
 // Step 1: Register RecipeType + RecipeSerializer
-public static final RecipeEntry<InfuserRecipe> INFUSER = REGISTRYLIB
+public static final RecipeTypeEntry<InfuserRecipe> INFUSER = REGISTRYLIB
         .<InfuserRecipe>recipeType("infuser")
         .serializer(InfuserRecipe.CODEC, InfuserRecipe.STREAM_CODEC)
         .register();
@@ -328,7 +303,7 @@ public static final BlockEntry<InfuserBlock> INFUSER_T2 = REGISTRYLIB
         .addTag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.NEEDS_IRON_TOOL)
         .register();
 
-public static final BlockEntityEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLIB
+public static final BlockEntityTypeEntry<InfuserBlockEntity> INFUSER_BE = REGISTRYLIB
         .blockEntity("infuser", InfuserBlockEntity::new)
         .validBlocks(INFUSER_T1, INFUSER_T2)
         .register();
@@ -374,7 +349,7 @@ public class SynthesizerRecipe implements Recipe<SynthesizerRecipe.SynthesizerIn
         return MultiInputRecipeExample.SYNTHESIZER.getSerializer();
     }
     @Override public RecipeType<? extends Recipe<SynthesizerInput>> getType() {
-        return MultiInputRecipeExample.SYNTHESIZER.getType();
+        return MultiInputRecipeExample.SYNTHESIZER.get();
     }
     // isSpecial(), showNotification(), etc. ...
 
@@ -429,7 +404,7 @@ public class SynthesizerRecipe implements Recipe<SynthesizerRecipe.SynthesizerIn
 ### Register and Add Multi-Input Recipes
 
 ```java
-public static final RecipeEntry<SynthesizerRecipe> SYNTHESIZER = REGISTRYLIB
+public static final RecipeTypeEntry<SynthesizerRecipe> SYNTHESIZER = REGISTRYLIB
         .<SynthesizerRecipe>recipeType("synthesizer")
         .serializer(SynthesizerRecipe.CODEC, SynthesizerRecipe.STREAM_CODEC)
         .register();
@@ -569,12 +544,12 @@ REGISTRYLIB.addRecipe("smelting/logs_to_charcoal",
 Note the `"type"` is `"minecraft:smelting"` — the recipe is injected into the vanilla type. The file lives under `data/registrylibtest/recipe/` (your mod's namespace) so it doesn't conflict with vanilla recipes.
 
 :::tip
-`core.addRecipe()` works for any recipe type — vanilla, NeoForge, or third-party. For custom recipe types registered via `recipeType()`, prefer `RecipeEntry.addRecipe()` which automatically prefixes the type name.
+`core.addRecipe()` works for any recipe type — vanilla, NeoForge, or third-party. For custom recipe types registered via `recipeType()`, prefer `RecipeTypeEntry.addRecipe()` which automatically prefixes the type name.
 :::
 
-## Adding Recipes: `addRecipe` on RecipeEntry
+## Adding Recipes: `addRecipe` on RecipeTypeEntry
 
-`RecipeEntry.addRecipe()` is a convenience wrapper that delegates to `core.addRecipe()` with the type name prefix. Three overloads:
+`RecipeTypeEntry.addRecipe()` is a convenience wrapper that delegates to `core.addRecipe()` with the type name prefix. Three overloads:
 
 | Overload | When to Use |
 |---|---|
@@ -597,8 +572,7 @@ ALTAR.addRecipe("cobblestone_to_stone",
 | `recipeType(name)` | Start recipe type builder (returns `RecipeTypeBuilder`) |
 | `.serializer(codec, streamCodec)` | Set the codecs for the `RecipeSerializer` |
 | `.typeFactory(function)` | Custom `RecipeType` creation factory (receives `Identifier`) |
-| `.serializerFactory(supplier)` | Custom `RecipeSerializer` factory (alternative to `.serializer()`) |
-| `.register()` | Register and return `RecipeEntry<T>` |
+| `.register()` | Register and return `RecipeTypeEntry<T>` |
 | `.build()` | Register and return parent (for chaining) |
 
 ### RegistryCore.addRecipe
@@ -611,14 +585,14 @@ Add recipes to any existing recipe type without registering a new `RecipeType`.
 | `addRecipe(id, supplier)` | Add a lazily-created recipe |
 | `addRecipe(id, registries -> recipe)` | Add recipe with registry access (for tags) |
 
-### RecipeEntry
+### RecipeTypeEntry
 
 | Method | Purpose |
 |---|---|
 | `.addRecipe(name, recipe)` | Add a recipe instance (convenience, delegates to `core.addRecipe`) |
 | `.addRecipe(name, supplier)` | Add a lazily-created recipe |
 | `.addRecipe(name, registries -> recipe)` | Add recipe with registry access |
-| `.getType()` | Get the registered `RecipeType<T>` |
+| `.get()` | Get the registered `RecipeType<T>` (inherited from `RegistryEntry`) |
 | `.getSerializer()` | Get the registered `RecipeSerializer<T>` |
 
 ### FluidIngredientType Registration
@@ -637,7 +611,7 @@ Add recipes to any existing recipe type without registering a new `RecipeType`.
 | `group()` | Return group string (usually `""`) |
 | `showNotification()` | Whether to show recipe unlock notification |
 | `getSerializer()` | Return the registered serializer via `ENTRY.getSerializer()` |
-| `getType()` | Return the registered type via `ENTRY.getType()` |
+| `getType()` | Return the registered type via `ENTRY.get()` |
 | `placementInfo()` | Return `PlacementInfo.NOT_PLACEABLE` for custom recipes |
 | `recipeBookCategory()` | Return recipe book category |
 

@@ -95,7 +95,7 @@ Fluid source = MOLTEN_GOLD.getSource();
 Item bucket = MOLTEN_GOLD.getBucket();
 ```
 
-## BlockEntityEntry\<T\>
+## BlockEntityTypeEntry\<T\>
 
 **Extends:** `RegistryEntry<BlockEntityType<?>, BlockEntityType<T>>`
 
@@ -106,7 +106,7 @@ Item bucket = MOLTEN_GOLD.getBucket();
 Host block binding is configured during registration via `validBlock()` or `validBlocks()` on the builder:
 
 ```java
-BlockEntityEntry<MyBlockEntity> MY_BE = REGISTRYLIB
+BlockEntityTypeEntry<MyBlockEntity> MY_BE = REGISTRYLIB
         .blockEntity("my_be", MyBlockEntity::new)
         .validBlock(MY_BLOCK)
         .renderer(() -> MyBlockEntityRenderer::new)

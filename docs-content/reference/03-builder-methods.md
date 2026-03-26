@@ -123,7 +123,7 @@ Created via `blockEntity("id", factory)`.
 | `validBlock(entry)` | `BlockEntry` | Bind a single host block |
 | `validBlocks(entries...)` | `BlockEntry...` | Bind multiple host blocks |
 | `renderer(supplier)` | `Supplier<BlockEntityRendererFactory>` | Register a renderer (lazy, client-side only) |
-| `register()` | —| Submit and return `BlockEntityEntry<T>` |
+| `register()` | —| Submit and return `BlockEntityTypeEntry<T>` |
 
 **Example:**
 

@@ -71,7 +71,7 @@ public class MinDurabilityIngredient implements ICustomIngredient {
 
     @Override
     public IngredientType<?> getType() {
-        return SimpleIngredientTypeExample.MIN_DURABILITY.get();
+        return SimpleIngredientTypeExample.MIN_DURABILITY;
     }
 
     // ── Convenience Factory ───────────────────────────────────────────────
@@ -100,11 +100,11 @@ Use `REGISTRYLIB.ingredientType()` to register:
 
 ```java
 // With auto-derived StreamCodec (simplest)
-public static final RegistryEntry<IngredientType<?>, IngredientType<MinDurabilityIngredient>> MIN_DURABILITY =
+public static final IngredientType<MinDurabilityIngredient> MIN_DURABILITY =
         REGISTRYLIB.ingredientType("min_durability", MinDurabilityIngredient.CODEC);
 
 // With explicit StreamCodec (for non-simple ingredients)
-public static final RegistryEntry<IngredientType<?>, IngredientType<MinDurabilityIngredient>> MIN_DURABILITY =
+public static final IngredientType<MinDurabilityIngredient> MIN_DURABILITY =
         REGISTRYLIB.ingredientType(
                 "min_durability",
                 MinDurabilityIngredient.CODEC,
@@ -116,7 +116,7 @@ Make sure `getType()` in your ingredient class returns the registered type from 
 ```java
 @Override
 public IngredientType<?> getType() {
-    return MY_ENTRY.get();
+    return MY_ENTRY;
 }
 ```
 :::
@@ -173,9 +173,9 @@ Any recipe that uses `Ingredient.CODEC` in its serializer automatically supports
 | `.fluidIngredientType(name, codec)` | Register `FluidIngredientType` with auto-derived StreamCodec |
 | `.fluidIngredientType(name, codec, streamCodec)` | Register `FluidIngredientType` with explicit StreamCodec |
 
-### RegistryEntry for IngredientType
+### Return Type
 
-The return type is `RegistryEntry<IngredientType<?>, IngredientType<T>>`. Use `.get()` to obtain the registered `IngredientType<T>`.
+The return type is `IngredientType<T>` directly. Use the value as-is in your ingredient's `getType()` method.
 
 ### ICustomIngredient Contract
 
