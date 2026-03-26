@@ -99,11 +99,18 @@ When `.register()` is called on a builder, it delegates to a `BuilderCallback`:
 
 ```java
 public RegistryEntry<R, T> register() {
-    return callback.accept(name, registryKey, this, this::createEntry, this::createEntryWrapper);
+    if (registered) throw new IllegalStateException("Builder already registered: " + name);
+    registered = true;
+    // ... tag processing, callback collection ...
+    return core.registry(name, registryKey, cbs, this::createEntry, this::createEntryWrapper);
 }
 ```
 
-The callback:
+:::warning
+Calling `.register()` (or `.build()`) more than once on the same builder throws `IllegalStateException`. Each builder instance is single-use.
+:::
+
+The registration:
 1. Creates a `Registration` record storing the builder, creator function, and entry factory
 2. Stores it in an internal table indexed by registry type and name
 3. Returns a `RegistryEntry<R, T>` that lazily resolves when NeoForge registers objects

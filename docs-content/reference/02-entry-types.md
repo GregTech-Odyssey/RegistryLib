@@ -21,7 +21,7 @@ All entry types also implement `Holder`-style interfaces. When an API expects a 
 | `get()` | `T` | Get the registered Item instance |
 | `asStack()` | `ItemStack` | Create a default ItemStack (count 1) |
 | `asStack(int count)` | `ItemStack` | Create an ItemStack with the specified count |
-| `readOnlyStack()` | `ItemStack` | Cached read-only ItemStack (count 1); avoids repeated allocations in hot paths |
+| `readOnlyStack()` | `ItemStack` | Defensive copy of a cached ItemStack (count 1); safe against external mutation |
 | `asResource()` | `ItemResource` | ItemResource wrapper for transfer APIs |
 
 **Usage example:**

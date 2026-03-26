@@ -24,7 +24,7 @@ description: Common errors and how to fix them.
 **Fix:** Ensure you are using `implementation` (not `compileOnly`) in your `build.gradle` dependencies:
 ```groovy
 dependencies {
-    implementation 'com.gto:registrylib:1.0.0'
+    implementation 'com.gto:registrylib:7.0.8'
 }
 ```
 
@@ -57,6 +57,12 @@ public class MyMod {
 **Cause:** Attachments are only supported on `ComponentItem` or `IComponentItem` implementations.
 
 **Fix:** Switch from `.item(...)` to `.componentItem(...)`.
+
+### `IllegalStateException: Builder already registered: <name>`
+
+**Cause:** `.register()` or `.build()` was called more than once on the same builder instance. Each builder is single-use.
+
+**Fix:** Ensure each builder chain calls `.register()` exactly once. If you need two entries with similar configuration, create two separate chains.
 
 ---
 

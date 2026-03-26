@@ -52,7 +52,7 @@ If you're unsure, start with `item(...)` or `block(...)` —they cover the vast 
 | Entry helper | What it gives you |
 | --- | --- |
 | `ItemEntry.asStack()` | A default `ItemStack` without reconstructing the item manually |
-| `ItemEntry.readOnlyStack()` | A cached read-only `ItemStack` (count 1); avoids repeated allocations |
+| `ItemEntry.readOnlyStack()` | Defensive copy of a cached `ItemStack` (count 1); safe against external mutation |
 | `ItemEntry.asResource()` | An `ItemResource` wrapper for transfer-related APIs |
 | `BlockEntry.getDefaultState()` | The block's default state for world placement or configuration |
 | `FluidEntry.getSource()` | The matching source fluid instance |
