@@ -1,5 +1,16 @@
 package com.gto.registrylib.builders;
 
+import java.awt.image.BufferedImage;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
@@ -12,6 +23,7 @@ import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
+import lombok.Setter;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.block.dispatch.Variant;
@@ -24,14 +36,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-
-import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.image.BufferedImage;
-import java.util.function.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public class BlockBuilder<T extends Block, P>
                          extends AbstractBuilder<Block, T, P, BlockBuilder<T, P>> {
@@ -68,8 +72,9 @@ public class BlockBuilder<T extends Block, P>
     public <I extends Item> BlockBuilder<T, P> item(
                                                     @NotNull BiFunction<? super T, Item.Properties, ? extends I> factory,
                                                     @NotNull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> consumer) {
+        var supplier = valueSupplier;
         var builder = core.<I, BlockBuilder<T, P>>item(
-                this, name, p -> factory.apply(getValue(), p.useBlockDescriptionPrefix()), false)
+                this, name, p -> factory.apply(supplier.get(), p.useBlockDescriptionPrefix()), false)
                 .setData(ProviderType.LANG, FunctionUtil.noOpConsumer())
                 .model(
                         () -> (ctx, prov) -> core.getDataProvider(ProviderType.BLOCKSTATE)
@@ -104,7 +109,8 @@ public class BlockBuilder<T extends Block, P>
     public <BE extends BlockEntity> BlockBuilder<T, P> blockEntity(
                                                                    @NotNull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
                                                                    @NotNull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> consumer) {
-        var builder = core.blockEntity(this, name, beFactory).validBlock(this::getValue);
+        Supplier<T> supplier = valueSupplier;
+        var builder = core.blockEntity(this, name, beFactory).validBlock(supplier::get);
         consumer.accept(builder);
         return builder.build();
     }

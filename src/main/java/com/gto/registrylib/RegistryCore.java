@@ -775,8 +775,8 @@ public class RegistryCore {
 
         private final ResourceKey<R> key;
         private final RegistryEntry<R, T> entry;
-        private final Function<ResourceKey<R>, ? extends T> creator;
-        private final List<Consumer<? super T>> callbacks;
+        private Function<ResourceKey<R>, ? extends T> creator;
+        private List<Consumer<? super T>> callbacks;
 
         private Registration(
                              ResourceKey<? extends Registry<R>> type,
@@ -796,6 +796,11 @@ public class RegistryCore {
             this.entry.bound(value);
             ((WritableRegistry) registry).register(key, value, RegistrationInfo.BUILT_IN);
             callbacks.forEach(c -> c.accept(value));
+            // Release references to builder-capturing lambdas; Registration is removed from
+            // the registrations map after this call, but nulling eagerly cuts the reference
+            // chain even if something unexpectedly holds this object.
+            creator = null;
+            callbacks = null;
         }
     }
 }
