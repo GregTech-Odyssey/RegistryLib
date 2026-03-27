@@ -3,7 +3,7 @@ plugins {
     id 'com.diffplug.spotless' version '8.3.0'
     id 'io.freefair.lombok' version '9.2.0'
     id 'maven-publish'
-    id 'com.gto.gtopublishgradleplugin' version '1.0.10'
+    id 'com.gto.gtopublishgradleplugin' version '1.0.14'
 }
 
 version = mod_version
@@ -162,5 +162,7 @@ gtoPublish {
     publishCurseforge = true
     githubRepo        = 'GregTech-Odyssey/RegistryLib'
     curseforgeProjectId = '1486427'
-    curseforgeGameVersions = ['26.1', 'NeoForge', 'Java 25']
+    curseforgeModLoader   = 'NeoForge'
+    curseforgeJavaVersion = 'Java 25'
+    minecraftVersion      = '26.1'
 }
