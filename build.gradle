@@ -3,6 +3,7 @@ plugins {
     id 'com.diffplug.spotless' version '8.3.0'
     id 'io.freefair.lombok' version '9.2.0'
     id 'maven-publish'
+    id 'com.gto.gtopublishgradleplugin' version '1.0.10'
 }
 
 version = mod_version
@@ -131,6 +132,10 @@ spotless {
     }
 }
 
+tasks.withType(GenerateModuleMetadata).configureEach {
+    suppressedValidationErrors.add('dependencies-without-versions')
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
@@ -141,7 +146,7 @@ publishing {
     }
     repositories {
         maven {
-            name = 'gtodysseyReleases'
+            name = 'gtodysseyRepository'
             url = uri('https://maven.gtodyssey.com/releases')
             credentials(PasswordCredentials)
             authentication {
@@ -151,6 +156,11 @@ publishing {
     }
 }
 
-tasks.withType(GenerateModuleMetadata).configureEach {
-    suppressedValidationErrors.add('dependencies-without-versions')
+gtoPublish {
+    publishMaven      = true
+    publishGithub     = true
+    publishCurseforge = true
+    githubRepo        = 'GregTech-Odyssey/RegistryLib'
+    curseforgeProjectId = '1486427'
+    curseforgeGameVersions = ['26.1', 'NeoForge', 'Java 25']
 }
