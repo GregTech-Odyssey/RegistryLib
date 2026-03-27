@@ -1,9 +1,5 @@
 package com.gto.registrylibtest.builder;
 
-import java.util.function.Function;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.builders.BlockBuilder;
 import com.gto.registrylibtest.ModRegistryCore;
@@ -11,13 +7,17 @@ import com.gto.registrylibtest.ModRegistryCore;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
+
 /**
  * Extended {@link BlockBuilder} that exposes a {@code langCn(String)} convenience method.
  *
  * <p>
- * Returned by {@link ModRegistryCore#block(Object, String, Function)} so that every
- * {@code .block(...)} call on a {@code ModRegistryCore} instance automatically has access to
- * {@code .langCn("中文名")}.
+ * Returned by {@link ModRegistryCore#block(Object, String, Function)} so that every {@code
+ * .block(...)} call on a {@code ModRegistryCore} instance automatically has access to {@code
+ * .langCn("中文名")}.
  */
 public class ModBlockBuilder<T extends Block, P> extends BlockBuilder<T, P> {
 

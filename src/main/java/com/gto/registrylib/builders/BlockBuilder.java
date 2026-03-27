@@ -72,7 +72,7 @@ public class BlockBuilder<T extends Block, P>
     public <I extends Item> BlockBuilder<T, P> item(
                                                     @NotNull BiFunction<? super T, Item.Properties, ? extends I> factory,
                                                     @NotNull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> consumer) {
-        var supplier = valueSupplier;
+        var supplier = getValueSupplier();
         var builder = core.<I, BlockBuilder<T, P>>item(
                 this, name, p -> factory.apply(supplier.get(), p.useBlockDescriptionPrefix()), false)
                 .setData(ProviderType.LANG, FunctionUtil.noOpConsumer())
@@ -109,7 +109,7 @@ public class BlockBuilder<T extends Block, P>
     public <BE extends BlockEntity> BlockBuilder<T, P> blockEntity(
                                                                    @NotNull BlockEntityBuilder.BlockEntityFactory<BE> beFactory,
                                                                    @NotNull Consumer<BlockEntityBuilder<BE, BlockBuilder<T, P>>> consumer) {
-        Supplier<T> supplier = valueSupplier;
+        Supplier<T> supplier = getValueSupplier();
         var builder = core.blockEntity(this, name, beFactory).validBlock(supplier::get);
         consumer.accept(builder);
         return builder.build();

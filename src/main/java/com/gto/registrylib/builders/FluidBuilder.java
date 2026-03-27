@@ -38,14 +38,14 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class FluidBuilder<T extends BaseFlowingFluid, P>
                          extends AbstractBuilder<Fluid, T, P, FluidBuilder<T, P>> {
@@ -247,14 +247,14 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
         this.defaultBlock = false;
-        final Supplier<T> supplier = valueSupplier;
+        final Supplier<T> supplier = getValueSupplier();
         final Supplier<Integer> lightLevel = Lazy.of(() -> fluidType.get().getLightLevel());
         final ToIntFunction<BlockState> lightLevelInt = $ -> lightLevel.get();
         final var block = core.<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier.get(), p))
                 .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
                 .properties(p -> p.lightLevel(lightLevelInt))
                 .blockstate(() -> (value, prov) -> prov.createNonTemplateModelBlock(value));
-        var blockSupplier = block.valueSupplier;
+        var blockSupplier = block.getValueSupplier();
         this.fluidProperties(p -> p.block(blockSupplier));
         consumer.accept(block);
         return block.build();
@@ -332,7 +332,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                                 prov.itemModelOutput.accept(ctx, ItemModelUtils.plainModel(modelId));
                             }
                         });
-        var itemSupplier = item.valueSupplier;
+        var itemSupplier = item.getValueSupplier();
         this.fluidProperties(p -> p.bucket(itemSupplier));
         if (defaultBucketTab != null) {
             item.addTab(defaultBucketTab);
@@ -368,7 +368,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     private BaseFlowingFluid.Properties makeProperties() {
         Supplier<? extends BaseFlowingFluid> source = this.source;
-        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, source, valueSupplier);
+        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, source, getValueSupplier());
         fluidProperties.accept(ret);
         return ret;
     }
@@ -381,7 +381,6 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return properties;
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     @Override
     @StandardAPI
     public FluidEntry<T> register() {

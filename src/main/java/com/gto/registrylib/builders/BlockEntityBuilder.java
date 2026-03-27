@@ -24,7 +24,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
-
 public class BlockEntityBuilder<BE extends BlockEntity, P>
                                extends AbstractBuilder<BlockEntityType<?>, BlockEntityType<BE>, P, BlockEntityBuilder<BE, P>> {
 
@@ -67,7 +66,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @SuppressWarnings("rawtypes")
     public BlockEntityBuilder<BE, P> renderer(
                                               @NotNull Supplier<? extends BlockEntityRendererProvider> renderer) {
-        Supplier supplier = valueSupplier;
+        Supplier supplier = getValueSupplier();
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT, () -> () -> Client.registerBER(supplier, renderer.get()));
         return this;
@@ -76,7 +75,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     @Override
     protected BlockEntityType<BE> createEntry(ResourceKey<BlockEntityType<?>> key) {
         Block[] blocks = validBlocks.stream().map(Supplier::get).toArray(Block[]::new);
-        var supplier = valueSupplier;
+        var supplier = getValueSupplier();
         return new BlockEntityType<>(
                 (pos, state) -> factory.create(supplier.get(), pos, state), blocks);
     }

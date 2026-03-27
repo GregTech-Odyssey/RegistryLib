@@ -26,10 +26,10 @@ public class ItemProviderEntry<T extends ItemLike, S extends T> extends Registry
 
     public ItemStack readOnlyStack() {
         var stack = readOnlyStack;
-        if (stack == null) {
+        if (stack == null || stack.count < 1) {
             readOnlyStack = stack = asStack();
         }
-        return stack.copy();
+        return stack;
     }
 
     public ItemStack asStack() {

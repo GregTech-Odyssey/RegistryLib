@@ -1,9 +1,5 @@
 package com.gto.registrylibtest;
 
-import java.util.function.Function;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.builders.FluidBuilder;
 import com.gto.registrylib.composite.ComponentItem;
@@ -24,6 +20,10 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
+
 /**
  * A subclass of {@link RegistryCore} that adds first-class Simplified-Chinese lang support.
  *
@@ -33,9 +33,9 @@ import net.neoforged.neoforge.fluids.BaseFlowingFluid;
  * <ul>
  * <li>Declares the shared {@link #LANG_ZH_CN} {@link ProviderType} and the {@link
  * ZhCnLangProvider} that backs it.
- * <li>Overrides {@link #block}, {@link #item}, and {@link #fluid} to return
- * {@link ModBlockBuilder}, {@link ModItemBuilder}, and {@link ModFluidBuilder} respectively
- * — each of which carries a {@code .langCn(String)} convenience method.
+ * <li>Overrides {@link #block}, {@link #item}, and {@link #fluid} to return {@link
+ * ModBlockBuilder}, {@link ModItemBuilder}, and {@link ModFluidBuilder} respectively — each
+ * of which carries a {@code .langCn(String)} convenience method.
  * </ul>
  *
  * <h3>Usage</h3>

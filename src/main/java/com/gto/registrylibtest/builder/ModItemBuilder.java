@@ -1,22 +1,22 @@
 package com.gto.registrylibtest.builder;
 
-import java.util.function.Function;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylibtest.ModRegistryCore;
 
 import net.minecraft.world.item.Item;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
+
 /**
  * Extended {@link ItemBuilder} that exposes a {@code langCn(String)} convenience method.
  *
  * <p>
  * Returned by {@link ModRegistryCore#item(Object, String, Function, boolean)} so that every
- * {@code .item(...)} call on a {@code ModRegistryCore} instance automatically has access to
- * {@code .langCn("中文名")}.
+ * {@code .item(...)} call on a {@code ModRegistryCore} instance automatically has access to {@code
+ * .langCn("中文名")}.
  */
 public class ModItemBuilder<T extends Item, P> extends ItemBuilder<T, P> {
 

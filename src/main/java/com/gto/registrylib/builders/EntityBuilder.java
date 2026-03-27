@@ -41,7 +41,6 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.common.world.BiomeModifiers.AddSpawnsBiomeModifier;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
-
 public class EntityBuilder<T extends Entity, P>
                           extends AbstractBuilder<EntityType<?>, EntityType<T>, P, EntityBuilder<T, P>> {
 
@@ -109,7 +108,6 @@ public class EntityBuilder<T extends Entity, P>
     }
 
     @StandardAPI
-    @SuppressWarnings("unchecked")
     public EntityBuilder<T, P> attributes(@NotNull Supplier<AttributeSupplier.Builder> attributes) {
         this.attributesFactory = attributes;
         return this;
@@ -118,7 +116,7 @@ public class EntityBuilder<T extends Entity, P>
     @StandardAPI
     @SuppressWarnings("rawtypes")
     public EntityBuilder<T, P> renderer(@NotNull Supplier<EntityRendererProvider> renderer) {
-        Supplier supplier = valueSupplier;
+        Supplier supplier = getValueSupplier();
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT, () -> () -> Client.registerEntityRenderer(supplier, renderer.get()));
         return this;
@@ -127,7 +125,7 @@ public class EntityBuilder<T extends Entity, P>
     @StandardAPI
     public EntityBuilder<T, P> spawnEgg(
                                         @NotNull Consumer<ItemBuilder<SpawnEggItem, EntityBuilder<T, P>>> consumer) {
-        var supplier = valueSupplier;
+        var supplier = getValueSupplier();
         var eggBuilder = core.<SpawnEggItem, EntityBuilder<T, P>>item(
                 this,
                 name + "_spawn_egg",
@@ -161,7 +159,7 @@ public class EntityBuilder<T extends Entity, P>
                                               @NotNull SpawnPlacementType placementType,
                                               @NotNull Heightmap.Types heightmap,
                                               @NotNull SpawnPlacements.SpawnPredicate<T> predicate) {
-        core.registerSpawnPlacement(valueSupplier, placementType, heightmap, predicate);
+        core.registerSpawnPlacement(getValueSupplier(), placementType, heightmap, predicate);
         return this;
     }
 
@@ -207,7 +205,7 @@ public class EntityBuilder<T extends Entity, P>
 
     @SyntaxSugar("lang(t -> t.getDescriptionId())")
     public EntityBuilder<T, P> defaultLang() {
-        return lang(t -> t.getDescriptionId());
+        return lang(EntityType::getDescriptionId);
     }
 
     @SyntaxSugar("lang(t -> t.getDescriptionId(), name)")
@@ -219,7 +217,7 @@ public class EntityBuilder<T extends Entity, P>
     @SyntaxSugar("lang(type, t -> t.getDescriptionId(), name)")
     public EntityBuilder<T, P> lang(
                                     @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
-        return lang(type, t -> t.getDescriptionId(), name);
+        return lang(type, EntityType::getDescriptionId, name);
     }
 
     // === Tags ===
@@ -232,7 +230,6 @@ public class EntityBuilder<T extends Entity, P>
 
     // === Registration ===
 
-    @SuppressWarnings("unchecked")
     @Override
     protected EntityType<T> createEntry(ResourceKey<EntityType<?>> key) {
         EntityType.Builder<T> builder = EntityType.Builder.of(factory, category);
@@ -246,11 +243,10 @@ public class EntityBuilder<T extends Entity, P>
         return new EntityEntry<>(key);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public EntityEntry<T> register() {
         if (attributesFactory != null) {
-            core.registerEntityAttributes(valueSupplier, attributesFactory);
+            core.registerEntityAttributes(getValueSupplier(), attributesFactory);
         }
         return (EntityEntry<T>) super.register();
     }
