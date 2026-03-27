@@ -299,24 +299,28 @@ public class RegistryCore {
     @StandardAPI
     public <R, T extends R> RegistryEntry<R, T> registry(
                                                          String name,
-                                                         ResourceKey<? extends Registry<R>> type,
+                                                         ResourceKey<? extends Registry<R>> registryType,
                                                          List<Consumer<? super T>> callbacks,
                                                          Function<ResourceKey<R>, ? extends T> factory,
                                                          Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
         var reg = new Registration<>(
-                type, Identifier.fromNamespaceAndPath(modid, name), factory, entryFactory, callbacks);
-        registrations.put(type, reg);
-        registryEntry.put(type, name, reg.entry);
+                registryType,
+                Identifier.fromNamespaceAndPath(modid, name),
+                factory,
+                entryFactory,
+                callbacks);
+        registrations.put(registryType, reg);
+        registryEntry.put(registryType, name, reg.entry);
         return reg.entry;
     }
 
     @SyntaxSugar("registry(...)")
     public <R, T extends R, E extends RegistryEntry<R, T>> E registry(
                                                                       String name,
-                                                                      ResourceKey<? extends Registry<R>> type,
+                                                                      ResourceKey<? extends Registry<R>> registryType,
                                                                       Function<ResourceKey<R>, ? extends T> factory,
                                                                       Function<ResourceKey<R>, E> entryFactory) {
-        return (E) registry(name, type, Collections.emptyList(), factory, entryFactory);
+        return (E) registry(name, registryType, Collections.emptyList(), factory, entryFactory);
     }
 
     @SyntaxSugar("registry(...)")
@@ -327,17 +331,10 @@ public class RegistryCore {
         return registry(name, registryType, Collections.emptyList(), factory, RegistryEntry::new);
     }
 
-    @StandardAPI
+    @SyntaxSugar("registry(...)")
     public <R, T extends R> T registry(
                                        @NotNull String name, @NotNull T value, @NotNull ResourceKey<Registry<R>> registryType) {
-        registrations.put(
-                registryType,
-                new Registration<>(
-                        registryType,
-                        Identifier.fromNamespaceAndPath(modid, name),
-                        _ -> value,
-                        RegistryEntry::new,
-                        Collections.emptyList()));
+        registry(name, registryType, Collections.emptyList(), k -> value, RegistryEntry::new);
         return value;
     }
 
