@@ -1,15 +1,14 @@
 package com.gto.registrylib.util.registry;
 
+import lombok.Getter;
+import org.jspecify.annotations.NonNull;
+
 import java.security.ProtectionDomain;
 import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-
-import org.jspecify.annotations.NonNull;
-
-import lombok.Getter;
 
 public abstract class AbstractRegistry<E> implements Iterable<E> {
 

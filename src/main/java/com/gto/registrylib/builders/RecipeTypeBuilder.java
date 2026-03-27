@@ -15,9 +15,9 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 
-import java.util.function.Function;
-
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Function;
 
 /**
  * 配方类型 Builder，一次性注册 {@link RecipeType} + {@link RecipeSerializer}。

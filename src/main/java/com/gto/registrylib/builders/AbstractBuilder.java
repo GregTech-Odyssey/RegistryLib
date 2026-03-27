@@ -1,17 +1,5 @@
 package com.gto.registrylib.builders;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
@@ -23,15 +11,27 @@ import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
-import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import lombok.Getter;
 import net.minecraft.core.Registry;
 import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
+
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import lombok.Getter;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @SuppressWarnings("unchecked")
 public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuilder<R, T, P, S>> {
@@ -41,10 +41,11 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @Getter
     protected final String name;
     protected final ResourceKey<? extends Registry<R>> registryKey;
-
-    protected @Nullable List<Consumer<? super T>> callbacks;
-    protected final Supplier<T> valueSupplier;
     protected final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;
+
+    private @Nullable List<Consumer<? super T>> callbacks;
+    private @Nullable Supplier<T> valueSupplier;
+
     private boolean registered;
 
     protected AbstractBuilder(
@@ -54,15 +55,22 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         this.name = name;
         this.registryKey = registryKey;
         this.tagsByType = core.doDatagen() ? new Reference2ReferenceOpenHashMap<>() : null;
-        this.valueSupplier = Lazy.of(() -> (T) core.get(name, registryKey).get());
     }
 
     protected abstract T createEntry(ResourceKey<R> key);
 
     protected abstract RegistryEntry<R, T> createEntryWrapper(ResourceKey<R> key);
 
-    public T getValue() {
-        return valueSupplier.get();
+    public final T getValue() {
+        return getValueSupplier().get();
+    }
+
+    public final Supplier<T> getValueSupplier() {
+        var supplier = valueSupplier;
+        if (supplier == null) {
+            valueSupplier = supplier = Lazy.of(() -> (T) core.get(name, registryKey).get());
+        }
+        return supplier;
     }
 
     /**

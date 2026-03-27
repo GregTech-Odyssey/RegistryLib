@@ -26,12 +26,12 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.data.loading.DatagenModLoader;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Supplier;
-
-import org.jetbrains.annotations.NotNull;
 
 @FunctionalInterface
 public interface ProviderType<T extends RegistryLibProvider> extends GeneratorType<T> {

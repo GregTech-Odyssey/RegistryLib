@@ -27,11 +27,10 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.image.BufferedImage;
 import java.util.function.*;
-
-import org.jetbrains.annotations.Nullable;
 
 public class BlockBuilder<T extends Block, P>
                          extends AbstractBuilder<Block, T, P, BlockBuilder<T, P>> {
