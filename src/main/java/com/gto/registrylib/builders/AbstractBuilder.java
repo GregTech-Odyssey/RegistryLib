@@ -8,7 +8,6 @@ import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 import com.gto.registrylib.util.FunctionUtil;
-import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
 import net.minecraft.core.Registry;
@@ -68,7 +67,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     public final Supplier<T> getValueSupplier() {
         var supplier = valueSupplier;
         if (supplier == null) {
-            valueSupplier = supplier = Lazy.of(() -> (T) core.get(name, registryKey).get());
+            valueSupplier = supplier = new ValueSupplier<>(core, name, registryKey);
         }
         return supplier;
     }
@@ -213,5 +212,30 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
                 prov -> prov.add(
                         langKeyProvider.apply(getValue()),
                         localizedNameProvider.apply(prov, this::getValue)));
+    }
+
+    private static final class ValueSupplier<R, T extends R> implements Supplier<T> {
+
+        private final RegistryCore core;
+        private final String name;
+        private final ResourceKey<? extends Registry<R>> registryKey;
+        private T value;
+
+        private ValueSupplier(
+                              RegistryCore core, String name, ResourceKey<? extends Registry<R>> registryKey) {
+            this.core = core;
+            this.name = name;
+            this.registryKey = registryKey;
+        }
+
+        @Override
+        public T get() {
+            var value = this.value;
+            if (value == null) {
+                RegistryEntry<R, T> entry = core.get(name, registryKey);
+                value = this.value = entry.get();
+            }
+            return value;
+        }
     }
 }
