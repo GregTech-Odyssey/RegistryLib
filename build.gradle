@@ -58,7 +58,14 @@ neoForge {
 
 sourceSets.main.resources {
     srcDir 'src/generated/resources'
-    srcDir 'src/generated/resources/registrylibtest'
+}
+
+jar {
+    exclude 'com/gto/registrylibtest/**'
+    exclude 'registrylibtest/**'
+    exclude 'assets/registrylibtest/**'
+    exclude 'data/registrylibtest/**'
+    exclude '.cache/**'
 }
 
 repositories {
