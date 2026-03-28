@@ -3,7 +3,7 @@ plugins {
     id 'com.diffplug.spotless' version '8.3.0'
     id 'io.freefair.lombok' version '9.2.0'
     id 'maven-publish'
-    id 'com.gto.gtopublishgradleplugin' version '1.0.14'
+    id 'com.gto.gtopublishgradleplugin' version '1.0.21'
 }
 
 version = mod_version
@@ -154,10 +154,10 @@ publishing {
     repositories {
         maven {
             name = 'gtodysseyRepository'
-            url = uri('https://maven.gtodyssey.com/releases')
-            credentials(PasswordCredentials)
-            authentication {
-                basic(BasicAuthentication)
+            url = 'https://maven.gtodyssey.com/releases'
+            credentials {
+                username = findProperty('gtodysseyRepositoryUsername') ?: ''
+                password = findProperty('gtodysseyRepositoryPassword') ?: ''
             }
         }
     }
@@ -167,9 +167,10 @@ gtoPublish {
     publishMaven      = true
     publishGithub     = true
     publishCurseforge = true
-    githubRepo        = 'GregTech-Odyssey/RegistryLib'
-    curseforgeProjectId = '1486427'
-    curseforgeModLoader   = 'NeoForge'
-    curseforgeJavaVersion = 'Java 25'
+    mavenRepoUrl      = 'releases'
     minecraftVersion      = '26.1'
+    githubRepo        = 'GregTech-Odyssey/RegistryLib'
+    modLoader         = 'NeoForge'
+    curseforgeProjectId   = '1486427'
+    curseforgeJavaVersion = 'Java 25'
 }
