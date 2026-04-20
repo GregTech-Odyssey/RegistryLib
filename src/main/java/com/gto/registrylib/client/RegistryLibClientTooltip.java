@@ -5,7 +5,7 @@ import com.gto.registrylib.tooltip.ResolvedRoot;
 import com.gto.registrylib.tooltip.SubNode;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 
 /**
@@ -50,11 +50,11 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
 
     /** 渲染文字层——原版先调用此方法。 独立框的背景也在此处绘制，保证背景在文字之下。 */
     @Override
-    public void renderText(GuiGraphics graphics, Font font, int x, int y) {
+    public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
         // 1) 内联 SubNodes
         int currentY = y;
         for (SubNode node : component.inlineSubNodes()) {
-            node.renderText(graphics, font, x, currentY);
+            node.extractText(graphics, font, x, currentY);
             currentY += node.getHeight(font);
         }
 
@@ -85,7 +85,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
             // 再提交文字
             int nodeY = boxY + padding;
             for (SubNode node : subNodes) {
-                node.renderText(graphics, font, x, nodeY);
+                node.extractText(graphics, font, x, nodeY);
                 nodeY += node.getHeight(font);
             }
 
@@ -93,13 +93,14 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
         }
     }
 
-    /** 渲染图像层——原版在 {@link #renderText} 之后调用此方法。 */
+    /** 渲染图像层——原版在 {@link #extractText} 之后调用此方法。 */
     @Override
-    public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics graphics) {
+    public void extractImage(
+                             Font font, int x, int y, int width, int height, GuiGraphicsExtractor graphics) {
         // 1) 内联 SubNodes
         int currentY = y;
         for (SubNode node : component.inlineSubNodes()) {
-            node.renderImage(font, x, currentY, width, height, graphics);
+            node.extractImage(font, x, currentY, width, height, graphics);
             currentY += node.getHeight(font);
         }
 
@@ -123,7 +124,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
 
             int nodeY = boxY + padding;
             for (SubNode node : subNodes) {
-                node.renderImage(font, x, nodeY, contentWidth, contentHeight, graphics);
+                node.extractImage(font, x, nodeY, contentWidth, contentHeight, graphics);
                 nodeY += node.getHeight(font);
             }
 

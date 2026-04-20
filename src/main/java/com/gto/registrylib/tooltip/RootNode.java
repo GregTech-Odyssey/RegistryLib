@@ -1,6 +1,6 @@
 package com.gto.registrylib.tooltip;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 /**
  * Tooltip 根节点——框容器。
@@ -82,6 +82,6 @@ public class RootNode {
     @FunctionalInterface
     public interface BoxRenderer {
 
-        void render(GuiGraphics graphics, int x, int y, int width, int height);
+        void render(GuiGraphicsExtractor graphics, int x, int y, int width, int height);
     }
 }

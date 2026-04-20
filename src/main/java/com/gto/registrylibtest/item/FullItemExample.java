@@ -1,11 +1,14 @@
 package com.gto.registrylibtest.item;
 
+import java.awt.Color;
+
 import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.ItemAttachment;
 import com.gto.registrylib.tooltip.RootNodeRef;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylibtest.ModRegistryCore;
 import com.gto.registrylibtest.RegistryLibTest;
@@ -65,6 +68,7 @@ public class FullItemExample {
             .lang("Magic Wand")
             // --- lang (zh_cn): 简体中文显示名称 ---
             .lang(ModRegistryCore.LANG_ZH_CN, "魔法杆")
+            .texture(() -> ImageUtil.generateIcon(new Color(167, 92, 255), ImageUtil.STAR, new Color(42, 24, 69)))
             // --- defaultModel: 使用默认扁平物品模型 ---
             .defaultModel()
             // --- addDefaultTab: 如果没有添加任何标签页，注册器会自动添加一个默认的，否则不会添加，如果需要添加，就需要调用此方法 ---

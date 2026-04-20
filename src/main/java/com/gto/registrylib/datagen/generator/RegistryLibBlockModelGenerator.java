@@ -1,8 +1,13 @@
 package com.gto.registrylib.datagen.generator;
 
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelOutput;
 import net.minecraft.client.data.models.MultiVariant;
@@ -23,12 +28,6 @@ import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.client.model.generators.template.ExtendedModelTemplateBuilder;
-
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
-import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
 
@@ -186,12 +185,20 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
         blockStateOutput.accept(createSlab(block, slabBottom, slabTop, doubleSlab));
     }
 
+    @Override
     public void createNonTemplateModelBlock(Block block) {
+        createNonTemplateModelBlock(block, TextureMapping.getBlockTexture(block));
+    }
+
+    public void createNonTemplateModelBlock(Block block, Identifier particleTexture) {
+        createNonTemplateModelBlock(block, new Material(particleTexture));
+    }
+
+    public void createNonTemplateModelBlock(Block block, Material particleTexture) {
+        TextureMapping textures = new TextureMapping().put(TextureSlot.PARTICLE, particleTexture);
         blockStateOutput.accept(
                 createSimpleBlock(
                         block,
-                        plainVariant(
-                                ModelTemplates.PARTICLE_ONLY.create(
-                                        block, TextureMapping.particle(block), modelOutput))));
+                plainVariant(ModelTemplates.PARTICLE_ONLY.create(block, textures, modelOutput))));
     }
 }

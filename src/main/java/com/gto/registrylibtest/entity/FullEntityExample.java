@@ -1,8 +1,13 @@
 package com.gto.registrylibtest.entity;
 
+import java.awt.Color;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.EntityEntry;
 import com.gto.registrylibtest.ModRegistryCore;
-
+import static com.gto.registrylibtest.RegistryLibTest.REGISTRYLIB;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
@@ -49,11 +54,6 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.LootItemKilledByPlayerCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import static com.gto.registrylibtest.RegistryLibTest.REGISTRYLIB;
-
 /**
  * 使用 EntityBuilder 全部 API 的复杂实体示例。
  *
@@ -98,7 +98,11 @@ public class FullEntityExample {
             .renderer(() -> ObsidianGolemRenderer::new)
             // --- spawnEgg: 刷怪蛋（Consumer 可自定义蛋的物品属性/名称）---
             .spawnEgg(
-                    egg -> egg.lang("Obsidian Golem Spawn Egg").lang(ModRegistryCore.LANG_ZH_CN, "黑曜石傀儡刷怪蛋"))
+                    egg -> egg.lang("Obsidian Golem Spawn Egg")
+                        .lang(ModRegistryCore.LANG_ZH_CN, "黑曜石傀儡刷怪蛋")
+                        .texture(
+                            () -> ImageUtil.generateIcon(
+                                new Color(76, 72, 84), ImageUtil.CIRCLE, new Color(135, 103, 68))))
             // --- addTag: 将实体添加到标签（用于数据包条件判断）---
             .addTag(EntityTypeTags.FALL_DAMAGE_IMMUNE)
             // --- loot: 实体战利品表（掉落物品）---

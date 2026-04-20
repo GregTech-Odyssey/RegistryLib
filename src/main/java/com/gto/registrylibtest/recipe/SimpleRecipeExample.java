@@ -1,5 +1,8 @@
 package com.gto.registrylibtest.recipe;
 
+import java.awt.Color;
+
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntityTypeEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RecipeTypeEntry;
@@ -80,6 +83,7 @@ public class SimpleRecipeExample {
             .properties(p -> p.strength(2.0F, 6.0F))
             .lang("Altar")
             .lang(ModRegistryCore.LANG_ZH_CN, "祭坛")
+            .texture(() -> ImageUtil.generateIcon(new Color(178, 122, 210), ImageUtil.SQUARE, new Color(70, 52, 84)))
             .simpleItem()
             .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .register();

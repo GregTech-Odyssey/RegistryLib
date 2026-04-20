@@ -1,7 +1,7 @@
 package com.gto.registrylib.tooltip;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 /**
@@ -12,8 +12,8 @@ import net.minecraft.network.chat.Component;
  * RootNode} 管理。
  *
  * <p>
- * 节点通过 {@link #getHeight} / {@link #getWidth} 提供自身尺寸， 通过 {@link #renderImage} / {@link
- * #renderText} 渲染自身内容。
+ * 节点通过 {@link #getHeight} / {@link #getWidth} 提供自身尺寸， 通过 {@link #extractImage} / {@link
+ * #extractText} 渲染自身内容。
  */
 public abstract class SubNode {
 
@@ -34,10 +34,11 @@ public abstract class SubNode {
     public abstract int getWidth(Font font);
 
     /** 渲染此节点的图形元素（如分隔线、色块）。默认无操作。 */
-    public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics graphics) {}
+    public void extractImage(
+                             Font font, int x, int y, int width, int height, GuiGraphicsExtractor graphics) {}
 
     /** 渲染此节点的文本内容。默认无操作。 */
-    public void renderText(GuiGraphics graphics, Font font, int x, int y) {}
+    public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {}
 
     /** 自定义文本节点——包装任意 {@link Component}。默认 priority = 0。 */
     public static class Basic extends SubNode {
@@ -68,8 +69,8 @@ public abstract class SubNode {
         }
 
         @Override
-        public void renderText(GuiGraphics graphics, Font font, int x, int y) {
-            graphics.drawString(font, text, x, y, -1);
+        public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+            graphics.text(font, text, x, y, -1);
         }
     }
 }

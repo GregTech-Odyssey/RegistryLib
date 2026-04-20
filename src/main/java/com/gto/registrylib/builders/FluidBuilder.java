@@ -1,5 +1,15 @@
 package com.gto.registrylib.builders;
 
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import com.google.common.base.Preconditions;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
@@ -12,12 +22,11 @@ import com.gto.registrylib.util.Lazy;
 import com.gto.registrylib.util.entry.FluidEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
-import com.google.common.base.Preconditions;
-
 import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
+import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -34,18 +43,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.client.fluid.FluidTintSource;
+import net.neoforged.neoforge.client.fluid.FluidTintSources;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
-
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
 
 public class FluidBuilder<T extends BaseFlowingFluid, P>
                          extends AbstractBuilder<Fluid, T, P, FluidBuilder<T, P>> {
@@ -74,19 +76,47 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         return this;
     }
 
-    @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1))")
+    @SyntaxSugar("clientExtension(stillTexture, flowingTexture, -1)")
     public FluidBuilder<T, P> clientExtension(
                                               @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture) {
-        return clientExtension(
-                () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, -1));
+        return clientExtension(stillTexture, flowingTexture, -1);
     }
 
-    @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor))")
+    @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(tintColor)) + register client fluid model")
+    /**
+     * 同时注册：
+     *
+     * <ul>
+     * <li>用于雾色的 {@link DefaultFluidTypeExtension}（基于 {@code tintColor}）
+     * <li>用于纹理 / 着色的 {@link net.minecraft.client.renderer.block.FluidModel.Unbaked}（NeoForge 26.1+
+     * 的新流体渲染管线）
+     * </ul>
+     */
     public FluidBuilder<T, P> clientExtension(
                                               @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture, int tintColor) {
         this.tintColor = tintColor;
-        return clientExtension(
-                () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor));
+        this.stillTextureIdentifier = stillTexture;
+        // 1) 雾色扩展
+        clientExtension(() -> () -> new DefaultFluidTypeExtension(tintColor));
+        // 2) 流体模型（纹理 + 可选 tint）
+        DistExecutor.unsafeRunWhenOn(
+                Dist.CLIENT,
+                () -> () -> {
+                    // 延迟到模型注册事件触发时再解析 source，避免在 builder 配置阶段过早捕获 null。
+                    Supplier<? extends Fluid> stillSupplier = () -> {
+                        Supplier<? extends BaseFlowingFluid> sourceSupplier = this.source;
+                        if (sourceSupplier != null) return sourceSupplier.get();
+                        throw new IllegalStateException(
+                                "Cannot register fluid model: source fluid not yet defined for " + sourceName);
+                    };
+                    Supplier<? extends Fluid> flowingSupplier = () -> getValueSupplier().get();
+                    Material still = new Material(stillTexture);
+                    Material flowing = new Material(flowingTexture);
+                    FluidTintSource tint = tintColor != -1 ? FluidTintSources.constant(tintColor) : null;
+                    FluidModel.Unbaked model = new FluidModel.Unbaked(still, flowing, null, tint);
+                    Client.registerFluidModel(this, stillSupplier, flowingSupplier, model);
+                });
+        return this;
     }
 
     // --- Static factory methods ---
@@ -120,6 +150,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     // --- Fields ---
 
     private int tintColor = -1;
+    @Nullable
+    private Identifier stillTextureIdentifier;
 
     private final String sourceName, bucketName;
     private final FluidFactory<T> fluidFactory;
@@ -243,17 +275,25 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     public <B extends LiquidBlock> FluidBuilder<T, P> block(
                                                             @NotNull BiFunction<T, BlockBehaviour.Properties, ? extends B> factory,
                                                             @NotNull Consumer<BlockBuilder<B, FluidBuilder<T, P>>> consumer) {
-        if (this.defaultBlock == Boolean.FALSE) {
+        if (Boolean.FALSE.equals(this.defaultBlock)) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
         this.defaultBlock = false;
         final Supplier<T> supplier = getValueSupplier();
         final Supplier<Integer> lightLevel = Lazy.of(() -> fluidType.get().getLightLevel());
         final ToIntFunction<BlockState> lightLevelInt = $ -> lightLevel.get();
+        final Identifier particleTexture = this.stillTextureIdentifier;
         final var block = core.<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier.get(), p))
                 .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
                 .properties(p -> p.lightLevel(lightLevelInt))
-                .blockstate(() -> (value, prov) -> prov.createNonTemplateModelBlock(value));
+                .blockstate(
+                        () -> (value, prov) -> {
+                            if (particleTexture != null) {
+                                prov.createNonTemplateModelBlock(value, particleTexture);
+                            } else {
+                                prov.createNonTemplateModelBlock(value);
+                            }
+                        });
         var blockSupplier = block.getValueSupplier();
         this.fluidProperties(p -> p.block(blockSupplier));
         consumer.accept(block);
@@ -262,7 +302,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @StandardAPI
     public FluidBuilder<T, P> noBlock() {
-        if (this.defaultBlock == Boolean.FALSE) {
+        if (Boolean.FALSE.equals(this.defaultBlock)) {
             throw new IllegalStateException("Only one call to block/noBlock per builder allowed");
         }
         this.defaultBlock = false;
@@ -301,21 +341,21 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     public <I extends BucketItem> FluidBuilder<T, P> bucket(
                                                             @NotNull BiFunction<BaseFlowingFluid, Item.Properties, ? extends I> factory,
                                                             @NotNull Consumer<ItemBuilder<I, FluidBuilder<T, P>>> consumer) {
-        if (this.defaultBucket == Boolean.FALSE) {
+        if (Boolean.FALSE.equals(this.defaultBucket)) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }
         this.defaultBucket = false;
         // Resolve default source if not yet created
-        if (this.source == null && this.defaultSource == Boolean.TRUE) {
+        if (this.source == null && Boolean.TRUE.equals(this.defaultSource)) {
             source(BaseFlowingFluid.Source::new);
         }
-        Supplier<? extends BaseFlowingFluid> source = this.source;
-        if (source == null) {
+        Supplier<? extends BaseFlowingFluid> sourceSupplier = this.source;
+        if (sourceSupplier == null) {
             throw new IllegalStateException("Cannot create a bucket before creating a source block");
         }
         final int bucketTintColor = this.tintColor;
         final var item = core.<I, FluidBuilder<T, P>>item(
-                this, bucketName, p -> factory.apply(source.get(), p), false)
+                this, bucketName, p -> factory.apply(sourceSupplier.get(), p), false)
                 .properties(p -> p.craftRemainder(Items.BUCKET).stacksTo(1))
                 .model(
                         () -> (ctx, prov) -> {
@@ -343,7 +383,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @StandardAPI
     public FluidBuilder<T, P> noBucket() {
-        if (this.defaultBucket == Boolean.FALSE) {
+        if (Boolean.FALSE.equals(this.defaultBucket)) {
             throw new IllegalStateException("Only one call to bucket/noBucket per builder allowed");
         }
         this.defaultBucket = false;
@@ -360,15 +400,10 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     // --- Internal helpers ---
 
-    private BaseFlowingFluid getSource() {
-        Supplier<? extends BaseFlowingFluid> source = this.source;
-        Preconditions.checkNotNull(source, "Fluid has no source block: " + sourceName);
-        return source.get();
-    }
-
     private BaseFlowingFluid.Properties makeProperties() {
-        Supplier<? extends BaseFlowingFluid> source = this.source;
-        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, source, getValueSupplier());
+        Supplier<? extends BaseFlowingFluid> sourceSupplier = this.source;
+        Preconditions.checkNotNull(sourceSupplier, "Fluid has no source block: " + sourceName);
+        BaseFlowingFluid.Properties ret = new BaseFlowingFluid.Properties(fluidType, sourceSupplier, getValueSupplier());
         fluidProperties.accept(ret);
         return ret;
     }
@@ -386,22 +421,22 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     public FluidEntry<T> register() {
         if (this.registerType) {
             core.registry(
-                    this.sourceName, NeoForgeRegistries.Keys.FLUID_TYPES, _ -> this.fluidType.get());
+                    this.sourceName, NeoForgeRegistries.Keys.FLUID_TYPES, ignoredKey -> this.fluidType.get());
         }
 
-        if (defaultSource == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(defaultSource)) {
             source(BaseFlowingFluid.Source::new);
         }
-        if (defaultBlock == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(defaultBlock)) {
             block(FunctionUtil.noOpConsumer());
         }
-        if (defaultBucket == Boolean.TRUE) {
+        if (Boolean.TRUE.equals(defaultBucket)) {
             bucket(FunctionUtil.noOpConsumer());
         }
 
-        Supplier<? extends BaseFlowingFluid> source = this.source;
-        if (source != null) {
-            core.registry(sourceName, Registries.FLUID, _ -> source.get());
+        Supplier<? extends BaseFlowingFluid> sourceSupplier = this.source;
+        if (sourceSupplier != null) {
+            core.registry(sourceName, Registries.FLUID, ignoredKey -> sourceSupplier.get());
         } else {
             throw new IllegalStateException("Fluid must have a source version: " + name);
         }
@@ -421,31 +456,22 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     // --- DefaultFluidTypeExtension ---
 
+    /**
+     * 默认流体类型扩展。
+     *
+     * <p>
+     * NeoForge 26.1+ 中，{@code IClientFluidTypeExtensions} 已不再包含 {@code
+     * getStillTexture/getFlowingTexture/getTintColor} —— 纹理与着色已迁移到 {@link
+     * net.minecraft.client.renderer.block.FluidModel.Unbaked}（通过 {@link
+     * net.neoforged.neoforge.client.event.RegisterFluidModelsEvent} 注册）。 此扩展现在仅负责修改流体雾色 ({@link
+     * #modifyFogColor})。
+     */
     public static class DefaultFluidTypeExtension implements IClientFluidTypeExtensions {
 
-        private final Identifier stillTexture, flowingTexture;
         private final int tintColor;
 
-        public DefaultFluidTypeExtension(
-                                         Identifier stillTexture, Identifier flowingTexture, int tintColor) {
-            this.stillTexture = stillTexture;
-            this.flowingTexture = flowingTexture;
+        public DefaultFluidTypeExtension(int tintColor) {
             this.tintColor = tintColor;
-        }
-
-        @Override
-        public Identifier getStillTexture() {
-            return stillTexture;
-        }
-
-        @Override
-        public Identifier getFlowingTexture() {
-            return flowingTexture;
-        }
-
-        @Override
-        public int getTintColor() {
-            return tintColor;
         }
 
         @Override

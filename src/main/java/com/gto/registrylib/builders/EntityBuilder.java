@@ -127,10 +127,7 @@ public class EntityBuilder<T extends Entity, P>
                                         @NotNull Consumer<ItemBuilder<SpawnEggItem, EntityBuilder<T, P>>> consumer) {
         var supplier = getValueSupplier();
         var eggBuilder = core.<SpawnEggItem, EntityBuilder<T, P>>item(
-                this,
-                name + "_spawn_egg",
-                p -> new SpawnEggItem(p.spawnEgg(supplier.get())),
-                false);
+            this, name + "_spawn_egg", p -> new SpawnEggItem(p.spawnEgg(supplier.get())), false);
         consumer.accept(eggBuilder);
         eggBuilder.build();
         return this;

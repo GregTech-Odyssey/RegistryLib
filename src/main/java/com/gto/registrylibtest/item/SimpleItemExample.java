@@ -1,5 +1,8 @@
 package com.gto.registrylibtest.item;
 
+import java.awt.Color;
+
+import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylibtest.RegistryLibTest;
 
@@ -19,5 +22,6 @@ public class SimpleItemExample {
             .item("copper_coin")
             .langCn("铜币") // Approach 2: ModItemBuilder.langCn()
             .lang("Copper Coin")
+            .texture(() -> ImageUtil.generateIcon(new Color(214, 164, 65), ImageUtil.CIRCLE, new Color(92, 58, 23)))
             .register();
 }
