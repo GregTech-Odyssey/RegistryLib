@@ -69,6 +69,35 @@ jar {
     exclude '.cache/**'
 }
 
+def mainLibrarySources = fileTree('src/main/java/com/gto/registrylib') {
+    include '**/*.java'
+}
+
+tasks.register('verifyNoRegistryLibTestLeaks') {
+    group = 'verification'
+    description = 'Fails the build if main library sources depend on registrylibtest classes that are excluded from the published jar.'
+    inputs.files(mainLibrarySources)
+
+    doLast {
+        def offendingFiles = mainLibrarySources.files.findAll {
+            it.getText('UTF-8').contains('com.gto.registrylibtest')
+        }
+
+        if (!offendingFiles.isEmpty()) {
+            def formattedPaths = offendingFiles.collect {
+                project.relativePath(it).replace('\\', '/')
+            }
+            throw new GradleException(
+                    'Main library sources cannot depend on com.gto.registrylibtest because that package is excluded from the published jar:\n - '
+                            + formattedPaths.join('\n - '))
+        }
+    }
+}
+
+tasks.named('compileJava') {
+    dependsOn(tasks.named('verifyNoRegistryLibTestLeaks'))
+}
+
 repositories {
     mavenLocal()
     flatDir {

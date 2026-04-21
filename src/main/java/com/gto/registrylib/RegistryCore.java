@@ -1,5 +1,25 @@
 package com.gto.registrylib;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.BlockBuilder;
@@ -28,10 +48,10 @@ import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylib.util.registry.ListRegistry;
-import com.gto.registrylibtest.builder.ModFluidBuilder;
-
 import com.mojang.serialization.MapCodec;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import lombok.Getter;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.WritableRegistry;
@@ -70,31 +90,10 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
+import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.crafting.FluidIngredientType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
-
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import lombok.Getter;
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class RegistryCore {
 
@@ -407,7 +406,7 @@ public class RegistryCore {
 
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
                                                                                  @NotNull P parent, @NotNull String name, @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
-        return ModFluidBuilder.create(this, parent, name, fluidFactory);
+        return FluidBuilder.create(this, parent, name, FluidType::new, fluidFactory);
     }
 
     @StandardAPI("Returns a FluidBuilder for fluent chain configuration. Call .register() to finalise.")
