@@ -22,4 +22,4 @@ In brief, the MPL-2.0 requires that:
 - You may combine MPL-licensed code with code under other licenses (including proprietary) in a larger work, as long as the MPL-licensed files themselves remain under the MPL-2.0.
 - A copy of the license must be included with any distribution.
 
-For the full license text, see the [`LICENSE`](https://github.com/GregTech-Odyssey/RegistryLib/blob/main/LICENSE) file in the repository.
+For the full license text, see the [`LICENSE`](https://github.com/GregTech-Odyssey/RegistryLib/blob/main/LICENSE) file in the repository. 
