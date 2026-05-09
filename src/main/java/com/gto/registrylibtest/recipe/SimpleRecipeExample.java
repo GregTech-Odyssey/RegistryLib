@@ -1,7 +1,5 @@
 package com.gto.registrylibtest.recipe;
 
-import java.awt.Color;
-
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntityTypeEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
@@ -16,6 +14,8 @@ import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
+
+import java.awt.Color;
 
 /**
  * 最简单的自定义配方注册示例：祭坛（Altar）。
@@ -83,7 +83,9 @@ public class SimpleRecipeExample {
             .properties(p -> p.strength(2.0F, 6.0F))
             .lang("Altar")
             .lang(ModRegistryCore.LANG_ZH_CN, "祭坛")
-            .texture(() -> ImageUtil.generateIcon(new Color(178, 122, 210), ImageUtil.SQUARE, new Color(70, 52, 84)))
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            new Color(178, 122, 210), ImageUtil.SQUARE, new Color(70, 52, 84)))
             .simpleItem()
             .addTag(BlockTags.MINEABLE_WITH_PICKAXE)
             .register();

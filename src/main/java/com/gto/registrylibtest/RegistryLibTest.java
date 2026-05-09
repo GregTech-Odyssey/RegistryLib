@@ -118,6 +118,10 @@ public class RegistryLibTest {
         SimpleAdvancementExample.register();
         FullAdvancementExample.register();
 
+        // Core API improvement examples
+        var _api1 = ApiImprovementExample.VANILLA_IRON_INGOT;
+        var _api2 = ApiImprovementExample.API_NOTE;
+
         long time = System.nanoTime();
         for (int i = 0; i < 1000; i++) {
             REGISTRYLIB

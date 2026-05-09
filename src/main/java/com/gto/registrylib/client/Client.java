@@ -1,14 +1,10 @@
 package com.gto.registrylib.client;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
 import com.gto.registrylib.tooltip.RegistryLibTooltipComponent;
 import com.gto.registrylib.tooltip.TooltipRegistry;
+
 import com.mojang.datafixers.util.Either;
 
-import lombok.experimental.UtilityClass;
 import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
@@ -26,6 +22,12 @@ import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtension
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.fluids.FluidType;
+
+import lombok.experimental.UtilityClass;
+
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 
 @UtilityClass
 public class Client {

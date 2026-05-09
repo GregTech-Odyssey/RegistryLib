@@ -6,11 +6,11 @@ description: Quick reference for enchantment registration patterns.
 
 # Register Enchantments
 
-Enchantments in NeoForge 1.21+ are **data-driven**. RegistryLib provides an `.enchantment()` builder that generates the enchantment JSON, lang entries, and tag entries — all from code, no hand-written JSON needed. The builder uses the Minecraft `Enchantment.Builder` API with typed `DataComponentType` references.
+Enchantments in NeoForge 1.21+ are **data-driven**. RegistryLib provides an `.enchantment()` builder that generates the enchantment JSON, lang entries, and tag entries from code, with no hand-written JSON needed. The builder uses the Minecraft `Enchantment.Builder` API with typed `DataComponentType` references.
 
 ## Simple Enchantment (Vanilla Effects)
 
-Use vanilla effect components (e.g. `EnchantmentEffectComponents.BLOCK_EXPERIENCE`) — no custom `DataComponentType` registration needed.
+Use vanilla effect components (e.g. `EnchantmentEffectComponents.BLOCK_EXPERIENCE`); no custom `DataComponentType` registration needed.
 
 ```java
 import net.minecraft.tags.EnchantmentTags;
@@ -38,10 +38,11 @@ public static final EnchantmentEntry ORE_FORTUNE = REGISTRYLIB
 ```
 
 This single declaration:
-1. Generates `data/<modid>/enchantment/ore_fortune.json` during datagen
-2. Registers English and Chinese lang entries
-3. Adds the enchantment to `minecraft:in_enchanting_table` tag
-4. Returns an `EnchantmentEntry` with `.getKey()` for code references
+
+1. Generates `data/<modid>/enchantment/ore_fortune.json` during datagen.
+2. Registers English and Chinese lang entries.
+3. Adds the enchantment to `minecraft:in_enchanting_table`.
+4. Returns an `EnchantmentEntry` with `.getKey()` for code references.
 
 ## Full Enchantment (Custom Effect Component)
 
@@ -61,18 +62,20 @@ public record AutoSmeltEffect(float chancePerLevel) {
 
 ### 2. Register the DataComponentType
 
+Use `dataComponentTypeEntry(...)` when another API can accept a supplier or lazy registry entry. It avoids resolving your mod-registered component during static initialization:
+
 ```java
-public static final DataComponentType<List<ConditionalEffect<AutoSmeltEffect>>>
-    AUTO_SMELT_EFFECT = REGISTRYLIB.dataComponentType(
+public static final DataComponentTypeEntry<List<ConditionalEffect<AutoSmeltEffect>>>
+    AUTO_SMELT_EFFECT = REGISTRYLIB.dataComponentTypeEntry(
             "auto_smelt",
             Registries.ENCHANTMENT_EFFECT_COMPONENT_TYPE,
             builder -> builder.persistent(
                     ConditionalEffect.codec(AutoSmeltEffect.CODEC.codec()).listOf()));
 ```
 
-### 3. Register with the Enchantment Builder
+Use `dataComponentType(...)` instead when you specifically need the concrete `DataComponentType` value immediately.
 
-Use the `Supplier` overload of `withEffect()` for mod-registered `DataComponentType` entries, since the `RegistryEntry` value may not yet be available at class loading time:
+### 3. Register with the Enchantment Builder
 
 ```java
 public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
@@ -92,7 +95,7 @@ public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
 ```
 
 :::tip
-`AUTO_SMELT_EFFECT` is a `DataComponentType` instance returned directly by `dataComponentType()`. For vanilla effect components like `EnchantmentEffectComponents.BLOCK_EXPERIENCE`, you can pass them directly since they are static constants.
+For vanilla effect components like `EnchantmentEffectComponents.BLOCK_EXPERIENCE`, pass the component directly because it is already a static constant. For mod-registered effect components, prefer the lazy `DataComponentTypeEntry` form when the receiving API supports it.
 :::
 
 ## EnchantmentBuilder API
@@ -112,7 +115,7 @@ public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
 | `.slots(EquipmentSlotGroup...)` | Set equipment slots (e.g. `EquipmentSlotGroup.MAINHAND`) |
 | `.exclusiveWith(ResourceKey<Enchantment>...)` | Set mutually exclusive enchantments |
 | `.withEffect(type, effect)` | Add a conditional effect (vanilla `DataComponentType`) |
-| `.withEffect(supplier, effect)` | Add a conditional effect (lazy `Supplier<DataComponentType>`) |
+| `.withEffect(supplierOrEntry, effect)` | Add a conditional effect through a lazy supplier or entry wrapper |
 | `.withEffect(type, effect, condition)` | Add a conditional effect with loot condition |
 | `.withSpecialEffect(type, effect)` | Add a non-list effect component |
 | `.configure(consumer)` | Direct access to `Enchantment.Builder` |
@@ -131,10 +134,10 @@ public static final EnchantmentEntry AUTO_SMELT = REGISTRYLIB
 | `min_cost` / `max_cost` | Enchanting table cost range |
 | `anvil_cost` | Anvil cost in levels |
 | `slots` | Equipment slots (`mainhand`, `offhand`, `head`, etc.) |
-| `effects` | Map of effect component type → effect definition list |
+| `effects` | Map of effect component type -> effect definition list |
 
 :::important
-Enchantments are data-driven in NeoForge 1.21+. The `.enchantment()` builder generates the JSON automatically during datagen — you do **not** need to write JSON files manually.
+Enchantments are data-driven in NeoForge 1.21+. The `.enchantment()` builder generates the JSON automatically during datagen; you do **not** need to write JSON files manually.
 :::
 
 ## See Also

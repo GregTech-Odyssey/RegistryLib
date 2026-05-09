@@ -1,7 +1,5 @@
 package com.gto.registrylibtest.block;
 
-import java.awt.Color;
-
 import com.gto.registrylib.Group;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.util.ColorUtil;
@@ -17,6 +15,8 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+
+import java.awt.Color;
 
 /**
  * 使用 BlockBuilder 全部 API 的复杂方块示例。
@@ -39,7 +39,9 @@ public class FullBlockExample {
             .lang("Magic Ore")
             // --- lang (zh_cn): 设置简体中文显示名称 ---
             .lang(ModRegistryCore.LANG_ZH_CN, "魔法矿石")
-            .texture(() -> ImageUtil.generateIcon(new Color(120, 240, 232), ImageUtil.CIRCLE, new Color(66, 48, 96)))
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            new Color(120, 240, 232), ImageUtil.CIRCLE, new Color(66, 48, 96)))
             // --- loot: 自定义战利品表（矿石掉落逻辑） ---
             .loot(
                     (tables, b) -> tables.add(b, tables.createOreDrop(b, SimpleItemExample.COPPER_COIN.get())))

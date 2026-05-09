@@ -6,6 +6,7 @@ import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.datagen.GeneratorType;
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.RegistryEntry;
@@ -112,6 +113,12 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     public <D> S addData(
                          @NotNull GeneratorType<? extends D> type, @NotNull Consumer<? extends D> cons) {
         core.addDataGenerator(type, cons);
+        return (S) this;
+    }
+
+    @StandardAPI
+    public S addRecipeData(@NotNull Consumer<RegistryLibRecipeProvider> cons) {
+        core.addRecipeData(cons);
         return (S) this;
     }
 

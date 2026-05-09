@@ -52,7 +52,7 @@ public class RegistryLibLangProvider extends LanguageProvider implements Registr
      * Constructor for custom-locale lang providers. The upside-down companion is not generated for
      * non-English locales.
      */
-    protected RegistryLibLangProvider(RegistryCore owner, PackOutput packOutput, String locale) {
+    public RegistryLibLangProvider(RegistryCore owner, PackOutput packOutput, String locale) {
         super(packOutput, owner.getModid(), locale);
         this.owner = owner;
     }

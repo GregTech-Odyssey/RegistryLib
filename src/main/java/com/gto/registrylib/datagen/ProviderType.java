@@ -12,6 +12,7 @@ import com.gto.registrylib.datagen.provider.RegistryLibItemTagsProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibModelProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibRecipeRunner;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 
@@ -39,7 +40,8 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
     ProviderType NULL = unusedContext -> null;
 
     // SERVER DATA
-    ProviderType<RegistryLibRecipeRunner> RECIPE = registerServerData("recipe", RegistryLibRecipeRunner::new);
+    ProviderType<RegistryLibRecipeRunner> RECIPE_PROVIDER = registerServerData("recipe", RegistryLibRecipeRunner::new);
+    GeneratorType<RegistryLibRecipeProvider> RECIPE = RECIPE_PROVIDER.createGenerator("recipe");
     ProviderType<RegistryLibLootTableProvider> LOOT = registerServerData("loot", RegistryLibLootTableProvider::new);
     ProviderType<RegistryLibAdvancementProvider> ADVANCEMENT = registerServerData("advancement", RegistryLibAdvancementProvider::new);
     ProviderType<RegistryLibDatapackProvider> DATAPACK_REGISTRIES = registerServerData("datapack_registries", RegistryLibDatapackProvider::new);

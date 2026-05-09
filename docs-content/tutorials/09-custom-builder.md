@@ -14,6 +14,17 @@ This page explains how to turn project-specific syntax sugar or default rules in
 - Group can only solve shared defaults, but your requirement is closer to "add new methods" or "change the default chaining experience".
 - You are willing to maintain a project-specific Builder layer for a more native call style.
 
+## Prefer Built-In Helpers First
+
+Before adding a custom Builder subclass, check whether the base API already has the hook you need:
+
+- Locale/lang helper APIs cover most extra-language call sites without chain type narrowing.
+- `addRecipeData(...)` gives typed recipe datagen callbacks without a custom recipe wrapper.
+- `existingItem(...)`, `existingBlock(...)`, `tagExisting(...)`, and batch tag helpers cover tag additions for vanilla or third-party objects.
+- Lazy entry wrappers, including data component type entries, let you pass registered values through suppliers instead of forcing early resolution.
+
+Use custom Builders when the project needs new fluent syntax or a project-specific compile-time return type. For isolated datagen callbacks or tags, the lighter helpers are usually easier to maintain.
+
 ## Quick Example
 
 ```java
@@ -39,19 +50,19 @@ This is the real pattern used in the test project: the custom Builder adds `lang
 
 ## Core Concepts
 
-### One Remaining Builder Hook
+### Builder Injection Points
 
 For Blocks and Items the public registration methods directly construct the Builders, so the right place to inject custom Builder types is a covariant override of those public methods:
 
 - Override `block(parent, name, factory)` to swap in your `ModBlockBuilder`.
-- Override `item(parent, name, factory, isComponentItem)` (and the convenience overloads) to swap in your `ModItemBuilder`.
+- Override `item(parent, name, factory, isComponentItem)` and the convenience overloads to swap in your `ModItemBuilder`.
 
-For Fluids, `RegistryCore` still exposes a single overridable factory hook:
+For Fluids, `RegistryCore` exposes a protected factory hook:
 
-- `newFluidBuilder(parent, name, fluidFactory)` —override this to return your `ModFluidBuilder`.
+- Override `newFluidBuilder(parent, name, fluidFactory)` to return your `ModFluidBuilder`.
 
 :::note
-The old `newBlockBuilder(...)` and `newItemBuilder(...)` hooks and the `BuilderCallback` interface have been removed. Custom Block and Item Builders are now injected by overriding the public registration methods directly.
+The old `BuilderCallback` style is no longer the preferred extension point. Current RegistryLib versions keep extension hooks lighter: override the public registration methods when you need a custom compile-time Builder type, and use built-in helper APIs for common cases such as locale/lang sugar, recipe data callbacks, and existing-object tags before creating a custom Builder layer.
 :::
 
 ### The Full Flow
@@ -60,7 +71,7 @@ In the test project, the extension has four moving parts that work together:
 
 1. Declare a new provider-side capability, here `ModRegistryCore.LANG_ZH_CN` backed by `ZhCnLangProvider`.
 2. Add custom Builder subclasses such as `ModBlockBuilder`, `ModItemBuilder`, and `ModFluidBuilder`.
-3. Override the public `block(...)` and `item(...)` registration methods in a custom `RegistryCore` subclass so they instantiate those Builders. For Fluids, override `newFluidBuilder(...)`.
+3. Override the public `block(...)` and `item(...)` registration methods in a custom `RegistryCore` subclass so they instantiate those Builders. For Fluids, override `newFluidBuilder(...)` when needed.
 4. Override the public registration methods that can legally return your subtype at compile time.
 
 If you skip step 4, your runtime object may still be a custom Builder, but the compiler can fall back to the base `BlockBuilder`, `ItemBuilder`, or `FluidBuilder` type and your new sugar methods will disappear from the chain.
@@ -68,7 +79,7 @@ If you skip step 4, your runtime object may still be a custom Builder, but the c
 ### Recommended Implementation Order
 
 1. Implement the language-side or other datagen-side support types first.
-2. Create `ModRegistryCore` and override the public registration methods (and `newFluidBuilder` for fluids).
+2. Create `ModRegistryCore` and override the public registration methods, plus `newFluidBuilder` for fluids if your custom fluid Builder needs to be injected.
 3. Create `ModBlockBuilder`, `ModItemBuilder`, and `ModFluidBuilder`.
 4. Switch the project entry point from `RegistryCore.create(...)` to `ModRegistryCore.create(...)`.
 
@@ -131,7 +142,7 @@ public <T extends Item, P> ModItemBuilder<T, P> item(
 }
 ```
 
-For Fluids, override `newFluidBuilder(...)` —this is the one remaining protected hook:
+For Fluids, override `newFluidBuilder(...)` when you need to replace the default fluid Builder:
 
 ```java
 @Override
@@ -143,7 +154,7 @@ protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
 }
 ```
 
-This is the runtime swap. Every public registration entry point calls these methods.
+This is the runtime swap. Public registration entry points call these methods before the chain is returned.
 
 ### Step 4: Preserve the Default Bootstrap Chain
 

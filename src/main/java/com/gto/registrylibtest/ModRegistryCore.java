@@ -64,6 +64,7 @@ public class ModRegistryCore extends RegistryCore {
 
     protected ModRegistryCore(String modid) {
         super(modid);
+        withLangAlias("zh_cn", LANG_ZH_CN);
     }
 
     /**

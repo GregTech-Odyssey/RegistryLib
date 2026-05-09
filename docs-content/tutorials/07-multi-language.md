@@ -6,16 +6,16 @@ description: Add multiple locales to your registration chains.
 
 # Multi-Language Support
 
+This tutorial explains how RegistryLib writes display names and other text into language files, and how to add additional locales such as `zh_cn`.
+
 ## What You Will Learn
 
-In this tutorial you will learn how the Lang System writes display names into language files and how to extend it to additional locales. By the end you will be able to:
-
 - Generate default English display names from registration chains.
-- Add extra locales (e.g. `zh_cn`) using the `ProviderType` approach.
-- Decide when to use custom Builder methods for language sugar.
-- Avoid common pitfalls around chain type narrowing.
+- Add raw lang entries for non-registered text such as tooltips and creative tab titles.
+- Add extra locale files with `locale(...)`, `lang(...)`, and `withLangAlias(...)`.
+- Decide when custom Builder methods are worth the maintenance cost.
 
-## Step 1 —Use Built-In English Support
+## Step 1 - Use Built-In English Support
 
 Every builder provides two ways to set the English display name:
 
@@ -30,78 +30,113 @@ REGISTRYLIB.item("copper_coin", Item::new)
     .register();
 ```
 
-:::tip
-Use `.defaultLang()` when the registry name directly implies the correct display name (e.g. `copper_coin` —"Copper Coin"). Use `.lang(...)` when you have a specific wording requirement.
-:::
+Use `.defaultLang()` when the registry name directly implies the correct display name, such as `copper_coin` -> "Copper Coin". Use `.lang(...)` when you have a specific wording requirement.
 
-## Step 2 —Add Extra Locales with ProviderType
+## Step 2 - Add Raw Text
 
-The simplest way to add another locale is through the `ProviderType` approach. First define your locale's `ProviderType` (typically in your mod's init class):
+Some text is not tied to a registered object. Use core lang helpers for tooltips, UI labels, creative tab titles, and other global text:
+
+```java
+public static final Component API_TOOLTIP =
+        REGISTRYLIB.lang("tooltip.example.api", "RegistryLib API example");
+```
+
+The helper returns `Component.translatable(key)` and schedules the lang entry during datagen.
+
+## Step 3 - Add Extra Locales
+
+The shortest current path is `locale(...)`:
 
 ```java
 public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
-        ProviderType.registerClientProvider(
-                "lang/zh_cn",
-                () -> c -> new RegistryLibLangProvider(c.parent(), c.output(), "zh_cn"));
+        REGISTRYLIB.locale("zh_cn");
+
+REGISTRYLIB.lang(LANG_ZH_CN, "tooltip.example.api", "RegistryLib API example (zh_cn)");
 ```
 
-Then use it in your registration chain:
+You can also use the locale string directly:
+
+```java
+REGISTRYLIB.lang("zh_cn", "tooltip.example.api", "RegistryLib API example (zh_cn)");
+```
+
+Then use the provider in registration chains:
 
 ```java
 REGISTRYLIB.item("copper_coin", Item::new)
     .lang("Copper Coin")
-    .lang(MyMod.LANG_ZH_CN, "铜币")
+    .lang(LANG_ZH_CN, "Copper Coin (zh_cn)")
     .register();
 ```
 
-Both `en_us.json` and `zh_cn.json` are generated from the same chain.
+Both `en_us.json` and `zh_cn.json` are generated from the same code path.
 
-## Step 3 —Choose Your Extension Approach
+## Step 4 - Reuse Existing Custom Providers
 
-There are two approaches for multi-language support. Choose the one that fits your project:
+If your project already has a custom provider class, register it directly and let the provider override `getProviderType()` to return the same constant:
+
+```java
+public static final ProviderType<RegistryLibLangProvider> LANG_ZH_CN =
+        ProviderType.registerClientProvider(
+                "lang_zh_cn",
+                () -> c -> new ZhCnLangProvider(c.parent(), c.output()));
+```
+
+Then alias the locale helper to that existing provider:
+
+```java
+protected ModRegistryCore(String modid) {
+    super(modid);
+    withLangAlias("zh_cn", LANG_ZH_CN);
+}
+```
+
+This prevents `locale("zh_cn")` from creating a second provider for the same output file.
+
+## Step 5 - Choose Your Extension Approach
 
 | Approach | Best for | Advantage | Limitation |
 | --- | --- | --- | --- |
-| `ProviderType` | Quickly adding one or more locales | No custom Builder type required | The call form is slightly longer |
-| Custom Builder methods | Projects that use extra language helpers heavily | More natural call sites (e.g. `.langCn(...)`) | Requires overriding `RegistryCore` and the corresponding Builders |
+| Locale/lang helpers | Quickly adding one or more locales | No custom Builder type required | Requires a current RegistryLib version |
+| `ProviderType` | Explicit provider routing | Works with the base Builder API | The call form is slightly longer |
+| Custom Builder methods | Heavily repeated project-specific syntax | Natural call sites such as `.langCn(...)` | Requires maintaining custom Builder types |
 
-For most projects, start with the `ProviderType` path. Only move to custom Builder methods if you find yourself repeating the same locale call across dozens of entries.
+For most projects, start with `locale(...)`, `lang(...)`, and `withLangAlias(...)`. Move to custom Builder methods only when a project-specific call style is repeated enough to justify the extra type work.
 
-## Step 4 —Understand Chain Type Narrowing
+## Step 6 - Understand Chain Type Narrowing
 
 :::important
-If you use a custom Builder approach, methods such as `.langCn(...)` usually need to be called while the chain is still returning **your custom Builder type**. Once the chain falls back to the base Builder type, those methods disappear at compile time.
+If you use a custom Builder approach, methods such as `.langCn(...)` usually need to be called while the chain is still returning your custom Builder type. Once the chain falls back to the base Builder type, those methods disappear at compile time.
 :::
 
-For example, this works:
+For example:
 
 ```java
 MY_CORE.item("gem", MyItem::new)   // returns MyItemBuilder
-    .langCn("宝石")                  // custom method —still MyItemBuilder
-    .lang("Gem")                     // base method —returns base builder
+    .langCn("Gem (zh_cn)")         // custom method, still MyItemBuilder
+    .lang("Gem")                   // base method, may return base builder
     .register();
 ```
 
-But reordering would fail if `.lang(...)` narrows the type before `.langCn(...)` is reached. Place custom Builder methods **before** any call that returns the base type.
-
-See the [Custom Builder](/tutorials/custom-builder) tutorial for the full pattern.
+Place custom Builder methods before any call that returns the base type, unless you have overridden that fluent method to preserve your subtype.
 
 ## Common Patterns
 
-- For items, blocks, and fluids that all need the **same** locale, define one `ProviderType` constant and reuse it everywhere.
-- When an outer fluid type and its bucket item both need multilingual support, the outer chain can use a custom Builder approach while the bucket callback uses `ProviderType`.
-- Combine with [Recipes and Tags](/tutorials/recipes-tags) datagen in the same registration chain for a complete single-chain setup.
+- Define one locale/provider constant and reuse it for all items, blocks, fluids, tooltips, and tabs.
+- Use `withLangAlias(...)` when a custom provider already exists for a locale.
+- Use core `lang(...)` helpers for global keys that are not registry-object names.
+- Combine lang entries with [Recipes and Tags](/tutorials/recipes-tags) datagen in the same registration chain.
 
 ## Boundaries and Pitfalls
 
 :::warning
-- `.defaultLang()` is appropriate when the registry name can directly imply the display name. It is **not** appropriate when you already have a specific wording requirement.
-- Extra-locale `ProviderType` values must correctly route back to their own provider type or output may go to the wrong target.
-- Do not mix "default English" and "project-specific language sugar" as if they were the same responsibility in one chain.
+- `.defaultLang()` is appropriate when the registry name can directly imply the display name. It is not appropriate when you already have a specific wording requirement.
+- If you hand-write a custom lang provider, make sure it routes back to its own provider type. Otherwise callbacks may run against the wrong locale.
+- Do not mix default English naming and project-specific language sugar as if they were the same responsibility.
 :::
 
 ## Next Steps
 
-- [Custom Builder](/tutorials/custom-builder) —Build your own Builder subclass with language helpers.
-- [Recipes and Tags](/tutorials/recipes-tags) —Combine datagen with your registration chains.
-- [API Reference](/reference/api-overview) —Full API surface for `ProviderType` and `RegistryLibLangProvider`.
+- [Custom Builder](/tutorials/custom-builder) - Build your own Builder subclass with language helpers.
+- [Recipes and Tags](/tutorials/recipes-tags) - Combine datagen with your registration chains.
+- [API Reference](/reference/api-overview) - Full API surface for lang providers and helper methods.

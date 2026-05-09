@@ -1,25 +1,5 @@
 package com.gto.registrylib;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
 import com.gto.registrylib.builders.BlockBuilder;
@@ -41,21 +21,22 @@ import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.DebugMarkers;
 import com.gto.registrylib.util.Environment;
 import com.gto.registrylib.util.FunctionUtil;
-import com.gto.registrylib.util.Lazy;
+import com.gto.registrylib.util.entry.BlockEntry;
+import com.gto.registrylib.util.entry.DataComponentTypeEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RecipeTypeEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylib.util.registry.ListRegistry;
+
 import com.mojang.serialization.MapCodec;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import lombok.Getter;
 import net.minecraft.core.RegistrationInfo;
 import net.minecraft.core.Registry;
 import net.minecraft.core.WritableRegistry;
 import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -64,6 +45,8 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagEntry;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -79,6 +62,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -94,6 +78,28 @@ import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.crafting.FluidIngredientType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import lombok.Getter;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class RegistryCore {
 
@@ -114,6 +120,12 @@ public class RegistryCore {
 
     private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>, String>, Consumer<?>> dataGensByEntry = NestedMap.createIdentity(HashMap::new);
     private final MultiMap<GeneratorType<?>, Consumer<?>> dataGens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
+    private final ConcurrentHashMap<String, ProviderType<RegistryLibLangProvider>> localeProviders = new ConcurrentHashMap<>();
+    private final MultiMap<ProviderType<? extends RegistryLibLangProvider>, Pair<String, String>> extraLang = MultiMap.createIdentity(ArrayList::new);
+    private final Set<ProviderType<? extends RegistryLibLangProvider>> extraLangCallbacks = new ReferenceOpenHashSet<>();
+    private final List<Consumer<ItemBuilder<?, ?>>> itemDefaultCallbacks = new ArrayList<>();
+    private final List<Consumer<BlockBuilder<?, ?>>> blockDefaultCallbacks = new ArrayList<>();
+    private final List<Consumer<FluidBuilder<?, ?>>> fluidDefaultCallbacks = new ArrayList<>();
 
     @Getter
     protected ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
@@ -213,6 +225,10 @@ public class RegistryCore {
         }
     }
 
+    public void addRecipeData(Consumer<RegistryLibRecipeProvider> cons) {
+        addDataGenerator(ProviderType.RECIPE, cons);
+    }
+
     @Nullable
     private DataProviderInitializer initializer;
 
@@ -225,27 +241,92 @@ public class RegistryCore {
 
     // === Lang ===
 
-    private final Supplier<List<Pair<String, String>>> extraLang = Lazy.of(
-            () -> {
-                final List<Pair<String, String>> ret = new ArrayList<>();
-                addDataGenerator(
-                        ProviderType.LANG, prov -> ret.forEach(p -> prov.add(p.getKey(), p.getValue())));
-                return ret;
-            });
-
     public MutableComponent addLang(String type, Identifier id, String localizedName) {
         return addRawLang(id.toLanguageKey(type), localizedName);
+    }
+
+    public MutableComponent addLang(
+                                    ProviderType<? extends RegistryLibLangProvider> provider,
+                                    String type,
+                                    Identifier id,
+                                    String localizedName) {
+        return addRawLang(provider, id.toLanguageKey(type), localizedName);
     }
 
     public MutableComponent addLang(String type, Identifier id, String suffix, String localizedName) {
         return addRawLang(id.toLanguageKey(type) + "." + suffix, localizedName);
     }
 
+    public MutableComponent addLang(
+                                    ProviderType<? extends RegistryLibLangProvider> provider,
+                                    String type,
+                                    Identifier id,
+                                    String suffix,
+                                    String localizedName) {
+        return addRawLang(provider, id.toLanguageKey(type) + "." + suffix, localizedName);
+    }
+
     public MutableComponent addRawLang(String key, String value) {
+        return addRawLang(ProviderType.LANG, key, value);
+    }
+
+    public MutableComponent addRawLang(
+                                       ProviderType<? extends RegistryLibLangProvider> type, String key, String value) {
         if (doDatagen()) {
-            extraLang.get().add(Pair.of(key, value));
+            addExtraLang(type, key, value);
         }
         return Component.translatable(key);
+    }
+
+    public MutableComponent lang(String key, String enUs) {
+        return addRawLang(key, enUs);
+    }
+
+    public MutableComponent lang(
+                                 ProviderType<? extends RegistryLibLangProvider> type, String key, String value) {
+        return addRawLang(type, key, value);
+    }
+
+    public MutableComponent lang(String locale, String key, String value) {
+        return addRawLang(locale(locale), key, value);
+    }
+
+    public ProviderType<RegistryLibLangProvider> locale(String locale) {
+        String normalized = locale.toLowerCase(java.util.Locale.ROOT);
+        if ("en_us".equals(normalized)) {
+            return ProviderType.LANG;
+        }
+        return localeProviders.computeIfAbsent(normalized, this::createLocaleProvider);
+    }
+
+    public RegistryCore withLangAlias(String locale, ProviderType<RegistryLibLangProvider> provider) {
+        localeProviders.put(locale.toLowerCase(java.util.Locale.ROOT), provider);
+        return this;
+    }
+
+    @SuppressWarnings("unchecked")
+    private ProviderType<RegistryLibLangProvider> createLocaleProvider(String locale) {
+        final ProviderType<?>[] holder = new ProviderType<?>[1];
+        ProviderType<RegistryLibLangProvider> type = ProviderType.registerClientProvider(
+                "lang/" + locale,
+                () -> c -> new RegistryLibLangProvider(c.parent(), c.output(), locale) {
+
+                    @Override
+                    protected ProviderType<? extends RegistryLibLangProvider> getProviderType() {
+                        return (ProviderType<? extends RegistryLibLangProvider>) holder[0];
+                    }
+                });
+        holder[0] = type;
+        return type;
+    }
+
+    private void addExtraLang(
+                              ProviderType<? extends RegistryLibLangProvider> type, String key, String value) {
+        if (extraLangCallbacks.add(type)) {
+            addDataGenerator(
+                    type, prov -> extraLang.get(type).forEach(p -> prov.add(p.getKey(), p.getValue())));
+        }
+        extraLang.put(type, Pair.of(key, value));
     }
 
     // === Data Gen Execution ===
@@ -284,6 +365,37 @@ public class RegistryCore {
 
     public void defaultCreativeTab(ResourceKey<CreativeModeTab> creativeModeTab) {
         defaultCreativeModeTab = creativeModeTab;
+    }
+
+    public RegistryCore withItemDefaults(Consumer<ItemBuilder<?, ?>> defaults) {
+        itemDefaultCallbacks.add(defaults);
+        return this;
+    }
+
+    public RegistryCore withBlockDefaults(Consumer<BlockBuilder<?, ?>> defaults) {
+        blockDefaultCallbacks.add(defaults);
+        return this;
+    }
+
+    public RegistryCore withFluidDefaults(Consumer<FluidBuilder<?, ?>> defaults) {
+        fluidDefaultCallbacks.add(defaults);
+        return this;
+    }
+
+    protected <T extends Item, P, B extends ItemBuilder<T, P>> B applyItemDefaults(B builder) {
+        itemDefaultCallbacks.forEach(c -> c.accept(builder));
+        return builder;
+    }
+
+    protected <T extends Block, P, B extends BlockBuilder<T, P>> B applyBlockDefaults(B builder) {
+        blockDefaultCallbacks.forEach(c -> c.accept(builder));
+        return builder;
+    }
+
+    protected <T extends BaseFlowingFluid, P, B extends FluidBuilder<T, P>> B applyFluidDefaults(
+                                                                                                 B builder) {
+        fluidDefaultCallbacks.forEach(c -> c.accept(builder));
+        return builder;
     }
 
     public void modifyCreativeModeTab(
@@ -337,6 +449,146 @@ public class RegistryCore {
         return value;
     }
 
+    public ItemEntry<Item> existingItem(@NotNull String id) {
+        return existingItem(Identifier.parse(id));
+    }
+
+    public ItemEntry<Item> existingItem(@NotNull Identifier id) {
+        return existingItem(ResourceKey.create(Registries.ITEM, id));
+    }
+
+    public ItemEntry<Item> existingItem(@NotNull ResourceKey<Item> key) {
+        Item item = BuiltInRegistries.ITEM.getValue(key.identifier());
+        if (item == null) throw new IllegalArgumentException("Unknown item: " + key.identifier());
+        var entry = new ItemEntry<Item>(key);
+        entry.bound(item);
+        return entry;
+    }
+
+    public BlockEntry<Block> existingBlock(@NotNull String id) {
+        return existingBlock(Identifier.parse(id));
+    }
+
+    public BlockEntry<Block> existingBlock(@NotNull Identifier id) {
+        return existingBlock(ResourceKey.create(Registries.BLOCK, id));
+    }
+
+    public BlockEntry<Block> existingBlock(@NotNull ResourceKey<Block> key) {
+        Block block = BuiltInRegistries.BLOCK.getValue(key.identifier());
+        if (block == null) throw new IllegalArgumentException("Unknown block: " + key.identifier());
+        var entry = new BlockEntry<Block>(key);
+        entry.bound(block);
+        return entry;
+    }
+
+    public ItemTagBatch itemTags() {
+        return new ItemTagBatch();
+    }
+
+    public BlockTagBatch blockTags() {
+        return new BlockTagBatch();
+    }
+
+    public RegistryCore tagExisting(@NotNull TagKey<Item> tag, @NotNull ItemLike... items) {
+        itemTags().add(tag, items);
+        return this;
+    }
+
+    public RegistryCore tagExisting(@NotNull TagKey<Block> tag, @NotNull Block... blocks) {
+        blockTags().add(tag, blocks);
+        return this;
+    }
+
+    public final class ItemTagBatch {
+
+        public ItemTagBatch add(@NotNull TagKey<Item> tag, @NotNull ItemLike... items) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.ITEM_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (ItemLike item : items) {
+                                builder.add(TagEntry.element(BuiltInRegistries.ITEM.getKey(item.asItem())));
+                            }
+                        });
+            }
+            return this;
+        }
+
+        public ItemTagBatch addIds(@NotNull TagKey<Item> tag, @NotNull Identifier... ids) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.ITEM_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (Identifier id : ids) {
+                                builder.add(TagEntry.element(id));
+                            }
+                        });
+            }
+            return this;
+        }
+
+        public ItemTagBatch addOptionalIds(@NotNull TagKey<Item> tag, @NotNull Identifier... ids) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.ITEM_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (Identifier id : ids) {
+                                builder.add(TagEntry.optionalElement(id));
+                            }
+                        });
+            }
+            return this;
+        }
+    }
+
+    public final class BlockTagBatch {
+
+        public BlockTagBatch add(@NotNull TagKey<Block> tag, @NotNull Block... blocks) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.BLOCK_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (Block block : blocks) {
+                                builder.add(TagEntry.element(BuiltInRegistries.BLOCK.getKey(block)));
+                            }
+                        });
+            }
+            return this;
+        }
+
+        public BlockTagBatch addIds(@NotNull TagKey<Block> tag, @NotNull Identifier... ids) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.BLOCK_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (Identifier id : ids) {
+                                builder.add(TagEntry.element(id));
+                            }
+                        });
+            }
+            return this;
+        }
+
+        public BlockTagBatch addOptionalIds(@NotNull TagKey<Block> tag, @NotNull Identifier... ids) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.BLOCK_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (Identifier id : ids) {
+                                builder.add(TagEntry.optionalElement(id));
+                            }
+                        });
+            }
+            return this;
+        }
+    }
+
     // === Builder Factory Methods ===
     // --- Items ---
 
@@ -346,7 +598,7 @@ public class RegistryCore {
                                                       @NotNull String name,
                                                       @NotNull Function<Item.Properties, T> factory,
                                                       boolean isComponentItem) {
-        return ItemBuilder.create(this, parent, name, factory, isComponentItem);
+        return applyItemDefaults(ItemBuilder.create(this, parent, name, factory, isComponentItem));
     }
 
     @StandardAPI("Returns an ItemBuilder for fluent chain configuration. Call .register() to finalise.")
@@ -374,7 +626,7 @@ public class RegistryCore {
                                                          @NotNull P parent,
                                                          @NotNull String name,
                                                          @NotNull Function<BlockBehaviour.Properties, T> factory) {
-        return BlockBuilder.create(this, parent, name, factory);
+        return applyBlockDefaults(BlockBuilder.create(this, parent, name, factory));
     }
 
     @StandardAPI("Returns a BlockBuilder for fluent chain configuration. Call .register() to finalise.")
@@ -406,7 +658,8 @@ public class RegistryCore {
 
     protected <T extends BaseFlowingFluid, P> FluidBuilder<T, P> newFluidBuilder(
                                                                                  @NotNull P parent, @NotNull String name, @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
-        return FluidBuilder.create(this, parent, name, FluidType::new, fluidFactory);
+        return applyFluidDefaults(
+                FluidBuilder.create(this, parent, name, FluidType::new, fluidFactory));
     }
 
     @StandardAPI("Returns a FluidBuilder for fluent chain configuration. Call .register() to finalise.")
@@ -611,6 +864,12 @@ public class RegistryCore {
         return dataComponentType(name, Registries.DATA_COMPONENT_TYPE, builder);
     }
 
+    @SyntaxSugar("dataComponentTypeEntry(name, Registries.DATA_COMPONENT_TYPE, builder)")
+    public <T> DataComponentTypeEntry<T> dataComponentTypeEntry(
+                                                                @NotNull String name, Consumer<DataComponentType.Builder<T>> builder) {
+        return dataComponentTypeEntry(name, Registries.DATA_COMPONENT_TYPE, builder);
+    }
+
     @StandardAPI("Registers a custom DataComponentType.")
     public <T> DataComponentType<T> dataComponentType(
                                                       @NotNull String name,
@@ -619,6 +878,16 @@ public class RegistryCore {
         DataComponentType.Builder<T> b = new DataComponentType.Builder<>();
         builder.accept(b);
         return registry(name, b.build(), registriesKey);
+    }
+
+    @StandardAPI("Registers a custom DataComponentType and returns a lazy entry wrapper.")
+    public <T> DataComponentTypeEntry<T> dataComponentTypeEntry(
+                                                                @NotNull String name,
+                                                                ResourceKey<Registry<DataComponentType<?>>> registriesKey,
+                                                                Consumer<DataComponentType.Builder<T>> builder) {
+        DataComponentType.Builder<T> b = new DataComponentType.Builder<>();
+        builder.accept(b);
+        return registry(name, registriesKey, _key -> b.build(), DataComponentTypeEntry::new);
     }
 
     // --- Enchantments (Builder) ---
@@ -761,7 +1030,6 @@ public class RegistryCore {
     }
 
     private void onGatherData(GatherDataEvent.Client event) {
-        extraLang.get();
         event
                 .getGenerator()
                 .addProvider(true, provider = new RegistryLibDataProvider(this, modid, event));

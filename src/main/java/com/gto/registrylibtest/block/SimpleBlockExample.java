@@ -1,13 +1,13 @@
 package com.gto.registrylibtest.block;
 
-import java.awt.Color;
-
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylibtest.RegistryLibTest;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+
+import java.awt.Color;
 
 /**
  * 最简单的方块注册：一个方块 + 对应物品 + 语言。
@@ -24,7 +24,9 @@ public class SimpleBlockExample {
             .langCn("装饰石") // Approach 2: ModBlockBuilder.langCn()，须最先调用
             .initialProperties(Blocks.STONE)
             .lang("Decorative Stone")
-            .texture(() -> ImageUtil.generateIcon(new Color(146, 146, 146), ImageUtil.SQUARE, new Color(92, 92, 92)))
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            new Color(146, 146, 146), ImageUtil.SQUARE, new Color(92, 92, 92)))
             .simpleItem()
             .register();
 }

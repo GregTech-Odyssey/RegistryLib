@@ -1,12 +1,8 @@
 package com.gto.registrylibtest.entity;
 
-import java.awt.Color;
-import java.util.Optional;
-
 import com.gto.registrylib.util.ImageUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.EntityEntry;
-import static com.gto.registrylibtest.RegistryLibTest.REGISTRYLIB;
 import com.gto.registrylibtest.client.CrystalGuardianRenderer;
 
 import net.minecraft.core.registries.Registries;
@@ -26,6 +22,11 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.predicates.LootItemKilledByPlayerCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+
+import java.awt.Color;
+import java.util.Optional;
+
+import static com.gto.registrylibtest.RegistryLibTest.REGISTRYLIB;
 
 /**
  * 晶体矿守卫者 — 完整的实体注册示例（Brain AI + MobRenderer 骨骼模型 + 战利品 + 自然生成）。
@@ -63,7 +64,9 @@ public class SimpleEntityExample {
             .langCn("晶体矿")
             .lang("Crystal Ore")
             .initialProperties(Blocks.DIAMOND_ORE)
-            .texture(() -> ImageUtil.generateIcon(new Color(105, 240, 255), ImageUtil.CIRCLE, new Color(44, 84, 112)))
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            new Color(105, 240, 255), ImageUtil.CIRCLE, new Color(44, 84, 112)))
             .defaultLoot()
             .simpleItem()
             .register();

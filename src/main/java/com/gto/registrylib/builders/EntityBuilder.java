@@ -1,13 +1,5 @@
 package com.gto.registrylib.builders;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
-
-import org.jetbrains.annotations.NotNull;
-
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
@@ -40,6 +32,14 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.common.world.BiomeModifiers.AddSpawnsBiomeModifier;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 public class EntityBuilder<T extends Entity, P>
                           extends AbstractBuilder<EntityType<?>, EntityType<T>, P, EntityBuilder<T, P>> {
@@ -127,7 +127,7 @@ public class EntityBuilder<T extends Entity, P>
                                         @NotNull Consumer<ItemBuilder<SpawnEggItem, EntityBuilder<T, P>>> consumer) {
         var supplier = getValueSupplier();
         var eggBuilder = core.<SpawnEggItem, EntityBuilder<T, P>>item(
-            this, name + "_spawn_egg", p -> new SpawnEggItem(p.spawnEgg(supplier.get())), false);
+                this, name + "_spawn_egg", p -> new SpawnEggItem(p.spawnEgg(supplier.get())), false);
         consumer.accept(eggBuilder);
         eggBuilder.build();
         return this;
