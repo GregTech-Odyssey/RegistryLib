@@ -61,12 +61,70 @@ sourceSets.main.resources {
     srcDir 'src/generated/resources/registrylibtest'
 }
 
+def releaseModsToml = layout.buildDirectory.file('generated/releaseResources/META-INF/neoforge.mods.toml')
+
+tasks.register('generateReleaseModsToml') {
+    group = 'build'
+    description = 'Generates the library-only NeoForge metadata for published jars.'
+    outputs.file(releaseModsToml)
+    inputs.properties([
+            mod_id                 : mod_id,
+            mod_version            : mod_version,
+            mod_name               : mod_name,
+            mod_authors            : mod_authors,
+            mod_description        : mod_description,
+            mod_license            : mod_license,
+            minecraft_version_range: minecraft_version_range,
+            neo_version_range      : neo_version_range,
+            loader_version_range   : loader_version_range,
+    ])
+
+    doLast {
+        def outputFile = releaseModsToml.get().asFile
+        outputFile.parentFile.mkdirs()
+        outputFile.setText("""modLoader="javafml"
+loaderVersion="${loader_version_range}"
+license="${mod_license}"
+issueTrackerURL=""
+
+[[mods]]
+modId="${mod_id}"
+version="${mod_version}"
+displayName="${mod_name}"
+authors="${mod_authors}"
+description='''${mod_description}'''
+
+[[dependencies.${mod_id}]]
+modId="neoforge"
+type="required"
+versionRange="${neo_version_range}"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.${mod_id}]]
+modId="minecraft"
+type="required"
+versionRange="${minecraft_version_range}"
+ordering="NONE"
+side="BOTH"
+""", 'UTF-8')
+    }
+}
+
 jar {
+    dependsOn(tasks.named('generateReleaseModsToml'))
+
+    exclude 'META-INF/neoforge.mods.toml'
     exclude 'com/gto/registrylibtest/**'
     exclude 'registrylibtest/**'
     exclude 'assets/registrylibtest/**'
     exclude 'data/registrylibtest/**'
+    exclude 'data/minecraft/tags/**'
     exclude '.cache/**'
+
+    from(releaseModsToml) {
+        into 'META-INF'
+    }
 }
 
 def mainLibrarySources = fileTree('src/main/java/com/gto/registrylib') {
@@ -96,6 +154,47 @@ tasks.register('verifyNoRegistryLibTestLeaks') {
 
 tasks.named('compileJava') {
     dependsOn(tasks.named('verifyNoRegistryLibTestLeaks'))
+}
+
+tasks.register('verifyReleaseJarDoesNotContainRegistryLibTest') {
+    group = 'verification'
+    description = 'Fails the build if the published jar contains registrylibtest classes, metadata, or generated resources.'
+    dependsOn(tasks.named('jar'))
+
+    doLast {
+        def jarFile = tasks.named('jar').get().archiveFile.get().asFile
+        def forbiddenEntries = []
+
+        zipTree(jarFile).matching {
+            include 'com/gto/registrylibtest/**'
+            include 'registrylibtest/**'
+            include 'assets/registrylibtest/**'
+            include 'data/registrylibtest/**'
+            include 'data/minecraft/tags/**'
+        }.visit { details ->
+            if (!details.directory) {
+                forbiddenEntries.add(details.relativePath.pathString)
+            }
+        }
+
+        def modsToml = zipTree(jarFile).matching {
+            include 'META-INF/neoforge.mods.toml'
+        }.singleFile
+
+        if (modsToml.getText('UTF-8').contains('registrylibtest')) {
+            forbiddenEntries.add('META-INF/neoforge.mods.toml contains registrylibtest')
+        }
+
+        if (!forbiddenEntries.isEmpty()) {
+            throw new GradleException(
+                    'Release jar must not contain registrylibtest content:\n - '
+                            + forbiddenEntries.sort().join('\n - '))
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn(tasks.named('verifyReleaseJarDoesNotContainRegistryLibTest'))
 }
 
 repositories {
