@@ -24,3 +24,4 @@ In brief, the MPL-2.0 requires that:
 
 For the full license text, see the [`LICENSE`](https://github.com/GregTech-Odyssey/RegistryLib/blob/main/LICENSE) file in the repository. 
  
+ 
