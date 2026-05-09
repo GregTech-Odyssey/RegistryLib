@@ -23,3 +23,4 @@ In brief, the MPL-2.0 requires that:
 - A copy of the license must be included with any distribution.
 
 For the full license text, see the [`LICENSE`](https://github.com/GregTech-Odyssey/RegistryLib/blob/main/LICENSE) file in the repository. 
+ 
