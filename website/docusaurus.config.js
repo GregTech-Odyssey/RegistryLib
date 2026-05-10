@@ -4,7 +4,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'RegistryLib',
-  tagline: 'Fluent registration for NeoForge — one chain call does it all.',
+  tagline: 'Fluent registration for NeoForge - one chain call does it all.',
   favicon: 'img/favicon.ico',
 
   future: {
@@ -12,7 +12,7 @@ const config = {
   },
 
   url: 'https://registrylib.gtodyssey.com',
-  baseUrl: '/',
+  baseUrl: process.env.DOCUSAURUS_BASE_URL ?? '/',
 
   organizationName: 'GregTech-Odyssey',
   projectName: 'RegistryLib',
@@ -107,7 +107,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} GregTech Odyssey. Built with Docusaurus.`,
+        copyright: `Copyright (c) ${new Date().getFullYear()} GregTech Odyssey. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.github,
@@ -121,7 +121,7 @@ const config = {
       '@docusaurus/plugin-client-redirects',
       {
         redirects: [
-          // Old Jekyll URLs → new Docusaurus paths
+          // Old Jekyll URLs -> new Docusaurus paths
           { from: '/quickstart', to: '/tutorials/installation' },
           { from: '/register-items', to: '/how-to/register-items' },
           { from: '/register-blocks', to: '/how-to/register-blocks' },
@@ -140,7 +140,7 @@ const config = {
           { from: '/content-guides', to: '/how-to/register-items' },
           { from: '/systems-overview', to: '/concepts/what-is-registrylib' },
           { from: '/advanced-topics', to: '/tutorials/custom-builder' },
-          // Old 3-level tutorial URLs → flat URLs
+          // Old 3-level tutorial URLs -> flat URLs
           { from: '/tutorials/beginner/installation', to: '/tutorials/installation' },
           { from: '/tutorials/beginner/first-item', to: '/tutorials/first-item' },
           { from: '/tutorials/beginner/first-block', to: '/tutorials/first-block' },
