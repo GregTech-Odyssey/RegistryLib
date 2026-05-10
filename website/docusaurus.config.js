@@ -12,7 +12,7 @@ const config = {
   },
 
   url: 'https://registrylib.gtodyssey.com',
-  baseUrl: '/',
+  baseUrl: process.env.DOCUSAURUS_BASE_URL ?? '/',
 
   organizationName: 'GregTech-Odyssey',
   projectName: 'RegistryLib',
