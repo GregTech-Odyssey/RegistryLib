@@ -13,13 +13,15 @@ import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.RegistryLibTintSources;
 import com.gto.registrylib.util.TextureRef;
+import com.gto.registrylib.util.color.ArgbColor;
+import com.gto.registrylib.util.color.RgbColor;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.visual.ItemVisualPreset;
 
 import net.minecraft.client.color.item.ItemTintSource;
-import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.Registries;
@@ -32,6 +34,8 @@ import net.minecraft.world.item.Item;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -42,6 +46,8 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, ItemBuilder<T, P>> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItemBuilder.class);
 
     public static <T extends Item, P> ItemBuilder<T, P> create(
                                                                RegistryCore owner,
@@ -63,6 +69,9 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     private @Nullable ArrayList<TooltipNodeCollector.TooltipConfig> tooltipConfigs;
     private final ArrayList<ItemAttachment<?>> pendingAttachments;
+    private int itemTintSourceCount;
+    @Nullable
+    private ArgbColor[] knownItemTintColors;
 
     protected ItemBuilder(
                           RegistryCore core,
@@ -154,22 +163,30 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> constantTint(int color) {
-        return tintSource(ItemModelUtils.constantTint(color));
+    public ItemBuilder<T, P> constantTint(@NotNull RgbColor color) {
+        tintSource(RegistryLibTintSources.itemConstant(color));
+        knownItemTintColors = new ArgbColor[] { color.opaque() };
+        return this;
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> constantTint(@NotNull String texturePath, int color) {
-        return tintSource(texturePath, ItemModelUtils.constantTint(color));
+    public ItemBuilder<T, P> constantTint(@NotNull String texturePath, @NotNull RgbColor color) {
+        tintSource(texturePath, RegistryLibTintSources.itemConstant(color));
+        knownItemTintColors = new ArgbColor[] { color.opaque() };
+        return this;
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> constantTint(@NotNull TextureRef texture, int color) {
-        return tintSource(texture, ItemModelUtils.constantTint(color));
+    public ItemBuilder<T, P> constantTint(@NotNull TextureRef texture, @NotNull RgbColor color) {
+        tintSource(texture, RegistryLibTintSources.itemConstant(color));
+        knownItemTintColors = new ArgbColor[] { color.opaque() };
+        return this;
     }
 
     @StandardAPI
     public ItemBuilder<T, P> tintSource(@NotNull ItemTintSource... tintSources) {
+        itemTintSourceCount = tintSources.length;
+        knownItemTintColors = null;
         return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, tintSources));
     }
 
@@ -194,6 +211,8 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     @StandardAPI
     public ItemBuilder<T, P> flatTintedModel(
                                              @NotNull TextureRef texture, @NotNull ItemTintSource... tintSources) {
+        itemTintSourceCount = tintSources.length;
+        knownItemTintColors = null;
         return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, texture, tintSources));
     }
 
@@ -221,6 +240,31 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     public ItemBuilder<T, P> visual(@NotNull ItemVisualPreset preset) {
         preset.apply(this);
         return this;
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> debugTint() {
+        LOGGER.info(
+                "RegistryLib tint debug for item '{}': itemTintSourceCount={}, colors={}",
+                name,
+                itemTintSourceCount,
+                describeColors(knownItemTintColors));
+        return this;
+    }
+
+    private static String describeColors(@Nullable ArgbColor[] colors) {
+        if (colors == null) return "unknown";
+        if (colors.length == 0) return "[]";
+        StringBuilder builder = new StringBuilder("[");
+        for (int i = 0; i < colors.length; i++) {
+            if (i > 0) builder.append(", ");
+            ArgbColor color = colors[i];
+            builder
+                    .append("0x")
+                    .append(String.format("%08X", color.argb()))
+                    .append(color.isOpaque() ? " opaque" : " alpha=" + color.alpha());
+        }
+        return builder.append(']').toString();
     }
 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")

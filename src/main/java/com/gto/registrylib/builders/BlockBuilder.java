@@ -3,19 +3,25 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
+import com.gto.registrylib.client.Client;
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.generator.RegistryLibBlockModelGenerator;
 import com.gto.registrylib.datagen.loot.RegistryLibBlockLootTables;
 import com.gto.registrylib.datagen.loot.RegistryLibLootTableProvider.LootType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
+import com.gto.registrylib.util.DistExecutor;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.RegistryLibTintSources;
 import com.gto.registrylib.util.TextureRef;
+import com.gto.registrylib.util.color.ArgbColor;
+import com.gto.registrylib.util.color.RgbColor;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
+import com.gto.registrylib.util.visual.BlockModelLayer;
 import com.gto.registrylib.util.visual.BlockVisualPreset;
 
+import net.minecraft.client.color.block.BlockTintSource;
 import net.minecraft.client.color.item.ItemTintSource;
-import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
 import net.minecraft.client.data.models.model.TextureSlot;
@@ -33,10 +39,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.neoforged.api.distmarker.Dist;
 
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.util.function.BiConsumer;
@@ -48,6 +57,8 @@ import java.util.function.UnaryOperator;
 
 public class BlockBuilder<T extends Block, P>
                          extends AbstractBuilder<Block, T, P, BlockBuilder<T, P>> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BlockBuilder.class);
 
     public static <T extends Block, P> BlockBuilder<T, P> create(
                                                                  RegistryCore owner, P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
@@ -65,6 +76,12 @@ public class BlockBuilder<T extends Block, P>
     private ResourceKey<CreativeModeTab> defaultItemTab;
     @Nullable
     private ItemTintSource[] blockItemTintSources;
+    @Nullable
+    private BlockTintSource[] blockTintSources;
+    @Nullable
+    private ArgbColor[] knownBlockTintColors;
+    @Nullable
+    private Integer maxBlockTintIndex;
 
     protected BlockBuilder(
                            RegistryCore core, P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
@@ -196,6 +213,7 @@ public class BlockBuilder<T extends Block, P>
 
     @StandardAPI
     public BlockBuilder<T, P> tintedCube(int tintIndex) {
+        trackBlockTintIndex(tintIndex);
         return blockstate(() -> (ctx, prov) -> prov.createTintedCube(ctx, tintIndex));
     }
 
@@ -211,21 +229,23 @@ public class BlockBuilder<T extends Block, P>
 
     @StandardAPI
     public BlockBuilder<T, P> tintedCube(@NotNull TextureRef texture, int tintIndex) {
+        trackBlockTintIndex(tintIndex);
         return blockstate(() -> (ctx, prov) -> prov.createTintedCube(ctx, texture.id(), tintIndex));
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> constantTint(int color) {
-        return tintSource(ItemModelUtils.constantTint(color));
+    public BlockBuilder<T, P> constantTint(@NotNull RgbColor color) {
+        blockConstantTint(color);
+        return tintSource(RegistryLibTintSources.itemConstant(color));
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> constantTint(@NotNull String texturePath, int color) {
+    public BlockBuilder<T, P> constantTint(@NotNull String texturePath, @NotNull RgbColor color) {
         return tintedCube(texturePath, 0).constantTint(color);
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> constantTint(@NotNull TextureRef texture, int color) {
+    public BlockBuilder<T, P> constantTint(@NotNull TextureRef texture, @NotNull RgbColor color) {
         return tintedCube(texture, 0).constantTint(color);
     }
 
@@ -239,6 +259,45 @@ public class BlockBuilder<T extends Block, P>
                 ProviderType.ITEM_MODEL,
                 p -> p.generateTintedBlockItem(getValue(), blockItemTintSources));
         return this;
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> blockTintSource(@NotNull BlockTintSource... tintSources) {
+        blockTintSources = tintSources.clone();
+        knownBlockTintColors = null;
+        BlockTintSource[] sources = blockTintSources;
+        DistExecutor.unsafeRunWhenOn(
+                Dist.CLIENT, () -> () -> Client.registerBlockTintSources(getValueSupplier(), sources));
+        return this;
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> blockConstantTint(@NotNull RgbColor color) {
+        return blockConstantTint(color.opaque());
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> blockConstantTint(@NotNull ArgbColor color) {
+        if (color.isTransparent()) {
+            LOGGER.warn(
+                    "Block '{}' uses a fully transparent ARGB block tint color: 0x{}",
+                    name,
+                    Integer.toHexString(color.argb()));
+        }
+        blockTintSource(RegistryLibTintSources.blockConstant(color));
+        knownBlockTintColors = new ArgbColor[] { color };
+        return this;
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> layeredCube(
+                                          @NotNull TextureRef particle, @NotNull BlockModelLayer... layers) {
+        for (BlockModelLayer layer : layers) {
+            if (layer.hasTint()) {
+                trackBlockTintIndex(layer.tintIndex());
+            }
+        }
+        return blockstate(() -> (ctx, prov) -> prov.createLayeredCube(ctx, particle, layers));
     }
 
     @StandardAPI
@@ -269,6 +328,53 @@ public class BlockBuilder<T extends Block, P>
     public BlockBuilder<T, P> visual(@NotNull BlockVisualPreset preset) {
         preset.apply(this);
         return this;
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> debugTint() {
+        int tintCount = blockTintSources == null ? 0 : blockTintSources.length;
+        int maxTintIndex = maxBlockTintIndex == null ? -1 : maxBlockTintIndex;
+        LOGGER.info(
+                "RegistryLib tint debug for block '{}': maxBlockTintIndex={}, blockTintSourceCount={}, blockTintColors={}, blockItemTintSourceCount={}",
+                name,
+                maxTintIndex,
+                tintCount,
+                describeColors(knownBlockTintColors),
+                blockItemTintSources == null ? 0 : blockItemTintSources.length);
+        validateKnownBlockTintState();
+        return this;
+    }
+
+    private void trackBlockTintIndex(int tintIndex) {
+        if (tintIndex < 0) return;
+        maxBlockTintIndex = maxBlockTintIndex == null ? tintIndex : Math.max(maxBlockTintIndex, tintIndex);
+    }
+
+    private void validateKnownBlockTintState() {
+        if (maxBlockTintIndex == null) return;
+        int tintSourceCount = blockTintSources == null ? 0 : blockTintSources.length;
+        if (tintSourceCount <= maxBlockTintIndex) {
+            LOGGER.warn(
+                    "Block '{}' model uses tintindex {} but only {} block tint source(s) are configured",
+                    name,
+                    maxBlockTintIndex,
+                    tintSourceCount);
+        }
+    }
+
+    private static String describeColors(@Nullable ArgbColor[] colors) {
+        if (colors == null) return "unknown";
+        if (colors.length == 0) return "[]";
+        StringBuilder builder = new StringBuilder("[");
+        for (int i = 0; i < colors.length; i++) {
+            if (i > 0) builder.append(", ");
+            ArgbColor color = colors[i];
+            builder
+                    .append("0x")
+                    .append(String.format("%08X", color.argb()))
+                    .append(color.isOpaque() ? " opaque" : " alpha=" + color.alpha());
+        }
+        return builder.append(']').toString();
     }
 
     @SyntaxSugar("lang(Block::getDescriptionId, name)")
@@ -329,6 +435,7 @@ public class BlockBuilder<T extends Block, P>
     @Override
     @StandardAPI
     public BlockEntry<T> register() {
+        validateKnownBlockTintState();
         return (BlockEntry<T>) super.register();
     }
 }

@@ -27,7 +27,7 @@ The code snippets on this page are short excerpts from the runnable `RegistryLib
 | Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `initialBlockProperties`, `blockProperties`, `itemProperties`, `addBlockTag`, `addItemTag`, `addFluidTag` |
 | Reference existing vanilla or third-party objects | `existingItem("namespace:id")`, `existingBlock("namespace:id")` | pass the entry to recipes, tags, tabs, tooltips, or holder-style APIs |
 | Add tags to existing objects | `tagExisting(...)`, `itemTags().add(...)`, `itemTags().addSuppliers(...)`, `blockTags().addSuppliers(...)` | datagen-only tag entries |
-| Share grayscale template textures | `constantTint(texturePath, color)`, `visual(ItemVisualPreset.tintedTemplate(...))`, `visual(BlockVisualPreset.constantTintedCube(...))` | model tint without per-material PNGs |
+| Share grayscale template textures | `constantTint(texturePath, RgbColor.of(...))`, `visual(ItemVisualPreset.tintedTemplate(...))`, `visual(BlockVisualPreset.constantTintedCube(...))` | model tint without per-material PNGs |
 
 :::tip
 If you're unsure, start with `item(...)` or `block(...)`; they cover the vast majority of registrations. See the [How-to guides](/how-to/register-items) for step-by-step walkthroughs.
@@ -91,14 +91,17 @@ Several Entry wrappers also satisfy holder-style usage directly. When another AP
 | `builder.modelTexture("item/template")` / `builder.existingTexture("item/template")` | Reference an existing texture in the generated model |
 | `REGISTRYLIB.textureRef("item/template")` | Create a `TextureRef` for type-safe texture APIs |
 | `REGISTRYLIB.cleanGeneratedNamespace("textures/item/generated")` | Explicitly remove stale generated files under a specific `textures/...` subdirectory before writing resources |
+| `RgbColor.of(0xRRGGBB)` | Typed opaque RGB input for item and common block tint APIs |
+| `ArgbColor.of(0xAARRGGBB)` | Typed ARGB input for explicit block tint sources |
+| `RegistryLibTintSources.blockConstant(RgbColor)` | Create an opaque block tint source without raw ARGB mistakes |
 
 ## Texture Path Decision Matrix
 
 | Scenario | API | Writes a PNG? |
 | --- | --- | --- |
 | Generate a new placeholder or procedural texture | `builder.texture("path", imageSupplier)` | Yes |
-| Reuse a shared grayscale item template | `constantTint("item/templates/dust", color)` | No |
-| Reuse a shared grayscale block template | `constantTint("block/templates/storage_cube", color)` | No |
+| Reuse a shared grayscale item template | `constantTint("item/templates/dust", RgbColor.of(0x6E7380))` | No |
+| Reuse a shared grayscale block template | `constantTint("block/templates/storage_cube", RgbColor.of(0x6E7380))` | No |
 | Reuse an untinted existing texture | `modelTexture("item/template")` or `existingTexture("block/template")` | No |
 | Pass a typed texture path through helper code | `TextureRef.mod(MOD_ID, "item/template")`, `TextureRef.mc("item/iron_ingot")`, or `REGISTRYLIB.textureRef("item/template")` | No |
 | Remove stale generated textures after changing strategy | `cleanGeneratedNamespace("textures/item/generated")` | Deletes old files first |
@@ -155,19 +158,21 @@ REGISTRYLIB.addRecipeData(prov -> prov.shapeless(RecipeCategory.MISC, Items.IRON
 ### Shared Tinted Template
 
 ```java
-ItemVisualPreset dustVisual(int color) {
+ItemVisualPreset dustVisual(RgbColor color) {
     return ItemVisualPreset.tintedTemplate("item/templates/dust", color);
 }
 
-REGISTRYLIB.item("lead_dust").visual(dustVisual(0x6E7380)).register();
-REGISTRYLIB.item("nickel_dust").visual(dustVisual(0xD5C36A)).register();
+REGISTRYLIB.item("lead_dust").visual(dustVisual(RgbColor.of(0x6E7380))).register();
+REGISTRYLIB.item("nickel_dust").visual(dustVisual(RgbColor.of(0xD5C36A))).register();
 
 TextureRef storageTemplate = REGISTRYLIB.textureRef("block/templates/storage_cube");
 REGISTRYLIB.block("lead_storage_block")
-        .visual(BlockVisualPreset.constantTintedCube(storageTemplate, 0x6E7380))
+        .visual(BlockVisualPreset.constantTintedCube(storageTemplate, RgbColor.of(0x6E7380)))
         .simpleItem()
         .register();
 ```
+
+For blocks, `constantTint(RgbColor)` also registers the runtime block tint source. Use `debugTint()` while developing layered models to log tint source counts and catch missing `tintindex` coverage.
 
 ### Cleaning Stale Generated Textures
 

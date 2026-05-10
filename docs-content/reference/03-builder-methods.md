@@ -24,9 +24,9 @@ Created via `item("id", factory)`, `item("id")`, or `componentItem("id")`.
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
 | `defaultLang()` | - | Infer display name from the registry path |
 | `defaultModel()` | - | Generate default item model during datagen |
-| `constantTint(color)` | `int` RGB color | Generate a flat tinted item model using the item's own texture path |
-| `constantTint(texturePath, color)` | `String, int` | Generate a flat tinted item model referencing a shared texture |
-| `constantTint(texture, color)` | `TextureRef, int` | Type-safe variant of the shared texture overload |
+| `constantTint(color)` | `RgbColor` | Generate a flat tinted item model using the item's own texture path |
+| `constantTint(texturePath, color)` | `String, RgbColor` | Generate a flat tinted item model referencing a shared texture |
+| `constantTint(texture, color)` | `TextureRef, RgbColor` | Type-safe variant of the shared texture overload |
 | `tintSource(texturePath, sources...)` | `String, ItemTintSource...` | Generate a flat item model with custom item tint sources |
 | `tintSource(texture, sources...)` | `TextureRef, ItemTintSource...` | Type-safe variant of the shared texture overload |
 | `flatTintedModel(texturePath, sources...)` | `String, ItemTintSource...` | Explicit alias for a flat tinted model |
@@ -75,10 +75,14 @@ Created via `block("id", factory)` or `block("id")`.
 | `tintedCube(tintIndex)` | `int` | Generate a simple cube block model using the block's own texture path |
 | `tintedCube(texturePath, tintIndex)` | `String, int` | Generate a tinted cube block model referencing a shared texture |
 | `tintedCube(texture, tintIndex)` | `TextureRef/Identifier, int` | Type-safe shared texture variants |
-| `constantTint(color)` | `int` RGB color | Generate a tinted BlockItem model using the block model |
-| `constantTint(texturePath, color)` | `String, int` | Generate both a shared-texture tinted cube and a tinted BlockItem model |
-| `constantTint(texture, color)` | `TextureRef, int` | Type-safe variant of the shared texture overload |
+| `constantTint(color)` | `RgbColor` | Register opaque block tint and generate a tinted BlockItem model using the block model |
+| `constantTint(texturePath, color)` | `String, RgbColor` | Generate a shared-texture tinted cube, register block tint, and generate a tinted BlockItem model |
+| `constantTint(texture, color)` | `TextureRef, RgbColor` | Type-safe variant of the shared texture overload |
 | `tintSource(sources...)` | `ItemTintSource...` | Generate a BlockItem model with custom item tint sources |
+| `blockTintSource(sources...)` | `BlockTintSource...` | Register runtime block/world tint sources |
+| `blockConstantTint(color)` | `RgbColor` or `ArgbColor` | Register a constant block tint source; RGB is converted to opaque ARGB |
+| `layeredCube(particle, layers...)` | `TextureRef, BlockModelLayer...` | Generate a layered full-cube model with per-layer `tintindex` and translucency settings |
+| `debugTint()` | - | Log model tint indices, tint source counts, colors, and warnings |
 | `modelTexture(texturePath)` / `existingTexture(texturePath)` | `String` | Reference an existing cube texture without generating a PNG |
 | `modelTexture(texture)` / `existingTexture(texture)` | `TextureRef` | Type-safe variant for existing cube textures |
 | `visual(preset)` | `BlockVisualPreset` | Apply a reusable block visual strategy |
@@ -103,6 +107,17 @@ REGISTRYLIB.block("decorative_stone", Block::new)
 :::tip
 Use `simpleItem()` for blocks that just need a basic BlockItem. Use `item(b -> { ... })` when you need to customize the item, such as adding tooltips, changing the model, or setting properties.
 :::
+
+## Color Types
+
+Tint APIs use typed colors instead of raw integers:
+
+| Type | Accepted value | Use |
+| --- | --- | --- |
+| `RgbColor.of(0xRRGGBB)` | 24-bit RGB only | Item tint and the common block tint builder path |
+| `ArgbColor.of(0xAARRGGBB)` | 32-bit ARGB | Explicit block tint sources when alpha is intentional |
+
+`RgbColor` rejects alpha bits and RegistryLib converts it to opaque ARGB. Raw Minecraft `BlockTintSources.constant(int)` does not add alpha; passing `0xRRGGBB` directly produces alpha `0`. Use `RegistryLibTintSources.blockConstant(RgbColor)` or `BlockBuilder.blockConstantTint(RgbColor)` for the opaque default.
 
 ## FluidBuilder
 

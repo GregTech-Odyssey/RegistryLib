@@ -2,9 +2,12 @@ package com.gto.registrylibtest;
 
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.util.ImageUtil;
+import com.gto.registrylib.util.TextureRef;
+import com.gto.registrylib.util.color.RgbColor;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.DataComponentTypeEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
+import com.gto.registrylib.util.visual.BlockModelLayer;
 import com.gto.registrylib.util.visual.BlockVisualPreset;
 import com.gto.registrylib.util.visual.ItemVisualPreset;
 
@@ -35,14 +38,31 @@ public final class ApiImprovementExample {
             "api_note",
             (DataComponentType.Builder<String> builder) -> builder.persistent(Codec.STRING));
 
+    private static final TextureRef API_BLOCK_TEMPLATE = RegistryLibTest.REGISTRYLIB.textureRef("block/api_template_block");
+
+    private static final TextureRef API_BLOCK_OVERLAY = RegistryLibTest.REGISTRYLIB.textureRef("block/api_template_overlay");
+
     public static final ItemEntry<Item> API_TINTED_GEM = RegistryLibTest.REGISTRYLIB
             .item("api_tinted_gem")
-            .visual(ItemVisualPreset.tintedTemplate("item/api_template_gem", 0x66CCFF))
+            .visual(ItemVisualPreset.tintedTemplate("item/api_template_gem", RgbColor.of(0x66CCFF)))
             .register();
 
     public static final BlockEntry<Block> API_TINTED_BLOCK = RegistryLibTest.REGISTRYLIB
             .block("api_tinted_block")
-            .visual(BlockVisualPreset.constantTintedCube("block/api_template_block", 0xCC8844))
+            .visual(
+                    BlockVisualPreset.constantTintedCube(
+                            "block/api_template_block", RgbColor.of(0xCC8844)))
+            .simpleItem()
+            .register();
+
+    public static final BlockEntry<Block> API_LAYERED_BLOCK = RegistryLibTest.REGISTRYLIB
+            .block("api_layered_block")
+            .visual(
+                    BlockVisualPreset.layeredCube(
+                            API_BLOCK_TEMPLATE,
+                            RgbColor.of(0x55AAFF),
+                            BlockModelLayer.untinted(API_BLOCK_TEMPLATE),
+                            BlockModelLayer.tinted(API_BLOCK_OVERLAY, 0, true)))
             .simpleItem()
             .register();
 
@@ -59,6 +79,10 @@ public final class ApiImprovementExample {
                                     "api_template_block",
                                     () -> ImageUtil.generateIcon(
                                             new Color(170, 170, 170), ImageUtil.SQUARE, new Color(80, 80, 80))));
+                    provider.addBlockTexture(
+                            provider.simpleTexture(
+                                    "api_template_overlay",
+                                    () -> ImageUtil.generateIcon(new Color(210, 210, 210), ImageUtil.CIRCLE)));
                 });
 
         RegistryLibTest.REGISTRYLIB.lang(

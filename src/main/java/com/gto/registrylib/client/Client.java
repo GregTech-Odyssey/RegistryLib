@@ -5,17 +5,20 @@ import com.gto.registrylib.tooltip.TooltipRegistry;
 
 import com.mojang.datafixers.util.Either;
 
+import net.minecraft.client.color.block.BlockTintSource;
 import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
+import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
 import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
@@ -25,6 +28,7 @@ import net.neoforged.neoforge.fluids.FluidType;
 
 import lombok.experimental.UtilityClass;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
@@ -35,6 +39,8 @@ public class Client {
     private final AtomicReference<ConcurrentHashMap<Supplier<BlockEntityType<?>>, BlockEntityRendererProvider>> BER = new AtomicReference<>(new ConcurrentHashMap<>());
 
     private final AtomicReference<ConcurrentHashMap<Supplier<FluidType>, IClientFluidTypeExtensions>> FLUID_TYPE_EXTENSIONS = new AtomicReference<>(new ConcurrentHashMap<>());
+
+    private final ConcurrentHashMap<Supplier<? extends Block>, List<BlockTintSource>> BLOCK_TINT_SOURCES = new ConcurrentHashMap<>();
 
     /**
      * 待注册的流体模型 (NeoForge 26.1+)。
@@ -60,6 +66,7 @@ public class Client {
         modEventBus.addListener(Client::onClientSetup);
         modEventBus.addListener(Client::onRegisterClientExtensions);
         modEventBus.addListener(Client::onRegisterFluidModels);
+        modEventBus.addListener(Client::onRegisterBlockTintSources);
         modEventBus.addListener(Client::onRegisterTooltipFactories);
         modEventBus.addListener(Client::onRegisterEntityRenderers);
         NeoForge.EVENT_BUS.addListener(Client::onGatherTooltipComponents);
@@ -91,6 +98,11 @@ public class Client {
         FLUID_MODELS.put(registrationKey, new FluidModelRegistration(still, flowing, model));
     }
 
+    public void registerBlockTintSources(
+                                         Supplier<? extends Block> block, BlockTintSource... tintSources) {
+        BLOCK_TINT_SOURCES.put(block, List.of(tintSources.clone()));
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void registerEntityRenderer(
                                        Supplier<EntityType<?>> type, EntityRendererProvider renderer) {
@@ -115,6 +127,10 @@ public class Client {
         FLUID_MODELS.forEach(
                 (registrationKey, registration) -> event.register(
                         registration.model(), registration.still().get(), registration.flowing().get()));
+    }
+
+    private void onRegisterBlockTintSources(RegisterColorHandlersEvent.BlockTintSources event) {
+        BLOCK_TINT_SOURCES.forEach((block, tintSources) -> event.register(tintSources, block.get()));
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })

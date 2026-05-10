@@ -76,18 +76,26 @@ These utilities are datagen-only —invoked when `doDatagen()` returns true. The
 Use `constantTint(...)` when a grayscale item texture should be colored by the generated item model instead of generating one PNG per color:
 
 ```java
+import com.gto.registrylib.util.color.RgbColor;
+
 public static final ItemEntry<Item> TIN_DUST = REGISTRYLIB
         .item("tin_dust")
-        .constantTint("item/templates/dust", 0xC8D8E8)
+        .constantTint("item/templates/dust", RgbColor.of(0xC8D8E8))
         .lang("Tin Dust")
         .register();
 ```
 
+`RgbColor` accepts only `0xRRGGBB`. RegistryLib converts it to opaque ARGB for item model tints.
+
 The texture path is an existing model texture reference, not a generated PNG request. The template PNG must already exist under `assets/<modid>/textures/...`, or be generated once by a general resource provider. Multiple items can point at the same grayscale template and differ only by tint:
 
 ```java
-REGISTRYLIB.item("lead_dust").constantTint("item/templates/dust", 0x6E7380).register();
-REGISTRYLIB.item("nickel_dust").constantTint("item/templates/dust", 0xD5C36A).register();
+REGISTRYLIB.item("lead_dust")
+        .constantTint("item/templates/dust", RgbColor.of(0x6E7380))
+        .register();
+REGISTRYLIB.item("nickel_dust")
+        .constantTint("item/templates/dust", RgbColor.of(0xD5C36A))
+        .register();
 ```
 
 For helper methods that pass texture paths around, prefer `TextureRef`:
@@ -96,7 +104,7 @@ For helper methods that pass texture paths around, prefer `TextureRef`:
 TextureRef dustTemplate = REGISTRYLIB.textureRef("item/templates/dust");
 
 REGISTRYLIB.item("silver_dust")
-        .visual(ItemVisualPreset.tintedTemplate(dustTemplate, 0xD7D7E8))
+        .visual(ItemVisualPreset.tintedTemplate(dustTemplate, RgbColor.of(0xD7D7E8)))
         .register();
 ```
 
@@ -115,9 +123,9 @@ Use `TextureRef.mc("item/iron_ingot")` or `TextureRef.of(id)` for vanilla or thi
 | `componentItem(name)` | Create a `ComponentItem`-backed `ItemBuilder` |
 | `lang(text)` | Set the display name |
 | `defaultModel()` | Generate the default item model |
-| `constantTint(color)` | Generate a flat item model using the item's own texture path |
-| `constantTint(texturePath, color)` | Generate a flat tinted model referencing a shared texture |
-| `constantTint(texture, color)` | TextureRef variant for shared textures |
+| `constantTint(RgbColor)` | Generate a flat item model using the item's own texture path |
+| `constantTint(texturePath, RgbColor)` | Generate a flat tinted model referencing a shared texture |
+| `constantTint(texture, RgbColor)` | TextureRef variant for shared textures |
 | `tintSource(texturePath, sources...)` / `flatTintedModel(texturePath, sources...)` | Generate a flat item model with custom item tint sources |
 | `modelTexture(texturePath)` / `existingTexture(texturePath)` | Reference an existing texture without writing a PNG |
 | `visual(ItemVisualPreset.tintedTemplate(...))` | Reuse a shared item visual rule in batch registration |

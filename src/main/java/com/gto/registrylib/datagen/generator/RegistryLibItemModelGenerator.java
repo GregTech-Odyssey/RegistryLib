@@ -2,7 +2,9 @@ package com.gto.registrylib.datagen.generator;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.util.RegistryLibTintSources;
 import com.gto.registrylib.util.TextureRef;
+import com.gto.registrylib.util.color.RgbColor;
 
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.data.models.ItemModelGenerators;
@@ -60,8 +62,8 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
                         template.create(item, TextureMapping.layer0(layer0), modelOutput)));
     }
 
-    public void generateFlatTintedItem(Item item, int color) {
-        generateFlatTintedItem(item, ItemModelUtils.constantTint(color));
+    public void generateFlatTintedItem(Item item, RgbColor color) {
+        generateFlatTintedItem(item, RegistryLibTintSources.itemConstant(color));
     }
 
     public void generateFlatTintedItem(Item item, ItemTintSource... tintSources) {
@@ -79,8 +81,8 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
         itemModelOutput.accept(item, ItemModelUtils.tintedModel(model, tintSources));
     }
 
-    public void generateTintedBlockItem(Block block, int color) {
-        generateTintedBlockItem(block, ItemModelUtils.constantTint(color));
+    public void generateTintedBlockItem(Block block, RgbColor color) {
+        generateTintedBlockItem(block, RegistryLibTintSources.itemConstant(color));
     }
 
     public void generateTintedBlockItem(Block block, ItemTintSource... tintSources) {

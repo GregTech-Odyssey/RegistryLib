@@ -2,6 +2,8 @@ package com.gto.registrylib.datagen.generator;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.util.TextureRef;
+import com.gto.registrylib.util.visual.BlockModelLayer;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -73,6 +75,13 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
     public Identifier createTintedCube(Block block, Identifier texture, int tintIndex) {
         Identifier model = ModelLocationUtils.getModelLocation(block);
         modelOutput.accept(model, () -> createTintedCubeJson(texture, tintIndex));
+        create(block, model);
+        return model;
+    }
+
+    public Identifier createLayeredCube(Block block, TextureRef particle, BlockModelLayer... layers) {
+        Identifier model = ModelLocationUtils.getModelLocation(block);
+        modelOutput.accept(model, () -> createLayeredCubeJson(particle, layers));
         create(block, model);
         return model;
     }
@@ -244,6 +253,63 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
         elements.add(element);
         root.add("elements", elements);
         return root;
+    }
+
+    private static JsonObject createLayeredCubeJson(TextureRef particle, BlockModelLayer... layers) {
+        if (layers.length == 0) {
+            throw new IllegalArgumentException("Layered cube model requires at least one layer");
+        }
+        JsonObject root = new JsonObject();
+        root.addProperty("parent", "minecraft:block/block");
+
+        JsonObject textures = new JsonObject();
+        textures.addProperty("particle", particle.id().toString());
+        for (int i = 0; i < layers.length; i++) {
+            textures.add("layer" + i, textureValue(layers[i]));
+        }
+        root.add("textures", textures);
+
+        JsonArray elements = new JsonArray();
+        for (int i = 0; i < layers.length; i++) {
+            elements.add(layerElement("layer" + i, layers[i]));
+        }
+        root.add("elements", elements);
+        return root;
+    }
+
+    private static JsonObject layerElement(String textureKey, BlockModelLayer layer) {
+        JsonObject element = new JsonObject();
+        element.add("from", vector(0, 0, 0));
+        element.add("to", vector(16, 16, 16));
+
+        JsonObject faces = new JsonObject();
+        faces.add("down", layeredFace("down", textureKey, layer));
+        faces.add("up", layeredFace("up", textureKey, layer));
+        faces.add("north", layeredFace("north", textureKey, layer));
+        faces.add("south", layeredFace("south", textureKey, layer));
+        faces.add("west", layeredFace("west", textureKey, layer));
+        faces.add("east", layeredFace("east", textureKey, layer));
+        element.add("faces", faces);
+        return element;
+    }
+
+    private static JsonObject layeredFace(String cullface, String textureKey, BlockModelLayer layer) {
+        JsonObject face = face(cullface, layer.tintIndex());
+        face.addProperty("texture", "#" + textureKey);
+        if (!layer.hasTint()) {
+            face.remove("tintindex");
+        }
+        return face;
+    }
+
+    private static com.google.gson.JsonElement textureValue(BlockModelLayer layer) {
+        if (!layer.forceTranslucent()) {
+            return new com.google.gson.JsonPrimitive(layer.texture().id().toString());
+        }
+        JsonObject texture = new JsonObject();
+        texture.addProperty("sprite", layer.texture().id().toString());
+        texture.addProperty("force_translucent", true);
+        return texture;
     }
 
     private static JsonObject face(String cullface, int tintIndex) {
