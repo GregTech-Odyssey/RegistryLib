@@ -3,13 +3,132 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RegistryLib Docs Versions</title>
-  <style>body{font-family:system-ui,-apple-system,sans-serif;margin:3rem;line-height:1.5}a{color:#2563eb}</style>
+  <title>RegistryLib Wiki Versions</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d9e0ea;
+      --accent: #1f6feb;
+      --accent-strong: #174ea6;
+      --shadow: 0 18px 45px rgba(23, 32, 51, 0.10);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+    }
+    main {
+      width: min(1040px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 72px 0 56px;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 28px;
+    }
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--accent-strong);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2.2rem, 5vw, 4.3rem);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    .summary {
+      margin: 14px 0 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .generated {
+      min-width: 220px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: right;
+    }
+    .generated strong {
+      display: block;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+    .version-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .version-card {
+      display: flex;
+      min-height: 118px;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      color: inherit;
+      text-decoration: none;
+      transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+    }
+    .version-card:hover,
+    .version-card:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 22px 55px rgba(31, 111, 235, 0.16);
+      transform: translateY(-2px);
+      outline: none;
+    }
+    .version-name {
+      font-size: 1.45rem;
+      font-weight: 750;
+    }
+    .version-meta {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    @media (max-width: 720px) {
+      main { padding-top: 42px; }
+      .hero { grid-template-columns: 1fr; }
+      .generated { text-align: left; }
+    }
+  </style>
 </head>
 <body>
-  <h1>RegistryLib Docs Versions</h1>
-  <ul>
-    <li><a href="./26.1.2/">26.1.2</a></li>
-  </ul>
+  <main>
+    <section class="hero" aria-labelledby="page-title">
+      <div>
+        <p class="eyebrow">RegistryLib Wiki</p>
+        <h1 id="page-title">Version Directory</h1>
+        <p class="summary">Choose the wiki that matches the RegistryLib branch or release line you are using. Each entry shows when that version was last published.</p>
+      </div>
+      <p class="generated"><span>Directory refreshed</span><strong>2026-05-10 00:17 UTC</strong></p>
+    </section>
+    <section class="version-grid" aria-label="Available wiki versions">
+        <a class="version-card" href="./26.1.2/">
+  <span class="version-name">26.1.2</span>
+  <span class="version-meta">Last updated <time datetime="2026-05-10T00:06:28Z">2026-05-10 00:06 UTC</time></span>
+</a>
+    </section>
+  </main>
 </body>
 </html>
