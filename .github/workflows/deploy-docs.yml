@@ -3,21 +3,24 @@ name: Deploy Docs to GitHub Pages
 on:
   push:
     branches:
-      - "26.1"
+      - "**"
     paths:
+      - ".github/workflows/deploy-docs.yml"
       - "docs-content/**"
       - "website/**"
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  actions: read
+  contents: write
 
-# Allow only one concurrent deployment; cancel in-progress runs for the same group.
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+# All branch docs are written into one gh-pages branch, so serialize publishes.
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: docs-pages
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -25,9 +28,20 @@ jobs:
     defaults:
       run:
         working-directory: website
+    outputs:
+      branch_path: ${{ steps.branch.outputs.branch_path }}
+      base_url: ${{ steps.branch.outputs.base_url }}
     steps:
-      - name: Checkout
+      - name: Checkout source
         uses: actions/checkout@v4
+
+      - name: Resolve branch path
+        id: branch
+        shell: bash
+        run: |
+          branch_path="${GITHUB_REF_NAME//\//-}"
+          echo "branch_path=${branch_path}" >> "$GITHUB_OUTPUT"
+          echo "base_url=/${branch_path}/" >> "$GITHUB_OUTPUT"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -37,7 +51,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
           cache-dependency-path: website/pnpm-lock.yaml
 
@@ -45,20 +59,263 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Docusaurus
+        env:
+          DOCUSAURUS_BASE_URL: ${{ steps.branch.outputs.base_url }}
         run: pnpm run build
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload branch docs artifact
+        uses: actions/upload-artifact@v4
         with:
+          name: docs-${{ steps.branch.outputs.branch_path }}
           path: website/build
 
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  publish:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Download branch docs artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docs-${{ needs.build.outputs.branch_path }}
+          path: branch-build
+
+      - name: Checkout Pages branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir pages
+          cd pages
+          git init
+          git remote add origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if git fetch --depth=1 origin gh-pages; then
+            git checkout -B gh-pages FETCH_HEAD
+          else
+            git checkout --orphan gh-pages
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Update branch docs directory
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch_path="${{ needs.build.outputs.branch_path }}"
+          rm -rf "pages/${branch_path}"
+          mkdir -p "pages/${branch_path}"
+          cp -R branch-build/. "pages/${branch_path}/"
+          rm -f "pages/${branch_path}/CNAME"
+
+          if [ -f website/static/CNAME ]; then
+            cp website/static/CNAME pages/CNAME
+          fi
+          touch pages/.nojekyll
+
+          python3 <<'PY'
+          from datetime import datetime, timezone
+          from html import escape
+          from pathlib import Path
+          import re
+          import subprocess
+
+          pages = Path("pages")
+
+          def version_key(name):
+              return [int(part) if part.isdigit() else part.lower() for part in re.split(r"([0-9]+)", name)]
+
+          generated_dt = datetime.now(timezone.utc)
+          generated = generated_dt.strftime("%Y-%m-%d %H:%M UTC")
+          generated_iso = generated_dt.isoformat().replace("+00:00", "Z")
+
+          def last_updated(directory):
+              status = subprocess.run(
+                  ["git", "status", "--porcelain", "--", directory],
+                  cwd=pages,
+                  text=True,
+                  stdout=subprocess.PIPE,
+                  stderr=subprocess.DEVNULL,
+                  check=False,
+              )
+              if status.stdout.strip():
+                  return generated, generated_iso
+              result = subprocess.run(
+                  ["git", "log", "-1", "--format=%cI", "--", directory],
+                  cwd=pages,
+                  text=True,
+                  stdout=subprocess.PIPE,
+                  stderr=subprocess.DEVNULL,
+                  check=False,
+              )
+              iso = result.stdout.strip()
+              if not iso:
+                  return "Unknown", ""
+              parsed = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(timezone.utc)
+              return parsed.strftime("%Y-%m-%d %H:%M UTC"), iso
+
+          versions = []
+          for directory in sorted((p for p in pages.iterdir() if p.is_dir() and p.name != ".git"), key=lambda p: version_key(p.name), reverse=True):
+              label, iso = last_updated(directory.name)
+              versions.append((directory.name, label, iso))
+
+          cards = "\n".join(
+              f"""        <a class="version-card" href="./{escape(name)}/">
+            <span class="version-name">{escape(name)}</span>
+            <span class="version-meta">Last updated <time datetime="{escape(iso)}">{escape(label)}</time></span>
+          </a>"""
+              for name, label, iso in versions
+          )
+
+          pages.joinpath("index.html").write_text(
+              f"""<!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>RegistryLib Wiki Versions</title>
+            <style>
+              :root {{
+                color-scheme: light;
+                --bg: #f7f8fb;
+                --panel: #ffffff;
+                --ink: #172033;
+                --muted: #667085;
+                --line: #d9e0ea;
+                --accent: #1f6feb;
+                --accent-strong: #174ea6;
+                --shadow: 0 18px 45px rgba(23, 32, 51, 0.10);
+              }}
+              * {{ box-sizing: border-box; }}
+              body {{
+                margin: 0;
+                min-height: 100vh;
+                font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                background: var(--bg);
+                color: var(--ink);
+                line-height: 1.5;
+              }}
+              main {{
+                width: min(1040px, calc(100% - 32px));
+                margin: 0 auto;
+                padding: 72px 0 56px;
+              }}
+              .hero {{
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 24px;
+                align-items: end;
+                margin-bottom: 28px;
+              }}
+              .eyebrow {{
+                margin: 0 0 10px;
+                color: var(--accent-strong);
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+              }}
+              h1 {{
+                margin: 0;
+                font-size: clamp(2.2rem, 5vw, 4.3rem);
+                line-height: 1;
+                letter-spacing: 0;
+              }}
+              .summary {{
+                margin: 14px 0 0;
+                max-width: 680px;
+                color: var(--muted);
+                font-size: 1.05rem;
+              }}
+              .generated {{
+                min-width: 220px;
+                padding: 14px 16px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: rgba(255, 255, 255, 0.72);
+                color: var(--muted);
+                font-size: 0.9rem;
+                text-align: right;
+              }}
+              .generated strong {{
+                display: block;
+                color: var(--ink);
+                font-size: 1rem;
+              }}
+              .version-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 14px;
+              }}
+              .version-card {{
+                display: flex;
+                min-height: 118px;
+                flex-direction: column;
+                justify-content: space-between;
+                padding: 22px;
+                border: 1px solid var(--line);
+                border-radius: 8px;
+                background: var(--panel);
+                box-shadow: var(--shadow);
+                color: inherit;
+                text-decoration: none;
+                transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+              }}
+              .version-card:hover,
+              .version-card:focus-visible {{
+                border-color: var(--accent);
+                box-shadow: 0 22px 55px rgba(31, 111, 235, 0.16);
+                transform: translateY(-2px);
+                outline: none;
+              }}
+              .version-name {{
+                font-size: 1.45rem;
+                font-weight: 750;
+              }}
+              .version-meta {{
+                color: var(--muted);
+                font-size: 0.95rem;
+              }}
+              @media (max-width: 720px) {{
+                main {{ padding-top: 42px; }}
+                .hero {{ grid-template-columns: 1fr; }}
+                .generated {{ text-align: left; }}
+              }}
+            </style>
+          </head>
+          <body>
+            <main>
+              <section class="hero" aria-labelledby="page-title">
+                <div>
+                  <p class="eyebrow">RegistryLib Wiki</p>
+                  <h1 id="page-title">Version Directory</h1>
+                  <p class="summary">Choose the wiki that matches the RegistryLib branch or release line you are using. Each entry shows when that version was last published.</p>
+                </div>
+                <p class="generated"><span>Directory refreshed</span><strong>{escape(generated)}</strong></p>
+              </section>
+              <section class="version-grid" aria-label="Available wiki versions">
+          {cards if cards else '        <p class="version-meta">No wiki versions have been published yet.</p>'}
+              </section>
+            </main>
+          </body>
+          </html>
+          """,
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Commit and push Pages branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No Pages changes to publish."
+            exit 0
+          fi
+          git commit -m "Deploy docs for ${GITHUB_REF_NAME}"
+          git push origin gh-pages
