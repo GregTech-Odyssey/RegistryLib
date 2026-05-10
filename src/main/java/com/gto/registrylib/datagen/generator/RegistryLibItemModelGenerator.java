@@ -2,6 +2,7 @@ package com.gto.registrylib.datagen.generator;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
+import com.gto.registrylib.util.TextureRef;
 
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.data.models.ItemModelGenerators;
@@ -65,6 +66,16 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
 
     public void generateFlatTintedItem(Item item, ItemTintSource... tintSources) {
         Identifier model = ModelTemplates.FLAT_ITEM.create(item, TextureMapping.layer0(item), modelOutput);
+        itemModelOutput.accept(item, ItemModelUtils.tintedModel(model, tintSources));
+    }
+
+    public void generateFlatTintedItem(Item item, String texturePath, ItemTintSource... tintSources) {
+        generateFlatTintedItem(item, parent.texture(texturePath), tintSources);
+    }
+
+    public void generateFlatTintedItem(Item item, TextureRef texture, ItemTintSource... tintSources) {
+        Identifier model = ModelTemplates.FLAT_ITEM.create(
+                item, TextureMapping.layer0(new Material(texture.id())), modelOutput);
         itemModelOutput.accept(item, ItemModelUtils.tintedModel(model, tintSources));
     }
 

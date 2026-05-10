@@ -13,12 +13,15 @@ import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.TextureRef;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
+import com.gto.registrylib.util.visual.ItemVisualPreset;
 
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
@@ -156,8 +159,68 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     @StandardAPI
+    public ItemBuilder<T, P> constantTint(@NotNull String texturePath, int color) {
+        return tintSource(texturePath, ItemModelUtils.constantTint(color));
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> constantTint(@NotNull TextureRef texture, int color) {
+        return tintSource(texture, ItemModelUtils.constantTint(color));
+    }
+
+    @StandardAPI
     public ItemBuilder<T, P> tintSource(@NotNull ItemTintSource... tintSources) {
         return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, tintSources));
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> tintSource(
+                                        @NotNull String texturePath, @NotNull ItemTintSource... tintSources) {
+        return tintSource(core.texture(texturePath), tintSources);
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> tintSource(
+                                        @NotNull TextureRef texture, @NotNull ItemTintSource... tintSources) {
+        return flatTintedModel(texture, tintSources);
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> flatTintedModel(
+                                             @NotNull String texturePath, @NotNull ItemTintSource... tintSources) {
+        return flatTintedModel(core.texture(texturePath), tintSources);
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> flatTintedModel(
+                                             @NotNull TextureRef texture, @NotNull ItemTintSource... tintSources) {
+        return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, texture, tintSources));
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> existingTexture(@NotNull String texturePath) {
+        return modelTexture(texturePath);
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> existingTexture(@NotNull TextureRef texture) {
+        return modelTexture(texture);
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> modelTexture(@NotNull String texturePath) {
+        return modelTexture(core.texture(texturePath));
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> modelTexture(@NotNull TextureRef texture) {
+        return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx, new Material(texture.id())));
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> visual(@NotNull ItemVisualPreset preset) {
+        preset.apply(this);
+        return this;
     }
 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")

@@ -24,8 +24,16 @@ Created via `item("id", factory)`, `item("id")`, or `componentItem("id")`.
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
 | `defaultLang()` | - | Infer display name from the registry path |
 | `defaultModel()` | - | Generate default item model during datagen |
-| `constantTint(color)` | `int` RGB color | Generate a flat item model with a constant item tint source |
-| `tintSource(sources...)` | `ItemTintSource...` | Generate a flat item model with custom item tint sources |
+| `constantTint(color)` | `int` RGB color | Generate a flat tinted item model using the item's own texture path |
+| `constantTint(texturePath, color)` | `String, int` | Generate a flat tinted item model referencing a shared texture |
+| `constantTint(texture, color)` | `TextureRef, int` | Type-safe variant of the shared texture overload |
+| `tintSource(texturePath, sources...)` | `String, ItemTintSource...` | Generate a flat item model with custom item tint sources |
+| `tintSource(texture, sources...)` | `TextureRef, ItemTintSource...` | Type-safe variant of the shared texture overload |
+| `flatTintedModel(texturePath, sources...)` | `String, ItemTintSource...` | Explicit alias for a flat tinted model |
+| `flatTintedModel(texture, sources...)` | `TextureRef, ItemTintSource...` | Type-safe variant of the flat tinted model overload |
+| `modelTexture(texturePath)` / `existingTexture(texturePath)` | `String` | Reference an existing texture without generating a PNG |
+| `modelTexture(texture)` / `existingTexture(texture)` | `TextureRef` | Type-safe variant for existing textures |
+| `visual(preset)` | `ItemVisualPreset` | Apply a reusable item visual strategy |
 | `addTab(tab)` | `ResourceKey<CreativeModeTab>` | Add to a creative tab |
 | `addDefaultTab()` | - | Add to the RegistryCore default tab |
 | `removeTab(tab)` | `ResourceKey<CreativeModeTab>` | Remove from a creative tab |
@@ -64,9 +72,16 @@ Created via `block("id", factory)` or `block("id")`.
 | `item(configurator)` | `Consumer<ItemBuilder>` | Create and customize the associated BlockItem |
 | `defaultLoot()` | - | Generate basic self-drop loot table |
 | `loot(configurator)` | `BiConsumer<BlockLootSubProvider, Block>` | Define a custom loot table |
-| `tintedCube(tintIndex)` | `int` | Generate a simple cube block model whose faces include `tintindex` |
+| `tintedCube(tintIndex)` | `int` | Generate a simple cube block model using the block's own texture path |
+| `tintedCube(texturePath, tintIndex)` | `String, int` | Generate a tinted cube block model referencing a shared texture |
+| `tintedCube(texture, tintIndex)` | `TextureRef/Identifier, int` | Type-safe shared texture variants |
 | `constantTint(color)` | `int` RGB color | Generate a tinted BlockItem model using the block model |
+| `constantTint(texturePath, color)` | `String, int` | Generate both a shared-texture tinted cube and a tinted BlockItem model |
+| `constantTint(texture, color)` | `TextureRef, int` | Type-safe variant of the shared texture overload |
 | `tintSource(sources...)` | `ItemTintSource...` | Generate a BlockItem model with custom item tint sources |
+| `modelTexture(texturePath)` / `existingTexture(texturePath)` | `String` | Reference an existing cube texture without generating a PNG |
+| `modelTexture(texture)` / `existingTexture(texture)` | `TextureRef` | Type-safe variant for existing cube textures |
+| `visual(preset)` | `BlockVisualPreset` | Apply a reusable block visual strategy |
 | `addTag(tags...)` | `TagKey<Block>...` | Add block tags |
 | `addItemTag(tags...)` | `TagKey<Item>...` | Add tags to the generated BlockItem |
 | `addRecipeData(callback)` | `Consumer<RegistryLibRecipeProvider>` | Add a typed recipe datagen callback |

@@ -19,6 +19,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
@@ -72,34 +73,70 @@ public class RegistryLibGeneralResourceProvider implements RegistryLibProvider {
     public CompletableFuture<?> run(CachedOutput cache) {
         parent.genData(ProviderType.GENERAL_RESOURCE, this);
         return CompletableFuture.runAsync(
-                () -> generates
-                        .getMap()
-                        .forEach(
-                                (k, v) -> {
-                                    var path = this.path.resolve(k);
-                                    v.forEach(
-                                            (n, g) -> {
-                                                var target = path.resolve(n);
-                                                if (!Files.exists(target)) {
-                                                    try {
-                                                        Files.createDirectories(target);
-                                                    } catch (Exception e) {
-                                                        throw new RuntimeException(e);
+                () -> {
+                    cleanGeneratedNamespaces();
+                    generates
+                            .getMap()
+                            .forEach(
+                                    (k, v) -> {
+                                        var path = this.path.resolve(k);
+                                        v.forEach(
+                                                (n, g) -> {
+                                                    var target = path.resolve(n);
+                                                    if (!Files.exists(target)) {
+                                                        try {
+                                                            Files.createDirectories(target);
+                                                        } catch (Exception e) {
+                                                            throw new RuntimeException(e);
+                                                        }
                                                     }
-                                                }
-                                                g.forEach(
-                                                        f -> {
-                                                            try {
-                                                                ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                                                                HashingOutputStream hashedBytes = new HashingOutputStream(Hashing.sha1(), bytes);
-                                                                var p = f.apply(target, hashedBytes);
-                                                                cache.writeIfNeeded(p, bytes.toByteArray(), hashedBytes.hash());
-                                                            } catch (IOException var10) {
-                                                                LOGGER.error("Failed to save file to {}", path, var10);
-                                                            }
-                                                        });
-                                            });
-                                }));
+                                                    g.forEach(
+                                                            f -> {
+                                                                try {
+                                                                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                                                                    HashingOutputStream hashedBytes = new HashingOutputStream(Hashing.sha1(), bytes);
+                                                                    var p = f.apply(target, hashedBytes);
+                                                                    cache.writeIfNeeded(p, bytes.toByteArray(), hashedBytes.hash());
+                                                                } catch (IOException var10) {
+                                                                    LOGGER.error("Failed to save file to {}", path, var10);
+                                                                }
+                                                            });
+                                                });
+                                    });
+                });
+    }
+
+    private void cleanGeneratedNamespaces() {
+        parent.getGeneratedNamespaceCleanups().forEach(this::cleanGeneratedNamespace);
+    }
+
+    private void cleanGeneratedNamespace(String relativePath) {
+        String normalizedPath = relativePath.replace('\\', '/');
+        String[] parts = normalizedPath.split("/");
+        if (parts.length < 3 || !"textures".equals(parts[0])) {
+            throw new IllegalArgumentException(
+                    "Generated resource cleanup path must target a specific textures subdirectory, " + "for example textures/item/generated_materials: " + relativePath);
+        }
+        Path target = path.resolve(relativePath).normalize();
+        if (!target.startsWith(path)) {
+            throw new IllegalArgumentException(
+                    "Generated resource cleanup path escapes namespace: " + relativePath);
+        }
+        if (!Files.exists(target)) return;
+        try (var stream = Files.walk(target)) {
+            stream
+                    .sorted(Comparator.reverseOrder())
+                    .forEach(
+                            p -> {
+                                try {
+                                    Files.deleteIfExists(p);
+                                } catch (IOException e) {
+                                    throw new RuntimeException("Failed to clean generated resource path: " + p, e);
+                                }
+                            });
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to clean generated resource path: " + target, e);
+        }
     }
 
     @Override

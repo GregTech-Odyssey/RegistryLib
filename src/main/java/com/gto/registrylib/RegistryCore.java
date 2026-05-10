@@ -24,6 +24,7 @@ import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.DebugMarkers;
 import com.gto.registrylib.util.Environment;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.TextureRef;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.DataComponentTypeEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
@@ -131,6 +132,7 @@ public class RegistryCore {
     private final List<Consumer<ItemBuilder<?, ?>>> itemDefaultCallbacks = new ArrayList<>();
     private final List<Consumer<BlockBuilder<?, ?>>> blockDefaultCallbacks = new ArrayList<>();
     private final List<Consumer<FluidBuilder<?, ?>>> fluidDefaultCallbacks = new ArrayList<>();
+    private final List<String> generatedNamespaceCleanups = new ArrayList<>();
 
     @Getter
     protected ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
@@ -392,6 +394,31 @@ public class RegistryCore {
     public RegistryCore withFluidDefaults(Consumer<FluidBuilder<?, ?>> defaults) {
         fluidDefaultCallbacks.add(defaults);
         return this;
+    }
+
+    public TextureRef texture(@NotNull String path) {
+        return TextureRef.mod(modid, path);
+    }
+
+    public TextureRef texture(@NotNull Identifier id) {
+        return TextureRef.of(id);
+    }
+
+    public TextureRef textureRef(@NotNull String path) {
+        return texture(path);
+    }
+
+    public TextureRef textureRef(@NotNull Identifier id) {
+        return texture(id);
+    }
+
+    public RegistryCore cleanGeneratedNamespace(@NotNull String relativePath) {
+        generatedNamespaceCleanups.add(relativePath);
+        return this;
+    }
+
+    public List<String> getGeneratedNamespaceCleanups() {
+        return Collections.unmodifiableList(generatedNamespaceCleanups);
     }
 
     protected <T extends Item, P, B extends ItemBuilder<T, P>> B applyItemDefaults(B builder) {

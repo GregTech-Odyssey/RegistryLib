@@ -78,12 +78,34 @@ Use `constantTint(...)` when a grayscale item texture should be colored by the g
 ```java
 public static final ItemEntry<Item> TIN_DUST = REGISTRYLIB
         .item("tin_dust")
-        .constantTint(0xC8D8E8)
+        .constantTint("item/templates/dust", 0xC8D8E8)
         .lang("Tin Dust")
         .register();
 ```
 
+The texture path is an existing model texture reference, not a generated PNG request. The template PNG must already exist under `assets/<modid>/textures/...`, or be generated once by a general resource provider. Multiple items can point at the same grayscale template and differ only by tint:
+
+```java
+REGISTRYLIB.item("lead_dust").constantTint("item/templates/dust", 0x6E7380).register();
+REGISTRYLIB.item("nickel_dust").constantTint("item/templates/dust", 0xD5C36A).register();
+```
+
+For helper methods that pass texture paths around, prefer `TextureRef`:
+
+```java
+TextureRef dustTemplate = REGISTRYLIB.textureRef("item/templates/dust");
+
+REGISTRYLIB.item("silver_dust")
+        .visual(ItemVisualPreset.tintedTemplate(dustTemplate, 0xD7D7E8))
+        .register();
+```
+
 For custom Minecraft item tint sources, use `tintSource(...)`.
+Use `TextureRef.mc("item/iron_ingot")` or `TextureRef.of(id)` for vanilla or third-party textures; string overloads such as `modelTexture("item/template")` resolve in the current mod namespace.
+
+:::important
+`.texture(path, imageSupplier)` generates a PNG into `src/generated/resources`. Use `modelTexture(...)`, `existingTexture(...)`, `constantTint(texturePath, color)`, or `flatTintedModel(...)` when you only want the model to reference an existing shared template.
+:::
 
 ## Common API Lookup
 
@@ -93,8 +115,12 @@ For custom Minecraft item tint sources, use `tintSource(...)`.
 | `componentItem(name)` | Create a `ComponentItem`-backed `ItemBuilder` |
 | `lang(text)` | Set the display name |
 | `defaultModel()` | Generate the default item model |
-| `constantTint(color)` | Generate a flat item model with a constant tint source |
-| `tintSource(sources...)` | Generate a flat item model with custom item tint sources |
+| `constantTint(color)` | Generate a flat item model using the item's own texture path |
+| `constantTint(texturePath, color)` | Generate a flat tinted model referencing a shared texture |
+| `constantTint(texture, color)` | TextureRef variant for shared textures |
+| `tintSource(texturePath, sources...)` / `flatTintedModel(texturePath, sources...)` | Generate a flat item model with custom item tint sources |
+| `modelTexture(texturePath)` / `existingTexture(texturePath)` | Reference an existing texture without writing a PNG |
+| `visual(ItemVisualPreset.tintedTemplate(...))` | Reuse a shared item visual rule in batch registration |
 | `addTab(tab)` | Add the item to a creative tab |
 | `addDefaultTab()` | Add the item to the `RegistryCore`-level default tab |
 | `removeTab(tab)` | Remove a previously added creative tab |

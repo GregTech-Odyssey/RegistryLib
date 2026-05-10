@@ -9,15 +9,22 @@ import com.gto.registrylib.datagen.loot.RegistryLibBlockLootTables;
 import com.gto.registrylib.datagen.loot.RegistryLibLootTableProvider.LootType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.TextureRef;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
+import com.gto.registrylib.util.visual.BlockVisualPreset;
 
 import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.data.models.model.ItemModelUtils;
+import net.minecraft.client.data.models.model.ModelTemplates;
+import net.minecraft.client.data.models.model.TextureMapping;
+import net.minecraft.client.data.models.model.TextureSlot;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.block.dispatch.Variant;
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
@@ -193,8 +200,33 @@ public class BlockBuilder<T extends Block, P>
     }
 
     @StandardAPI
+    public BlockBuilder<T, P> tintedCube(@NotNull String texturePath, int tintIndex) {
+        return tintedCube(core.texture(texturePath), tintIndex);
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> tintedCube(@NotNull Identifier texture, int tintIndex) {
+        return tintedCube(TextureRef.of(texture), tintIndex);
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> tintedCube(@NotNull TextureRef texture, int tintIndex) {
+        return blockstate(() -> (ctx, prov) -> prov.createTintedCube(ctx, texture.id(), tintIndex));
+    }
+
+    @StandardAPI
     public BlockBuilder<T, P> constantTint(int color) {
         return tintSource(ItemModelUtils.constantTint(color));
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> constantTint(@NotNull String texturePath, int color) {
+        return tintedCube(texturePath, 0).constantTint(color);
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> constantTint(@NotNull TextureRef texture, int color) {
+        return tintedCube(texture, 0).constantTint(color);
     }
 
     @StandardAPI
@@ -206,6 +238,36 @@ public class BlockBuilder<T extends Block, P>
                 Registries.ITEM,
                 ProviderType.ITEM_MODEL,
                 p -> p.generateTintedBlockItem(getValue(), blockItemTintSources));
+        return this;
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> existingTexture(@NotNull String texturePath) {
+        return modelTexture(texturePath);
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> existingTexture(@NotNull TextureRef texture) {
+        return modelTexture(texture);
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> modelTexture(@NotNull String texturePath) {
+        return modelTexture(core.texture(texturePath));
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> modelTexture(@NotNull TextureRef texture) {
+        return blockstate(
+                () -> (ctx, prov) -> prov.generateWithTemplate(
+                        ctx,
+                        ModelTemplates.CUBE_ALL,
+                        new TextureMapping().put(TextureSlot.ALL, new Material(texture.id()))));
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> visual(@NotNull BlockVisualPreset preset) {
+        preset.apply(this);
         return this;
     }
 
