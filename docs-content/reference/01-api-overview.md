@@ -23,10 +23,10 @@ The code snippets on this page are short excerpts from the runnable `RegistryLib
 | Register a BlockEntity | `blockEntity("id", factory)` | `validBlock` or `validBlocks`, `renderer` |
 | Register a generic object in another registry | `generic("id", registryKey, factory)` or `simple(...)` | `register` or immediate completion |
 | Register a data component type lazily | `dataComponentTypeEntry("id", builder)` | pass the entry into supplier-friendly APIs |
-| Register a creative tab | `creativeTab("id")` | title, icon, content population |
+| Register a creative tab | `creativeTab("id")` or `creativeTab("id", enUs, locales)` | title, icon, content population |
 | Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `initialBlockProperties`, `blockProperties`, `itemProperties`, `addBlockTag`, `addItemTag`, `addFluidTag` |
-| Reference existing vanilla or third-party objects | `existingItem("namespace:id")`, `existingBlock("namespace:id")` | pass the entry to recipes, tags, or holder-style APIs |
-| Add tags to existing objects | `tagExisting(...)`, `itemTags().add(...)`, `blockTags().add(...)` | datagen-only tag entries |
+| Reference existing vanilla or third-party objects | `existingItem("namespace:id")`, `existingBlock("namespace:id")` | pass the entry to recipes, tags, tabs, tooltips, or holder-style APIs |
+| Add tags to existing objects | `tagExisting(...)`, `itemTags().add(...)`, `itemTags().addSuppliers(...)`, `blockTags().addSuppliers(...)` | datagen-only tag entries |
 
 :::tip
 If you're unsure, start with `item(...)` or `block(...)`; they cover the vast majority of registrations. See the [How-to guides](/how-to/register-items) for step-by-step walkthroughs.
@@ -59,6 +59,8 @@ If you're unsure, start with `item(...)` or `block(...)`; they cover the vast ma
 | `ItemEntry.readOnlyStack()` | Defensive copy of a cached `ItemStack` (count 1); safe against external mutation |
 | `ItemEntry.asResource()` | An `ItemResource` wrapper for transfer-related APIs |
 | `BlockEntry.getDefaultState()` | The block's default state for world placement or configuration |
+| `DataComponentTypeEntry.get(stack)` | Read a component value without scattering `.get()` at call sites |
+| `DataComponentTypeEntry.set(stack, value)` | Set a component value on a stack through the lazy entry wrapper |
 | `FluidEntry.getSource()` | The matching source fluid instance |
 | `FluidEntry.getType()` | The `FluidType` associated with the family |
 | `FluidEntry.getBlock()` / `getBucket()` | The related fluid block or bucket when they exist |
@@ -77,10 +79,13 @@ Several Entry wrappers also satisfy holder-style usage directly. When another AP
 | `locale("zh_cn")` | Get or create a lang provider for a locale |
 | `lang(key, enUs)` | Add an English lang entry and return a translatable component |
 | `lang(locale, key, value)` | Add a lang entry for a locale string |
+| Duplicate lang entry with same value | Ignored as idempotent; conflicting values still fail fast |
 | `addRecipeData(provider -> { ... })` | Add a typed recipe datagen callback |
 | `tagExisting(tag, items...)` | Add an item tag to existing items |
 | `tagExisting(tag, blocks...)` | Add a block tag to existing blocks |
 | `itemTags().add(...)` / `blockTags().add(...)` | Batch tag helpers for existing objects or ids |
+| `tooltipExisting(item, tooltip)` | Attach RegistryLib tooltips to vanilla or third-party items |
+| `addExistingToTab(tab, item)` | Add existing items to creative tabs through RegistryLib |
 
 ## Common Chain Lookup
 
@@ -118,6 +123,10 @@ REGISTRYLIB.block("decorative_stone", Block::new)
 
 ```java
 ItemEntry<Item> VANILLA_IRON_INGOT = REGISTRYLIB.existingItem("minecraft:iron_ingot");
+
+REGISTRYLIB.tooltipExisting(VANILLA_IRON_INGOT,
+        Component.translatable("tooltip.example.iron_ingot"));
+REGISTRYLIB.addExistingToDefaultTab(VANILLA_IRON_INGOT);
 
 REGISTRYLIB.addRecipeData(prov -> prov.shapeless(RecipeCategory.MISC, Items.IRON_NUGGET, 9)
         .requires(VANILLA_IRON_INGOT)

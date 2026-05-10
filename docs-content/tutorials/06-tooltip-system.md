@@ -98,6 +98,19 @@ The collector merges nodes from multiple sources, which makes it easy to compose
 - Let `ItemAttachment` on a `ComponentItem` contribute separate nodes through `collectTooltipNodes(...)`.
 - Reuse the same tooltip pipeline for Blocks through `.item(item -> ...)`.
 
+## Step 6 - Attach Tooltips to Existing Items
+
+For vanilla or third-party items that you reference with `existingItem(...)`, use `tooltipExisting(...)` instead of calling `TooltipRegistry.register(...)` directly:
+
+```java
+ItemEntry<Item> VANILLA_IRON_INGOT = REGISTRYLIB.existingItem("minecraft:iron_ingot");
+
+REGISTRYLIB.tooltipExisting(VANILLA_IRON_INGOT,
+        Component.translatable("tooltip.example.iron_ingot"));
+```
+
+Use `tooltipExistingSupplier(...)` for a lazy supplier that is not an `ItemEntry`.
+
 ## Boundaries and Pitfalls
 
 :::warning

@@ -12,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -28,24 +29,42 @@ public final class ApiImprovementExample {
             "api_note",
             (DataComponentType.Builder<String> builder) -> builder.persistent(Codec.STRING));
 
+    public static final ItemEntry<Item> API_TINTED_GEM = RegistryLibTest.REGISTRYLIB.item("api_tinted_gem").constantTint(0x66CCFF).register();
+
+    public static final BlockEntry<Block> API_TINTED_BLOCK = RegistryLibTest.REGISTRYLIB
+            .block("api_tinted_block")
+            .tintedCube(0)
+            .constantTint(0xCC8844)
+            .simpleItem()
+            .register();
+
     static {
         RegistryLibTest.REGISTRYLIB.lang(
                 RegistryLibTest.REGISTRYLIB.locale("zh_cn"),
                 "tooltip.registrylibtest.api_improvement",
                 "RegistryLib API improvement example (zh_cn)");
 
+        RegistryLibTest.REGISTRYLIB.tooltipExisting(VANILLA_IRON_INGOT, API_TOOLTIP);
+        RegistryLibTest.REGISTRYLIB.addExistingToDefaultTab(VANILLA_IRON_INGOT);
+
         RegistryLibTest.REGISTRYLIB
                 .itemTags()
-                .add(ItemTags.BEACON_PAYMENT_ITEMS, Items.IRON_INGOT, VANILLA_IRON_INGOT.get());
+                .add(ItemTags.BEACON_PAYMENT_ITEMS, Items.DIAMOND)
+                .addSuppliers(ItemTags.BEACON_PAYMENT_ITEMS, VANILLA_IRON_INGOT);
         RegistryLibTest.REGISTRYLIB
                 .blockTags()
-                .add(BlockTags.MINEABLE_WITH_PICKAXE, Blocks.IRON_BLOCK, VANILLA_IRON_BLOCK.get());
+                .add(BlockTags.MINEABLE_WITH_PICKAXE, Blocks.DIAMOND_BLOCK)
+                .addSuppliers(BlockTags.MINEABLE_WITH_PICKAXE, VANILLA_IRON_BLOCK);
 
         RegistryLibTest.REGISTRYLIB.addRecipeData(
                 prov -> prov.shapeless(RecipeCategory.MISC, Items.IRON_NUGGET, 9)
                         .requires(VANILLA_IRON_INGOT)
                         .unlockedBy("has_iron_ingot", prov.has(VANILLA_IRON_INGOT))
                         .save(prov, RegistryLibTest.MOD_ID + ":api/iron_nuggets_from_existing_iron"));
+    }
+
+    public static String readApiNote(ItemStack stack) {
+        return API_NOTE.getOrDefault(stack, "");
     }
 
     private ApiImprovementExample() {}

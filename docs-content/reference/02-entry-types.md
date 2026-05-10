@@ -117,6 +117,29 @@ BlockEntityTypeEntry<MyBlockEntity> MY_BE = REGISTRYLIB
 Bind multiple blocks with `validBlocks(block1, block2, ...)` when the same BlockEntity type is shared across several blocks.
 :::
 
+## DataComponentTypeEntry\<T\>
+
+**Extends:** `RegistryEntry<DataComponentType<?>, DataComponentType<T>>`
+
+| Method | Return type | Description |
+| --- | --- | --- |
+| `get()` | `DataComponentType<T>` | Get the registered component type |
+| `get(stack)` | `T` | Read a component value from an `ItemStack` |
+| `getOrDefault(stack, defaultValue)` | `T` | Read a component value with a fallback |
+| `has(stack)` | `boolean` | Check whether the stack has the component |
+| `set(stack, value)` | `T` | Set the component value and return the previous value |
+| `remove(stack)` | `T` | Remove the component and return the previous value |
+| `component(properties, value)` | `Item.Properties` | Add the component to item properties |
+
+```java
+DataComponentTypeEntry<String> API_NOTE = REGISTRYLIB.dataComponentTypeEntry(
+        "api_note",
+        builder -> builder.persistent(Codec.STRING));
+
+String note = API_NOTE.getOrDefault(stack, "");
+API_NOTE.set(stack, "Stored on the stack");
+```
+
 ## EntityEntry\<T\>
 
 **Extends:** `RegistryEntry<EntityType<?>, EntityType<T>>`

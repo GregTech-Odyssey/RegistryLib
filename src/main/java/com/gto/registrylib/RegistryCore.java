@@ -17,6 +17,9 @@ import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.RegistryLibDataProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
+import com.gto.registrylib.tooltip.SubNode;
+import com.gto.registrylib.tooltip.TooltipNodeCollector;
+import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.DebugMarkers;
 import com.gto.registrylib.util.Environment;
@@ -93,6 +96,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -121,7 +126,7 @@ public class RegistryCore {
     private final NestedMap<GeneratorType<?>, Pair<ResourceKey<?>, String>, Consumer<?>> dataGensByEntry = NestedMap.createIdentity(HashMap::new);
     private final MultiMap<GeneratorType<?>, Consumer<?>> dataGens = MultiMap.createIdentity(ReferenceOpenHashSet::new);
     private final ConcurrentHashMap<String, ProviderType<RegistryLibLangProvider>> localeProviders = new ConcurrentHashMap<>();
-    private final MultiMap<ProviderType<? extends RegistryLibLangProvider>, Pair<String, String>> extraLang = MultiMap.createIdentity(ArrayList::new);
+    private final NestedMap<ProviderType<? extends RegistryLibLangProvider>, String, String> extraLang = NestedMap.createIdentity(LinkedHashMap::new);
     private final Set<ProviderType<? extends RegistryLibLangProvider>> extraLangCallbacks = new ReferenceOpenHashSet<>();
     private final List<Consumer<ItemBuilder<?, ?>>> itemDefaultCallbacks = new ArrayList<>();
     private final List<Consumer<BlockBuilder<?, ?>>> blockDefaultCallbacks = new ArrayList<>();
@@ -292,7 +297,7 @@ public class RegistryCore {
     }
 
     public ProviderType<RegistryLibLangProvider> locale(String locale) {
-        String normalized = locale.toLowerCase(java.util.Locale.ROOT);
+        String normalized = locale.toLowerCase(Locale.ROOT);
         if ("en_us".equals(normalized)) {
             return ProviderType.LANG;
         }
@@ -300,7 +305,7 @@ public class RegistryCore {
     }
 
     public RegistryCore withLangAlias(String locale, ProviderType<RegistryLibLangProvider> provider) {
-        localeProviders.put(locale.toLowerCase(java.util.Locale.ROOT), provider);
+        localeProviders.put(locale.toLowerCase(Locale.ROOT), provider);
         return this;
     }
 
@@ -322,11 +327,18 @@ public class RegistryCore {
 
     private void addExtraLang(
                               ProviderType<? extends RegistryLibLangProvider> type, String key, String value) {
-        if (extraLangCallbacks.add(type)) {
-            addDataGenerator(
-                    type, prov -> extraLang.get(type).forEach(p -> prov.add(p.getKey(), p.getValue())));
+        String existing = extraLang.get(type, key);
+        if (existing != null) {
+            if (!existing.equals(value)) {
+                throw new IllegalArgumentException(
+                        "Conflicting lang value for " + key + ": '" + existing + "' vs '" + value + "'");
+            }
+            return;
         }
-        extraLang.put(type, Pair.of(key, value));
+        if (extraLangCallbacks.add(type)) {
+            addDataGenerator(type, prov -> extraLang.get(type).forEach(prov::add));
+        }
+        extraLang.put(type, key, value);
     }
 
     // === Data Gen Execution ===
@@ -494,8 +506,116 @@ public class RegistryCore {
         return this;
     }
 
+    @SafeVarargs
+    public final RegistryCore tagExistingSuppliers(
+                                                   @NotNull TagKey<Item> tag, @NotNull Supplier<? extends ItemLike>... items) {
+        itemTags().addSuppliers(tag, items);
+        return this;
+    }
+
     public RegistryCore tagExisting(@NotNull TagKey<Block> tag, @NotNull Block... blocks) {
         blockTags().add(tag, blocks);
+        return this;
+    }
+
+    @SafeVarargs
+    public final RegistryCore tagExistingBlockSuppliers(
+                                                        @NotNull TagKey<Block> tag, @NotNull Supplier<? extends Block>... blocks) {
+        blockTags().addSuppliers(tag, blocks);
+        return this;
+    }
+
+    public RegistryCore tooltipExisting(
+                                        @NotNull ItemLike item, @NotNull TooltipNodeCollector.TooltipConfig config) {
+        TooltipRegistry.register(item.asItem(), config);
+        return this;
+    }
+
+    public RegistryCore tooltipExisting(
+                                        @NotNull ItemEntry<?> item, @NotNull TooltipNodeCollector.TooltipConfig config) {
+        return tooltipExistingSupplier(item, config);
+    }
+
+    public RegistryCore tooltipExisting(@NotNull ItemLike item, @NotNull Component component) {
+        return tooltipExisting(
+                item, (collector, stack) -> collector.node(new SubNode.Basic(component, 0)));
+    }
+
+    public RegistryCore tooltipExisting(@NotNull ItemEntry<?> item, @NotNull Component component) {
+        return tooltipExistingSupplier(item, component);
+    }
+
+    public RegistryCore tooltipExistingSupplier(
+                                                @NotNull Supplier<? extends ItemLike> item,
+                                                @NotNull TooltipNodeCollector.TooltipConfig config) {
+        Runnable register = () -> TooltipRegistry.register(item.get().asItem(), config);
+        if (isRegistered(Registries.ITEM)) {
+            register.run();
+        } else {
+            addRegisterCallback(Registries.ITEM, register);
+        }
+        return this;
+    }
+
+    public RegistryCore tooltipExistingSupplier(
+                                                @NotNull Supplier<? extends ItemLike> item, @NotNull Component component) {
+        return tooltipExistingSupplier(
+                item, (collector, stack) -> collector.node(new SubNode.Basic(component, 0)));
+    }
+
+    public RegistryCore addExistingToTab(
+                                         @NotNull ResourceKey<CreativeModeTab> tab, @NotNull ItemLike item) {
+        return addExistingSupplierToTab(
+                tab, () -> item, CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
+    }
+
+    public RegistryCore addExistingToTab(
+                                         @NotNull ResourceKey<CreativeModeTab> tab, @NotNull ItemEntry<?> item) {
+        return addExistingSupplierToTab(tab, item);
+    }
+
+    public RegistryCore addExistingToTab(
+                                         @NotNull ResourceKey<CreativeModeTab> tab,
+                                         @NotNull ItemLike item,
+                                         @NotNull CreativeModeTab.TabVisibility visibility) {
+        return addExistingSupplierToTab(tab, () -> item, visibility);
+    }
+
+    public RegistryCore addExistingToTab(
+                                         @NotNull ResourceKey<CreativeModeTab> tab,
+                                         @NotNull ItemEntry<?> item,
+                                         @NotNull CreativeModeTab.TabVisibility visibility) {
+        return addExistingSupplierToTab(tab, item, visibility);
+    }
+
+    public RegistryCore addExistingSupplierToTab(
+                                                 @NotNull ResourceKey<CreativeModeTab> tab, @NotNull Supplier<? extends ItemLike> item) {
+        return addExistingSupplierToTab(
+                tab, item, CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS);
+    }
+
+    public RegistryCore addExistingSupplierToTab(
+                                                 @NotNull ResourceKey<CreativeModeTab> tab,
+                                                 @NotNull Supplier<? extends ItemLike> item,
+                                                 @NotNull CreativeModeTab.TabVisibility visibility) {
+        modifyCreativeModeTab(
+                tab, m -> m.accept(new ItemStack(item.get().asItem().builtInRegistryHolder), visibility));
+        return this;
+    }
+
+    public RegistryCore addExistingToDefaultTab(@NotNull ItemLike item) {
+        return addExistingSupplierToDefaultTab(() -> item);
+    }
+
+    public RegistryCore addExistingToDefaultTab(@NotNull ItemEntry<?> item) {
+        return addExistingSupplierToDefaultTab(item);
+    }
+
+    public RegistryCore addExistingSupplierToDefaultTab(@NotNull Supplier<? extends ItemLike> item) {
+        var tab = getDefaultCreativeModeTab();
+        if (tab != null) {
+            addExistingSupplierToTab(tab, item);
+        }
         return this;
     }
 
@@ -509,6 +629,22 @@ public class RegistryCore {
                             var builder = prov.rawBuilder(tag);
                             for (ItemLike item : items) {
                                 builder.add(TagEntry.element(BuiltInRegistries.ITEM.getKey(item.asItem())));
+                            }
+                        });
+            }
+            return this;
+        }
+
+        @SafeVarargs
+        public final ItemTagBatch addSuppliers(
+                                               @NotNull TagKey<Item> tag, @NotNull Supplier<? extends ItemLike>... items) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.ITEM_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (Supplier<? extends ItemLike> item : items) {
+                                builder.add(TagEntry.element(BuiltInRegistries.ITEM.getKey(item.get().asItem())));
                             }
                         });
             }
@@ -554,6 +690,22 @@ public class RegistryCore {
                             var builder = prov.rawBuilder(tag);
                             for (Block block : blocks) {
                                 builder.add(TagEntry.element(BuiltInRegistries.BLOCK.getKey(block)));
+                            }
+                        });
+            }
+            return this;
+        }
+
+        @SafeVarargs
+        public final BlockTagBatch addSuppliers(
+                                                @NotNull TagKey<Block> tag, @NotNull Supplier<? extends Block>... blocks) {
+            if (doDatagen()) {
+                addDataGenerator(
+                        ProviderType.BLOCK_TAGS,
+                        prov -> {
+                            var builder = prov.rawBuilder(tag);
+                            for (Supplier<? extends Block> block : blocks) {
+                                builder.add(TagEntry.element(BuiltInRegistries.BLOCK.getKey(block.get())));
                             }
                         });
             }
@@ -947,13 +1099,38 @@ public class RegistryCore {
         return creativeTab(name, FunctionUtil.noOpConsumer());
     }
 
-    @StandardAPI
+    @SyntaxSugar("creativeTab(name, RegistryLibLangProvider.toEnglishName(name), config)")
     public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(
                                                                        String name, Consumer<CreativeModeTab.Builder> config) {
+        return creativeTab(name, RegistryLibLangProvider.toEnglishName(name), Map.of(), config);
+    }
+
+    public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(String name, String enUs) {
+        return creativeTab(name, enUs, Map.of(), FunctionUtil.noOpConsumer());
+    }
+
+    public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(
+                                                                       String name, String enUs, Consumer<CreativeModeTab.Builder> config) {
+        return creativeTab(name, enUs, Map.of(), config);
+    }
+
+    public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(
+                                                                       String name, String enUs, Map<String, String> localeNames) {
+        return creativeTab(name, enUs, localeNames, FunctionUtil.noOpConsumer());
+    }
+
+    @StandardAPI
+    public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(
+                                                                       String name,
+                                                                       String enUs,
+                                                                       Map<String, String> localeNames,
+                                                                       Consumer<CreativeModeTab.Builder> config) {
         return this.registry(
                 name,
                 Registries.CREATIVE_MODE_TAB,
                 k -> {
+                    String langKey = k.identifier().toLanguageKey("itemGroup");
+                    localeNames.forEach((locale, value) -> addRawLang(locale(locale), langKey, value));
                     var builder = CreativeModeTab.builder()
                             .icon(
                                     () -> getAll(Registries.ITEM).stream()
@@ -961,11 +1138,7 @@ public class RegistryCore {
                                             .map(ItemEntry::cast)
                                             .map(ItemEntry::asStack)
                                             .orElse(new ItemStack(Items.AIR)))
-                            .title(
-                                    this.addLang(
-                                            "itemGroup",
-                                            k.identifier(),
-                                            RegistryLibLangProvider.toEnglishName(name)));
+                            .title(this.addRawLang(langKey, enUs));
                     config.accept(builder);
                     return builder.build();
                 },

@@ -24,6 +24,8 @@ Created via `item("id", factory)`, `item("id")`, or `componentItem("id")`.
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
 | `defaultLang()` | - | Infer display name from the registry path |
 | `defaultModel()` | - | Generate default item model during datagen |
+| `constantTint(color)` | `int` RGB color | Generate a flat item model with a constant item tint source |
+| `tintSource(sources...)` | `ItemTintSource...` | Generate a flat item model with custom item tint sources |
 | `addTab(tab)` | `ResourceKey<CreativeModeTab>` | Add to a creative tab |
 | `addDefaultTab()` | - | Add to the RegistryCore default tab |
 | `removeTab(tab)` | `ResourceKey<CreativeModeTab>` | Remove from a creative tab |
@@ -62,6 +64,9 @@ Created via `block("id", factory)` or `block("id")`.
 | `item(configurator)` | `Consumer<ItemBuilder>` | Create and customize the associated BlockItem |
 | `defaultLoot()` | - | Generate basic self-drop loot table |
 | `loot(configurator)` | `BiConsumer<BlockLootSubProvider, Block>` | Define a custom loot table |
+| `tintedCube(tintIndex)` | `int` | Generate a simple cube block model whose faces include `tintindex` |
+| `constantTint(color)` | `int` RGB color | Generate a tinted BlockItem model using the block model |
+| `tintSource(sources...)` | `ItemTintSource...` | Generate a BlockItem model with custom item tint sources |
 | `addTag(tags...)` | `TagKey<Block>...` | Add block tags |
 | `addItemTag(tags...)` | `TagKey<Item>...` | Add tags to the generated BlockItem |
 | `addRecipeData(callback)` | `Consumer<RegistryLibRecipeProvider>` | Add a typed recipe datagen callback |
@@ -198,9 +203,18 @@ These helpers add datagen entries for objects that were registered outside the c
 | `existingItem(id)` | `String`, `Identifier`, or `ResourceKey<Item>` | Return an `ItemEntry` bound to an already-registered item |
 | `existingBlock(id)` | `String`, `Identifier`, or `ResourceKey<Block>` | Return a `BlockEntry` bound to an already-registered block |
 | `tagExisting(tag, items...)` | `TagKey<Item>, ItemLike...` | Add one item tag to existing items |
+| `tagExistingSuppliers(tag, items...)` | `TagKey<Item>, Supplier<? extends ItemLike>...` | Add one item tag to lazy item suppliers |
 | `tagExisting(tag, blocks...)` | `TagKey<Block>, Block...` | Add one block tag to existing blocks |
+| `tagExistingBlockSuppliers(tag, blocks...)` | `TagKey<Block>, Supplier<? extends Block>...` | Add one block tag to lazy block suppliers |
 | `itemTags().add(tag, items...)` | `TagKey<Item>, ItemLike...` | Batch-add existing items to an item tag |
+| `itemTags().addSuppliers(tag, items...)` | `TagKey<Item>, Supplier<? extends ItemLike>...` | Batch-add lazy item suppliers to an item tag |
 | `blockTags().add(tag, blocks...)` | `TagKey<Block>, Block...` | Batch-add existing blocks to a block tag |
+| `blockTags().addSuppliers(tag, blocks...)` | `TagKey<Block>, Supplier<? extends Block>...` | Batch-add lazy block suppliers to a block tag |
+| `tooltipExisting(item, tooltip)` | `ItemLike` or `ItemEntry`, `Component`/tooltip config | Attach RegistryLib tooltip nodes to existing items |
+| `tooltipExistingSupplier(item, tooltip)` | `Supplier<? extends ItemLike>`, `Component`/tooltip config | Attach tooltip nodes to a lazy item supplier |
+| `addExistingToTab(tab, item)` | `ResourceKey<CreativeModeTab>`, `ItemLike` or `ItemEntry` | Add an existing item to a creative tab |
+| `addExistingSupplierToTab(tab, item)` | `ResourceKey<CreativeModeTab>`, `Supplier<? extends ItemLike>` | Add a lazy item supplier to a creative tab |
+| `addExistingToDefaultTab(item)` | `ItemLike` or `ItemEntry` | Add an existing item to the default creative tab |
 
 ## Data Component Type Entries
 
@@ -210,6 +224,14 @@ Use `dataComponentTypeEntry(...)` when you need a lazy wrapper around a register
 public static final DataComponentTypeEntry<MyEffect> MY_EFFECT =
         REGISTRYLIB.dataComponentTypeEntry("my_effect",
                 builder -> builder.persistent(MyEffect.CODEC));
+```
+
+The entry can also read and mutate stack data directly:
+
+```java
+MyEffect effect = MY_EFFECT.get(stack);
+MyEffect fallback = MY_EFFECT.getOrDefault(stack, MyEffect.EMPTY);
+MY_EFFECT.set(stack, newEffect);
 ```
 
 Use the direct `dataComponentType(...)` form when you need the concrete value immediately, and the entry form when another builder accepts a supplier or lazy registry entry.

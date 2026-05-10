@@ -31,6 +31,8 @@ import net.neoforged.fml.common.Mod;
 
 import org.slf4j.Logger;
 
+import java.util.Map;
+
 /**
  * Mod 入口类，仅负责：
  *
@@ -73,7 +75,7 @@ public class RegistryLibTest {
 
     // === Creative Tab ===
     static {
-        var tab = REGISTRYLIB.creativeTab("test_tab");
+        var tab = REGISTRYLIB.creativeTab("test_tab", "RegistryLib Test", Map.of("zh_cn", "RegistryLib 测试"));
         REGISTRYLIB.defaultCreativeTab(tab.getKey());
     }
 

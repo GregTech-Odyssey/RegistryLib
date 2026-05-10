@@ -12,6 +12,8 @@ import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
+import net.minecraft.client.color.item.ItemTintSource;
+import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.client.renderer.block.dispatch.SingleVariant;
 import net.minecraft.client.renderer.block.dispatch.Variant;
@@ -54,6 +56,8 @@ public class BlockBuilder<T extends Block, P>
     private Function<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = FunctionUtil.identityFn();
     @Nullable
     private ResourceKey<CreativeModeTab> defaultItemTab;
+    @Nullable
+    private ItemTintSource[] blockItemTintSources;
 
     protected BlockBuilder(
                            RegistryCore core, P parent, String name, Function<BlockBehaviour.Properties, T> factory) {
@@ -94,6 +98,10 @@ public class BlockBuilder<T extends Block, P>
                                 .ifPresent(model -> prov.createWithExistingModel(ctx, model)));
         if (defaultItemTab != null) {
             builder.addTab(defaultItemTab);
+        }
+        if (blockItemTintSources != null) {
+            builder.model(
+                    () -> (ctx, prov) -> prov.generateTintedBlockItem(getValue(), blockItemTintSources));
         }
         consumer.accept(builder);
         return builder.build();
@@ -177,6 +185,28 @@ public class BlockBuilder<T extends Block, P>
                                          @NotNull Supplier<BiConsumer<T, RegistryLibBlockModelGenerator>> cons) {
         if (!core.doDatagen()) return this;
         return setData(ProviderType.BLOCKSTATE, p -> cons.get().accept(getValue(), p));
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> tintedCube(int tintIndex) {
+        return blockstate(() -> (ctx, prov) -> prov.createTintedCube(ctx, tintIndex));
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> constantTint(int color) {
+        return tintSource(ItemModelUtils.constantTint(color));
+    }
+
+    @StandardAPI
+    public BlockBuilder<T, P> tintSource(@NotNull ItemTintSource... tintSources) {
+        blockItemTintSources = tintSources.clone();
+        if (!core.doDatagen()) return this;
+        core.setDataGenerator(
+                name,
+                Registries.ITEM,
+                ProviderType.ITEM_MODEL,
+                p -> p.generateTintedBlockItem(getValue(), blockItemTintSources));
+        return this;
     }
 
     @SyntaxSugar("lang(Block::getDescriptionId, name)")

@@ -3,12 +3,16 @@ package com.gto.registrylib.datagen.generator;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelOutput;
 import net.minecraft.client.data.models.MultiVariant;
 import net.minecraft.client.data.models.blockstates.BlockModelDefinitionGenerator;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
 import net.minecraft.client.data.models.model.ModelInstance;
+import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplate;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.client.data.models.model.TextureMapping;
@@ -60,6 +64,17 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
 
     public void create(Block block, Identifier model) {
         this.blockStateOutput.accept(createSimpleBlock(block, plainVariant(model)));
+    }
+
+    public Identifier createTintedCube(Block block, int tintIndex) {
+        return createTintedCube(block, TextureMapping.getBlockTexture(block).sprite(), tintIndex);
+    }
+
+    public Identifier createTintedCube(Block block, Identifier texture, int tintIndex) {
+        Identifier model = ModelLocationUtils.getModelLocation(block);
+        modelOutput.accept(model, () -> createTintedCubeJson(texture, tintIndex));
+        create(block, model);
+        return model;
     }
 
     public Identifier mcLoc(String id) {
@@ -201,5 +216,50 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
                 createSimpleBlock(
                         block,
                         plainVariant(ModelTemplates.PARTICLE_ONLY.create(block, textures, modelOutput))));
+    }
+
+    private static JsonObject createTintedCubeJson(Identifier texture, int tintIndex) {
+        JsonObject root = new JsonObject();
+        root.addProperty("parent", "minecraft:block/block");
+
+        JsonObject textures = new JsonObject();
+        textures.addProperty("particle", texture.toString());
+        textures.addProperty("all", texture.toString());
+        root.add("textures", textures);
+
+        JsonObject element = new JsonObject();
+        element.add("from", vector(0, 0, 0));
+        element.add("to", vector(16, 16, 16));
+
+        JsonObject faces = new JsonObject();
+        faces.add("down", face("down", tintIndex));
+        faces.add("up", face("up", tintIndex));
+        faces.add("north", face("north", tintIndex));
+        faces.add("south", face("south", tintIndex));
+        faces.add("west", face("west", tintIndex));
+        faces.add("east", face("east", tintIndex));
+        element.add("faces", faces);
+
+        JsonArray elements = new JsonArray();
+        elements.add(element);
+        root.add("elements", elements);
+        return root;
+    }
+
+    private static JsonObject face(String cullface, int tintIndex) {
+        JsonObject face = new JsonObject();
+        face.add("uv", vector(0, 0, 16, 16));
+        face.addProperty("texture", "#all");
+        face.addProperty("cullface", cullface);
+        face.addProperty("tintindex", tintIndex);
+        return face;
+    }
+
+    private static JsonArray vector(int... values) {
+        JsonArray array = new JsonArray();
+        for (int value : values) {
+            array.add(value);
+        }
+        return array;
     }
 }

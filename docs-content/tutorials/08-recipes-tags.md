@@ -110,6 +110,16 @@ REGISTRYLIB.itemTags().add(MY_GEMS_TAG, Items.AMETHYST_SHARD, Items.DIAMOND);
 REGISTRYLIB.blockTags().add(BlockTags.MINEABLE_WITH_PICKAXE, Blocks.AMETHYST_BLOCK, Blocks.DIAMOND_BLOCK);
 ```
 
+Lazy entries and other suppliers can use the supplier variants, so you do not have to call `.get()` just to feed tag datagen:
+
+```java
+ItemEntry<Item> VANILLA_IRON_INGOT = REGISTRYLIB.existingItem("minecraft:iron_ingot");
+BlockEntry<Block> VANILLA_IRON_BLOCK = REGISTRYLIB.existingBlock("minecraft:iron_block");
+
+REGISTRYLIB.itemTags().addSuppliers(ItemTags.BEACON_PAYMENT_ITEMS, VANILLA_IRON_INGOT);
+REGISTRYLIB.blockTags().addSuppliers(BlockTags.MINEABLE_WITH_PICKAXE, VANILLA_IRON_BLOCK);
+```
+
 ## Step 4 - Generate Recipes with Recipe Data Helpers
 
 RegistryLib integrates recipe generation into its datagen pipeline through typed recipe data callbacks. Use `.addRecipeData(...)` on any builder to contribute recipes:

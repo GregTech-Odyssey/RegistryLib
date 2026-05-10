@@ -43,6 +43,8 @@ public static final Component API_TOOLTIP =
 
 The helper returns `Component.translatable(key)` and schedules the lang entry during datagen.
 
+Adding the same key with the same value more than once is idempotent. RegistryLib still throws if the same key is assigned two different values, because that usually means two registration paths disagree about the user-facing text.
+
 ## Step 3 - Add Extra Locales
 
 The shortest current path is `locale(...)`:
@@ -71,7 +73,26 @@ REGISTRYLIB.item("copper_coin", Item::new)
 
 Both `en_us.json` and `zh_cn.json` are generated from the same code path.
 
-## Step 4 - Reuse Existing Custom Providers
+## Step 4 - Register Creative Tabs with Locales
+
+Creative tabs can declare English and extra locale names at registration time:
+
+```java
+public static final RegistryEntry<CreativeModeTab, CreativeModeTab> MATERIALS_TAB =
+        REGISTRYLIB.creativeTab("materials", "Materials", Map.of(
+                "zh_cn", "材料"));
+```
+
+This writes the `itemGroup.<modid>.materials` key for `en_us` and each supplied locale. If a project also adds the same key through `lang(...)`, matching values are ignored as duplicates.
+
+Use the overload with a builder callback when you need to customize icon or tab behavior:
+
+```java
+REGISTRYLIB.creativeTab("materials", "Materials", Map.of("zh_cn", "材料"),
+        builder -> builder.icon(() -> COPPER_INGOT.asStack()));
+```
+
+## Step 5 - Reuse Existing Custom Providers
 
 If your project already has a custom provider class, register it directly and let the provider override `getProviderType()` to return the same constant:
 
@@ -93,7 +114,7 @@ protected ModRegistryCore(String modid) {
 
 This prevents `locale("zh_cn")` from creating a second provider for the same output file.
 
-## Step 5 - Choose Your Extension Approach
+## Step 6 - Choose Your Extension Approach
 
 | Approach | Best for | Advantage | Limitation |
 | --- | --- | --- | --- |
@@ -103,7 +124,7 @@ This prevents `locale("zh_cn")` from creating a second provider for the same out
 
 For most projects, start with `locale(...)`, `lang(...)`, and `withLangAlias(...)`. Move to custom Builder methods only when a project-specific call style is repeated enough to justify the extra type work.
 
-## Step 6 - Understand Chain Type Narrowing
+## Step 7 - Understand Chain Type Narrowing
 
 :::important
 If you use a custom Builder approach, methods such as `.langCn(...)` usually need to be called while the chain is still returning your custom Builder type. Once the chain falls back to the base Builder type, those methods disappear at compile time.

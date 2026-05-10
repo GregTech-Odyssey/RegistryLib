@@ -3,6 +3,7 @@ package com.gto.registrylib.datagen.generator;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
 
+import net.minecraft.client.color.item.ItemTintSource;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.ItemModelOutput;
 import net.minecraft.client.data.models.model.ItemModelUtils;
@@ -17,6 +18,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.Block;
 
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -55,6 +57,25 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
                 item,
                 ItemModelUtils.plainModel(
                         template.create(item, TextureMapping.layer0(layer0), modelOutput)));
+    }
+
+    public void generateFlatTintedItem(Item item, int color) {
+        generateFlatTintedItem(item, ItemModelUtils.constantTint(color));
+    }
+
+    public void generateFlatTintedItem(Item item, ItemTintSource... tintSources) {
+        Identifier model = ModelTemplates.FLAT_ITEM.create(item, TextureMapping.layer0(item), modelOutput);
+        itemModelOutput.accept(item, ItemModelUtils.tintedModel(model, tintSources));
+    }
+
+    public void generateTintedBlockItem(Block block, int color) {
+        generateTintedBlockItem(block, ItemModelUtils.constantTint(color));
+    }
+
+    public void generateTintedBlockItem(Block block, ItemTintSource... tintSources) {
+        itemModelOutput.accept(
+                block.asItem(),
+                ItemModelUtils.tintedModel(ModelLocationUtils.getModelLocation(block), tintSources));
     }
 
     public void generateFlatBlockItem(BlockItem item) {

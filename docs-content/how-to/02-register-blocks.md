@@ -37,6 +37,21 @@ public static final BlockEntry<Block> MAGIC_ORE = REGISTRYLIB
 Registering a Block does **NOT** automatically create a BlockItem. You must explicitly call `.simpleItem()` or `.item(...)` to generate one.
 :::
 
+## Tinted Block Models
+
+Use `tintedCube(...)` when the block model needs face-level `tintindex` values, then use `constantTint(...)` or `tintSource(...)` for the generated BlockItem model:
+
+```java
+public static final BlockEntry<Block> TIN_BLOCK = REGISTRYLIB
+        .block("tin_block")
+        .tintedCube(0)
+        .constantTint(0xC8D8E8)
+        .simpleItem()
+        .register();
+```
+
+`tintedCube(0)` writes a simple cube block model with `tintindex: 0` on each face. `constantTint(...)` affects the item model for the BlockItem.
+
 ## Common API Lookup
 
 | Method | Purpose |
@@ -48,6 +63,9 @@ Registering a Block does **NOT** automatically create a BlockItem. You must expl
 | `item(...)` | Customize the BlockItem |
 | `defaultLoot()` | Generate basic self-drop loot table |
 | `loot(...)` | Supply a custom loot table callback |
+| `tintedCube(tintIndex)` | Generate a cube block model with face tint indices |
+| `constantTint(color)` | Generate a tinted BlockItem model using the block model |
+| `tintSource(sources...)` | Generate a BlockItem model with custom item tint sources |
 | `addTag(...)` | Add one or more block tags |
 | `register()` | Complete registration and return `BlockEntry<T>` |
 

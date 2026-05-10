@@ -71,6 +71,20 @@ import com.gto.registrylib.util.ImageUtil;
 These utilities are datagen-only —invoked when `doDatagen()` returns true. They have no runtime effect on the registered item.
 :::
 
+## Tinted Item Models
+
+Use `constantTint(...)` when a grayscale item texture should be colored by the generated item model instead of generating one PNG per color:
+
+```java
+public static final ItemEntry<Item> TIN_DUST = REGISTRYLIB
+        .item("tin_dust")
+        .constantTint(0xC8D8E8)
+        .lang("Tin Dust")
+        .register();
+```
+
+For custom Minecraft item tint sources, use `tintSource(...)`.
+
 ## Common API Lookup
 
 | Method | Purpose |
@@ -79,6 +93,8 @@ These utilities are datagen-only —invoked when `doDatagen()` returns true. The
 | `componentItem(name)` | Create a `ComponentItem`-backed `ItemBuilder` |
 | `lang(text)` | Set the display name |
 | `defaultModel()` | Generate the default item model |
+| `constantTint(color)` | Generate a flat item model with a constant tint source |
+| `tintSource(sources...)` | Generate a flat item model with custom item tint sources |
 | `addTab(tab)` | Add the item to a creative tab |
 | `addDefaultTab()` | Add the item to the `RegistryCore`-level default tab |
 | `removeTab(tab)` | Remove a previously added creative tab |

@@ -16,6 +16,8 @@ import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
+import net.minecraft.client.color.item.ItemTintSource;
+import net.minecraft.client.data.models.model.ItemModelUtils;
 import net.minecraft.client.data.models.model.ModelTemplates;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
@@ -146,6 +148,16 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                                    @NotNull Supplier<BiConsumer<T, RegistryLibItemModelGenerator>> cons) {
         if (!core.doDatagen()) return this;
         return setData(ProviderType.ITEM_MODEL, p -> cons.get().accept(getValue(), p));
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> constantTint(int color) {
+        return tintSource(ItemModelUtils.constantTint(color));
+    }
+
+    @StandardAPI
+    public ItemBuilder<T, P> tintSource(@NotNull ItemTintSource... tintSources) {
+        return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, tintSources));
     }
 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")
