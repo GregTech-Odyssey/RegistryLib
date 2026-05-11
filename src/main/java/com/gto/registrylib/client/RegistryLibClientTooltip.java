@@ -31,7 +31,8 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
 
     private static final int TOOLTIP_BORDER = 3;
     private static final int BOX_GAP = 2;
-    private static final int SEPARATE_BOX_X_OFFSET = -2;
+    private static final int SEPARATE_BOX_GAP = BOX_GAP + 2;
+    private static final int SEPARATE_BOX_X_OFFSET = -3;
     private static final int PAGE_CONTROL_GAP = 3;
     private static final int PAGE_CONTROL_PADDING_X = 6;
     private static final int PAGE_CONTROL_PADDING_Y = 4;
@@ -263,7 +264,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
                             contentWidth,
                             contentHeight,
                             padding));
-            y += height + BOX_GAP;
+            y += height + SEPARATE_BOX_GAP;
         }
         return boxes;
     }
@@ -277,7 +278,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
         int pageContentHeight = 0;
 
         for (BoxLayout box : boxes) {
-            int boxContribution = box.height() + (page.isEmpty() ? 0 : BOX_GAP);
+            int boxContribution = box.height() + (page.isEmpty() ? 0 : SEPARATE_BOX_GAP);
             if (!page.isEmpty() && pageContentHeight + boxContribution > maxPageHeight) {
                 pages.add(reposition(page, firstBoxY));
                 page = new ArrayList<>();
@@ -302,7 +303,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
         int y = firstY;
         for (BoxLayout box : boxes) {
             result.add(box.withY(y));
-            y += box.height() + BOX_GAP;
+            y += box.height() + SEPARATE_BOX_GAP;
         }
         return result;
     }

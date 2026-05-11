@@ -18,10 +18,10 @@ public class RootNode {
     private static final int BG_COLOR = 0xF0100010;
 
     /** 边框亮边——顶部高光 (ARGB)。 */
-    private static final int BORDER_HIGHLIGHT = 0x33FFFFFF;
+    private static final int BORDER_HIGHLIGHT = 0x90E8E8E8;
 
     /** 边框暗边——底部阴影 (ARGB)。 */
-    private static final int BORDER_SHADOW = 0x15FFFFFF;
+    private static final int BORDER_SHADOW = 0x90686870;
 
     /** 默认框渲染器——深色背景 + 白色亮度渐变边框。 */
     public static final BoxRenderer DEFAULT_BOX_RENDERER = (graphics, x, y, width, height) -> {
@@ -29,15 +29,11 @@ public class RootNode {
         int b = y + height;
         // 背景（十字形，留出 4 角像素形成圆角效果）
         graphics.fill(x + 1, y + 1, r - 1, b - 1, BG_COLOR);
-        graphics.fill(x + 1, y, r - 1, y + 1, BG_COLOR);
-        graphics.fill(x + 1, b - 1, r - 1, b, BG_COLOR);
-        graphics.fill(x, y + 1, x + 1, b - 1, BG_COLOR);
-        graphics.fill(r - 1, y + 1, r, b - 1, BG_COLOR);
         // 1px 亮度渐变边框
-        graphics.fillGradient(x + 1, y + 1, x + 2, b - 1, BORDER_HIGHLIGHT, BORDER_SHADOW);
-        graphics.fillGradient(r - 2, y + 1, r - 1, b - 1, BORDER_HIGHLIGHT, BORDER_SHADOW);
-        graphics.fill(x + 1, y + 1, r - 1, y + 2, BORDER_HIGHLIGHT);
-        graphics.fill(x + 1, b - 2, r - 1, b - 1, BORDER_SHADOW);
+        graphics.fillGradient(x, y, x + 1, b, BORDER_HIGHLIGHT, BORDER_SHADOW);
+        graphics.fillGradient(r - 1, y, r, b, BORDER_HIGHLIGHT, BORDER_SHADOW);
+        graphics.fill(x, y, r, y + 1, BORDER_HIGHLIGHT);
+        graphics.fill(x, b - 1, r, b, BORDER_SHADOW);
     };
 
     private final String id;
