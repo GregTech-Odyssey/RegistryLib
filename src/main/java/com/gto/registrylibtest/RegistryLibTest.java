@@ -86,6 +86,7 @@ public class RegistryLibTest {
         // 物品示例
         var _item1 = SimpleItemExample.COPPER_COIN;
         var _item2 = FullItemExample.MAGIC_WAND;
+        var _item3 = FullItemExample.TOOLTIP_STRESS_TESTER;
 
         // 方块示例
         var _block1 = SimpleBlockExample.DECORATIVE_STONE;

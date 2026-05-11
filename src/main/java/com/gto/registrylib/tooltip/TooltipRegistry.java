@@ -80,7 +80,7 @@ public final class TooltipRegistry {
         }
         if (collector.nodesByRoot.isEmpty()) return null;
 
-        var inlineSubNodes = new ArrayList<SubNode>();
+        var inlineRoots = new ArrayList<ResolvedRoot>();
         var separateRoots = new ArrayList<ResolvedRoot>();
 
         for (var entry : collector.nodesByRoot.entrySet()) {
@@ -115,11 +115,17 @@ public final class TooltipRegistry {
             if (rootNode.isSeparateBox()) {
                 separateRoots.add(new ResolvedRoot(rootNode, result));
             } else {
-                inlineSubNodes.addAll(result);
+                inlineRoots.add(new ResolvedRoot(rootNode, result));
             }
         }
 
-        if (inlineSubNodes.isEmpty() && separateRoots.isEmpty()) return null;
+        inlineRoots.sort(Comparator.comparingInt(r -> r.rootNode().getPriority()));
+        if (inlineRoots.isEmpty() && separateRoots.isEmpty()) return null;
+
+        var inlineSubNodes = new ArrayList<SubNode>();
+        for (ResolvedRoot resolved : inlineRoots) {
+            inlineSubNodes.addAll(resolved.subNodes());
+        }
 
         separateRoots.sort(Comparator.comparingInt(r -> r.rootNode().getPriority()));
         return new RegistryLibTooltipComponent(inlineSubNodes, separateRoots);

@@ -1,0 +1,6 @@
+{
+  "key.categories.registrylib.tooltip": "RegistryLib Tooltip",
+  "key.registrylib.tooltip_page_down": "RegistryLib tooltip page down",
+  "key.registrylib.tooltip_page_up": "RegistryLib tooltip page up",
+  "tooltip.registrylib.page_keys": "%s / %s"
+}

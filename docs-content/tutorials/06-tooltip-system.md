@@ -111,11 +111,28 @@ REGISTRYLIB.tooltipExisting(VANILLA_IRON_INGOT,
 
 Use `tooltipExistingSupplier(...)` for a lazy supplier that is not an `ItemEntry`.
 
+## Runtime Layout and Pagination
+
+RegistryLib tooltip roots participate in vanilla tooltip positioning as one combined visual footprint. This lets vanilla move the tooltip upward when the full RegistryLib layout would otherwise run below the screen, while separate roots still render as independent boxes instead of being swallowed by the vanilla background.
+
+When the separate-box content is still too tall, RegistryLib paginates the separate roots automatically:
+
+- The vanilla tooltip and inline RegistryLib nodes stay in the normal tooltip box.
+- Separate roots keep their own backgrounds and are split across pages when needed.
+- A small page control is rendered below the visible separate roots.
+- The page control shows the current page and the keys used to move between pages.
+- The default page keys are Up and Down, and players can remap them in the controls screen under the RegistryLib Tooltip category.
+
+Page state is display-only state. RegistryLib does not write page information into the `ItemStack`. The page resets when the hovered item changes, when the same item has different data components, or when a non-RegistryLib tooltip is shown.
+
+The test mod includes `registrylibtest:tooltip_stress_tester` as a stress item with 20 separate roots and 100 total child nodes. Use it when checking overflow, pagination, and custom `SubNode` layout behavior in-game.
+
 ## Boundaries and Pitfalls
 
 :::warning
 - `separatorAbove` and `separatorBelow` express layout intent. They are **not** absolute pixel-level positioning controls.
 - For custom `SubNode` implementations, `getWidth()` and `getHeight()` must be accurate or layout will drift.
+- Custom image or separator nodes should render within the width passed to their own root or inline layout, not the total tooltip width.
 - If tooltip text needs localization, prefer `Component.translatable(...)` rather than relying on `Component.literal(...)` long term. See the [Multi-Language Support](./multi-language) tutorial for details.
 :::
 

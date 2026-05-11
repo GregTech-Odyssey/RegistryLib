@@ -1,0 +1,6 @@
+{
+  "key.categories.registrylib.tooltip": "RegistryLib 提示框",
+  "key.registrylib.tooltip_page_down": "RegistryLib 提示框向下翻页",
+  "key.registrylib.tooltip_page_up": "RegistryLib 提示框向上翻页",
+  "tooltip.registrylib.page_keys": "%s / %s"
+}

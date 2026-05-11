@@ -36,6 +36,8 @@ public class FullItemExample {
 
     public static final RootNodeRef DETAIL_BOX = TooltipRegistry.rootNode(RegistryLibTest.MOD_ID + ":detail_box", 10, true);
 
+    private static final RootNodeRef[] STRESS_BOXES = createStressBoxes();
+
     // ── ComponentItem 附件 ──────────────────────────────────────────────────
 
     static class InspectAttachment extends ItemAttachment<ComponentItem> {
@@ -99,8 +101,55 @@ public class FullItemExample {
                                 DETAIL_BOX, new SubNode.Basic(Component.literal("§bDetailed Information"), 0));
                         collector.node(
                                 DETAIL_BOX, new SubNode.Basic(Component.literal("§7Fire resistant"), 10));
+                        for (int i = 1; i <= 28; i++) {
+                            collector.node(
+                                    DETAIL_BOX,
+                                    new SubNode.Basic(
+                                            Component.literal("§7Arcane calibration line §f" + i), 10 + i));
+                        }
                     })
             // --- attach: 绑定 ComponentItem 附件 ---
             .attach(new InspectAttachment())
             .register();
+
+    public static final ItemEntry<Item> TOOLTIP_STRESS_TESTER = RegistryLibTest.REGISTRYLIB
+            .item("tooltip_stress_tester")
+            .properties(properties -> properties.stacksTo(1))
+            .lang("Tooltip Stress Tester")
+            .lang(ModRegistryCore.LANG_ZH_CN, "提示框压力测试器")
+            .texture(
+                    () -> ImageUtil.generateIcon(
+                            new Color(48, 170, 255), ImageUtil.STAR, new Color(8, 28, 55)))
+            .defaultModel()
+            .addDefaultTab()
+            .addTooltip(Component.literal("§6RegistryLib tooltip pagination stress test"))
+            .addTooltip(
+                    (collector, stack) -> {
+                        collector.node(
+                                new SubNode.Basic(Component.literal("§e20 roots / 100 subnodes"), 0),
+                                true,
+                                false);
+                        for (int rootIndex = 0; rootIndex < STRESS_BOXES.length; rootIndex++) {
+                            RootNodeRef root = STRESS_BOXES[rootIndex];
+                            int rootNumber = rootIndex + 1;
+                            for (int nodeIndex = 1; nodeIndex <= 5; nodeIndex++) {
+                                collector.node(
+                                        root,
+                                        new SubNode.Basic(
+                                                Component.literal(
+                                                        "§bRoot " + rootNumber + " §8/ §fSubnode " + nodeIndex + " §7- very long tooltip content for overflow testing"),
+                                                nodeIndex));
+                            }
+                        }
+                    })
+            .register();
+
+    private static RootNodeRef[] createStressBoxes() {
+        RootNodeRef[] roots = new RootNodeRef[20];
+        for (int i = 0; i < roots.length; i++) {
+            roots[i] = TooltipRegistry.rootNode(
+                    RegistryLibTest.MOD_ID + ":tooltip_stress_box_" + (i + 1), 100 + i, true);
+        }
+        return roots;
+    }
 }
