@@ -49,6 +49,7 @@ const sidebars = {
         'how-to/register-custom-ingredients',
         'how-to/register-enchantments',
         'how-to/register-recipes',
+        'how-to/register-environment-features',
       ],
     },
     {

@@ -12,6 +12,10 @@ RegistryLib provides specialized Entry types that wrap `DeferredHolder` with con
 All entry types also implement `Holder`-style interfaces. When an API expects a `Holder<Item>`, `Holder<Block>`, or `Holder<Fluid>`, you can pass the entry directly.
 :::
 
+:::note
+`ChunkStateEntry`, `WorldStateEntry`, and `WorldgenFeatureEntry` are boundary handles, not `RegistryEntry` subclasses. They expose the ids and runtime access methods needed for their domain without pretending to be normal registry objects.
+:::
+
 ## ItemEntry\<T\>
 
 **Extends:** `RegistryEntry<Item, T>`
@@ -139,6 +143,64 @@ DataComponentTypeEntry<String> API_NOTE = REGISTRYLIB.dataComponentTypeEntry(
 String note = API_NOTE.getOrDefault(stack, "");
 API_NOTE.set(stack, "Stored on the stack");
 ```
+
+## AttachmentTypeEntry\<T\>
+
+**Extends:** `RegistryEntry<AttachmentType<?>, AttachmentType<T>>`
+
+| Method | Return type | Description |
+| --- | --- | --- |
+| `get()` | `AttachmentType<T>` | Get the registered NeoForge attachment type |
+| `getOrCreate(holder)` | `T` | Read or create data on an `IAttachmentHolder` |
+| `getIfPresent(holder)` | `Optional<T>` | Read existing data without creating it |
+| `set(holder, value)` | `T` | Replace attachment data and return the previous value |
+| `remove(holder)` | `T` | Remove attachment data and return the previous value |
+| `sync(holder)` | `void` | Sync attachment data through NeoForge |
+
+Prefer `chunkState(...)` or `worldState(...)` when the attachment represents gameplay state.
+
+## ChunkStateEntry\<T\>
+
+**Does not extend:** `RegistryEntry`
+
+| Method | Return type | Description |
+| --- | --- | --- |
+| `identifier()` | `Identifier` | Logical state id |
+| `scope()` | `StateScope` | Always `CHUNK` |
+| `codec()` | `Codec<T>` | Persistent value codec |
+| `attachmentType()` | `AttachmentType<T>` | Underlying attachment type |
+| `debugConfig()` | `StateDebugConfig` | Debug command configuration |
+| `getOrCreate(level, chunkPos)` | `T` | Read or create chunk state |
+| `getIfLoaded(level, chunkPos)` | `Optional<T>` | Read without force-loading the chunk |
+| `set(level, chunkPos, value)` | `void` | Replace the value and mark the chunk unsaved |
+| `modify(level, chunkPos, action)` | `void` | Mutate the value and mark the chunk unsaved |
+| `sync(level, chunkPos)` | `void` | Manually sync the state |
+
+## WorldStateEntry\<T\>
+
+**Does not extend:** `RegistryEntry`
+
+| Method | Return type | Description |
+| --- | --- | --- |
+| `identifier()` | `Identifier` | Logical state id |
+| `scope()` | `StateScope` | Always `WORLD` |
+| `codec()` | `Codec<T>` | Persistent value codec |
+| `attachmentType()` | `AttachmentType<T>` | Underlying attachment type |
+| `debugConfig()` | `StateDebugConfig` | Debug command configuration |
+| `getOrCreate(level)` | `T` | Read or create world state |
+| `getIfPresent(level)` | `Optional<T>` | Read without creating state |
+| `set(level, value)` | `void` | Replace the value |
+| `modify(level, action)` | `void` | Mutate the value |
+| `sync(level)` | `void` | Manually sync the state |
+
+## WorldgenFeatureEntry
+
+**Record fields:** `configuredKey`, `placedKey`
+
+| Method | Return type | Description |
+| --- | --- | --- |
+| `configuredKey()` | `ResourceKey<ConfiguredFeature<?, ?>>` | Key for the generated configured feature |
+| `placedKey()` | `ResourceKey<PlacedFeature>` | Key for the generated placed feature |
 
 ## EntityEntry\<T\>
 

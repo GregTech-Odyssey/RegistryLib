@@ -24,6 +24,10 @@ The code snippets on this page are short excerpts from the runnable `RegistryLib
 | Register a generic object in another registry | `generic("id", registryKey, factory)` or `simple(...)` | `register` or immediate completion |
 | Register a data component type lazily | `dataComponentTypeEntry("id", builder)` | pass the entry into supplier-friendly APIs |
 | Register a creative tab | `creativeTab("id")` or `creativeTab("id", enUs, locales)` | title, icon, content population |
+| Register a NeoForge attachment type | `attachmentType("id", holder -> defaultValue)` | `serialize`, `sync`, `register` |
+| Register chunk or world state | `chunkState("id", codec, default)` or `worldState("id", codec, default)` | `debug`, `sync`, `register` |
+| Register a crop-like plant | `crop("id")` | `properties`, `produce`, `growthRoll`, `onHarvest`, `stageTextures` |
+| Register configured and placed worldgen | `worldgenFeature("id", configuredFeature)` | `placement`, `addToBiomes`, `register` |
 | Share defaults across many entries | `group("name")` | `langPrefix`, `tab`, `initialBlockProperties`, `blockProperties`, `itemProperties`, `addBlockTag`, `addItemTag`, `addFluidTag` |
 | Reference existing vanilla or third-party objects | `existingItem("namespace:id")`, `existingBlock("namespace:id")` | pass the entry to recipes, tags, tabs, tooltips, or holder-style APIs |
 | Add tags to existing objects | `tagExisting(...)`, `itemTags().add(...)`, `itemTags().addSuppliers(...)`, `blockTags().addSuppliers(...)` | datagen-only tag entries |
@@ -41,6 +45,10 @@ If you're unsure, start with `item(...)` or `block(...)`; they cover the vast ma
 | `BlockBuilder` | Block properties, drops, block item, recipe, tag | `BlockEntry` |
 | `FluidBuilder` | Fluid type, rendering, block, bucket, tag | `FluidEntry` |
 | `BlockEntityBuilder` | Host block binding and renderer | `BlockEntityTypeEntry` |
+| `CropBuilder` | Crop block, seed item, growth, harvest, stage models | `BlockEntry<RegistryLibCropBlock>` |
+| `AttachmentTypeBuilder` | NeoForge attachment registration | `AttachmentTypeEntry` |
+| `ChunkStateBuilder` / `WorldStateBuilder` | Attachment-backed scoped state | `ChunkStateEntry` / `WorldStateEntry` |
+| `WorldgenFeatureBuilder` | Configured feature, placed feature, biome modifier data | `WorldgenFeatureEntry` |
 
 ## Entry Type Quick Lookup
 
@@ -51,6 +59,10 @@ If you're unsure, start with `item(...)` or `block(...)`; they cover the vast ma
 | `FluidEntry<T>` | Access source, type, block, bucket, `FluidStack`, and `FluidResource` together |
 | `BlockEntityTypeEntry<T>` | Reference a `BlockEntityType` with host binding |
 | `DataComponentTypeEntry<T>` | Lazy wrapper for a `DataComponentType<T>` |
+| `AttachmentTypeEntry<T>` | Lazy wrapper for a NeoForge `AttachmentType<T>` |
+| `ChunkStateEntry<T>` | Scoped handle for chunk attachment state |
+| `WorldStateEntry<T>` | Scoped handle for world attachment state |
+| `WorldgenFeatureEntry` | Datapack keys for configured and placed features |
 
 ## Entry Helper Quick Lookup
 
@@ -62,6 +74,11 @@ If you're unsure, start with `item(...)` or `block(...)`; they cover the vast ma
 | `BlockEntry.getDefaultState()` | The block's default state for world placement or configuration |
 | `DataComponentTypeEntry.get(stack)` | Read a component value without scattering `.get()` at call sites |
 | `DataComponentTypeEntry.set(stack, value)` | Set a component value on a stack through the lazy entry wrapper |
+| `AttachmentTypeEntry.getOrCreate(holder)` | Read or create raw attachment data on an `IAttachmentHolder` |
+| `ChunkStateEntry.modify(level, pos, action)` | Mutate chunk state while marking the chunk unsaved |
+| `ChunkStateEntry.getIfLoaded(level, pos)` | Read chunk state without force-loading the chunk |
+| `WorldStateEntry.set(level, value)` | Replace level-scoped state attached to a `ServerLevel` |
+| `WorldgenFeatureEntry.placedKey()` | Reference the generated placed feature key |
 | `FluidEntry.getSource()` | The matching source fluid instance |
 | `FluidEntry.getType()` | The `FluidType` associated with the family |
 | `FluidEntry.getBlock()` / `getBucket()` | The related fluid block or bucket when they exist |
@@ -201,4 +218,5 @@ MACHINES.block("crusher", Block::new)
 - [Builder Methods](/reference/builder-methods) - complete method reference for all Builder types
 - [Register Items](/how-to/register-items) - step-by-step item registration
 - [Register Blocks](/how-to/register-blocks) - step-by-step block registration
+- [Register Environment Features](/how-to/register-environment-features) - chunk/world state, crops, and worldgen
 - [Builder Pattern & Fluent API](/concepts/builder-pattern) - how the chain architecture works

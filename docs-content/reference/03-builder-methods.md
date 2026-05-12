@@ -119,6 +119,70 @@ Tint APIs use typed colors instead of raw integers:
 
 `RgbColor` rejects alpha bits and RegistryLib converts it to opaque ARGB. Raw Minecraft `BlockTintSources.constant(int)` does not add alpha; passing `0xRRGGBB` directly produces alpha `0`. Use `RegistryLibTintSources.blockConstant(RgbColor)` or `BlockBuilder.blockConstantTint(RgbColor)` for the opaque default.
 
+## CropBuilder
+
+Created via `crop("id")`.
+
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `properties(modifier)` | `UnaryOperator<BlockBehaviour.Properties>` | Configure crop block properties |
+| `growthRoll(callback)` | `RegistryLibCropBlock.GrowthRoll` | Decide whether a random tick may advance growth |
+| `onHarvest(callback)` | `RegistryLibCropBlock.HarvestCallback` | Run server harvest logic before right-click replanting |
+| `rightClickHarvest(enabled)` | `boolean` | Enable or disable mature right-click harvest |
+| `seedItem(configurator)` | `Consumer<ItemBuilder<Item, RegistryCore>>` | Configure the generated seed item |
+| `produce(supplier)` | `Supplier<? extends Item>` | Configure mature crop loot |
+| `stageTextures(textures...)` | `TextureRef...` | Generate crop stage blockstate/model data |
+| `register()` | - | Register crop block and seed item, returning `BlockEntry<RegistryLibCropBlock>` |
+
+## AttachmentTypeBuilder
+
+Created via `attachmentType("id", holder -> defaultValue)` or `attachmentType("id", () -> defaultValue)`.
+
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `configure(callback)` | `UnaryOperator<AttachmentType.Builder<T>>` | Apply low-level NeoForge attachment configuration |
+| `serialize(codec)` | `MapCodec<T>` | Configure persistent attachment serialization |
+| `sync(streamCodec)` | `StreamCodec<? super RegistryFriendlyByteBuf, T>` | Configure attachment sync |
+| `register()` | - | Register and return `AttachmentTypeEntry<T>` |
+
+## ChunkStateBuilder
+
+Created via `chunkState("id", codec, defaultValue)`.
+
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `syncOnModify(enabled)` | `boolean` | Request sync after `set` or `modify` when a sync codec exists |
+| `sync(streamCodec)` | `StreamCodec<? super RegistryFriendlyByteBuf, T>` | Configure sync and enable sync-on-modify |
+| `debug()` | - | Enable read-only debug commands with default permissions |
+| `debug(configurator)` | `UnaryOperator<StateDebugConfig>` | Enable and configure debug command permissions and writability |
+| `register()` | - | Register and return `ChunkStateEntry<T>` |
+| `build()` | - | Register and return the parent chain object |
+
+## WorldStateBuilder
+
+Created via `worldState("id", codec, defaultValue)`.
+
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `syncOnModify(enabled)` | `boolean` | Request sync after `set` or `modify` when a sync codec exists |
+| `sync(streamCodec)` | `StreamCodec<? super RegistryFriendlyByteBuf, T>` | Configure sync and enable sync-on-modify |
+| `debug()` | - | Enable read-only debug commands with default permissions |
+| `debug(configurator)` | `UnaryOperator<StateDebugConfig>` | Enable and configure debug command permissions and writability |
+| `register()` | - | Register and return `WorldStateEntry<T>` |
+| `build()` | - | Register and return the parent chain object |
+
+## WorldgenFeatureBuilder
+
+Created via `worldgenFeature("id", configuredFeature)` or `worldgenFeature("id", configuredFeatureSupplier)`.
+
+| Method | Parameters | Description |
+| --- | --- | --- |
+| `placement(modifier)` | `PlacementModifier` | Add one placed feature modifier |
+| `placements(modifiers)` | `List<PlacementModifier>` | Add multiple placed feature modifiers |
+| `addToBiomes(tag, step)` | `TagKey<Biome>, GenerationStep.Decoration` | Generate an `AddFeaturesBiomeModifier` for matching biomes |
+| `register()` | - | Generate configured/placed feature data and return `WorldgenFeatureEntry` |
+| `build()` | - | Register and return the parent chain object |
+
 ## FluidBuilder
 
 Created via `fluid("id", still, flow)`.
