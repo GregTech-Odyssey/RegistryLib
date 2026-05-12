@@ -58,7 +58,7 @@ Jump into **intermediate tutorials** for real-world patterns:
 
 - [Register Items](/how-to/register-items) | [Register Blocks](/how-to/register-blocks) | [Register Fluids](/how-to/register-fluids)
 - [Register Block Entities](/how-to/register-block-entities) | [Register Advancements](/how-to/register-advancements)
-- [Register Environment Features](/how-to/register-environment-features) 鈥擟hunk/world state, crops, and worldgen features
+- [Register Crops](/how-to/register-crops) | [Register Environment State](/how-to/register-environment-state)
 
 ### I need API details
 
@@ -67,6 +67,7 @@ Jump into **intermediate tutorials** for real-world patterns:
 - [API Overview](/reference/api-overview) —Entry points and builder families
 - [Entry Types](/reference/entry-types) —What you get back from `.register()`
 - [Builder Methods](/reference/builder-methods) —Complete method reference
+- [Crop API](/reference/crop-api) | [Environment API](/reference/environment-api)
 
 ---
 

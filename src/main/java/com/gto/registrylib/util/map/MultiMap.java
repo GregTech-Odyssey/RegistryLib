@@ -54,6 +54,11 @@ public interface MultiMap<K, V> {
         }
 
         @Override
+        public Map<K, Collection<V>> getMap() {
+            return map;
+        }
+
+        @Override
         public Collection<V> get(K key) {
             var values = map.get(key);
             if (values != null) return values;

@@ -2,6 +2,7 @@ package com.gto.registrylib;
 
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
+import com.gto.registrylib.builders.AttachmentTypeBuilder;
 import com.gto.registrylib.builders.BlockBuilder;
 import com.gto.registrylib.builders.BlockEntityBuilder;
 import com.gto.registrylib.builders.EnchantmentBuilder;
@@ -11,12 +12,17 @@ import com.gto.registrylib.builders.ItemBuilder;
 import com.gto.registrylib.builders.RecipeTypeBuilder;
 import com.gto.registrylib.composite.ComponentItem;
 import com.gto.registrylib.composite.IComponentItem;
+import com.gto.registrylib.crop.CropBuilder;
 import com.gto.registrylib.datagen.DataProviderInitializer;
 import com.gto.registrylib.datagen.GeneratorType;
 import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.RegistryLibDataProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
+import com.gto.registrylib.state.ChunkStateBuilder;
+import com.gto.registrylib.state.StateEntry;
+import com.gto.registrylib.state.StateRegistryManager;
+import com.gto.registrylib.state.WorldStateBuilder;
 import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
@@ -25,6 +31,7 @@ import com.gto.registrylib.util.DebugMarkers;
 import com.gto.registrylib.util.Environment;
 import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.TextureRef;
+import com.gto.registrylib.util.entry.AttachmentTypeEntry;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.DataComponentTypeEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
@@ -33,7 +40,9 @@ import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.map.MultiMap;
 import com.gto.registrylib.util.map.NestedMap;
 import com.gto.registrylib.util.registry.ListRegistry;
+import com.gto.registrylib.worldgen.WorldgenFeatureBuilder;
 
+import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 
 import net.minecraft.core.RegistrationInfo;
@@ -71,6 +80,8 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.crafting.IngredientType;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
@@ -80,6 +91,8 @@ import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.crafting.FluidIngredientType;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
@@ -133,6 +146,7 @@ public class RegistryCore {
     private final List<Consumer<BlockBuilder<?, ?>>> blockDefaultCallbacks = new ArrayList<>();
     private final List<Consumer<FluidBuilder<?, ?>>> fluidDefaultCallbacks = new ArrayList<>();
     private final List<String> generatedNamespaceCleanups = new ArrayList<>();
+    private final StateRegistryManager stateRegistryManager = new StateRegistryManager();
 
     @Getter
     protected ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
@@ -167,7 +181,15 @@ public class RegistryCore {
     }
 
     public boolean doDatagen() {
-        return Environment.isDatagen;
+        return Environment.isDatagenStatic();
+    }
+
+    public String getModid() {
+        return modid;
+    }
+
+    public ResourceKey<CreativeModeTab> getDefaultCreativeModeTab() {
+        return defaultCreativeModeTab;
     }
 
     public int priority() {
@@ -369,7 +391,7 @@ public class RegistryCore {
     // === Configuration ===
 
     public RegistryCore skipErrors(boolean skipErrors) {
-        if (skipErrors && Environment.isProd) {
+        if (skipErrors && Environment.isProdStatic()) {
             log.error("Ignoring skipErrors(true) as this is not a development environment!");
         } else {
             this.skipErrors = skipErrors;
@@ -419,6 +441,18 @@ public class RegistryCore {
 
     public List<String> getGeneratedNamespaceCleanups() {
         return Collections.unmodifiableList(generatedNamespaceCleanups);
+    }
+
+    public Collection<StateEntry<?>> getStateEntries() {
+        return stateRegistryManager.all();
+    }
+
+    public void registerStateEntry(StateEntry<?> entry) {
+        stateRegistryManager.register(entry);
+    }
+
+    public static Collection<RegistryCore> getRegistryCores() {
+        return Collections.unmodifiableCollection(REGISTRY_CORES);
     }
 
     protected <T extends Item, P, B extends ItemBuilder<T, P>> B applyItemDefaults(B builder) {
@@ -818,6 +852,122 @@ public class RegistryCore {
         return block(this, name, Block::new);
     }
 
+    @StandardAPI
+    public <P> CropBuilder<P> crop(@NotNull P parent, @NotNull String name) {
+        return CropBuilder.create(this, parent, name);
+    }
+
+    @StandardAPI
+    public CropBuilder<RegistryCore> crop(@NotNull String name) {
+        return crop(this, name);
+    }
+
+    // --- Attachments and State ---
+
+    @StandardAPI
+    public <T, P> AttachmentTypeBuilder<T, P> attachmentType(
+                                                             @NotNull P parent,
+                                                             @NotNull String name,
+                                                             @NotNull Function<IAttachmentHolder, T> defaultValueFactory) {
+        return AttachmentTypeBuilder.create(this, parent, name, defaultValueFactory);
+    }
+
+    @StandardAPI
+    public <T> AttachmentTypeBuilder<T, RegistryCore> attachmentType(
+                                                                     @NotNull String name,
+                                                                     @NotNull Function<IAttachmentHolder, T> defaultValueFactory) {
+        return attachmentType(this, name, defaultValueFactory);
+    }
+
+    @StandardAPI
+    public <T> AttachmentTypeBuilder<T, RegistryCore> attachmentType(
+                                                                     @NotNull String name,
+                                                                     @NotNull Supplier<T> defaultValueFactory) {
+        return attachmentType(name, _holder -> defaultValueFactory.get());
+    }
+
+    @StandardAPI
+    public <T> AttachmentType<T> attachmentType(
+                                                @NotNull String name,
+                                                @NotNull Supplier<T> defaultValueFactory,
+                                                @NotNull MapCodec<T> codec) {
+        return attachmentType(name, defaultValueFactory).serialize(codec).register().get();
+    }
+
+    @StandardAPI
+    public <T> AttachmentTypeEntry<T> attachmentTypeEntry(
+                                                          @NotNull String name,
+                                                          @NotNull Supplier<T> defaultValueFactory,
+                                                          @NotNull MapCodec<T> codec) {
+        return attachmentType(name, defaultValueFactory).serialize(codec).register();
+    }
+
+    @StandardAPI
+    public <T, P> WorldStateBuilder<T, P> worldState(
+                                                     @NotNull P parent,
+                                                     @NotNull String name,
+                                                     @NotNull Codec<T> codec,
+                                                     @NotNull Supplier<T> defaultValueFactory) {
+        return WorldStateBuilder.create(this, parent, name, codec, defaultValueFactory);
+    }
+
+    @StandardAPI
+    public <T> WorldStateBuilder<T, RegistryCore> worldState(
+                                                             @NotNull String name,
+                                                             @NotNull Codec<T> codec,
+                                                             @NotNull Supplier<T> defaultValueFactory) {
+        return worldState(this, name, codec, defaultValueFactory);
+    }
+
+    @StandardAPI
+    public <T, P> ChunkStateBuilder<T, P> chunkState(
+                                                     @NotNull P parent,
+                                                     @NotNull String name,
+                                                     @NotNull Codec<T> codec,
+                                                     @NotNull Supplier<T> defaultValueFactory) {
+        return ChunkStateBuilder.create(this, parent, name, codec, defaultValueFactory);
+    }
+
+    @StandardAPI
+    public <T> ChunkStateBuilder<T, RegistryCore> chunkState(
+                                                             @NotNull String name,
+                                                             @NotNull Codec<T> codec,
+                                                             @NotNull Supplier<T> defaultValueFactory) {
+        return chunkState(this, name, codec, defaultValueFactory);
+    }
+
+    // --- Worldgen ---
+
+    @StandardAPI
+    public <C extends FeatureConfiguration, P> WorldgenFeatureBuilder<C, P> worldgenFeature(
+                                                                                            @NotNull P parent,
+                                                                                            @NotNull String name,
+                                                                                            @NotNull ConfiguredFeature<C, ?> configuredFeature) {
+        return WorldgenFeatureBuilder.create(this, parent, name, configuredFeature);
+    }
+
+    @StandardAPI
+    public <C extends FeatureConfiguration, P> WorldgenFeatureBuilder<C, P> worldgenFeature(
+                                                                                            @NotNull P parent,
+                                                                                            @NotNull String name,
+                                                                                            @NotNull java.util.function.Supplier<ConfiguredFeature<C, ?>> configuredFeature) {
+        return WorldgenFeatureBuilder.create(this, parent, name, configuredFeature);
+    }
+
+    @StandardAPI
+    public <C extends FeatureConfiguration> WorldgenFeatureBuilder<C, RegistryCore> worldgenFeature(
+                                                                                                    @NotNull String name,
+                                                                                                    @NotNull ConfiguredFeature<C, ?> configuredFeature) {
+        return worldgenFeature(this, name, configuredFeature);
+    }
+
+    @StandardAPI
+    public <C extends FeatureConfiguration> WorldgenFeatureBuilder<C, RegistryCore> worldgenFeature(
+                                                                                                    @NotNull String name,
+                                                                                                    @NotNull java.util.function.Supplier<ConfiguredFeature<C, ?>> configuredFeature) {
+        return worldgenFeature(this, name, configuredFeature);
+    }
+
     // --- Block Entities ---
 
     public <T extends BlockEntity, P> BlockEntityBuilder<T, P> blockEntity(
@@ -1123,7 +1273,7 @@ public class RegistryCore {
 
     @SyntaxSugar("creativeTab(name, FunctionUtil.noOpConsumer())")
     public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(String name) {
-        return creativeTab(name, FunctionUtil.noOpConsumer());
+        return creativeTab(name, FunctionUtil.noOpConsumerStatic());
     }
 
     @SyntaxSugar("creativeTab(name, RegistryLibLangProvider.toEnglishName(name), config)")
@@ -1133,7 +1283,7 @@ public class RegistryCore {
     }
 
     public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(String name, String enUs) {
-        return creativeTab(name, enUs, Map.of(), FunctionUtil.noOpConsumer());
+        return creativeTab(name, enUs, Map.of(), FunctionUtil.noOpConsumerStatic());
     }
 
     public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(
@@ -1143,7 +1293,7 @@ public class RegistryCore {
 
     public RegistryEntry<CreativeModeTab, CreativeModeTab> creativeTab(
                                                                        String name, String enUs, Map<String, String> localeNames) {
-        return creativeTab(name, enUs, localeNames, FunctionUtil.noOpConsumer());
+        return creativeTab(name, enUs, localeNames, FunctionUtil.noOpConsumerStatic());
     }
 
     @StandardAPI
@@ -1185,7 +1335,7 @@ public class RegistryCore {
                                     } catch (Exception ex) {
                                         String err = "Unexpected error while registering entry " + r.key.identifier() + " to registry " + key.identifier();
                                         if (core.skipErrors) {
-                                            log.error(DebugMarkers.REGISTER, err);
+                                            log.error(DebugMarkers.register(), err);
                                         } else {
                                             throw new RuntimeException(err, ex);
                                         }

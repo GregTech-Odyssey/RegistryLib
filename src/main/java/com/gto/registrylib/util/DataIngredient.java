@@ -51,6 +51,10 @@ public final class DataIngredient {
         return criteriaFactory.apply(prov);
     }
 
+    public Identifier getId() {
+        return id;
+    }
+
     @SuppressWarnings("unchecked")
     @SafeVarargs
     public static <T extends ItemLike> DataIngredient items(

@@ -49,7 +49,8 @@ const sidebars = {
         'how-to/register-custom-ingredients',
         'how-to/register-enchantments',
         'how-to/register-recipes',
-        'how-to/register-environment-features',
+        'how-to/register-crops',
+        'how-to/register-environment-state',
       ],
     },
     {
@@ -66,6 +67,8 @@ const sidebars = {
         'reference/api-overview',
         'reference/entry-types',
         'reference/builder-methods',
+        'reference/crop-api',
+        'reference/environment-api',
       ],
     },
     {

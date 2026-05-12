@@ -73,6 +73,10 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         return supplier;
     }
 
+    public final String getName() {
+        return name;
+    }
+
     /**
      * Registers this entry and returns the parent object, allowing the caller to continue configuring
      * the parent builder. Typically used to close a sub-entry chain: {@code

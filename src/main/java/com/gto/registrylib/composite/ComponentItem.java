@@ -32,6 +32,11 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
         super(properties);
     }
 
+    @Override
+    public List<ItemAttachment<ComponentItem>> getAttachments() {
+        return attachments;
+    }
+
     /** 挂载附件。自动检测该 attachment 类覆盖了哪些方法，更新位掩码。 */
     public void attachAttachment(ItemAttachment<ComponentItem> attachment) {
         attachment.overrideFlags = ItemAttachment.detectOverrides(attachment.getClass());

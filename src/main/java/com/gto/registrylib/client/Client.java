@@ -105,15 +105,28 @@ public class Client {
         NeoForge.EVENT_BUS.addListener(Client::onClientTickPost);
     }
 
+    public static void initStatic(IEventBus modEventBus) {
+        init(modEventBus);
+    }
+
     public void registerBER(Supplier<BlockEntityType<?>> type, BlockEntityRendererProvider provider) {
         var map = BER.get();
         if (map != null) map.put(type, provider);
+    }
+
+    public static void registerBERStatic(Supplier<BlockEntityType<?>> type, BlockEntityRendererProvider provider) {
+        registerBER(type, provider);
     }
 
     public void registerFluidTypeExtensions(
                                             Supplier<FluidType> type, IClientFluidTypeExtensions extensions) {
         var map = FLUID_TYPE_EXTENSIONS.get();
         if (map != null) map.put(type, extensions);
+    }
+
+    public static void registerFluidTypeExtensionsStatic(
+                                                         Supplier<FluidType> type, IClientFluidTypeExtensions extensions) {
+        registerFluidTypeExtensions(type, extensions);
     }
 
     /**
@@ -131,9 +144,22 @@ public class Client {
         FLUID_MODELS.put(registrationKey, new FluidModelRegistration(still, flowing, model));
     }
 
+    public static void registerFluidModelStatic(
+                                                Object registrationKey,
+                                                Supplier<? extends Fluid> still,
+                                                Supplier<? extends Fluid> flowing,
+                                                FluidModel.Unbaked model) {
+        registerFluidModel(registrationKey, still, flowing, model);
+    }
+
     public void registerBlockTintSources(
                                          Supplier<? extends Block> block, BlockTintSource... tintSources) {
         BLOCK_TINT_SOURCES.put(block, List.of(tintSources.clone()));
+    }
+
+    public static void registerBlockTintSourcesStatic(
+                                                      Supplier<? extends Block> block, BlockTintSource... tintSources) {
+        registerBlockTintSources(block, tintSources);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -141,6 +167,11 @@ public class Client {
                                        Supplier<EntityType<?>> type, EntityRendererProvider renderer) {
         var map = ENTITY_RENDERERS.get();
         if (map != null) map.put(type, renderer);
+    }
+
+    public static void registerEntityRendererStatic(
+                                                    Supplier<EntityType<?>> type, EntityRendererProvider renderer) {
+        registerEntityRenderer(type, renderer);
     }
 
     @SuppressWarnings("unused")
@@ -268,6 +299,10 @@ public class Client {
                 "tooltip.registrylib.page_keys",
                 compactKeyName(TOOLTIP_PAGE_UP),
                 compactKeyName(TOOLTIP_PAGE_DOWN));
+    }
+
+    public static Component tooltipPageKeyHintStatic() {
+        return tooltipPageKeyHint();
     }
 
     private Component compactKeyName(KeyMapping mapping) {

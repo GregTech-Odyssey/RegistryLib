@@ -1,12 +1,15 @@
 package com.gto.registrylib;
 
 import com.gto.registrylib.client.Client;
+import com.gto.registrylib.state.StateDebugCommands;
 import com.gto.registrylib.util.DistExecutor;
 
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -28,6 +31,7 @@ public final class RegistryLib {
         modEventBus.addListener(RegistryCore::onBuildCreativeModeTabContents);
         modEventBus.addListener(RegistryCore::onEntityAttributeCreation);
         modEventBus.addListener(RegistryCore::onRegisterSpawnPlacements);
+        NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> StateDebugCommands.register(event));
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.init(modEventBus));
     }
 }

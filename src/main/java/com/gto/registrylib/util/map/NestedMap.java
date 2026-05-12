@@ -66,6 +66,11 @@ public interface NestedMap<K1, K2, V> {
         }
 
         @Override
+        public Map<K1, Map<K2, V>> getMap() {
+            return map;
+        }
+
+        @Override
         public Map<K2, V> get(Object k1) {
             var innerMap = map.get(k1);
             if (innerMap != null) return innerMap;

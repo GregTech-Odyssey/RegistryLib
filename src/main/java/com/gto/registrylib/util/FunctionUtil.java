@@ -8,21 +8,25 @@ import java.util.function.*;
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class FunctionUtil {
 
-    public final Supplier NULL_SUPPLIER = () -> null;
+    public static final Supplier NULL_SUPPLIER = () -> null;
 
-    public final Function IDENTITY_FN = Function.identity();
+    public static final Function IDENTITY_FN = Function.identity();
 
-    public final UnaryOperator IDENTITY_UNARY_OP = UnaryOperator.identity();
+    public static final UnaryOperator IDENTITY_UNARY_OP = UnaryOperator.identity();
 
-    public final Consumer NO_OP_CONSUMER = _ -> {};
+    public static final Consumer NO_OP_CONSUMER = _ -> {};
 
-    public final BiConsumer NO_OP_BICONSUMER = (_, _) -> {};
+    public static final BiConsumer NO_OP_BICONSUMER = (_, _) -> {};
 
-    public final Predicate ALWAYS_TRUE = t -> true;
+    public static final Predicate ALWAYS_TRUE = t -> true;
 
-    public final Predicate ALWAYS_FALSE = t -> false;
+    public static final Predicate ALWAYS_FALSE = t -> false;
 
     public <T, R> Function<T, R> identityFn() {
+        return IDENTITY_FN;
+    }
+
+    public static <T, R> Function<T, R> identityFnStatic() {
         return IDENTITY_FN;
     }
 
@@ -30,7 +34,15 @@ public class FunctionUtil {
         return IDENTITY_UNARY_OP;
     }
 
+    public static <T> UnaryOperator<T> identityUnaryOpStatic() {
+        return IDENTITY_UNARY_OP;
+    }
+
     public <T> Consumer<T> noOpConsumer() {
+        return NO_OP_CONSUMER;
+    }
+
+    public static <T> Consumer<T> noOpConsumerStatic() {
         return NO_OP_CONSUMER;
     }
 
@@ -38,7 +50,15 @@ public class FunctionUtil {
         return NO_OP_BICONSUMER;
     }
 
+    public static <T, U> BiConsumer<T, U> noOpBiConsumerStatic() {
+        return NO_OP_BICONSUMER;
+    }
+
     public <T> Predicate<T> alwaysTrue() {
+        return ALWAYS_TRUE;
+    }
+
+    public static <T> Predicate<T> alwaysTrueStatic() {
         return ALWAYS_TRUE;
     }
 
@@ -46,7 +66,15 @@ public class FunctionUtil {
         return ALWAYS_FALSE;
     }
 
+    public static <T> Predicate<T> alwaysFalseStatic() {
+        return ALWAYS_FALSE;
+    }
+
     public <T> Supplier<T> nullSupplier() {
+        return NULL_SUPPLIER;
+    }
+
+    public static <T> Supplier<T> nullSupplierStatic() {
         return NULL_SUPPLIER;
     }
 
@@ -54,11 +82,23 @@ public class FunctionUtil {
         return () -> value;
     }
 
+    public static <T> Supplier<T> constantSupplierStatic(T value) {
+        return () -> value;
+    }
+
     public <T, R> Function<T, R> constantFn(R value) {
         return _ -> value;
     }
 
+    public static <T, R> Function<T, R> constantFnStatic(R value) {
+        return _ -> value;
+    }
+
     public <T, U, R> BiFunction<T, U, R> constantBiFn(R value) {
+        return (_, _) -> value;
+    }
+
+    public static <T, U, R> BiFunction<T, U, R> constantBiFnStatic(R value) {
         return (_, _) -> value;
     }
 }

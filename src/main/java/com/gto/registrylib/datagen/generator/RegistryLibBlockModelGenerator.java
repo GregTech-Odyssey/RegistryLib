@@ -13,6 +13,7 @@ import net.minecraft.client.data.models.ItemModelOutput;
 import net.minecraft.client.data.models.MultiVariant;
 import net.minecraft.client.data.models.blockstates.BlockModelDefinitionGenerator;
 import net.minecraft.client.data.models.blockstates.MultiVariantGenerator;
+import net.minecraft.client.data.models.blockstates.PropertyDispatch;
 import net.minecraft.client.data.models.model.ModelInstance;
 import net.minecraft.client.data.models.model.ModelLocationUtils;
 import net.minecraft.client.data.models.model.ModelTemplate;
@@ -24,6 +25,7 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
 import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.SlabBlock;
 import net.minecraft.world.level.block.StairBlock;
@@ -130,6 +132,22 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
 
     public void generateWithTemplate(Block block, ModelTemplate template, TextureMapping textures) {
         create(block, template.create(block, textures, modelOutput));
+    }
+
+    public void generateCropStages(CropBlock block, TextureRef... stageTextures) {
+        Identifier[] models = new Identifier[stageTextures.length];
+        for (int i = 0; i < stageTextures.length; i++) {
+            Identifier blockTexture = TextureMapping.getBlockTexture(block).sprite();
+            models[i] = blockTexture.withSuffix("_stage" + i);
+            Identifier texture = stageTextures[i].id();
+            modelOutput.accept(models[i], () -> createCropStageJson(texture));
+        }
+        blockStateOutput.accept(MultiVariantGenerator
+                .dispatch(block)
+                .with(PropertyDispatch.initial(CropBlock.AGE).generate(age -> {
+                    int modelIndex = Math.min(models.length - 1, age * models.length / (block.getMaxAge() + 1));
+                    return plainVariant(models[modelIndex]);
+                })));
     }
 
     public void generate(Block block, TexturedModel.Provider texture) {
@@ -252,6 +270,15 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
         JsonArray elements = new JsonArray();
         elements.add(element);
         root.add("elements", elements);
+        return root;
+    }
+
+    private static JsonObject createCropStageJson(Identifier texture) {
+        JsonObject root = new JsonObject();
+        root.addProperty("parent", "minecraft:block/crop");
+        JsonObject textures = new JsonObject();
+        textures.addProperty("crop", texture.toString());
+        root.add("textures", textures);
         return root;
     }
 

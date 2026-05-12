@@ -11,6 +11,14 @@ public class DebugMarkers {
         return MarkerManager.getMarker("REGISTRYLIB." + name);
     }
 
-    public final Marker REGISTER = marker("REGISTER");
-    public final Marker DATA = marker("DATA");
+    public static final Marker REGISTER = marker("REGISTER");
+    public static final Marker DATA = marker("DATA");
+
+    public static Marker register() {
+        return REGISTER;
+    }
+
+    public static Marker data() {
+        return DATA;
+    }
 }

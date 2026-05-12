@@ -8,12 +8,15 @@ import com.gto.registrylibtest.block.FullBlockExample;
 import com.gto.registrylibtest.block.SimpleBlockExample;
 import com.gto.registrylibtest.blockentity.FullBlockEntityExample;
 import com.gto.registrylibtest.blockentity.SimpleBlockEntityExample;
+import com.gto.registrylibtest.crop.SimpleCropExample;
 import com.gto.registrylibtest.enchantment.FullEnchantmentExample;
 import com.gto.registrylibtest.enchantment.SimpleEnchantmentExample;
 import com.gto.registrylibtest.entity.FullEntityExample;
 import com.gto.registrylibtest.entity.SimpleEntityExample;
 import com.gto.registrylibtest.fluid.FullFluidExample;
 import com.gto.registrylibtest.fluid.SimpleFluidExample;
+import com.gto.registrylibtest.gametest.RegistryLibFeatureGameTests;
+import com.gto.registrylibtest.gametest.RegistryLibStateGameTests;
 import com.gto.registrylibtest.item.FullItemExample;
 import com.gto.registrylibtest.item.SimpleItemExample;
 import com.gto.registrylibtest.recipe.FullRecipeExample;
@@ -21,6 +24,8 @@ import com.gto.registrylibtest.recipe.MultiInputRecipeExample;
 import com.gto.registrylibtest.recipe.SimpleAddRecipeExample;
 import com.gto.registrylibtest.recipe.SimpleIngredientTypeExample;
 import com.gto.registrylibtest.recipe.SimpleRecipeExample;
+import com.gto.registrylibtest.state.SimpleStateExample;
+import com.gto.registrylibtest.worldgen.SimpleWorldgenExample;
 
 import com.mojang.logging.LogUtils;
 
@@ -117,6 +122,11 @@ public class RegistryLibTest {
         var _entity1 = SimpleEntityExample.CRYSTAL_GUARDIAN;
         var _entity2 = FullEntityExample.OBSIDIAN_GOLEM;
 
+        var _state1 = SimpleStateExample.AMBIENT_ESSENCE;
+        var _state2 = SimpleStateExample.ESSENCE_EPOCH;
+        var _crop1 = SimpleCropExample.ESSENCE_CARROT;
+        var _worldgen1 = SimpleWorldgenExample.ESSENCE_NODE_PATCH;
+
         // 成就进度
         SimpleAdvancementExample.register();
         FullAdvancementExample.register();
@@ -140,6 +150,8 @@ public class RegistryLibTest {
 
     public RegistryLibTest(IEventBus modEventBus, ModContainer modContainer) {
         LOGGER.info("registrylib test mod initializing...");
+        RegistryLibStateGameTests.register(modEventBus);
+        RegistryLibFeatureGameTests.register(modEventBus);
         LOGGER.info(
                 "Registered {} items and {} blocks",
                 REGISTRYLIB.getAll(Registries.ITEM).size(),

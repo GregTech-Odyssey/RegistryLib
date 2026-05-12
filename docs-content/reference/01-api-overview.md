@@ -218,5 +218,6 @@ MACHINES.block("crusher", Block::new)
 - [Builder Methods](/reference/builder-methods) - complete method reference for all Builder types
 - [Register Items](/how-to/register-items) - step-by-step item registration
 - [Register Blocks](/how-to/register-blocks) - step-by-step block registration
-- [Register Environment Features](/how-to/register-environment-features) - chunk/world state, crops, and worldgen
+- [Register Crops](/how-to/register-crops) - crop blocks, seeds, growth, and harvest callbacks
+- [Register Environment State](/how-to/register-environment-state) - chunk/world state and worldgen
 - [Builder Pattern & Fluent API](/concepts/builder-pattern) - how the chain architecture works

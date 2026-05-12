@@ -76,6 +76,11 @@ public interface NestedMultiMap<K1, K2, V> {
         }
 
         @Override
+        public Map<K1, Map<K2, Collection<V>>> getMap() {
+            return map;
+        }
+
+        @Override
         public Collection<V> get(K1 k1, K2 k2) {
             var innerMap = map.get(k1);
             if (innerMap == null) return Collections.emptyList();

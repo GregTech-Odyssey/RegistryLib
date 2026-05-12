@@ -186,6 +186,11 @@ public class BlockBuilder<T extends Block, P>
         return this;
     }
 
+    public BlockBuilder<T, P> setInitialProperties(@NotNull Supplier<BlockBehaviour.Properties> properties) {
+        this.initialProperties = properties;
+        return this;
+    }
+
     @SyntaxSugar("initialProperties(() -> block)")
     public BlockBuilder<T, P> initialProperties(Block block) {
         initialProperties = () -> BlockBehaviour.Properties.ofFullCopy(block);
