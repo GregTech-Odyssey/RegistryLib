@@ -10,11 +10,13 @@ import com.gto.registrylib.util.entry.ItemEntry;
 
 import net.minecraft.advancements.criterion.StatePropertiesPredicate;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.storage.loot.predicates.LootItemBlockStatePropertyCondition;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
@@ -26,13 +28,16 @@ public final class CropBuilder<P> {
     private final String name;
     private UnaryOperator<BlockBehaviour.Properties> properties = UnaryOperator.identity();
     private RegistryLibCropBlock.GrowthRoll growthRoll = (_state, _level, _pos, _random) -> true;
-    private RegistryLibCropBlock.HarvestCallback harvestCallback = (_state, _level, _pos, _player) -> {};
+    private RegistryLibCropBlock.HarvestCallback harvestCallback = (_state, _level, _pos, _player) -> {
+    };
     private boolean rightClickHarvest = true;
-    private Consumer<com.gto.registrylib.builders.ItemBuilder<Item, RegistryCore>> seedConfig = _builder -> {};
+    private Consumer<com.gto.registrylib.builders.ItemBuilder<BlockItem, RegistryCore>> seedConfig = _builder -> {
+    };
     private Supplier<? extends Item> produceItem;
+    private BiConsumer<RegistryLibBlockLootTables, RegistryLibCropBlock> loot;
     private TextureRef[] stageTextures;
 
-    private ItemEntry<Item> seedEntry;
+    private ItemEntry<? extends Item> seedEntry;
 
     public CropBuilder(RegistryCore core, P parent, String name) {
         this.core = core;
@@ -71,7 +76,7 @@ public final class CropBuilder<P> {
 
     @StandardAPI
     public CropBuilder<P> seedItem(
-                                   Consumer<com.gto.registrylib.builders.ItemBuilder<Item, RegistryCore>> seedConfig) {
+            Consumer<com.gto.registrylib.builders.ItemBuilder<BlockItem, RegistryCore>> seedConfig) {
         this.seedConfig = seedConfig;
         return this;
     }
@@ -83,6 +88,12 @@ public final class CropBuilder<P> {
     }
 
     @StandardAPI
+    public CropBuilder<P> loot(BiConsumer<RegistryLibBlockLootTables, RegistryLibCropBlock> loot) {
+        this.loot = loot;
+        return this;
+    }
+
+    @StandardAPI
     public CropBuilder<P> stageTextures(TextureRef... stageTextures) {
         this.stageTextures = stageTextures.clone();
         return this;
@@ -90,7 +101,11 @@ public final class CropBuilder<P> {
 
     @StandardAPI
     public BlockEntry<RegistryLibCropBlock> register() {
-        com.gto.registrylib.builders.ItemBuilder<Item, RegistryCore> seedBuilder = core.item(name + "_seeds", Item::new);
+        @SuppressWarnings("unchecked")
+        BlockEntry<RegistryLibCropBlock>[] cropRef = new BlockEntry[1];
+        com.gto.registrylib.builders.ItemBuilder<BlockItem, RegistryCore> seedBuilder = core.item(
+                name + "_seeds",
+                p -> new RegistryLibCropSeedsItem(() -> cropRef[0].get(), p));
         seedConfig.accept(seedBuilder);
         seedEntry = seedBuilder.register();
         BlockEntry<RegistryLibCropBlock> crop = core
@@ -108,8 +123,9 @@ public final class CropBuilder<P> {
                         prov.generateCropStages(block, stageTextures);
                     }
                 })
-                .loot((tables, block) -> cropLoot(tables, block))
+                .loot((tables, block) -> generateLoot(tables, block))
                 .register();
+        cropRef[0] = crop;
         return crop;
     }
 
@@ -130,5 +146,13 @@ public final class CropBuilder<P> {
                         LootItemBlockStatePropertyCondition
                                 .hasBlockStateProperties(block)
                                 .setProperties(StatePropertiesPredicate.Builder.properties().hasProperty(CropBlock.AGE, block.getMaxAge()))));
+    }
+
+    private void generateLoot(RegistryLibBlockLootTables tables, RegistryLibCropBlock block) {
+        if (loot == null) {
+            cropLoot(tables, block);
+            return;
+        }
+        loot.accept(tables, block);
     }
 }

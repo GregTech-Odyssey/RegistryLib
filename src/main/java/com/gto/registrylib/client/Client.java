@@ -73,6 +73,7 @@ public class Client {
 
     private final AtomicReference<ConcurrentHashMap<Supplier<EntityType<?>>, EntityRendererProvider>> ENTITY_RENDERERS = new AtomicReference<>(new ConcurrentHashMap<>());
 
+    @SuppressWarnings("deprecation")
     private final KeyMapping.Category TOOLTIP_KEY_CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("registrylib", "tooltip"));
 
     private final KeyMapping TOOLTIP_PAGE_UP = new KeyMapping(
@@ -174,7 +175,7 @@ public class Client {
         registerEntityRenderer(type, renderer);
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({ "unused", "unchecked", "rawtypes" })
     private void onClientSetup(FMLClientSetupEvent ignoredEvent) {
         var map = BER.getAndSet(null);
         if (map != null)

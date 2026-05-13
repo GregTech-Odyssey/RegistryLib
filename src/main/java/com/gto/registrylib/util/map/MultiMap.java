@@ -5,7 +5,6 @@ import com.google.common.base.Supplier;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceFunction;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import lombok.Getter;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,7 +41,6 @@ public interface MultiMap<K, V> {
 
     class MultiMapWrapper<K, V> implements MultiMap<K, V> {
 
-        @Getter
         private final Map<K, Collection<V>> map;
         private final Reference2ReferenceFunction<Object, Collection<V>> factory;
         private final boolean isRefMap;

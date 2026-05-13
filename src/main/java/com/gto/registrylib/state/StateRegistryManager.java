@@ -13,6 +13,20 @@ public final class StateRegistryManager {
     private final Map<Key, StateEntry<?>> entries = new LinkedHashMap<>();
 
     public void register(StateEntry<?> entry) {
+        Optional<StateEntry<?>> conflictingScope = entries
+                .values()
+                .stream()
+                .filter(existing -> existing.identifier().equals(entry.identifier()))
+                .findFirst();
+        if (conflictingScope.isPresent()) {
+            StateEntry<?> existing = conflictingScope.get();
+            throw new IllegalStateException("Duplicate state id: "
+                    + entry.identifier()
+                    + " is already registered as "
+                    + existing.scope().id()
+                    + " and cannot also be registered as "
+                    + entry.scope().id());
+        }
         StateEntry<?> existing = entries.putIfAbsent(new Key(entry.scope(), entry.identifier()), entry);
         if (existing != null) {
             throw new IllegalStateException("Duplicate state entry: " + entry.scope().id() + " " + entry.identifier());
@@ -33,5 +47,6 @@ public final class StateRegistryManager {
                 .toList();
     }
 
-    private record Key(StateScope scope, Identifier id) {}
+    private record Key(StateScope scope, Identifier id) {
+    }
 }

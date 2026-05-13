@@ -54,8 +54,9 @@ public class ItemEntry<T extends Item> extends ItemProviderEntry<Item, T> implem
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public final boolean is(Holder<Item> holder) {
-        return value == holder.value();
+        return holder.is(this.key);
     }
 
     @Override

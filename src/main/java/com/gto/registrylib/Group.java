@@ -143,6 +143,7 @@ public class Group {
 
     // === Default Application ===
 
+    @SuppressWarnings("unchecked")
     private <T extends Block> BlockBuilder<T, Group> applyBlockDefaults(
                                                                         BlockBuilder<T, Group> builder) {
         if (initialBlockProperties != null) {
@@ -172,6 +173,7 @@ public class Group {
         return builder;
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends Item> ItemBuilder<T, Group> applyItemDefaults(ItemBuilder<T, Group> builder) {
         if (initialItemProperties != null) {
             builder.initialProperties(initialItemProperties);
@@ -195,6 +197,7 @@ public class Group {
         return builder;
     }
 
+    @SuppressWarnings("unchecked")
     private <T extends BaseFlowingFluid> FluidBuilder<T, Group> applyFluidDefaults(
                                                                                    FluidBuilder<T, Group> builder) {
         if (tab != null) {

@@ -20,7 +20,6 @@ import net.minecraft.tags.TagKey;
 
 import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import lombok.Getter;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,6 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
 
     protected final RegistryCore core;
     protected final P parent;
-    @Getter
     protected final String name;
     protected final ResourceKey<? extends Registry<R>> registryKey;
     protected final Reference2ReferenceOpenHashMap<ProviderType<? extends RegistryLibTagsProvider<?>>, Reference2BooleanOpenHashMap<TagKey<?>>> tagsByType;

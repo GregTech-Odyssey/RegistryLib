@@ -37,6 +37,7 @@ import java.util.Optional;
 public class CrystalGuardianAi {
 
     /** 创建 Brain.Provider，声明所需的额外 MemoryModuleType、SensorType 以及 ActivitySupplier。 */
+    @SuppressWarnings("deprecation")
     public static Brain.Provider<CrystalGuardian> brainProvider() {
         return Brain.provider(
                 List.of(

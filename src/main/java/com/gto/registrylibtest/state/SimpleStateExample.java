@@ -19,9 +19,10 @@ public final class SimpleStateExample {
             .register();
 
     public static final WorldStateEntry<Integer> AMBIENT_ESSENCE_WORLD = RegistryLibTest.REGISTRYLIB
-            .worldState("ambient_essence", Codec.INT, () -> 100)
+            .worldState("ambient_essence_world", Codec.INT, () -> 100)
             .debug()
             .register();
 
-    private SimpleStateExample() {}
+    private SimpleStateExample() {
+    }
 }

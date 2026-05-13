@@ -97,7 +97,6 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import lombok.Getter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
@@ -148,10 +147,8 @@ public class RegistryCore {
     private final List<String> generatedNamespaceCleanups = new ArrayList<>();
     private final StateRegistryManager stateRegistryManager = new StateRegistryManager();
 
-    @Getter
     protected ResourceKey<CreativeModeTab> defaultCreativeModeTab = null;
 
-    @Getter
     private final String modid;
 
     private boolean skipErrors;
@@ -499,6 +496,7 @@ public class RegistryCore {
     }
 
     @SyntaxSugar("registry(...)")
+    @SuppressWarnings("unchecked")
     public <R, T extends R, E extends RegistryEntry<R, T>> E registry(
                                                                       String name,
                                                                       ResourceKey<? extends Registry<R>> registryType,
@@ -1322,6 +1320,7 @@ public class RegistryCore {
                 RegistryEntry::new);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     static void onRegister(RegisterEvent event) {
         var type = event.getRegistry();
         var key = type.key();
@@ -1404,11 +1403,11 @@ public class RegistryCore {
             this.callbacks = callbacks;
         }
 
-        @SuppressWarnings("all")
+        @SuppressWarnings("unchecked")
         private void register(Registry<R> registry) {
             T value = creator.apply(key);
             this.entry.bound(value);
-            ((WritableRegistry) registry).register(key, value, RegistrationInfo.BUILT_IN);
+            ((WritableRegistry<R>) registry).register(key, value, RegistrationInfo.BUILT_IN);
             callbacks.forEach(c -> c.accept(value));
             // Release references to builder-capturing lambdas; Registration is removed from
             // the registrations map after this call, but nulling eagerly cuts the reference

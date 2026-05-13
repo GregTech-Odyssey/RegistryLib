@@ -4,6 +4,7 @@ import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.TagsProvider;
@@ -37,7 +38,7 @@ public class RegistryLibItemTagsProvider extends RegistryLibTagsProvider.Intrins
                 output,
                 Registries.ITEM,
                 registriesLookup,
-                item -> item.builtInRegistryHolder().key());
+                item -> BuiltInRegistries.ITEM.getResourceKey(item).orElseThrow());
         this.blockTags = blockTags;
     }
 

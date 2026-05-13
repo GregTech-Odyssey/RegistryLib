@@ -16,6 +16,7 @@ import com.gto.registrylibtest.entity.SimpleEntityExample;
 import com.gto.registrylibtest.fluid.FullFluidExample;
 import com.gto.registrylibtest.fluid.SimpleFluidExample;
 import com.gto.registrylibtest.gametest.RegistryLibFeatureGameTests;
+import com.gto.registrylibtest.gametest.RegistryLibGameTestSupport;
 import com.gto.registrylibtest.gametest.RegistryLibStateGameTests;
 import com.gto.registrylibtest.item.FullItemExample;
 import com.gto.registrylibtest.item.SimpleItemExample;
@@ -126,6 +127,7 @@ public class RegistryLibTest {
         var _state2 = SimpleStateExample.ESSENCE_EPOCH;
         var _crop1 = SimpleCropExample.ESSENCE_CARROT;
         var _worldgen1 = SimpleWorldgenExample.ESSENCE_NODE_PATCH;
+        RegistryLibGameTestSupport.bootstrap();
 
         // 成就进度
         SimpleAdvancementExample.register();

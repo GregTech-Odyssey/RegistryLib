@@ -17,6 +17,7 @@ public final class Lazy<T> implements Supplier<T> {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public T get() {
         var value = this.value;
         if (value == UNINITIALIZED) {

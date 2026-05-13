@@ -75,6 +75,7 @@ public class ItemAttachment<T extends IComponentItem<T>> {
     /** 由注册系统在 attach 时设置。 */
     public int overrideFlags = 0;
 
+    @SuppressWarnings("unchecked")
     public final <A> A self() {
         return (A) this;
     }

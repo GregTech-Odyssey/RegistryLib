@@ -114,7 +114,7 @@ public class EntityBuilder<T extends Entity, P>
     }
 
     @StandardAPI
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public EntityBuilder<T, P> renderer(@NotNull Supplier<EntityRendererProvider> renderer) {
         Supplier supplier = getValueSupplier();
         DistExecutor.unsafeRunWhenOn(

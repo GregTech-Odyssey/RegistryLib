@@ -94,7 +94,7 @@ public class RegistryLibGeneralResourceProvider implements RegistryLibProvider {
                                                             f -> {
                                                                 try {
                                                                     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-                                                                    HashingOutputStream hashedBytes = new HashingOutputStream(Hashing.sha1(), bytes);
+                                                                    HashingOutputStream hashedBytes = new HashingOutputStream(Hashing.sha256(), bytes);
                                                                     var p = f.apply(target, hashedBytes);
                                                                     cache.writeIfNeeded(p, bytes.toByteArray(), hashedBytes.hash());
                                                                 } catch (IOException var10) {

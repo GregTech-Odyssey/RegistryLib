@@ -63,7 +63,7 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     }
 
     @StandardAPI
-    @SuppressWarnings("rawtypes")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public BlockEntityBuilder<BE, P> renderer(
                                               @NotNull Supplier<? extends BlockEntityRendererProvider> renderer) {
         Supplier supplier = getValueSupplier();

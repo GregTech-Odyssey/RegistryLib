@@ -7,6 +7,7 @@ import com.gto.registrylibtest.ModRegistryCore;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
@@ -298,7 +299,7 @@ public class FullEntityExample {
             BlockState blockState = Blocks.OBSIDIAN.defaultBlockState();
             BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(blockState);
             List<BlockStateModelPart> parts = new ArrayList<>();
-            model.collectParts(random, parts);
+            model.collectParts(Minecraft.getInstance().level, BlockPos.ZERO, blockState, random, parts);
             return parts;
         }
     }

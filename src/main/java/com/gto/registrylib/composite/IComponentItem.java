@@ -4,6 +4,7 @@ import java.util.List;
 
 public interface IComponentItem<T extends IComponentItem<T>> {
 
+    @SuppressWarnings("unchecked")
     default <I> I self() {
         return (I) this;
     }

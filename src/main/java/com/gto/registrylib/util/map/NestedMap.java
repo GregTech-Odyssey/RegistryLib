@@ -5,7 +5,6 @@ import com.google.common.base.Supplier;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceFunction;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import lombok.Getter;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -47,7 +46,6 @@ public interface NestedMap<K1, K2, V> {
 
     class NestedMapWrapper<K1, K2, V> implements NestedMap<K1, K2, V> {
 
-        @Getter
         private final Map<K1, Map<K2, V>> map;
         private final Reference2ReferenceFunction<Object, Map<K2, V>> factory;
         private final boolean isRefMap;

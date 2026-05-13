@@ -22,6 +22,7 @@ import net.neoforged.neoforge.registries.datamaps.DataMapType;
 import net.neoforged.neoforge.transfer.fluid.FluidResource;
 
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -117,7 +118,7 @@ public class FluidEntry<T extends BaseFlowingFluid> extends RegistryEntry<Fluid,
 
     @Override
     public final boolean is(Holder<Fluid> holder) {
-        return value == holder.value();
+        return holder.is(this.key);
     }
 
     @Override
@@ -136,22 +137,22 @@ public class FluidEntry<T extends BaseFlowingFluid> extends RegistryEntry<Fluid,
     }
 
     @Override
-    public final boolean is(TagKey<Fluid> tag) {
+    public final boolean is(@NonNull TagKey<Fluid> tag) {
         return value != null && value.builtInRegistryHolder.is(tag);
     }
 
     @Override
-    public final Stream<TagKey<Fluid>> tags() {
+    public final @NonNull Stream<TagKey<Fluid>> tags() {
         return value != null ? value.builtInRegistryHolder.tags() : Stream.empty();
     }
 
     @Override
-    public final DataComponentMap components() {
+    public final @NonNull DataComponentMap components() {
         return value != null ? value.builtInRegistryHolder.components() : DataComponentMap.EMPTY;
     }
 
     @Override
-    public final Either<ResourceKey<Fluid>, Fluid> unwrap() {
+    public final @NonNull Either<ResourceKey<Fluid>, Fluid> unwrap() {
         return Either.left(this.key);
     }
 

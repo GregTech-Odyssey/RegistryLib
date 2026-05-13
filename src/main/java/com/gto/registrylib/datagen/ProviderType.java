@@ -18,6 +18,7 @@ import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceKey;
@@ -51,7 +52,7 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
             c -> new RegistryLibEnchantmentTagsProvider(
                     c.parent(), c.type(), c.output(), c.provider()));
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<Block>> BLOCK_TAGS = registerIntrinsicTag(
-            "tags/block", "blocks", Registries.BLOCK, block -> block.builtInRegistryHolder().key());
+            "tags/block", "blocks", Registries.BLOCK, block -> BuiltInRegistries.BLOCK.getResourceKey(block).orElseThrow());
     ProviderType<RegistryLibItemTagsProvider> ITEM_TAGS = registerTag(
             "tags/item",
             Registries.ITEM,
@@ -63,12 +64,12 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
                     c.provider(),
                     c.get(BLOCK_TAGS).contentsGetter()));
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<Fluid>> FLUID_TAGS = registerIntrinsicTag(
-            "tags/fluid", "fluids", Registries.FLUID, fluid -> fluid.builtInRegistryHolder().key());
+            "tags/fluid", "fluids", Registries.FLUID, fluid -> BuiltInRegistries.FLUID.getResourceKey(fluid).orElseThrow());
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<EntityType<?>>> ENTITY_TAGS = registerIntrinsicTag(
             "tags/entity",
             "entity_types",
             Registries.ENTITY_TYPE,
-            entityType -> entityType.builtInRegistryHolder().key());
+            entityType -> BuiltInRegistries.ENTITY_TYPE.getResourceKey(entityType).orElseThrow());
 
     // CLIENT DATA
     ProviderType<RegistryLibModelProvider> MODEL = registerClientProvider(
@@ -136,9 +137,10 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
     }
 
     @NotNull
+    @SuppressWarnings("unchecked")
     static <T extends RegistryLibProvider> ProviderType<T> registerClientProvider(
                                                                                   String name, Supplier<ProviderType<T>> supplier) {
-        if (!DatagenModLoader.isRunningDataGen()) return NULL;
+        if (!DatagenModLoader.isRunningDataGen()) return (ProviderType<T>) NULL;
         var type = supplier.get();
         RegistryLibDataProvider.TYPES.put(name, type);
         return type;

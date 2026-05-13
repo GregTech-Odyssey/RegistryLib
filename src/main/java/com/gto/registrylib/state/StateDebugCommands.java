@@ -5,18 +5,22 @@ import com.gto.registrylib.RegistryLib;
 import com.google.gson.JsonParser;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.serialization.JsonOps;
 
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.ResourceKeyArgument;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.level.ChunkPos;
@@ -33,7 +37,8 @@ public final class StateDebugCommands {
     private static final DynamicCommandExceptionType INVALID_VALUE = new DynamicCommandExceptionType(
             value -> Component.literal(String.valueOf(value)));
 
-    private StateDebugCommands() {}
+    private StateDebugCommands() {
+    }
 
     public static void register(RegisterCommandsEvent event) {
         register(event.getDispatcher());
@@ -52,7 +57,7 @@ public final class StateDebugCommands {
                                 .then(Commands
                                         .literal("get")
                                         .then(Commands
-                                                .argument("id", StateIdArgument.id())
+                                                .argument("id", ResourceKeyArgument.key(Registries.CUSTOM_STAT))
                                                 .suggests((ctx, builder) -> suggestStateIds(builder))
                                                 .executes(StateDebugCommands::getWorldState)
                                                 .then(Commands
@@ -63,7 +68,7 @@ public final class StateDebugCommands {
                                 .then(Commands
                                         .literal("set")
                                         .then(Commands
-                                                .argument("id", StateIdArgument.id())
+                                                .argument("id", ResourceKeyArgument.key(Registries.CUSTOM_STAT))
                                                 .suggests((ctx, builder) -> suggestWritableStateIds(builder))
                                                 .then(Commands
                                                         .argument("tail", StringArgumentType.greedyString())
@@ -71,7 +76,7 @@ public final class StateDebugCommands {
                                 .then(Commands
                                         .literal("debug")
                                         .then(Commands
-                                                .argument("id", StateIdArgument.id())
+                                                .argument("id", ResourceKeyArgument.key(Registries.CUSTOM_STAT))
                                                 .suggests((ctx, builder) -> suggestStateIds(builder))
                                                 .executes(StateDebugCommands::debugWorldState)
                                                 .then(Commands
@@ -135,12 +140,10 @@ public final class StateDebugCommands {
     }
 
     private static int setState(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        Identifier id = StateIdArgument.getId(context, "id");
-        String raw = id.toString();
+        Identifier id = getId(context, "id");
+        String raw = getRawId(context, "id");
         String tail = StringArgumentType.getString(context, "tail");
-        boolean hasChunkState = findState(id, StateScope.CHUNK).isPresent()
-                || (!raw.contains(":") && findStateByPath(raw, StateScope.CHUNK).isPresent());
-        if (hasChunkState && canParseChunkSetInput(tail)) {
+        if (canParseChunkSetInput(tail) && findUniqueState(context, StateScope.CHUNK, false).isPresent()) {
             return setChunkState(context);
         }
         return setWorldState(context);
@@ -182,7 +185,7 @@ public final class StateDebugCommands {
         return entry.identifier() + " = " + encoded;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private static String encodeValue(StateEntry<?> entry, Object value) {
         Object encoded = ((StateEntry) entry)
                 .codec()
@@ -234,20 +237,17 @@ public final class StateDebugCommands {
 
     @SuppressWarnings("unchecked")
     private static <T> StateEntry<T> requireTypedState(
-                                                       CommandContext<CommandSourceStack> context, StateScope scope) throws CommandSyntaxException {
+            CommandContext<CommandSourceStack> context, StateScope scope) throws CommandSyntaxException {
         return (StateEntry<T>) requireState(context, scope, true);
     }
 
     private static StateEntry<?> requireState(
-                                              CommandContext<CommandSourceStack> context,
-                                              StateScope scope,
-                                              boolean writable) throws CommandSyntaxException {
-        Identifier id = StateIdArgument.getId(context, "id");
-        String raw = id.toString();
-        Optional<StateEntry<?>> entry = findState(id, scope);
-        if (entry.isEmpty() && !raw.contains(":")) {
-            entry = findStateByPath(raw, scope);
-        }
+            CommandContext<CommandSourceStack> context,
+            StateScope scope,
+            boolean writable) throws CommandSyntaxException {
+        Identifier id = getId(context, "id");
+        String raw = getRawId(context, "id");
+        Optional<StateEntry<?>> entry = findUniqueState(context, scope, writable);
         if (entry.isEmpty() || entry.get().scope() != scope || (writable && !entry.get().debugConfig().writable())) {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherParseException().create("Unknown state: " + raw);
         }
@@ -260,18 +260,26 @@ public final class StateDebugCommands {
                 IntegerArgumentType.getInteger(context, "chunkZ"));
     }
 
-    private static Optional<StateEntry<?>> findState(Identifier id, StateScope scope) {
-        return allStates().stream()
-                .filter(e -> e.identifier().equals(id))
-                .filter(e -> e.scope() == scope)
-                .findFirst();
+    private static Optional<StateEntry<?>> findUniqueState(
+            CommandContext<CommandSourceStack> context,
+            StateScope scope,
+            boolean writable) throws CommandSyntaxException {
+        Identifier id = getId(context, "id");
+        String raw = getRawId(context, "id");
+        List<StateEntry<?>> matches = matchingStates(id, raw, scope, writable);
+        if (matches.size() > 1) {
+            throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherParseException().create("Ambiguous state id: " + raw);
+        }
+        return matches.stream().findFirst();
     }
 
-    private static Optional<StateEntry<?>> findStateByPath(String path, StateScope scope) {
-        return allStates().stream()
-                .filter(e -> e.identifier().getPath().equals(path))
+    private static List<StateEntry<?>> matchingStates(Identifier id, String raw, StateScope scope, boolean writable) {
+        return allStates()
+                .stream()
                 .filter(e -> e.scope() == scope)
-                .findFirst();
+                .filter(e -> !writable || e.debugConfig().writable())
+                .filter(e -> e.identifier().equals(id) || (!raw.contains(":") && e.identifier().getPath().equals(raw)))
+                .toList();
     }
 
     private static boolean canParseChunkSetInput(String tail) {
@@ -307,52 +315,56 @@ public final class StateDebugCommands {
                 .toList();
     }
 
-    private static CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestStateIds(
-                                                                                                  com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
+    private static Identifier getId(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        ResourceKey<?> key = context.getArgument(name, ResourceKey.class);
+        return key.identifier();
+    }
+
+    private static String getRawId(CommandContext<CommandSourceStack> context, String name) throws CommandSyntaxException {
+        for (var node : context.getNodes()) {
+            if (node.getNode().getName().equals(name)) {
+                return context.getInput().substring(node.getRange().getStart(), node.getRange().getEnd());
+            }
+        }
+        return "";
+    }
+
+    private static CompletableFuture<Suggestions> suggestStateIds(SuggestionsBuilder builder) {
+        return suggestStateIds(builder, false);
+    }
+
+    private static CompletableFuture<Suggestions> suggestWritableStateIds(SuggestionsBuilder builder) {
+        return suggestStateIds(builder, true);
+    }
+
+    private static CompletableFuture<Suggestions> suggestStateIds(SuggestionsBuilder builder, boolean writableOnly) {
+        SuggestionsBuilder argumentBuilder = builder.createOffset(currentArgumentStart(builder));
+        String remaining = argumentBuilder.getRemainingLowerCase();
         allStates()
                 .stream()
                 .filter(e -> e.debugConfig().enabled())
-                .map(e -> e.identifier().toString())
-                .filter(id -> id.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
-                .forEach(builder::suggest);
-        return builder.buildFuture();
+                .filter(e -> !writableOnly || e.debugConfig().writable())
+                .map(StateEntry::identifier)
+                .filter(id -> matchesIdSuggestion(id, remaining))
+                .map(Identifier::toString)
+                .forEach(argumentBuilder::suggest);
+        return argumentBuilder.buildFuture();
     }
 
-    private static CompletableFuture<com.mojang.brigadier.suggestion.Suggestions> suggestWritableStateIds(
-                                                                                                          com.mojang.brigadier.suggestion.SuggestionsBuilder builder) {
-        allStates()
-                .stream()
-                .filter(e -> e.debugConfig().enabled() && e.debugConfig().writable())
-                .map(e -> e.identifier().toString())
-                .filter(id -> id.toLowerCase(Locale.ROOT).startsWith(builder.getRemainingLowerCase()))
-                .forEach(builder::suggest);
-        return builder.buildFuture();
+    private static int currentArgumentStart(SuggestionsBuilder builder) {
+        String input = builder.getInput();
+        int start = Math.min(builder.getStart(), input.length());
+        while (start > 0 && !Character.isWhitespace(input.charAt(start - 1))) {
+            start--;
+        }
+        return start;
     }
 
-    private static final class StateIdArgument implements ArgumentType<Identifier> {
-
-        private static final Collection<String> EXAMPLES = List.of("ambient_essence", "registrylibtest:ambient_essence");
-
-        private StateIdArgument() {}
-
-        private static StateIdArgument id() {
-            return new StateIdArgument();
-        }
-
-        private static Identifier getId(CommandContext<CommandSourceStack> context, String name) {
-            return context.getArgument(name, Identifier.class);
-        }
-
-        @Override
-        public Identifier parse(StringReader reader) throws CommandSyntaxException {
-            return Identifier.read(reader);
-        }
-
-        @Override
-        public Collection<String> getExamples() {
-            return EXAMPLES;
-        }
+    private static boolean matchesIdSuggestion(Identifier id, String remaining) {
+        return id.toString().toLowerCase(Locale.ROOT).startsWith(remaining)
+                || id.getPath().toLowerCase(Locale.ROOT).startsWith(remaining);
     }
 
-    private record ChunkSetInput(ChunkPos pos, String value) {}
+    private record ChunkSetInput(ChunkPos pos, String value) {
+    }
 }

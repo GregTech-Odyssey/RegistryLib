@@ -53,8 +53,9 @@ public class BlockEntry<T extends Block> extends ItemProviderEntry<Block, T>
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public final boolean is(Holder<Block> holder) {
-        return value == holder.value();
+        return holder.is(this.key);
     }
 
     @Override

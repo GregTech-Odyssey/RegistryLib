@@ -11,8 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
-import lombok.Getter;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,7 +22,6 @@ import java.util.List;
  */
 public class ComponentItem extends Item implements IComponentItem<ComponentItem> {
 
-    @Getter
     private final List<ItemAttachment<ComponentItem>> attachments = new ArrayList<>();
     private int combinedFlags = 0;
 

@@ -41,7 +41,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.neoforged.api.distmarker.Dist;
 
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -69,7 +68,6 @@ public class BlockBuilder<T extends Block, P>
     }
 
     private final Function<BlockBehaviour.Properties, T> factory;
-    @Setter
     private Supplier<BlockBehaviour.Properties> initialProperties;
     private Function<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = FunctionUtil.identityFn();
     @Nullable
