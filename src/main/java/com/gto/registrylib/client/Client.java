@@ -8,7 +8,7 @@ import com.mojang.datafixers.util.Either;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.color.block.BlockTintSource;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
 import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
@@ -101,7 +101,7 @@ public class Client {
         NeoForge.EVENT_BUS.addListener(Client::onGatherTooltipComponents);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, Client::onResetTooltipLayout);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onRenderTooltipPre);
-        NeoForge.EVENT_BUS.addListener(Client::onRenderTooltipTexture);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onRenderTooltipTexture);
         NeoForge.EVENT_BUS.addListener(Client::onTooltipKeyPressed);
         NeoForge.EVENT_BUS.addListener(Client::onClientTickPost);
     }
@@ -258,24 +258,11 @@ public class Client {
         }
         if (hasRegistryLibTooltip) {
             if (vanillaWidth > 0 && vanillaHeight > 0) {
-                renderTooltipPanel(
-                        event.getGraphics(), event.getX(), event.getY(), vanillaWidth, vanillaHeight);
+                TooltipRenderUtil.extractTooltipBackground(
+                        event.getGraphics(), event.getX(), event.getY(), vanillaWidth, vanillaHeight, event.getTexture());
             }
             event.setTexture(Identifier.fromNamespaceAndPath("registrylib", "transparent"));
         }
-    }
-
-    private void renderTooltipPanel(
-                                    GuiGraphicsExtractor graphics, int x, int y, int width, int height) {
-        int left = x - 3;
-        int top = y - 3;
-        int right = x + width + 3;
-        int bottom = y + height + 3;
-        graphics.fill(left, top, right, bottom, 0xF0100010);
-        graphics.fillGradient(left, top, left + 1, bottom, 0x505000FF, 0x5028007F);
-        graphics.fillGradient(right - 1, top, right, bottom, 0x505000FF, 0x5028007F);
-        graphics.fill(left, top, right, top + 1, 0x505000FF);
-        graphics.fill(left, bottom - 1, right, bottom, 0x5028007F);
     }
 
     private void onClientTickPost(ClientTickEvent.Post event) {

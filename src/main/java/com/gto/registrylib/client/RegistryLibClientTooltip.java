@@ -32,7 +32,7 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
     private static final int TOOLTIP_BORDER = 3;
     private static final int BOX_GAP = 2;
     private static final int SEPARATE_BOX_GAP = BOX_GAP + 2;
-    private static final int SEPARATE_BOX_X_OFFSET = -3;
+    private static final int SEPARATE_BOX_X_OFFSET = -4;
     private static final int PAGE_CONTROL_GAP = 3;
     private static final int PAGE_CONTROL_PADDING_X = 6;
     private static final int PAGE_CONTROL_PADDING_Y = 4;
