@@ -122,7 +122,7 @@ public class Client {
         modEventBus.addListener(Client::onRegisterTooltipFactories);
         modEventBus.addListener(Client::onRegisterKeyMappings);
         modEventBus.addListener(Client::onRegisterEntityRenderers);
-        NeoForge.EVENT_BUS.addListener(Client::onGatherTooltipComponents);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onGatherTooltipComponents);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onRenderTooltipTexture);
         NeoForge.EVENT_BUS.addListener(Client::onTooltipKeyPressed);
         NeoForge.EVENT_BUS.addListener(Client::onClientTickPost);
