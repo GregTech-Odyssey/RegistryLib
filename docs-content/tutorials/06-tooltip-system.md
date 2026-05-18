@@ -113,14 +113,20 @@ Use `tooltipExistingSupplier(...)` for a lazy supplier that is not an `ItemEntry
 
 ## Runtime Layout and Pagination
 
-RegistryLib tooltip roots participate in vanilla tooltip positioning as one combined visual footprint. This lets vanilla move the tooltip upward when the full RegistryLib layout would otherwise run below the screen, while separate roots still render as independent boxes instead of being swallowed by the vanilla background.
+Every RegistryLib tooltip piece is exposed to the vanilla `GuiGraphicsExtractor.tooltip()` pipeline as its own `ClientTooltipComponent`:
 
-When the separate-box content is still too tall, RegistryLib paginates the separate roots automatically:
+- The item name stays a normal vanilla text component.
+- Inline `SubNode` lines (from any `separateBox=false` root) become a single inline component appended right after the title.
+- Each `separateBox=true` `RootNodeRef` becomes a separate panel component, one entry per root.
+- When pagination is active, an extra page-control component is appended at the very end.
 
-- The vanilla tooltip and inline RegistryLib nodes stay in the normal tooltip box.
-- Separate roots keep their own backgrounds and are split across pages when needed.
-- A small page control is rendered below the visible separate roots.
-- The page control shows the current page and the keys used to move between pages.
+Because every piece is a real tooltip component, the vanilla positioner uses the widest one to compute the tooltip rectangle and lays every component out at the same left edge — separate panels stack cleanly under the title and the inline area without manual X offsets. RegistryLib only intercepts the global tooltip background: it swaps the vanilla full-area texture for a transparent one and paints the familiar purple-bordered background just for the title + inline portion. Each panel then draws its own dark background inside its own renderer.
+
+When the panels together would overflow the screen, RegistryLib paginates the separate roots automatically:
+
+- The vanilla tooltip and inline RegistryLib nodes always stay on screen.
+- Separate roots are distributed across pages; only the current page's panels are added to the tooltip list.
+- A small page control is appended below the visible panels showing the current page and the configured page keys.
 - The default page keys are Up and Down, and players can remap them in the controls screen under the RegistryLib Tooltip category.
 
 Page state is display-only state. RegistryLib does not write page information into the `ItemStack`. The page resets when the hovered item changes, when the same item has different data components, or when a non-RegistryLib tooltip is shown.

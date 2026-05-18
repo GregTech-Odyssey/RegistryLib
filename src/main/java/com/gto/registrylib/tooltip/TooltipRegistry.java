@@ -64,12 +64,14 @@ public final class TooltipRegistry {
     }
 
     /**
-     * 查询指定 {@link ItemStack} 的 tooltip 组件。
+     * 查询指定 {@link ItemStack} 的 tooltip 节点结构。
      *
      * <p>
-     * 按 {@link RootNodeRef} 分组收集 {@link SubNode}，在每组内按 priority 排序， 根据节点的分隔线偏好插入分隔符。
+     * 按 {@link RootNodeRef} 分组收集 {@link SubNode}，在每组内按 priority 排序，并根据节点偏好插入分隔符。 返回值是中间结构
+     * {@link ResolvedTooltip}——它会在 gather 阶段被 {@link com.gto.registrylib.client.Client}
+     * 拆分为多个 ClientTooltipComponent（一个内联组件 + 每个独立框一个组件 + 可选分页控件）。
      */
-    public static RegistryLibTooltipComponent resolve(ItemStack itemStack) {
+    public static ResolvedTooltip resolve(ItemStack itemStack) {
         var configs = map.get(itemStack.getItem());
         if (configs.isEmpty()) return null;
 
@@ -128,6 +130,6 @@ public final class TooltipRegistry {
         }
 
         separateRoots.sort(Comparator.comparingInt(r -> r.rootNode().getPriority()));
-        return new RegistryLibTooltipComponent(inlineSubNodes, separateRoots);
+        return new ResolvedTooltip(inlineSubNodes, separateRoots);
     }
 }

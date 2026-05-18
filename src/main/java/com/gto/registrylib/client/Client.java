@@ -1,13 +1,20 @@
 package com.gto.registrylib.client;
 
+import com.gto.registrylib.tooltip.RegistryLibPageControlComponent;
+import com.gto.registrylib.tooltip.RegistryLibPanelComponent;
 import com.gto.registrylib.tooltip.RegistryLibTooltipComponent;
+import com.gto.registrylib.tooltip.ResolvedRoot;
+import com.gto.registrylib.tooltip.SubNode;
+import com.gto.registrylib.tooltip.TooltipPagination;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.datafixers.util.Either;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
 import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -39,6 +46,8 @@ import net.neoforged.neoforge.fluids.FluidType;
 import lombok.experimental.UtilityClass;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicReference;
@@ -90,6 +99,21 @@ public class Client {
             GLFW.GLFW_KEY_DOWN,
             TOOLTIP_KEY_CATEGORY);
 
+    /** 默认 lineHeight 估算（gather 阶段没有 event font，用它作为分页高度估算的兜底）。 */
+    private static final int DEFAULT_LINE_HEIGHT = 9;
+
+    /** 屏幕底部预留的空白比例（与原版 prepareLayout 旧值保持一致），用于估算独立框可用高度。 */
+    private static final int RESERVED_HEIGHT_DIVISOR = 3;
+
+    /** 估算可用高度时扣除的安全余量（包含标题与原版 padding 的粗略折算）。 */
+    private static final int LAYOUT_OVERHEAD = 24;
+
+    /** 分页时面板之间预留的间距——面板 getHeight 已包含 TOP_MARGIN，无需额外加值。 */
+    private static final int PANEL_GAP_ESTIMATE = 0;
+
+    /** 透明 tooltip 纹理 ID——通过 setTexture 让原版的整块背景在视觉上失效。 */
+    private static final Identifier TRANSPARENT_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "transparent");
+
     public void init(IEventBus modEventBus) {
         modEventBus.addListener(Client::onClientSetup);
         modEventBus.addListener(Client::onRegisterClientExtensions);
@@ -99,8 +123,6 @@ public class Client {
         modEventBus.addListener(Client::onRegisterKeyMappings);
         modEventBus.addListener(Client::onRegisterEntityRenderers);
         NeoForge.EVENT_BUS.addListener(Client::onGatherTooltipComponents);
-        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, Client::onResetTooltipLayout);
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onRenderTooltipPre);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onRenderTooltipTexture);
         NeoForge.EVENT_BUS.addListener(Client::onTooltipKeyPressed);
         NeoForge.EVENT_BUS.addListener(Client::onClientTickPost);
@@ -208,6 +230,8 @@ public class Client {
 
     private void onRegisterTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
         event.register(RegistryLibTooltipComponent.class, RegistryLibClientTooltip::new);
+        event.register(RegistryLibPanelComponent.class, RegistryLibClientPanelComponent::new);
+        event.register(RegistryLibPageControlComponent.class, RegistryLibClientPageControl::new);
     }
 
     private void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
@@ -215,68 +239,169 @@ public class Client {
         event.register(TOOLTIP_PAGE_DOWN);
     }
 
+    /**
+     * 把 {@link TooltipRegistry#resolve} 的结果拆分成多个独立组件追加到原版组件列表里：
+     * <ul>
+     *   <li>非空内联节点 → 一个 {@link RegistryLibTooltipComponent}
+     *   <li>每一个独立框 → 一个 {@link RegistryLibPanelComponent}
+     *   <li>分页时还会追加一个 {@link RegistryLibPageControlComponent}
+     * </ul>
+     *
+     * <p>
+     * 这样原版的 {@code GuiGraphicsExtractor.tooltip()} 在计算 tooltip 总宽高、定位与渲染时就能像处理任何普通组件一样
+     * 把它们左对齐到同一个已定位的 x，避免「整块塞进一个 ClientTooltipComponent 然后内部手算偏移」导致的对齐问题。
+     */
     private void onGatherTooltipComponents(RenderTooltipEvent.GatherComponents event) {
         if (event.getItemStack().isEmpty()) return;
-        var component = TooltipRegistry.resolve(event.getItemStack());
-        if (component == null) return;
-        event.getTooltipElements().add(Either.right(component));
+        var resolved = TooltipRegistry.resolve(event.getItemStack());
+        if (resolved == null || resolved.isEmpty()) return;
+
+        TooltipPagination.prepareForTarget(event.getItemStack());
+
+        var elements = event.getTooltipElements();
+
+        if (!resolved.inlineSubNodes().isEmpty()) {
+            elements.add(Either.right(new RegistryLibTooltipComponent(resolved.inlineSubNodes())));
+        }
+
+        var panels = resolved.separateRoots();
+        if (panels.isEmpty()) {
+            TooltipPagination.setPageCount(1);
+            return;
+        }
+
+        int availableForPanels = estimateAvailablePanelHeight(event.getScreenHeight());
+        var pages = paginatePanels(panels, availableForPanels);
+        TooltipPagination.setPageCount(pages.size());
+
+        int pageOffset = TooltipPagination.pageOffset();
+        for (var panel : pages.get(pageOffset)) {
+            elements.add(Either.right(new RegistryLibPanelComponent(panel)));
+        }
+        if (pages.size() > 1) {
+            elements.add(Either.right(new RegistryLibPageControlComponent(pageOffset, pages.size())));
+        }
     }
 
-    private void onRenderTooltipPre(RenderTooltipEvent.Pre event) {
-        boolean hasRegistryLibTooltip = false;
-        int otherHeight = event.getComponents().size() == 1 ? -2 : 0;
-        for (var component : event.getComponents()) {
-            if (component instanceof RegistryLibClientTooltip) {
-                hasRegistryLibTooltip = true;
-                continue;
+    /** 估算允许独立框占据的最大高度——和老版本 prepareLayout 的算法保持一致（屏幕高度的 2/3 减去若干余量）。 */
+    private static int estimateAvailablePanelHeight(int screenHeight) {
+        int reserved = screenHeight / RESERVED_HEIGHT_DIVISOR;
+        return Math.max(1, screenHeight - reserved - LAYOUT_OVERHEAD);
+    }
+
+    /**
+     * 按 {@link #estimateAvailablePanelHeight} 把独立框切成若干页。
+     *
+     * <p>
+     * gather 阶段没有 event font，因此用 {@link Minecraft#font} 做高度估算；面板间距使用 {@link
+     * #PANEL_GAP_ESTIMATE}（原版 tooltip 组件之间会被 GuiGraphicsExtractor 加 2px 间隙， 加上独立框自身想要的视觉留白后大致与这个常量一致）。
+     */
+    private static List<List<ResolvedRoot>> paginatePanels(
+                                                           List<ResolvedRoot> panels, int availableHeight) {
+        Font font = Minecraft.getInstance().font;
+        List<List<ResolvedRoot>> pages = new ArrayList<>();
+        List<ResolvedRoot> current = new ArrayList<>();
+        int currentHeight = 0;
+
+        for (ResolvedRoot panel : panels) {
+            int panelHeight = estimatePanelHeight(panel, font);
+            int contribution = panelHeight + (current.isEmpty() ? 0 : PANEL_GAP_ESTIMATE);
+            if (!current.isEmpty() && currentHeight + contribution > availableHeight) {
+                pages.add(current);
+                current = new ArrayList<>();
+                currentHeight = 0;
+                contribution = panelHeight;
             }
-            otherHeight += component.getHeight(event.getFont());
+            current.add(panel);
+            currentHeight += contribution;
         }
-        if (hasRegistryLibTooltip) {
-            RegistryLibClientTooltip.prepareLayout(
-                    event.getItemStack(), event.getScreenHeight(), otherHeight);
-        }
+        if (!current.isEmpty()) pages.add(current);
+        if (pages.isEmpty()) pages.add(Collections.emptyList());
+        return pages;
     }
 
-    private void onResetTooltipLayout(RenderTooltipEvent.Pre event) {
-        RegistryLibClientTooltip.resetLayout();
+    private static int estimatePanelHeight(ResolvedRoot panel, Font font) {
+        int contentHeight = 0;
+        for (SubNode node : panel.subNodes()) {
+            int nh = node.getHeight(font);
+            if (nh <= 0) nh = DEFAULT_LINE_HEIGHT;
+            contentHeight += nh;
+        }
+        return RegistryLibClientPanelComponent.TOP_MARGIN
+                + RegistryLibClientPanelComponent.INSET * 2
+                + contentHeight;
     }
 
+    /**
+     * 把原版的整块 tooltip 背景换成透明，再手动给「标题 + 内联」这一段画一份原版风格的背景。
+     *
+     * <p>
+     * 独立框面板各自在自己的 extractText 里画背景，所以原版的整块背景对它们来说就是多余的。 透明纹理让原版那一刀不可见，再单独绘制内联那一段保证标题区还是熟悉的紫色边框风格。
+     */
     private void onRenderTooltipTexture(RenderTooltipEvent.Texture event) {
-        int vanillaWidth = 0;
-        int vanillaHeight = event.getComponents().size() == 1 ? -2 : 0;
-        boolean hasRegistryLibTooltip = false;
-        for (var component : event.getComponents()) {
-            if (component instanceof RegistryLibClientTooltip tooltip) {
-                hasRegistryLibTooltip = true;
-                vanillaWidth = Math.max(vanillaWidth, tooltip.getInlineWidth(event.getFont()));
-                vanillaHeight += tooltip.getInlineHeight(event.getFont());
-            } else {
-                vanillaWidth = Math.max(vanillaWidth, component.getWidth(event.getFont()));
-                vanillaHeight += component.getHeight(event.getFont());
-            }
+        if (!containsRegistryLibComponent(event.getComponents())) return;
+
+        InlineAreaDims inline = measureInlineArea(event.getComponents(), event.getFont());
+        if (inline.width > 0 && inline.height > 0) {
+            TooltipRenderUtil.extractTooltipBackground(
+                    event.getGraphics(),
+                    event.getX(),
+                    event.getY(),
+                    inline.width,
+                    inline.height,
+                    event.getTexture());
         }
-        if (hasRegistryLibTooltip) {
-            if (vanillaWidth > 0 && vanillaHeight > 0) {
-                TooltipRenderUtil.extractTooltipBackground(
-                        event.getGraphics(), event.getX(), event.getY(), vanillaWidth, vanillaHeight, event.getTexture());
-            }
-            event.setTexture(Identifier.fromNamespaceAndPath("registrylib", "transparent"));
-        }
+        event.setTexture(TRANSPARENT_TEXTURE);
     }
+
+    private static boolean containsRegistryLibComponent(
+                                                        List<net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent> components) {
+        for (var c : components) {
+            if (c instanceof RegistryLibClientTooltip
+                    || c instanceof RegistryLibClientPanelComponent
+                    || c instanceof RegistryLibClientPageControl) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 「内联区域」 = 原版 tooltip 顺序里、第一个独立框/分页控件出现之前的所有组件 （通常就是标题文本 + 可选的 {@link
+     * RegistryLibClientTooltip}）。
+     */
+    private static InlineAreaDims measureInlineArea(
+                                                    List<net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent> components,
+                                                    Font font) {
+        int width = 0;
+        int height = 0;
+        for (var c : components) {
+            if (c instanceof RegistryLibClientPanelComponent
+                    || c instanceof RegistryLibClientPageControl) {
+                break;
+            }
+            width = Math.max(width, c.getWidth(font));
+            height += c.getHeight(font);
+        }
+        return new InlineAreaDims(width, height);
+    }
+
+    private record InlineAreaDims(int width, int height) {}
 
     private void onClientTickPost(ClientTickEvent.Post event) {
-        RegistryLibClientTooltip.resetIfNoTooltipRendered();
+        TooltipPagination.resetIfIdle();
     }
 
     private void onTooltipKeyPressed(ScreenEvent.KeyPressed.Pre event) {
-        var key = event.getKeyCode() == -1 ? InputConstants.Type.SCANCODE.getOrCreate(event.getScanCode()) : InputConstants.Type.KEYSYM.getOrCreate(event.getKeyCode());
+        var key = event.getKeyCode() == -1
+                ? InputConstants.Type.SCANCODE.getOrCreate(event.getScanCode())
+                : InputConstants.Type.KEYSYM.getOrCreate(event.getKeyCode());
         if (TOOLTIP_PAGE_UP.isActiveAndMatches(key)) {
-            if (RegistryLibClientTooltip.pageUp()) {
+            if (TooltipPagination.pageUp()) {
                 event.setCanceled(true);
             }
         } else if (TOOLTIP_PAGE_DOWN.isActiveAndMatches(key)) {
-            if (RegistryLibClientTooltip.pageDown()) {
+            if (TooltipPagination.pageDown()) {
                 event.setCanceled(true);
             }
         }
