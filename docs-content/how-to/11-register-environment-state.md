@@ -147,6 +147,10 @@ AttachmentTypeEntry<Integer> COUNTER = REGISTRYLIB
 - Chunk and world state are small attachment-backed values.
 - Large global indexes should use a separate storage design and may reference these state entries as summaries or handles.
 
+:::note
+Internally, `WorldStateBuilder` and `ChunkStateBuilder` now extend `AbstractStateBuilder<T, P, S>`, and `WorldStateEntry` and `ChunkStateEntry` extend `AbstractStateEntry<T>`. The public API is unchanged. If you subclass these builders, note that `AbstractStateBuilder` uses the CRTP pattern (`S extends AbstractStateBuilder<T, P, S>`) so fluent methods return the concrete subtype.
+:::
+
 ## See Also
 
 - [Environment API](/reference/environment-api)

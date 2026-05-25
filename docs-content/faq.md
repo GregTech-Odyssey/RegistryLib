@@ -47,6 +47,10 @@ See [Installation & Setup](/tutorials/installation) for the full walkthrough.
 2. **Missing creative tab**: call `.addDefaultTab()` or `.addTab(...)` to place it in a creative tab.
 3. **Missing model/texture**: call `.defaultModel()`, or provide a texture via `.texture(...)` or a resource pack.
 
+### I used to get a NullPointerException from `.get()` but now I see an IllegalStateException
+
+This is intentional. Entry `.get()` now throws `IllegalStateException` with a descriptive message instead of a raw NPE. The fix is the same: do not call `.get()` before registration completes. If you need a safe check, use `isBound()` or `getOptional()`. See [Troubleshooting](/troubleshooting) for details.
+
 ### What is the difference between `item()` and `componentItem()`?
 
 `item()` creates a plain `Item`. `componentItem()` creates a `ComponentItem` or `IComponentItem` implementation that supports the attachment system for modular behavior composition. Use `componentItem()` when you need `.attach(...)`.

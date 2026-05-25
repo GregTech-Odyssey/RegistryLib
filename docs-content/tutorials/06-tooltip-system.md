@@ -56,7 +56,7 @@ A `RootNode` decides where a set of `SubNode`s is rendered:
 
 ### TooltipNodeCollector
 
-The collector merges nodes from multiple sources, including the Item's tooltip callback, BlockItem tooltips, and nodes contributed by attachments.
+The collector merges nodes from multiple sources, including the Item's tooltip callback, BlockItem tooltips, and nodes contributed by attachments. Internally, `TooltipRegistry` uses a `ThreadLocal` collector instance so that tooltip resolution is thread-safe and avoids per-call allocation.
 
 ## Step 3 —Register a RootNode Reference
 

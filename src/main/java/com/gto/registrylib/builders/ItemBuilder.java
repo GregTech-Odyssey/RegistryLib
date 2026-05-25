@@ -39,6 +39,8 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -253,18 +255,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     }
 
     private static String describeColors(@Nullable ArgbColor[] colors) {
-        if (colors == null) return "unknown";
-        if (colors.length == 0) return "[]";
-        StringBuilder builder = new StringBuilder("[");
-        for (int i = 0; i < colors.length; i++) {
-            if (i > 0) builder.append(", ");
-            ArgbColor color = colors[i];
-            builder
-                    .append("0x")
-                    .append(String.format("%08X", color.argb()))
-                    .append(color.isOpaque() ? " opaque" : " alpha=" + color.alpha());
-        }
-        return builder.append(']').toString();
+        return ArgbColor.describeColors(colors);
     }
 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")
@@ -276,6 +267,29 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     public ItemBuilder<T, P> lang(
                                   @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
         return lang(type, Item::getDescriptionId, name);
+    }
+
+    /**
+     * Register display names for multiple locales at once.
+     *
+     * <p>
+     * The {@code "en_us"} entry uses the default lang provider; all other entries use
+     * {@code core.locale(localeCode)}.
+     *
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
+     *                     name
+     */
+    @StandardAPI
+    public ItemBuilder<T, P> lang(@NotNull Map<String, String> localeToName) {
+        for (var entry : localeToName.entrySet()) {
+            String locale = entry.getKey().toLowerCase(Locale.ROOT);
+            if ("en_us".equals(locale)) {
+                lang(entry.getValue());
+            } else {
+                lang(core.locale(locale), entry.getValue());
+            }
+        }
+        return this;
     }
 
     /**
@@ -342,7 +356,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
             // 自动注册附件的 tooltip 收集
             boolean hasTooltipAttachment = false;
             for (var att : componentItem.getAttachments()) {
-                if ((att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) != 0) {
+                if ((att.getOverrideFlags() & ItemAttachment.COLLECT_TOOLTIP) != 0) {
                     hasTooltipAttachment = true;
                     break;
                 }
@@ -352,7 +366,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
                         item,
                         (collector, stack) -> {
                             for (var att : componentItem.getAttachments()) {
-                                if ((att.overrideFlags & ItemAttachment.COLLECT_TOOLTIP) == 0) continue;
+                                if ((att.getOverrideFlags() & ItemAttachment.COLLECT_TOOLTIP) == 0) continue;
                                 att.collectTooltipNodes(componentItem.self(), stack, collector);
                             }
                         });

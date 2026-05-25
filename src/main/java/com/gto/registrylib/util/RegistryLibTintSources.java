@@ -17,23 +17,12 @@ public class RegistryLibTintSources {
         return ItemModelUtils.constantTint(color.opaqueArgb());
     }
 
-    public static ItemTintSource itemConstantStatic(RgbColor color) {
-        return ItemModelUtils.constantTint(color.opaqueArgb());
-    }
-
     public BlockTintSource blockConstant(RgbColor color) {
         return blockConstant(color.opaque());
-    }
-
-    public static BlockTintSource blockConstantStatic(RgbColor color) {
-        return blockConstantStatic(color.opaque());
     }
 
     public BlockTintSource blockConstant(ArgbColor color) {
         return BlockTintSources.constant(color.argb());
     }
 
-    public static BlockTintSource blockConstantStatic(ArgbColor color) {
-        return BlockTintSources.constant(color.argb());
-    }
 }

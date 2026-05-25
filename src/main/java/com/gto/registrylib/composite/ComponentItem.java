@@ -36,8 +36,8 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
 
     /** 挂载附件。自动检测该 attachment 类覆盖了哪些方法，更新位掩码。 */
     public void attachAttachment(ItemAttachment<ComponentItem> attachment) {
-        attachment.overrideFlags = ItemAttachment.detectOverrides(attachment.getClass());
-        combinedFlags |= attachment.overrideFlags;
+        attachment.setOverrideFlags(ItemAttachment.detectOverrides(attachment.getClass()));
+        combinedFlags |= attachment.getOverrideFlags();
         attachments.add(attachment);
         attachment.onAttached(this);
     }
@@ -48,7 +48,7 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     public InteractionResult useOn(UseOnContext context) {
         if ((combinedFlags & ItemAttachment.USE_ON) == 0) return super.useOn(context);
         for (var att : attachments) {
-            if ((att.overrideFlags & ItemAttachment.USE_ON) == 0) continue;
+            if ((att.getOverrideFlags() & ItemAttachment.USE_ON) == 0) continue;
             var result = att.useOn(this, context);
             if (result != InteractionResult.PASS) return result;
         }
@@ -59,7 +59,7 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         if ((combinedFlags & ItemAttachment.USE) == 0) return super.use(level, player, hand);
         for (var att : attachments) {
-            if ((att.overrideFlags & ItemAttachment.USE) == 0) continue;
+            if ((att.getOverrideFlags() & ItemAttachment.USE) == 0) continue;
             var result = att.use(this, level, player, hand);
             if (result != InteractionResult.PASS) return result;
         }
@@ -72,7 +72,7 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     public boolean isBarVisible(ItemStack stack) {
         if ((combinedFlags & ItemAttachment.IS_BAR_VISIBLE) == 0) return super.isBarVisible(stack);
         for (var att : attachments) {
-            if ((att.overrideFlags & ItemAttachment.IS_BAR_VISIBLE) == 0) continue;
+            if ((att.getOverrideFlags() & ItemAttachment.IS_BAR_VISIBLE) == 0) continue;
             Boolean result = att.isBarVisible(this, stack);
             if (result != null) return result;
         }
@@ -83,7 +83,7 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     public int getBarWidth(ItemStack stack) {
         if ((combinedFlags & ItemAttachment.GET_BAR_WIDTH) == 0) return super.getBarWidth(stack);
         for (var att : attachments) {
-            if ((att.overrideFlags & ItemAttachment.GET_BAR_WIDTH) == 0) continue;
+            if ((att.getOverrideFlags() & ItemAttachment.GET_BAR_WIDTH) == 0) continue;
             Integer result = att.getBarWidth(this, stack);
             if (result != null) return result;
         }
@@ -94,7 +94,7 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     public int getBarColor(ItemStack stack) {
         if ((combinedFlags & ItemAttachment.GET_BAR_COLOR) == 0) return super.getBarColor(stack);
         for (var att : attachments) {
-            if ((att.overrideFlags & ItemAttachment.GET_BAR_COLOR) == 0) continue;
+            if ((att.getOverrideFlags() & ItemAttachment.GET_BAR_COLOR) == 0) continue;
             Integer result = att.getBarColor(this, stack);
             if (result != null) return result;
         }
@@ -108,7 +108,7 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
         super.inventoryTick(stack, level, entity, slot);
         if ((combinedFlags & ItemAttachment.INVENTORY_TICK) == 0) return;
         for (var att : attachments) {
-            if ((att.overrideFlags & ItemAttachment.INVENTORY_TICK) == 0) continue;
+            if ((att.getOverrideFlags() & ItemAttachment.INVENTORY_TICK) == 0) continue;
             att.inventoryTick(this, stack, level, entity, slot);
         }
     }

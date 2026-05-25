@@ -47,6 +47,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.image.BufferedImage;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -184,7 +186,8 @@ public class BlockBuilder<T extends Block, P>
         return this;
     }
 
-    public BlockBuilder<T, P> setInitialProperties(@NotNull Supplier<BlockBehaviour.Properties> properties) {
+    public BlockBuilder<T, P> setInitialProperties(
+                                                   @NotNull Supplier<BlockBehaviour.Properties> properties) {
         this.initialProperties = properties;
         return this;
     }
@@ -366,18 +369,7 @@ public class BlockBuilder<T extends Block, P>
     }
 
     private static String describeColors(@Nullable ArgbColor[] colors) {
-        if (colors == null) return "unknown";
-        if (colors.length == 0) return "[]";
-        StringBuilder builder = new StringBuilder("[");
-        for (int i = 0; i < colors.length; i++) {
-            if (i > 0) builder.append(", ");
-            ArgbColor color = colors[i];
-            builder
-                    .append("0x")
-                    .append(String.format("%08X", color.argb()))
-                    .append(color.isOpaque() ? " opaque" : " alpha=" + color.alpha());
-        }
-        return builder.append(']').toString();
+        return ArgbColor.describeColors(colors);
     }
 
     @SyntaxSugar("lang(Block::getDescriptionId, name)")
@@ -389,6 +381,25 @@ public class BlockBuilder<T extends Block, P>
     public BlockBuilder<T, P> lang(
                                    @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
         return lang(type, Block::getDescriptionId, name);
+    }
+
+    /**
+     * Register display names for multiple locales at once.
+     *
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
+     *                     name
+     */
+    @StandardAPI
+    public BlockBuilder<T, P> lang(@NotNull Map<String, String> localeToName) {
+        for (var entry : localeToName.entrySet()) {
+            String locale = entry.getKey().toLowerCase(Locale.ROOT);
+            if ("en_us".equals(locale)) {
+                lang(entry.getValue());
+            } else {
+                lang(core.locale(locale), entry.getValue());
+            }
+        }
+        return this;
     }
 
     @StandardAPI

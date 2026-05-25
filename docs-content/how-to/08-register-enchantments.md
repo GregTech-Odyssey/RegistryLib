@@ -105,6 +105,7 @@ For vanilla effect components like `EnchantmentEffectComponents.BLOCK_EXPERIENCE
 | `enchantment(name)` | Start enchantment builder (returns `EnchantmentBuilder`) |
 | `.lang(name)` | Set English display name |
 | `.lang(providerType, name)` | Set localized name for a specific lang provider |
+| `.lang(Map<String, String>)` | Set display names for multiple locales in one call |
 | `.supportedItems(TagKey<Item>)` | Set supported item tag (e.g. `ItemTags.MINING_ENCHANTABLE`) |
 | `.primaryItems(TagKey<Item>)` | Set primary items (enchanting table preference) |
 | `.weight(n)` | Set enchantment weight (rarity) |
@@ -138,6 +139,10 @@ For vanilla effect components like `EnchantmentEffectComponents.BLOCK_EXPERIENCE
 
 :::important
 Enchantments are data-driven in NeoForge 1.21+. The `.enchantment()` builder generates the JSON automatically during datagen; you do **not** need to write JSON files manually.
+:::
+
+:::warning
+Calling `.register()` on the same `EnchantmentBuilder` twice throws an `IllegalStateException`. Store the returned `EnchantmentEntry` in a `static final` field and reuse it instead of re-registering.
 :::
 
 ## See Also

@@ -68,6 +68,9 @@ If you're unsure, start with `item(...)` or `block(...)`; they cover the vast ma
 
 | Entry helper | What it gives you |
 | --- | --- |
+| `entry.get()` | The registered object; **throws `IllegalStateException`** if the entry is not yet bound |
+| `entry.getOptional()` | The registered object as an `Optional`; returns empty if unbound (safe pre-registration) |
+| `entry.isBound()` | `true` once the entry has been bound to a registered object |
 | `ItemEntry.asStack()` | A default `ItemStack` without reconstructing the item manually |
 | `ItemEntry.readOnlyStack()` | Defensive copy of a cached `ItemStack` (count 1); safe against external mutation |
 | `ItemEntry.asResource()` | An `ItemResource` wrapper for transfer-related APIs |
@@ -84,7 +87,7 @@ If you're unsure, start with `item(...)` or `block(...)`; they cover the vast ma
 | `FluidEntry.getBlock()` / `getBucket()` | The related fluid block or bucket when they exist |
 | `FluidEntry.asStack()` / `asResource()` | Transfer-friendly fluid values without rebuilding them by hand |
 | `FluidEntry.readOnlyStack()` | A cached read-only `FluidStack` (1000 mB); avoids repeated allocations |
-| Lazy entry wrappers | Use `get()` only after registration, or pass the entry/supplier to APIs that resolve lazily |
+| Lazy entry wrappers | Use `get()` only after registration, use `getOptional()` or `isBound()` when access timing is uncertain, or pass the entry/supplier to APIs that resolve lazily |
 
 :::note
 Several Entry wrappers also satisfy holder-style usage directly. When another API expects a `Holder<Item>`, `Holder<Block>`, or `Holder<Fluid>`, the RegistryLib entry wrapper is often already usable as that value.
@@ -97,6 +100,8 @@ Several Entry wrappers also satisfy holder-style usage directly. When another AP
 | `locale("zh_cn")` | Get or create a lang provider for a locale |
 | `lang(key, enUs)` | Add an English lang entry and return a translatable component |
 | `lang(locale, key, value)` | Add a lang entry for a locale string |
+| `langPair(key, enUs, zhCn)` | Register a translation key in both `en_us` and `zh_cn` at once; returns a translatable component |
+| `lang(key, Map<String, String>)` | Register a translation key in multiple locales at once; `en_us` uses the default provider, others use `locale(...)` |
 | Duplicate lang entry with same value | Ignored as idempotent; conflicting values still fail fast |
 | `addRecipeData(provider -> { ... })` | Add a typed recipe datagen callback |
 | `tagExisting(tag, items...)` | Add an item tag to existing items |
@@ -106,11 +111,33 @@ Several Entry wrappers also satisfy holder-style usage directly. When another AP
 | `addExistingToTab(tab, item)` | Add existing items to creative tabs through RegistryLib |
 | `builder.texture("foo", imageSupplier)` | Generate a PNG resource during datagen |
 | `builder.modelTexture("item/template")` / `builder.existingTexture("item/template")` | Reference an existing texture in the generated model |
-| `REGISTRYLIB.textureRef("item/template")` | Create a `TextureRef` for type-safe texture APIs |
+| `REGISTRYLIB.texture("item/template")` | Create a `TextureRef` for type-safe texture APIs |
+| ~~`REGISTRYLIB.textureRef("item/template")`~~ | **@Deprecated (for removal)** — use `texture(...)` instead |
 | `REGISTRYLIB.cleanGeneratedNamespace("textures/item/generated")` | Explicitly remove stale generated files under a specific `textures/...` subdirectory before writing resources |
 | `RgbColor.of(0xRRGGBB)` | Typed opaque RGB input for item and common block tint APIs |
 | `ArgbColor.of(0xAARRGGBB)` | Typed ARGB input for explicit block tint sources |
 | `RegistryLibTintSources.blockConstant(RgbColor)` | Create an opaque block tint source without raw ARGB mistakes |
+
+## Utility Classes
+
+| Class | Purpose |
+| --- | --- |
+| `FreezableRegistry<K, V>` | A generic key-value registry with freeze semantics. Once `freeze()` is called, the registry becomes permanently immutable. Thread-safe. Use `create()` for unordered or `createOrdered()` for insertion-order iteration. |
+
+`FreezableRegistry` is located in `com.gto.registrylib.util.registry` and provides:
+
+| Method | Description |
+| --- | --- |
+| `register(key, value)` | Add a new entry (throws if frozen or duplicate key) |
+| `get(key)` | Return the value or `null` |
+| `getOrThrow(key)` | Return the value or throw `IllegalArgumentException` |
+| `getOptional(key)` | Return `Optional<V>` |
+| `contains(key)` | Check if a key is present |
+| `freeze()` | Make the registry permanently immutable |
+| `isFrozen()` | Check if the registry has been frozen |
+| `values()` / `keys()` / `entries()` | Unmodifiable views of the registry contents |
+| `forEach(action)` | Iterate over all entries |
+| `size()` / `isEmpty()` | Size queries |
 
 ## Texture Path Decision Matrix
 
@@ -120,10 +147,10 @@ Several Entry wrappers also satisfy holder-style usage directly. When another AP
 | Reuse a shared grayscale item template | `constantTint("item/templates/dust", RgbColor.of(0x6E7380))` | No |
 | Reuse a shared grayscale block template | `constantTint("block/templates/storage_cube", RgbColor.of(0x6E7380))` | No |
 | Reuse an untinted existing texture | `modelTexture("item/template")` or `existingTexture("block/template")` | No |
-| Pass a typed texture path through helper code | `TextureRef.mod(MOD_ID, "item/template")`, `TextureRef.mc("item/iron_ingot")`, or `REGISTRYLIB.textureRef("item/template")` | No |
+| Pass a typed texture path through helper code | `TextureRef.mod(MOD_ID, "item/template")`, `TextureRef.mc("item/iron_ingot")`, or `REGISTRYLIB.texture("item/template")` | No |
 | Remove stale generated textures after changing strategy | `cleanGeneratedNamespace("textures/item/generated")` | Deletes old files first |
 
-Use `builder.texture(...)` only when RegistryLib should create the image file. Use `TextureRef`, `modelTexture`, `existingTexture`, and the shared-texture tint overloads when the file already exists or is generated once by another provider.
+Use `builder.texture(...)` only when RegistryLib should create the image file. Use `TextureRef`, `modelTexture`, `existingTexture`, and the shared-texture tint overloads when the file already exists or is generated once by another provider. Note: `REGISTRYLIB.textureRef(...)` is deprecated; use `REGISTRYLIB.texture(...)` instead.
 
 ## Common Chain Lookup
 
@@ -182,7 +209,7 @@ ItemVisualPreset dustVisual(RgbColor color) {
 REGISTRYLIB.item("lead_dust").visual(dustVisual(RgbColor.of(0x6E7380))).register();
 REGISTRYLIB.item("nickel_dust").visual(dustVisual(RgbColor.of(0xD5C36A))).register();
 
-TextureRef storageTemplate = REGISTRYLIB.textureRef("block/templates/storage_cube");
+TextureRef storageTemplate = REGISTRYLIB.texture("block/templates/storage_cube");
 REGISTRYLIB.block("lead_storage_block")
         .visual(BlockVisualPreset.constantTintedCube(storageTemplate, RgbColor.of(0x6E7380)))
         .simpleItem()

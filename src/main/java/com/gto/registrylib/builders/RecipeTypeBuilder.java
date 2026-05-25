@@ -67,6 +67,7 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
     private final RegistryCore core;
     private final P parent;
     private final String name;
+    private boolean registered;
 
     private MapCodec<T> codec;
     private StreamCodec<RegistryFriendlyByteBuf, T> streamCodec;
@@ -132,6 +133,10 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      */
     @StandardAPI
     public RecipeTypeEntry<T> register() {
+        if (registered) {
+            throw new IllegalStateException("Cannot register recipe type '" + name + "' twice");
+        }
+        registered = true;
         if (codec == null || streamCodec == null) {
             throw new IllegalStateException(
                     "RecipeTypeBuilder for '" + name + "' requires serializer(codec, streamCodec) or serializerFactory() before register()");

@@ -108,6 +108,42 @@ public class MachineBlockBuilder<T extends MachineBlock, P>
 
 A plugin system would add complexity for a use case that most mods don't need. Method overriding keeps the common case simple and the advanced case possible.
 
+## Thread-Safety Decisions
+
+Minecraft is fundamentally single-threaded for most game logic, but certain RegistryLib systems can be accessed from multiple threads (e.g. render thread vs. server thread, parallel mod loading). The library uses targeted concurrency primitives rather than blanket synchronization:
+
+- **TooltipRegistry** uses a `ThreadLocal` collector so that tooltip resolution on the render thread cannot interfere with other threads. Each thread builds its own node list independently.
+- **RegistryCore.completedRegistrations** uses `ConcurrentHashMap.newKeySet()` because multiple mods may complete registration concurrently during parallel mod loading.
+- **ItemAttachment cache** uses a `ConcurrentHashMap` for the same reason —attachment lookups can occur from any thread during setup.
+- **NestedMap / NestedMultiMap** mark their `isInnerRefMap` flag as `volatile` to ensure visibility across threads when the inner map is replaced.
+
+**Rationale:** fine-grained concurrency tools (`ThreadLocal`, `ConcurrentHashMap`, `volatile`) are preferred over coarse `synchronized` blocks. They communicate intent clearly and avoid unnecessary contention in the common single-threaded path.
+
+## FreezableRegistry as a Design Primitive
+
+`FreezableRegistry<K, V>` is a generic key-value map that supports a one-way "freeze" transition: once `freeze()` is called, the registry becomes permanently immutable and all further `register()` calls throw.
+
+```java
+FreezableRegistry<String, Integer> reg = FreezableRegistry.create();
+reg.register("a", 1);
+reg.freeze();
+// reg.register("b", 2);  // throws IllegalStateException
+```
+
+**Why a dedicated class instead of raw `Map` + boolean?**
+
+1. **Intent-revealing API** —`freeze()` makes the lifecycle explicit. A plain map with a boolean guard is easy to get wrong (forgetting to check, exposing the map directly).
+2. **Thread-safe by construction** —the backing map is `ConcurrentHashMap` (or synchronized `LinkedHashMap` for ordered iteration). Freezing replaces it with an unmodifiable snapshot, so readers never see a half-frozen state.
+3. **Reusable** —tooltip registries, state registries, and internal lookup tables all share the same freeze pattern. Centralizing it avoids copy-paste and inconsistent error messages.
+
+## Dead Code Removal Philosophy
+
+RegistryLib actively removes unused code rather than accumulating it behind deprecation annotations. The recent removal of 19 unused `*Static()` methods (e.g. convenience static wrappers that were never called from outside the library) follows these principles:
+
+1. **Unused code is a liability.** It must be read, maintained, and tested even though it serves no purpose. Removing it reduces cognitive load for contributors.
+2. **Deprecation is for external contracts.** If a public method has known external callers, it gets `@Deprecated` with a migration path. If no callers exist (verified by usage search), it is deleted outright.
+3. **Smaller surface area is safer.** Fewer public methods means fewer compatibility promises and fewer opportunities for misuse.
+
 ## Trade-offs and Limitations
 
 Every design has trade-offs. Here are RegistryLib's known limitations:

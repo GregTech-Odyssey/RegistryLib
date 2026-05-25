@@ -52,12 +52,6 @@ public abstract class AbstractRegistry<E> implements Iterable<E> {
         this.frozen = true;
     }
 
-    public void unfreeze() {
-        checkCallerIsCreator();
-        if (!frozen) throw new IllegalStateException("Registry is already unfrozen!");
-        this.frozen = false;
-    }
-
     private void checkCallerIsCreator() {
         if (!WALKER.walk(
                 frames -> frames

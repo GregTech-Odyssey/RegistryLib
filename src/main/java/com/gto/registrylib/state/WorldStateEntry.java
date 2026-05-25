@@ -6,18 +6,11 @@ import com.mojang.serialization.Codec;
 
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.neoforged.neoforge.attachment.AttachmentType;
 
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public final class WorldStateEntry<T> implements StateEntry<T> {
-
-    private final Identifier identifier;
-    private final Codec<T> codec;
-    private final AttachmentTypeEntry<T> attachment;
-    private final StateDebugConfig debugConfig;
-    private final boolean syncOnModify;
+public final class WorldStateEntry<T> extends AbstractStateEntry<T> {
 
     public WorldStateEntry(
                            Identifier identifier,
@@ -25,36 +18,12 @@ public final class WorldStateEntry<T> implements StateEntry<T> {
                            AttachmentTypeEntry<T> attachment,
                            StateDebugConfig debugConfig,
                            boolean syncOnModify) {
-        this.identifier = identifier;
-        this.codec = codec;
-        this.attachment = attachment;
-        this.debugConfig = debugConfig;
-        this.syncOnModify = syncOnModify;
-    }
-
-    @Override
-    public Identifier identifier() {
-        return identifier;
+        super(identifier, codec, attachment, debugConfig, syncOnModify);
     }
 
     @Override
     public StateScope scope() {
         return StateScope.WORLD;
-    }
-
-    @Override
-    public Codec<T> codec() {
-        return codec;
-    }
-
-    @Override
-    public AttachmentType<T> attachmentType() {
-        return attachment.get();
-    }
-
-    @Override
-    public StateDebugConfig debugConfig() {
-        return debugConfig;
     }
 
     public T getOrCreate(ServerLevel level) {

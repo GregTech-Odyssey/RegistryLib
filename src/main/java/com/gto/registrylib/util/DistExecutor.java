@@ -15,9 +15,4 @@ public class DistExecutor {
         }
     }
 
-    public static void unsafeRunWhenOnStatic(Dist dist, Supplier<Runnable> toRun) {
-        if (dist == Environment.dist) {
-            toRun.get().run();
-        }
-    }
 }

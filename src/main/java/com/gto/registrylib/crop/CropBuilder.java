@@ -38,6 +38,7 @@ public final class CropBuilder<P> {
     private TextureRef[] stageTextures;
 
     private ItemEntry<? extends Item> seedEntry;
+    private boolean registered;
 
     public CropBuilder(RegistryCore core, P parent, String name) {
         this.core = core;
@@ -101,6 +102,10 @@ public final class CropBuilder<P> {
 
     @StandardAPI
     public BlockEntry<RegistryLibCropBlock> register() {
+        if (registered) {
+            throw new IllegalStateException("Cannot register crop '" + name + "' twice");
+        }
+        registered = true;
         @SuppressWarnings("unchecked")
         BlockEntry<RegistryLibCropBlock>[] cropRef = new BlockEntry[1];
         com.gto.registrylib.builders.ItemBuilder<BlockItem, RegistryCore> seedBuilder = core.item(

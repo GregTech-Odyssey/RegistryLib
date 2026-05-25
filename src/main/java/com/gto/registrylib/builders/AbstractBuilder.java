@@ -238,11 +238,16 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public T get() {
             var value = this.value;
             if (value == null) {
                 RegistryEntry<R, T> entry = core.get(name, registryKey);
-                value = this.value = entry.get();
+                if (entry == null) {
+                    throw new IllegalStateException(
+                            "No entry registered for '" + name + "' in registry " + registryKey);
+                }
+                value = this.value = (T) entry.get();
             }
             return value;
         }

@@ -21,6 +21,8 @@ public final class TooltipPagination {
 
     private TooltipPagination() {}
 
+    // Pagination state is intentionally global: only one tooltip is visible at a time,
+    // and all access is on the Minecraft client render thread.
     private static int pageOffset;
     private static int pageCount = 1;
     private static boolean activeTooltip;

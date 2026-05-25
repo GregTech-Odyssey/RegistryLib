@@ -575,6 +575,10 @@ ALTAR.addRecipe("cobblestone_to_stone",
 | `.register()` | Register and return `RecipeTypeEntry<T>` |
 | `.build()` | Register and return parent (for chaining) |
 
+:::warning
+Calling `.register()` on the same `RecipeTypeBuilder` twice throws an `IllegalStateException`. Store the returned `RecipeTypeEntry` in a `static final` field and reuse it instead of re-registering.
+:::
+
 ### RegistryCore.addRecipe
 
 Add recipes to any existing recipe type without registering a new `RecipeType`.

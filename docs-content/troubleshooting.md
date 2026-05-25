@@ -46,11 +46,27 @@ public class MyMod {
 }
 ```
 
-### `NullPointerException` when calling `.get()` on an Entry
+### `IllegalStateException: Registry entry '...' has not been bound yet`
 
-**Cause:** `.get()` was called before registration is complete (before `FMLCommonSetupEvent`).
+**Cause:** `.get()` was called on an entry before registration is complete. Entry types now throw `IllegalStateException` with a descriptive message instead of a raw `NullPointerException`.
 
-**Fix:** Use the Entry as a `Holder` or `Supplier` where possible, or defer the `.get()` call to an event handler that runs after registration.
+**Fix:**
+1. Use the entry as a `Holder` or `Supplier` where possible —these resolve lazily.
+2. Defer the `.get()` call to an event handler that runs after registration (e.g. `FMLCommonSetupEvent`).
+3. If you need to check whether an entry is available without throwing, use `isBound()` or `getOptional()`:
+
+```java
+if (MY_ITEM.isBound()) {
+    Item item = MY_ITEM.get();  // safe — registration is complete
+}
+
+// Or:
+MY_ITEM.getOptional().ifPresent(item -> {
+    // use item
+});
+```
+
+`isBound()` returns `true` once the entry has been populated by the registry event. `getOptional()` returns `Optional.empty()` instead of throwing if the entry is not yet bound.
 
 ### `.attach(...)` compilation error on plain `Item`
 
@@ -60,9 +76,20 @@ public class MyMod {
 
 ### `IllegalStateException: Builder already registered: <name>`
 
-**Cause:** `.register()` or `.build()` was called more than once on the same builder instance. Each builder is single-use.
+**Cause:** `.register()` or `.build()` was called more than once on the same builder instance. Every builder in RegistryLib is single-use —this guard exists on `AbstractBuilder`, `AbstractStateBuilder`, `EnchantmentBuilder`, `RecipeTypeBuilder`, `CropBuilder`, and `WorldgenFeatureBuilder`.
 
-**Fix:** Ensure each builder chain calls `.register()` exactly once. If you need two entries with similar configuration, create two separate chains.
+**Fix:** Ensure each builder chain calls `.register()` exactly once. If you need two entries with similar configuration, create two separate chains:
+
+```java
+// Wrong —reuses the same builder
+var builder = REGISTRYLIB.item("a", Item::new).lang("A");
+builder.register();
+builder.register();  // throws IllegalStateException
+
+// Correct —two independent chains
+REGISTRYLIB.item("a", Item::new).lang("A").register();
+REGISTRYLIB.item("b", Item::new).lang("B").register();
+```
 
 ---
 

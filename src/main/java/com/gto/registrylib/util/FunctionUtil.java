@@ -26,15 +26,7 @@ public class FunctionUtil {
         return IDENTITY_FN;
     }
 
-    public static <T, R> Function<T, R> identityFnStatic() {
-        return IDENTITY_FN;
-    }
-
     public <T> UnaryOperator<T> identityUnaryOp() {
-        return IDENTITY_UNARY_OP;
-    }
-
-    public static <T> UnaryOperator<T> identityUnaryOpStatic() {
         return IDENTITY_UNARY_OP;
     }
 
@@ -50,15 +42,7 @@ public class FunctionUtil {
         return NO_OP_BICONSUMER;
     }
 
-    public static <T, U> BiConsumer<T, U> noOpBiConsumerStatic() {
-        return NO_OP_BICONSUMER;
-    }
-
     public <T> Predicate<T> alwaysTrue() {
-        return ALWAYS_TRUE;
-    }
-
-    public static <T> Predicate<T> alwaysTrueStatic() {
         return ALWAYS_TRUE;
     }
 
@@ -66,15 +50,7 @@ public class FunctionUtil {
         return ALWAYS_FALSE;
     }
 
-    public static <T> Predicate<T> alwaysFalseStatic() {
-        return ALWAYS_FALSE;
-    }
-
     public <T> Supplier<T> nullSupplier() {
-        return NULL_SUPPLIER;
-    }
-
-    public static <T> Supplier<T> nullSupplierStatic() {
         return NULL_SUPPLIER;
     }
 
@@ -82,15 +58,7 @@ public class FunctionUtil {
         return () -> value;
     }
 
-    public static <T> Supplier<T> constantSupplierStatic(T value) {
-        return () -> value;
-    }
-
     public <T, R> Function<T, R> constantFn(R value) {
-        return _ -> value;
-    }
-
-    public static <T, R> Function<T, R> constantFnStatic(R value) {
         return _ -> value;
     }
 
@@ -98,7 +66,4 @@ public class FunctionUtil {
         return (_, _) -> value;
     }
 
-    public static <T, U, R> BiFunction<T, U, R> constantBiFnStatic(R value) {
-        return (_, _) -> value;
-    }
 }

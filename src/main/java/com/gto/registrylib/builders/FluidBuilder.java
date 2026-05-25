@@ -44,6 +44,8 @@ import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -232,6 +234,25 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     public FluidBuilder<T, P> lang(
                                    @NotNull ProviderType<? extends RegistryLibLangProvider> type, @NotNull String name) {
         return lang(type, f -> f.getFluidType().getDescriptionId(), name);
+    }
+
+    /**
+     * Register display names for multiple locales at once.
+     *
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
+     *                     name
+     */
+    @StandardAPI
+    public FluidBuilder<T, P> lang(@NotNull Map<String, String> localeToName) {
+        for (var entry : localeToName.entrySet()) {
+            String locale = entry.getKey().toLowerCase(Locale.ROOT);
+            if ("en_us".equals(locale)) {
+                lang(entry.getValue());
+            } else {
+                lang(core.locale(locale), entry.getValue());
+            }
+        }
+        return this;
     }
 
     // --- Source ---

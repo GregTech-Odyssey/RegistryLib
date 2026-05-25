@@ -247,6 +247,10 @@ Once a chain step returns the base Builder type, the compiler no longer sees you
 - Project-level fixed tags or tooltip rules, such as machine-family Blocks automatically receiving a shared label or hint.
 - Project-level default models or default tabs when the rule is genuinely stable across modules.
 
+## The CRTP Pattern in RegistryLib
+
+Custom Builders use the Curiously Recurring Template Pattern (CRTP) so that fluent methods return the concrete subtype. The same pattern is used internally by `AbstractStateBuilder<T, P, S extends AbstractStateBuilder<T, P, S>>`, which is the shared base of `WorldStateBuilder` and `ChunkStateBuilder`. If you write a custom builder that extends an existing RegistryLib builder, follow the same convention: pass your own type as the self-referencing generic parameter so that inherited fluent methods preserve your subtype in the chain.
+
 ## Boundaries and Pitfalls
 
 - Custom Builders are not meant to replace Group. Group is good at shared defaults, while custom Builders are good at new syntax sugar and custom compile-time return types.

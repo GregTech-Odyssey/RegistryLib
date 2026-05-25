@@ -49,7 +49,7 @@ public interface NestedMap<K1, K2, V> {
         private final Map<K1, Map<K2, V>> map;
         private final Reference2ReferenceFunction<Object, Map<K2, V>> factory;
         private final boolean isRefMap;
-        private boolean isInnerRefMap;
+        private volatile boolean isInnerRefMap;
 
         private NestedMapWrapper(Map<K1, Map<K2, V>> map, Supplier<Map<K2, V>> factory) {
             this.map = map;

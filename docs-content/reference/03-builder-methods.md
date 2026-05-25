@@ -12,6 +12,10 @@ Complete method reference for all RegistryLib builder types. Each builder is cre
 All configuration methods return `this` for fluent chaining. Order generally does not matter, but `initialProperties` should come before `properties` when both are used.
 :::
 
+:::warning
+All builders have a double-registration guard: calling `register()` twice on the same builder instance throws `IllegalStateException`. This applies to `AbstractBuilder` subclasses (ItemBuilder, BlockBuilder, FluidBuilder, BlockEntityBuilder, EntityBuilder) as well as standalone builders (EnchantmentBuilder, RecipeTypeBuilder, CropBuilder, WorldgenFeatureBuilder, ChunkStateBuilder, WorldStateBuilder).
+:::
+
 ## ItemBuilder
 
 Created via `item("id", factory)`, `item("id")`, or `componentItem("id")`.
@@ -22,6 +26,7 @@ Created via `item("id", factory)`, `item("id")`, or `componentItem("id")`.
 | `properties(modifier)` | `UnaryOperator<Item.Properties>` | Modify the existing properties |
 | `lang(text)` | `String` | Set English display name |
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
+| `lang(localeToName)` | `Map<String, String>` | Set display names for multiple locales at once (keys are locale codes like `"en_us"`, `"zh_cn"`) |
 | `defaultLang()` | - | Infer display name from the registry path |
 | `defaultModel()` | - | Generate default item model during datagen |
 | `constantTint(color)` | `RgbColor` | Generate a flat tinted item model using the item's own texture path |
@@ -67,6 +72,7 @@ Created via `block("id", factory)` or `block("id")`.
 | `properties(modifier)` | `UnaryOperator<BlockBehaviour.Properties>` | Modify block properties |
 | `lang(text)` | `String` | Set English display name |
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
+| `lang(localeToName)` | `Map<String, String>` | Set display names for multiple locales at once |
 | `defaultLang()` | - | Infer display name from registry path |
 | `simpleItem()` | - | Create a default BlockItem with no customization |
 | `item(configurator)` | `Consumer<ItemBuilder>` | Create and customize the associated BlockItem |
@@ -192,6 +198,7 @@ Created via `fluid("id", still, flow)`.
 | `properties(modifier)` | `Consumer<FluidType.Properties>` | Modify fluid type properties |
 | `lang(text)` | `String` | Set English display name |
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
+| `lang(localeToName)` | `Map<String, String>` | Set display names for multiple locales at once |
 | `clientExtension(still, flow)` | `ResourceLocation, ResourceLocation` | Client rendering with colored textures |
 | `clientExtension(still, flow, tint)` | `ResourceLocation, ResourceLocation, int` | Client rendering with grayscale textures and tint color |
 | `tag(tags...)` | `TagKey<Fluid>...` | Add fluid tags |
@@ -260,6 +267,7 @@ Created via `entity("id", factory, category)`.
 | `spawnEgg(consumer)` | `Consumer<ItemBuilder>` | Create and customize the spawn egg item |
 | `lang(text)` | `String` | Set English display name |
 | `lang(providerType, text)` | `ProviderType, String` | Set locale-specific display name |
+| `lang(localeToName)` | `Map<String, String>` | Set display names for multiple locales at once |
 | `defaultLang()` | - | Infer display name from registry path |
 | `addTag(tags...)` | `TagKey<EntityType<?>>...` | Add entity type tags |
 | `loot(configurator)` | `BiConsumer<RegistryLibEntityLootTables, EntityType<T>>` | Define entity loot table (drops on death) |

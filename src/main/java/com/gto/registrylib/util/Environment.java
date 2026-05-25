@@ -17,24 +17,8 @@ public class Environment {
     public static final boolean isDev = !isProd;
     public static final boolean isDatagen = DatagenModLoader.isRunningDataGen();
 
-    public static Dist distStatic() {
-        return dist;
-    }
-
-    public static boolean isClientStatic() {
-        return isClient;
-    }
-
-    public static boolean isServerStatic() {
-        return isServer;
-    }
-
     public static boolean isProdStatic() {
         return isProd;
-    }
-
-    public static boolean isDevStatic() {
-        return isDev;
     }
 
     public static boolean isDatagenStatic() {

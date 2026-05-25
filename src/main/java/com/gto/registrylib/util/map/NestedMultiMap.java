@@ -55,7 +55,7 @@ public interface NestedMultiMap<K1, K2, V> {
         private final Reference2ReferenceFunction<Object, Map<K2, Collection<V>>> mapFactory;
         private final Reference2ReferenceFunction<Object, Collection<V>> collectionFactory;
         private final boolean isRefMap;
-        private boolean isInnerRefMap;
+        private volatile boolean isInnerRefMap;
 
         public NestedMultiMapWrapper(
                                      Map<K1, Map<K2, Collection<V>>> map,

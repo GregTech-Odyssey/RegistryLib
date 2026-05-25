@@ -79,6 +79,34 @@ public <I extends Item> ItemBuilder<I, BlockBuilder<T, P>> item(
 
 The same pattern applies to `FluidBuilder.block()`, `FluidBuilder.bucket()`, and other sub-entry methods. Each creates a child builder with the appropriate parent type.
 
+## Entry Type Hierarchy
+
+When `.register()` produces an entry, the concrete type depends on the builder. All entry types share a common inheritance chain:
+
+```
+RegistryEntry<R, T>
+  └─ AbstractHolderEntry<R, T>   (implements Holder<R>)
+       ├─ ItemProviderEntry<T, S>  (implements ItemLike)
+       │    ├─ ItemEntry<T>
+       │    └─ BlockEntry<T>
+       └─ FluidEntry<T>
+```
+
+`AbstractHolderEntry` is the abstract base for any entry that is backed by a NeoForge `Holder`. It provides `isBound()`, `get()` with a descriptive error message, and default `Holder` delegation. Concrete entries like `ItemEntry` and `BlockEntry` extend it through `ItemProviderEntry`, which adds `ItemLike` support (`asStack()`, `readOnlyStack()`).
+
+## TagBatch Generification
+
+Tag helpers `ItemTagBatch` and `BlockTagBatch` both extend a generic base class `TagBatch<T, B>`:
+
+```java
+public abstract class TagBatch<T, B extends TagBatch<T, B>> { ... }
+
+public final class ItemTagBatch  extends TagBatch<Item, ItemTagBatch>  { ... }
+public final class BlockTagBatch extends TagBatch<Block, BlockTagBatch> { ... }
+```
+
+Shared logic (adding tags, applying to entries) lives in `TagBatch<T, B>`. The concrete subclasses only provide their `ProviderType`. If you create a custom tag batch for a different registry, extend `TagBatch<T, B>` the same way.
+
 ## Lazy Evaluation
 
 Entry objects are **not** created when you call builder methods. The builder only accumulates configuration callbacks. The actual game object is created later, when NeoForge fires the `RegisterEvent`:
@@ -90,8 +118,27 @@ Entry objects are **not** created when you call builder methods. The builder onl
 The `RegistryEntry` returned by `.register()` is a lazy reference —it resolves to the actual object only after registration completes.
 
 :::warning
-Calling `.get()` on an entry before registration has fired will throw an exception. Use entries in setup code, event handlers, or gameplay logic —never during static initialization.
+Calling `.get()` on an entry before registration has fired will throw `IllegalStateException` with the message *"Registry entry '...' has not been bound yet."* Use entries in setup code, event handlers, or gameplay logic —never during static initialization. See [Troubleshooting](/troubleshooting) for details.
 :::
+
+## The CRTP Pattern Beyond AbstractBuilder
+
+The self-type (CRTP) pattern is not limited to `AbstractBuilder`. The state system uses the same technique in `AbstractStateBuilder<T, P, S>`:
+
+```java
+public abstract class AbstractStateBuilder<T, P, S extends AbstractStateBuilder<T, P, S>> {
+    // ...
+    protected abstract S self();
+}
+
+public final class ChunkStateBuilder<T, P>
+        extends AbstractStateBuilder<T, P, ChunkStateBuilder<T, P>> { ... }
+
+public final class WorldStateBuilder<T, P>
+        extends AbstractStateBuilder<T, P, WorldStateBuilder<T, P>> { ... }
+```
+
+`AbstractStateBuilder` extracts shared fields (core, parent, name, codec, sync codec, debug config) and shared methods (sync, debug, the `register()`/`build()` guard) so that `ChunkStateBuilder` and `WorldStateBuilder` only add scope-specific logic. This is the same CRTP self-type trick as `AbstractBuilder<R, T, P, S>`, applied to a different part of the library.
 
 ## The BuilderCallback Mechanism
 
@@ -107,7 +154,7 @@ public RegistryEntry<R, T> register() {
 ```
 
 :::warning
-Calling `.register()` (or `.build()`) more than once on the same builder throws `IllegalStateException`. Each builder instance is single-use.
+Calling `.register()` (or `.build()`) more than once on the same builder throws `IllegalStateException`. Each builder instance is single-use. This guard exists on all builder families: `AbstractBuilder`, `AbstractStateBuilder`, `EnchantmentBuilder`, `RecipeTypeBuilder`, `CropBuilder`, and `WorldgenFeatureBuilder`.
 :::
 
 The registration:

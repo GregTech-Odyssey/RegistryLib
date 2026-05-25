@@ -19,6 +19,7 @@ import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.RegistryLibDataProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
+import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 import com.gto.registrylib.state.ChunkStateBuilder;
 import com.gto.registrylib.state.StateEntry;
 import com.gto.registrylib.state.StateRegistryManager;
@@ -58,6 +59,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagBuilder;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
@@ -83,6 +85,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.attachment.AttachmentType;
+import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import net.neoforged.neoforge.common.crafting.IngredientType;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
@@ -91,8 +95,6 @@ import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.crafting.FluidIngredientType;
-import net.neoforged.neoforge.attachment.AttachmentType;
-import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 
@@ -130,7 +132,7 @@ public class RegistryCore {
     private final NestedMap<ResourceKey<? extends Registry<?>>, String, RegistryEntry<?, ?>> registryEntry = NestedMap.createIdentity(LinkedHashMap::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Registration<?, ?>> registrations = MultiMap.createIdentity(ArrayList::new);
     private final MultiMap<ResourceKey<? extends Registry<?>>, Runnable> afterRegisterCallbacks = MultiMap.createIdentity(ArrayList::new);
-    private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = new ReferenceOpenHashSet<>();
+    private final Set<ResourceKey<? extends Registry<?>>> completedRegistrations = ConcurrentHashMap.newKeySet();
 
     private final MultiMap<ResourceKey<CreativeModeTab>, Consumer<CreativeModeTabModifier>> creativeModeTabModifiers = MultiMap.createIdentity(ArrayList::new);
     private final ListRegistry<Pair<Supplier<EntityType<?>>, Supplier<AttributeSupplier.Builder>>> entityAttributes = new ListRegistry<>();
@@ -317,6 +319,51 @@ public class RegistryCore {
         return addRawLang(locale(locale), key, value);
     }
 
+    /**
+     * Register a translation key in both {@code en_us} and {@code zh_cn}. Convenience for mods
+     * that maintain bilingual translations.
+     *
+     * @param key  the translation key
+     * @param enUs the English display name
+     * @param zhCn the Chinese display name
+     * @return a translatable {@link MutableComponent} for the key
+     */
+    @StandardAPI
+    public MutableComponent langPair(String key, String enUs, String zhCn) {
+        MutableComponent component = lang(key, enUs);
+        lang(locale("zh_cn"), key, zhCn);
+        return component;
+    }
+
+    /**
+     * Register a translation key in multiple locales at once.
+     *
+     * <p>
+     * The {@code "en_us"} entry (if present) is registered via the default lang provider; all
+     * other entries are registered via {@link #locale(String)}.
+     *
+     * @param key          the translation key
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
+     *                     name
+     * @return a translatable {@link MutableComponent} for the key
+     */
+    @StandardAPI
+    public MutableComponent lang(String key, Map<String, String> localeToName) {
+        MutableComponent component = null;
+        for (var entry : localeToName.entrySet()) {
+            String locale = entry.getKey().toLowerCase(Locale.ROOT);
+            if ("en_us".equals(locale)) {
+                component = lang(key, entry.getValue());
+            } else {
+                lang(locale(locale), key, entry.getValue());
+            }
+        }
+        if (component == null) {
+            component = Component.translatable(key);
+        }
+        return component;
+    }
+
     public ProviderType<RegistryLibLangProvider> locale(String locale) {
         String normalized = locale.toLowerCase(Locale.ROOT);
         if ("en_us".equals(normalized)) {
@@ -423,10 +470,14 @@ public class RegistryCore {
         return TextureRef.of(id);
     }
 
+    /** @deprecated Use {@link #texture(String)} instead. */
+    @Deprecated(forRemoval = true)
     public TextureRef textureRef(@NotNull String path) {
         return texture(path);
     }
 
+    /** @deprecated Use {@link #texture(Identifier)} instead. */
+    @Deprecated(forRemoval = true)
     public TextureRef textureRef(@NotNull Identifier id) {
         return texture(id);
     }
@@ -678,125 +729,107 @@ public class RegistryCore {
         return this;
     }
 
-    public final class ItemTagBatch {
+    @SuppressWarnings("unchecked")
+    public abstract class TagBatch<T, B extends TagBatch<T, B>> {
 
-        public ItemTagBatch add(@NotNull TagKey<Item> tag, @NotNull ItemLike... items) {
+        private final GeneratorType<? extends RegistryLibTagsProvider<T>> providerType;
+
+        TagBatch(GeneratorType<? extends RegistryLibTagsProvider<T>> providerType) {
+            this.providerType = providerType;
+        }
+
+        protected B self() {
+            return (B) this;
+        }
+
+        @SuppressWarnings("rawtypes")
+        private B addTagEntries(@NotNull TagKey<T> tag, @NotNull Consumer<TagBuilder> filler) {
             if (doDatagen()) {
                 addDataGenerator(
-                        ProviderType.ITEM_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (ItemLike item : items) {
-                                builder.add(TagEntry.element(BuiltInRegistries.ITEM.getKey(item.asItem())));
-                            }
-                        });
+                        (GeneratorType) providerType,
+                        (Consumer<RegistryLibTagsProvider<T>>) prov -> filler.accept(prov.rawBuilder(tag)));
             }
-            return this;
+            return self();
+        }
+
+        public B addIds(@NotNull TagKey<T> tag, @NotNull Identifier... ids) {
+            return addTagEntries(
+                    tag,
+                    builder -> {
+                        for (Identifier id : ids) {
+                            builder.add(TagEntry.element(id));
+                        }
+                    });
+        }
+
+        public B addOptionalIds(@NotNull TagKey<T> tag, @NotNull Identifier... ids) {
+            return addTagEntries(
+                    tag,
+                    builder -> {
+                        for (Identifier id : ids) {
+                            builder.add(TagEntry.optionalElement(id));
+                        }
+                    });
+        }
+
+        protected B addElements(@NotNull TagKey<T> tag, @NotNull Identifier[] keys) {
+            return addTagEntries(
+                    tag,
+                    builder -> {
+                        for (Identifier key : keys) {
+                            builder.add(TagEntry.element(key));
+                        }
+                    });
+        }
+    }
+
+    public final class ItemTagBatch extends TagBatch<Item, ItemTagBatch> {
+
+        ItemTagBatch() {
+            super(ProviderType.ITEM_TAGS);
+        }
+
+        public ItemTagBatch add(@NotNull TagKey<Item> tag, @NotNull ItemLike... items) {
+            Identifier[] keys = new Identifier[items.length];
+            for (int i = 0; i < items.length; i++) {
+                keys[i] = BuiltInRegistries.ITEM.getKey(items[i].asItem());
+            }
+            return addElements(tag, keys);
         }
 
         @SafeVarargs
         public final ItemTagBatch addSuppliers(
                                                @NotNull TagKey<Item> tag, @NotNull Supplier<? extends ItemLike>... items) {
-            if (doDatagen()) {
-                addDataGenerator(
-                        ProviderType.ITEM_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (Supplier<? extends ItemLike> item : items) {
-                                builder.add(TagEntry.element(BuiltInRegistries.ITEM.getKey(item.get().asItem())));
-                            }
-                        });
+            Identifier[] keys = new Identifier[items.length];
+            for (int i = 0; i < items.length; i++) {
+                keys[i] = BuiltInRegistries.ITEM.getKey(items[i].get().asItem());
             }
-            return this;
-        }
-
-        public ItemTagBatch addIds(@NotNull TagKey<Item> tag, @NotNull Identifier... ids) {
-            if (doDatagen()) {
-                addDataGenerator(
-                        ProviderType.ITEM_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (Identifier id : ids) {
-                                builder.add(TagEntry.element(id));
-                            }
-                        });
-            }
-            return this;
-        }
-
-        public ItemTagBatch addOptionalIds(@NotNull TagKey<Item> tag, @NotNull Identifier... ids) {
-            if (doDatagen()) {
-                addDataGenerator(
-                        ProviderType.ITEM_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (Identifier id : ids) {
-                                builder.add(TagEntry.optionalElement(id));
-                            }
-                        });
-            }
-            return this;
+            return addElements(tag, keys);
         }
     }
 
-    public final class BlockTagBatch {
+    public final class BlockTagBatch extends TagBatch<Block, BlockTagBatch> {
+
+        BlockTagBatch() {
+            super(ProviderType.BLOCK_TAGS);
+        }
 
         public BlockTagBatch add(@NotNull TagKey<Block> tag, @NotNull Block... blocks) {
-            if (doDatagen()) {
-                addDataGenerator(
-                        ProviderType.BLOCK_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (Block block : blocks) {
-                                builder.add(TagEntry.element(BuiltInRegistries.BLOCK.getKey(block)));
-                            }
-                        });
+            Identifier[] keys = new Identifier[blocks.length];
+            for (int i = 0; i < blocks.length; i++) {
+                keys[i] = BuiltInRegistries.BLOCK.getKey(blocks[i]);
             }
-            return this;
+            return addElements(tag, keys);
         }
 
         @SafeVarargs
         public final BlockTagBatch addSuppliers(
                                                 @NotNull TagKey<Block> tag, @NotNull Supplier<? extends Block>... blocks) {
-            if (doDatagen()) {
-                addDataGenerator(
-                        ProviderType.BLOCK_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (Supplier<? extends Block> block : blocks) {
-                                builder.add(TagEntry.element(BuiltInRegistries.BLOCK.getKey(block.get())));
-                            }
-                        });
+            Identifier[] keys = new Identifier[blocks.length];
+            for (int i = 0; i < blocks.length; i++) {
+                keys[i] = BuiltInRegistries.BLOCK.getKey(blocks[i].get());
             }
-            return this;
-        }
-
-        public BlockTagBatch addIds(@NotNull TagKey<Block> tag, @NotNull Identifier... ids) {
-            if (doDatagen()) {
-                addDataGenerator(
-                        ProviderType.BLOCK_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (Identifier id : ids) {
-                                builder.add(TagEntry.element(id));
-                            }
-                        });
-            }
-            return this;
-        }
-
-        public BlockTagBatch addOptionalIds(@NotNull TagKey<Block> tag, @NotNull Identifier... ids) {
-            if (doDatagen()) {
-                addDataGenerator(
-                        ProviderType.BLOCK_TAGS,
-                        prov -> {
-                            var builder = prov.rawBuilder(tag);
-                            for (Identifier id : ids) {
-                                builder.add(TagEntry.optionalElement(id));
-                            }
-                        });
-            }
-            return this;
+            return addElements(tag, keys);
         }
     }
 
@@ -872,31 +905,25 @@ public class RegistryCore {
 
     @StandardAPI
     public <T> AttachmentTypeBuilder<T, RegistryCore> attachmentType(
-                                                                     @NotNull String name,
-                                                                     @NotNull Function<IAttachmentHolder, T> defaultValueFactory) {
+                                                                     @NotNull String name, @NotNull Function<IAttachmentHolder, T> defaultValueFactory) {
         return attachmentType(this, name, defaultValueFactory);
     }
 
     @StandardAPI
     public <T> AttachmentTypeBuilder<T, RegistryCore> attachmentType(
-                                                                     @NotNull String name,
-                                                                     @NotNull Supplier<T> defaultValueFactory) {
+                                                                     @NotNull String name, @NotNull Supplier<T> defaultValueFactory) {
         return attachmentType(name, _holder -> defaultValueFactory.get());
     }
 
     @StandardAPI
     public <T> AttachmentType<T> attachmentType(
-                                                @NotNull String name,
-                                                @NotNull Supplier<T> defaultValueFactory,
-                                                @NotNull MapCodec<T> codec) {
+                                                @NotNull String name, @NotNull Supplier<T> defaultValueFactory, @NotNull MapCodec<T> codec) {
         return attachmentType(name, defaultValueFactory).serialize(codec).register().get();
     }
 
     @StandardAPI
     public <T> AttachmentTypeEntry<T> attachmentTypeEntry(
-                                                          @NotNull String name,
-                                                          @NotNull Supplier<T> defaultValueFactory,
-                                                          @NotNull MapCodec<T> codec) {
+                                                          @NotNull String name, @NotNull Supplier<T> defaultValueFactory, @NotNull MapCodec<T> codec) {
         return attachmentType(name, defaultValueFactory).serialize(codec).register();
     }
 
@@ -911,9 +938,7 @@ public class RegistryCore {
 
     @StandardAPI
     public <T> WorldStateBuilder<T, RegistryCore> worldState(
-                                                             @NotNull String name,
-                                                             @NotNull Codec<T> codec,
-                                                             @NotNull Supplier<T> defaultValueFactory) {
+                                                             @NotNull String name, @NotNull Codec<T> codec, @NotNull Supplier<T> defaultValueFactory) {
         return worldState(this, name, codec, defaultValueFactory);
     }
 
@@ -928,9 +953,7 @@ public class RegistryCore {
 
     @StandardAPI
     public <T> ChunkStateBuilder<T, RegistryCore> chunkState(
-                                                             @NotNull String name,
-                                                             @NotNull Codec<T> codec,
-                                                             @NotNull Supplier<T> defaultValueFactory) {
+                                                             @NotNull String name, @NotNull Codec<T> codec, @NotNull Supplier<T> defaultValueFactory) {
         return chunkState(this, name, codec, defaultValueFactory);
     }
 
@@ -938,9 +961,7 @@ public class RegistryCore {
 
     @StandardAPI
     public <C extends FeatureConfiguration, P> WorldgenFeatureBuilder<C, P> worldgenFeature(
-                                                                                            @NotNull P parent,
-                                                                                            @NotNull String name,
-                                                                                            @NotNull ConfiguredFeature<C, ?> configuredFeature) {
+                                                                                            @NotNull P parent, @NotNull String name, @NotNull ConfiguredFeature<C, ?> configuredFeature) {
         return WorldgenFeatureBuilder.create(this, parent, name, configuredFeature);
     }
 
@@ -948,21 +969,19 @@ public class RegistryCore {
     public <C extends FeatureConfiguration, P> WorldgenFeatureBuilder<C, P> worldgenFeature(
                                                                                             @NotNull P parent,
                                                                                             @NotNull String name,
-                                                                                            @NotNull java.util.function.Supplier<ConfiguredFeature<C, ?>> configuredFeature) {
+                                                                                            @NotNull Supplier<ConfiguredFeature<C, ?>> configuredFeature) {
         return WorldgenFeatureBuilder.create(this, parent, name, configuredFeature);
     }
 
     @StandardAPI
     public <C extends FeatureConfiguration> WorldgenFeatureBuilder<C, RegistryCore> worldgenFeature(
-                                                                                                    @NotNull String name,
-                                                                                                    @NotNull ConfiguredFeature<C, ?> configuredFeature) {
+                                                                                                    @NotNull String name, @NotNull ConfiguredFeature<C, ?> configuredFeature) {
         return worldgenFeature(this, name, configuredFeature);
     }
 
     @StandardAPI
     public <C extends FeatureConfiguration> WorldgenFeatureBuilder<C, RegistryCore> worldgenFeature(
-                                                                                                    @NotNull String name,
-                                                                                                    @NotNull java.util.function.Supplier<ConfiguredFeature<C, ?>> configuredFeature) {
+                                                                                                    @NotNull String name, @NotNull Supplier<ConfiguredFeature<C, ?>> configuredFeature) {
         return worldgenFeature(this, name, configuredFeature);
     }
 

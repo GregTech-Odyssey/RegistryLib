@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceKey;
 import lombok.Getter;
 
 import java.util.Locale;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 public class RegistryEntry<T, S extends T> implements Supplier<S> {
@@ -52,7 +53,20 @@ public class RegistryEntry<T, S extends T> implements Supplier<S> {
 
     @Override
     public S get() {
+        if (value == null) {
+            throw new IllegalStateException(
+                    "Registry entry '" + key + "' has not been bound yet. "
+                            + "This usually means you're accessing it before registration is complete.");
+        }
         return value;
+    }
+
+    public Optional<S> getOptional() {
+        return Optional.ofNullable(value);
+    }
+
+    public boolean isBound() {
+        return value != null;
     }
 
     public void bound(S value) {

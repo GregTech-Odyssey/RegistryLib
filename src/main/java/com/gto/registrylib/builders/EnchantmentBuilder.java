@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -59,6 +61,7 @@ public class EnchantmentBuilder<P> {
     private final RegistryCore core;
     private final P parent;
     private final String name;
+    private boolean registered;
 
     // Enchantment definition fields
     private TagKey<Item> supportedItems;
@@ -118,6 +121,25 @@ public class EnchantmentBuilder<P> {
                                       @NotNull ProviderType<? extends RegistryLibLangProvider> type,
                                       @NotNull String localizedName) {
         langCallbacks.add(c -> c.addDataGenerator(type, prov -> prov.add(langKey(), localizedName)));
+        return this;
+    }
+
+    /**
+     * Register display names for multiple locales at once.
+     *
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
+     *                     name
+     */
+    @StandardAPI
+    public EnchantmentBuilder<P> lang(@NotNull Map<String, String> localeToName) {
+        for (var entry : localeToName.entrySet()) {
+            String locale = entry.getKey().toLowerCase(Locale.ROOT);
+            if ("en_us".equals(locale)) {
+                lang(entry.getValue());
+            } else {
+                lang(core.locale(locale), entry.getValue());
+            }
+        }
         return this;
     }
 
@@ -381,6 +403,10 @@ public class EnchantmentBuilder<P> {
      */
     @StandardAPI
     public EnchantmentEntry register() {
+        if (registered) {
+            throw new IllegalStateException("Cannot register enchantment '" + name + "' twice");
+        }
+        registered = true;
         if (supportedItems == null) {
             throw new IllegalStateException(
                     "EnchantmentBuilder for '" + name + "' requires supportedItems() before register()");

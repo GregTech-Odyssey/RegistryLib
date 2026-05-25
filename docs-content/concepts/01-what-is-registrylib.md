@@ -55,8 +55,9 @@ RegistryLib is inspired by **Registrate** (tterrag's library for Forge), but reb
 - Native support for NeoForge's `DeferredHolder` and `RegisterEvent`
 - Integrated datagen (models, lang, loot, tags) within the builder chain
 - The [Group system](/how-to/register-items) for sharing defaults across entries
-- Specialized entry types (`ItemEntry`, `FluidEntry`, etc.) with convenience helpers
+- Specialized entry types (`ItemEntry`, `BlockEntry`, `FluidEntry`, etc.) built on a shared `AbstractHolderEntry` base with safe access (`isBound()`, `getOptional()`)
 - Support for the component item / attachment pattern
+- Thread-safe internals (`FreezableRegistry`, `ConcurrentHashMap`-backed caches, `ThreadLocal` tooltip resolution)
 
 ## See Also
 

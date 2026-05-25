@@ -12,17 +12,52 @@ RegistryLib provides specialized Entry types that wrap `DeferredHolder` with con
 All entry types also implement `Holder`-style interfaces. When an API expects a `Holder<Item>`, `Holder<Block>`, or `Holder<Fluid>`, you can pass the entry directly.
 :::
 
+## Inheritance Hierarchy
+
+The entry type class hierarchy is:
+
+```
+RegistryEntry<R, T>
+├── AbstractHolderEntry<R, T>   (implements Holder<R>)
+│   ├── ItemProviderEntry<T, S> (implements ItemLike)
+│   │   ├── ItemEntry<T>
+│   │   └── BlockEntry<T>
+│   └── FluidEntry<T>
+├── EntityEntry<T>
+├── BlockEntityTypeEntry<T>
+├── DataComponentTypeEntry<T>
+└── AttachmentTypeEntry<T>
+```
+
+`AbstractHolderEntry<R, T>` is the base class for entry types that act as `Holder<R>` delegates. It implements all `Holder` methods by delegating to the underlying `builtInRegistryHolder` obtained from the registered object. Subclasses only need to implement `delegate()` to return that holder.
+
+## Common RegistryEntry Methods
+
+All `RegistryEntry<R, T>` subclasses inherit these methods:
+
+| Method | Return type | Description |
+| --- | --- | --- |
+| `get()` | `T` | Get the registered object. **Throws `IllegalStateException`** if the entry has not been bound yet (i.e. accessed before registration completes). |
+| `getOptional()` | `Optional<T>` | Get the registered object wrapped in an `Optional`. Returns `Optional.empty()` if the entry has not been bound yet. Safe to call at any time. |
+| `isBound()` | `boolean` | Returns `true` if the entry has been bound to a registered object. Use this to check whether `get()` is safe to call. |
+| `key()` | `ResourceKey<R>` | The registry key for this entry |
+| `identifier()` | `Identifier` | The resource identifier for this entry |
+
+:::warning
+`get()` throws `IllegalStateException` when called before registration is complete. If you need to access an entry's value during early initialization or in a context where registration may not have finished, use `getOptional()` or check `isBound()` first.
+:::
+
 :::note
 `ChunkStateEntry`, `WorldStateEntry`, and `WorldgenFeatureEntry` are boundary handles, not `RegistryEntry` subclasses. They expose the ids and runtime access methods needed for their domain without pretending to be normal registry objects.
 :::
 
 ## ItemEntry\<T\>
 
-**Extends:** `RegistryEntry<Item, T>`
+**Extends:** `AbstractHolderEntry<Item, T>` (via `ItemProviderEntry`)
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `get()` | `T` | Get the registered Item instance |
+| `get()` | `T` | Get the registered Item instance (throws `IllegalStateException` if unbound) |
 | `asStack()` | `ItemStack` | Create a default ItemStack (count 1) |
 | `asStack(int count)` | `ItemStack` | Create an ItemStack with the specified count |
 | `readOnlyStack()` | `ItemStack` | Defensive copy of a cached ItemStack (count 1); safe against external mutation |
@@ -42,11 +77,11 @@ Item item = COPPER_COIN.get();
 
 ## BlockEntry\<T\>
 
-**Extends:** `RegistryEntry<Block, T>`
+**Extends:** `AbstractHolderEntry<Block, T>` (via `ItemProviderEntry`)
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `get()` | `T` | Get the registered Block instance |
+| `get()` | `T` | Get the registered Block instance (throws `IllegalStateException` if unbound) |
 | `getDefaultState()` | `BlockState` | Block's default BlockState for placement or configuration |
 
 **Usage example:**
@@ -63,13 +98,13 @@ BlockState state = DECORATIVE_STONE.getDefaultState();
 
 ## FluidEntry\<T\>
 
-**Extends:** `RegistryEntry<Fluid, T>`
+**Extends:** `AbstractHolderEntry<Fluid, T>`
 
 The most feature-rich entry type. Provides access to the entire fluid family (source, flowing, block, bucket) from a single reference.
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `get()` | `T` | Get the flowing fluid |
+| `get()` | `T` | Get the flowing fluid (throws `IllegalStateException` if unbound) |
 | `getSource()` | `Fluid` | Get the source fluid |
 | `getType()` | `FluidType` | Get the FluidType |
 | `getBlock()` | `LiquidBlock` | Get the fluid block (if registered) |
@@ -105,7 +140,7 @@ Item bucket = MOLTEN_GOLD.getBucket();
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `get()` | `BlockEntityType<T>` | Get the BlockEntityType |
+| `get()` | `BlockEntityType<T>` | Get the BlockEntityType (throws `IllegalStateException` if unbound) |
 
 Host block binding is configured during registration via `validBlock()` or `validBlocks()` on the builder:
 
@@ -127,7 +162,7 @@ Bind multiple blocks with `validBlocks(block1, block2, ...)` when the same Block
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `get()` | `DataComponentType<T>` | Get the registered component type |
+| `get()` | `DataComponentType<T>` | Get the registered component type (throws `IllegalStateException` if unbound) |
 | `get(stack)` | `T` | Read a component value from an `ItemStack` |
 | `getOrDefault(stack, defaultValue)` | `T` | Read a component value with a fallback |
 | `has(stack)` | `boolean` | Check whether the stack has the component |
@@ -150,7 +185,7 @@ API_NOTE.set(stack, "Stored on the stack");
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `get()` | `AttachmentType<T>` | Get the registered NeoForge attachment type |
+| `get()` | `AttachmentType<T>` | Get the registered NeoForge attachment type (throws `IllegalStateException` if unbound) |
 | `getOrCreate(holder)` | `T` | Read or create data on an `IAttachmentHolder` |
 | `getIfPresent(holder)` | `Optional<T>` | Read existing data without creating it |
 | `set(holder, value)` | `T` | Replace attachment data and return the previous value |
@@ -208,7 +243,7 @@ Prefer `chunkState(...)` or `worldState(...)` when the attachment represents gam
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `get()` | `EntityType<T>` | Get the EntityType |
+| `get()` | `EntityType<T>` | Get the EntityType (throws `IllegalStateException` if unbound) |
 | `is(entity)` | `boolean` | Check if an Entity instance is of this type |
 
 **Usage example:**

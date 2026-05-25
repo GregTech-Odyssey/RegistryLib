@@ -75,7 +75,9 @@ Every `.register()` call returns a typed Entry:
 | `block(...)` | `BlockEntry<T>` | `T extends Block` |
 | `fluid(...)` | `FluidEntry<T>` | `T extends FlowingFluid` |
 
-Entry objects are safe to store as `static final` fields. They are resolved lazily —`.get()` returns the registered instance after the registry event fires.
+The concrete entry types (`ItemEntry`, `BlockEntry`, `FluidEntry`) extend `AbstractHolderEntry`, which in turn extends `RegistryEntry`. `AbstractHolderEntry` implements `Holder<R>`, so entries can be passed directly to APIs that accept holders.
+
+Entry objects are safe to store as `static final` fields. They are resolved lazily -- `.get()` returns the registered instance after the registry event fires. If the entry has not been bound yet (i.e. the registry event has not fired), `.get()` throws an `IllegalStateException` rather than returning `null`. Use `.getOptional()` when you need a safe check, or `.isBound()` to test whether the value is available:
 
 ```java
 // Store as a constant
@@ -85,8 +87,12 @@ public static final ItemEntry<Item> MY_ITEM = REGISTRYLIB
         .register();
 
 // Use later (after registration)
-Item item = MY_ITEM.get();
+Item item = MY_ITEM.get();               // throws if not yet bound
 ResourceKey<Item> key = MY_ITEM.getKey();
+
+// Safe access patterns
+Optional<Item> maybe = MY_ITEM.getOptional();  // empty before binding
+boolean ready = MY_ITEM.isBound();             // false before binding
 ```
 
 ## Common Pitfalls
@@ -125,15 +131,20 @@ A common pattern is to add a no-op `public static void init() {}` method to each
 
 ### Calling `.get()` Too Early
 
-Entry objects are lazy. Calling `.get()` before the registry event fires (e.g., during static initialization or in a constructor) will throw an exception or return `null`.
+Entry objects are lazy. Calling `.get()` before the registry event fires (e.g., during static initialization or in a constructor) throws an `IllegalStateException`. It never returns `null`.
 
 ```java
 // —Too early —registry event has not fired yet
-public static final Item RAW = MY_ITEM.get();
+public static final Item RAW = MY_ITEM.get();  // throws IllegalStateException
 
 // —Use the Entry itself and call .get() when needed at runtime
 public void someMethod() {
     Item item = MY_ITEM.get();  // safe after registration
+}
+
+// —Use .isBound() or .getOptional() when you are unsure of timing
+if (MY_ITEM.isBound()) {
+    Item item = MY_ITEM.get();
 }
 ```
 
@@ -144,7 +155,7 @@ public void someMethod() {
 | Chain structure | Create —Configure —`.register()` |
 | Terminal operation | `.register()` submits and returns an Entry |
 | Nested builders | `.item(...)` on a block builder creates a child; one `.register()` submits both |
-| Entry objects | Lazy suppliers; store as `static final`, call `.get()` at runtime |
+| Entry objects | Lazy suppliers; store as `static final`, call `.get()` at runtime (throws if unbound; use `.getOptional()` or `.isBound()` for safe checks) |
 | Class loading | Reference your registration class so its static fields are initialized |
 
 ## What's Next

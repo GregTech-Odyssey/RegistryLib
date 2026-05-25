@@ -29,8 +29,8 @@ public final class TooltipRegistry {
     /** 查找表。 */
     private static final MultiMap<Item, TooltipNodeCollector.TooltipConfig> map = MultiMap.createIdentity(ArrayList::new);
 
-    /** 复用的收集器，避免每次 resolve 创建新实例。 */
-    private static final TooltipNodeCollector reusableCollector = new TooltipNodeCollector();
+    /** 线程本地收集器，避免每次 resolve 创建新实例，同时保证线程安全。 */
+    private static final ThreadLocal<TooltipNodeCollector> threadLocalCollector = ThreadLocal.withInitial(TooltipNodeCollector::new);
 
     /** 共享的分隔线实例。 */
     private static final SeparatorNode SEPARATOR = new SeparatorNode();
@@ -75,7 +75,7 @@ public final class TooltipRegistry {
         var configs = map.get(itemStack.getItem());
         if (configs.isEmpty()) return null;
 
-        var collector = reusableCollector;
+        var collector = threadLocalCollector.get();
         collector.nodesByRoot.clear();
         for (var config : configs) {
             config.configure(collector, itemStack);

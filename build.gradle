@@ -253,6 +253,8 @@ dependencies {
     implementation("com.fast.fastcollection:fastcollection-neoforge-26.1:1.0.0")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
+    testImplementation("com.google.guava:guava:33.5.0-jre")
+    testImplementation("it.unimi.dsi:fastutil:8.5.18")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

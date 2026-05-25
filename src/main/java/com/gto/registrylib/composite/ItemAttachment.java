@@ -13,8 +13,8 @@ import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 
 import java.lang.reflect.Method;
-import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 可附加到 {@link IComponentItem} 上的行为组件。
@@ -54,7 +54,7 @@ public class ItemAttachment<T extends IComponentItem<T>> {
             "inventoryTick", INVENTORY_TICK,
             "collectTooltipNodes", COLLECT_TOOLTIP);
 
-    private static final Map<Class<?>, Integer> cache = new IdentityHashMap<>();
+    private static final Map<Class<?>, Integer> cache = new ConcurrentHashMap<>();
 
     /** 检测子类实际覆盖了哪些方法，返回覆盖方法的位掩码并集。结果缓存。 */
     public static int detectOverrides(Class<?> clazz) {
@@ -73,7 +73,17 @@ public class ItemAttachment<T extends IComponentItem<T>> {
     }
 
     /** 由注册系统在 attach 时设置。 */
-    public int overrideFlags = 0;
+    private int overrideFlags = 0;
+
+    /** Returns the bitmask of overridden callback methods. */
+    public int getOverrideFlags() {
+        return overrideFlags;
+    }
+
+    /** Sets the override flags. Called by the registration system during attach. */
+    void setOverrideFlags(int flags) {
+        this.overrideFlags = flags;
+    }
 
     @SuppressWarnings("unchecked")
     public final <A> A self() {
