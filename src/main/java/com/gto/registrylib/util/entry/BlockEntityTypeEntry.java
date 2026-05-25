@@ -19,10 +19,12 @@ public class BlockEntityTypeEntry<T extends BlockEntity>
     }
 
     public T create(BlockPos pos, BlockState state) {
+        if (value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return value.create(pos, state);
     }
 
     public boolean is(@Nullable BlockEntity t) {
+        if (value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return t != null && t.getType() == value;
     }
 
@@ -32,6 +34,7 @@ public class BlockEntityTypeEntry<T extends BlockEntity>
 
     @SuppressWarnings("unchecked")
     public @Nullable T getNullable(BlockGetter world, BlockPos pos) {
+        if (value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         BlockEntity be = world.getBlockEntity(pos);
         return is(be) ? (T) be : null;
     }

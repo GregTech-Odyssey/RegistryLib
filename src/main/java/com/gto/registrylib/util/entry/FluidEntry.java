@@ -87,10 +87,11 @@ public class FluidEntry<T extends BaseFlowingFluid> extends AbstractHolderEntry<
     }
 
     public FluidStack readOnlyStack() {
-        if (readOnlyStack == null) {
-            readOnlyStack = asStack();
+        var stack = readOnlyStack;
+        if (stack == null || stack.getAmount() < 1) {
+            readOnlyStack = stack = asStack();
         }
-        return readOnlyStack;
+        return stack;
     }
 
     public FluidStack asStack() {

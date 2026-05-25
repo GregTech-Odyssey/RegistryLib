@@ -16,28 +16,38 @@ public class DataComponentTypeEntry<T>
 
     @Nullable
     public T get(ItemStack stack) {
+        if (value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return stack.get(value);
     }
 
     public T getOrDefault(ItemStack stack, T defaultValue) {
+        if (value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return stack.getOrDefault(value, defaultValue);
     }
 
     public boolean has(ItemStack stack) {
+        if (value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return stack.has(value);
     }
 
     @Nullable
     public T set(ItemStack stack, @Nullable T value) {
+        if (this.value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return stack.set(this.value, value);
     }
 
     @Nullable
     public T remove(ItemStack stack) {
+        if (value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return stack.remove(value);
     }
 
     public Item.Properties component(Item.Properties properties, T value) {
+        if (this.value == null) throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         return properties.component(this.value, value);
+    }
+
+    public static <T> DataComponentTypeEntry<T> cast(RegistryEntry<DataComponentType<?>, DataComponentType<T>> entry) {
+        return RegistryEntry.cast(DataComponentTypeEntry.class, entry);
     }
 }

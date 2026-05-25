@@ -109,4 +109,8 @@ public class RecipeTypeEntry<T extends Recipe<?>>
         core.addRecipe(typeName + "/" + recipeName, recipeFactory);
         return this;
     }
+
+    public static <T extends Recipe<?>> RecipeTypeEntry<T> cast(RegistryEntry<RecipeType<?>, RecipeType<T>> entry) {
+        return RegistryEntry.cast(RecipeTypeEntry.class, entry);
+    }
 }

@@ -81,6 +81,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
@@ -328,7 +329,7 @@ public class RegistryCore {
      * @param zhCn the Chinese display name
      * @return a translatable {@link MutableComponent} for the key
      */
-    @StandardAPI
+    @SyntaxSugar("lang(key, Map.of(\"en_us\", enUs, \"zh_cn\", zhCn))")
     public MutableComponent langPair(String key, String enUs, String zhCn) {
         MutableComponent component = lang(key, enUs);
         lang(locale("zh_cn"), key, zhCn);
@@ -611,6 +612,12 @@ public class RegistryCore {
         return new BlockTagBatch();
     }
 
+    @StandardAPI
+    public FluidTagBatch fluidTags() { return new FluidTagBatch(); }
+
+    @StandardAPI
+    public EntityTagBatch entityTags() { return new EntityTagBatch(); }
+
     public RegistryCore tagExisting(@NotNull TagKey<Item> tag, @NotNull ItemLike... items) {
         itemTags().add(tag, items);
         return this;
@@ -833,6 +840,49 @@ public class RegistryCore {
         }
     }
 
+    public final class FluidTagBatch extends TagBatch<Fluid, FluidTagBatch> {
+        FluidTagBatch() { super(ProviderType.FLUID_TAGS); }
+
+        public FluidTagBatch add(@NotNull TagKey<Fluid> tag, @NotNull Fluid... fluids) {
+            Identifier[] keys = new Identifier[fluids.length];
+            for (int i = 0; i < fluids.length; i++) {
+                keys[i] = BuiltInRegistries.FLUID.getKey(fluids[i]);
+            }
+            return addElements(tag, keys);
+        }
+
+        @SafeVarargs
+        public final FluidTagBatch addSuppliers(@NotNull TagKey<Fluid> tag, @NotNull Supplier<? extends Fluid>... fluids) {
+            Identifier[] keys = new Identifier[fluids.length];
+            for (int i = 0; i < fluids.length; i++) {
+                keys[i] = BuiltInRegistries.FLUID.getKey(fluids[i].get());
+            }
+            return addElements(tag, keys);
+        }
+    }
+
+    public final class EntityTagBatch extends TagBatch<EntityType<?>, EntityTagBatch> {
+        EntityTagBatch() { super(ProviderType.ENTITY_TAGS); }
+
+        @SafeVarargs
+        public final EntityTagBatch add(@NotNull TagKey<EntityType<?>> tag, @NotNull EntityType<?>... entityTypes) {
+            Identifier[] keys = new Identifier[entityTypes.length];
+            for (int i = 0; i < entityTypes.length; i++) {
+                keys[i] = BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes[i]);
+            }
+            return addElements(tag, keys);
+        }
+
+        @SafeVarargs
+        public final EntityTagBatch addSuppliers(@NotNull TagKey<EntityType<?>> tag, @NotNull Supplier<? extends EntityType<?>>... entityTypes) {
+            Identifier[] keys = new Identifier[entityTypes.length];
+            for (int i = 0; i < entityTypes.length; i++) {
+                keys[i] = BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes[i].get());
+            }
+            return addElements(tag, keys);
+        }
+    }
+
     // === Builder Factory Methods ===
     // --- Items ---
 
@@ -845,7 +895,7 @@ public class RegistryCore {
         return applyItemDefaults(ItemBuilder.create(this, parent, name, factory, isComponentItem));
     }
 
-    @StandardAPI("Returns an ItemBuilder for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("item(this, name, factory, false)")
     public <T extends Item> ItemBuilder<T, RegistryCore> item(
                                                               @NotNull String name, @NotNull Function<Item.Properties, T> factory) {
         return item(this, name, factory, false);
@@ -866,6 +916,7 @@ public class RegistryCore {
 
     // --- Blocks ---
 
+    @StandardAPI
     public <T extends Block, P> BlockBuilder<T, P> block(
                                                          @NotNull P parent,
                                                          @NotNull String name,
@@ -873,12 +924,13 @@ public class RegistryCore {
         return applyBlockDefaults(BlockBuilder.create(this, parent, name, factory));
     }
 
-    @StandardAPI("Returns a BlockBuilder for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("block(this, name, factory)")
     public <T extends Block> BlockBuilder<T, RegistryCore> block(
                                                                  @NotNull String name, @NotNull Function<BlockBehaviour.Properties, T> factory) {
         return block(this, name, factory);
     }
 
+    @SyntaxSugar("block(this, name, Block::new)")
     public BlockBuilder<Block, RegistryCore> block(@NotNull String name) {
         return block(this, name, Block::new);
     }
@@ -888,7 +940,7 @@ public class RegistryCore {
         return CropBuilder.create(this, parent, name);
     }
 
-    @StandardAPI
+    @SyntaxSugar("crop(this, name)")
     public CropBuilder<RegistryCore> crop(@NotNull String name) {
         return crop(this, name);
     }
@@ -903,25 +955,25 @@ public class RegistryCore {
         return AttachmentTypeBuilder.create(this, parent, name, defaultValueFactory);
     }
 
-    @StandardAPI
+    @SyntaxSugar("attachmentType(this, name, defaultValueFactory)")
     public <T> AttachmentTypeBuilder<T, RegistryCore> attachmentType(
                                                                      @NotNull String name, @NotNull Function<IAttachmentHolder, T> defaultValueFactory) {
         return attachmentType(this, name, defaultValueFactory);
     }
 
-    @StandardAPI
+    @SyntaxSugar("attachmentType(name, _holder -> defaultValueFactory.get())")
     public <T> AttachmentTypeBuilder<T, RegistryCore> attachmentType(
                                                                      @NotNull String name, @NotNull Supplier<T> defaultValueFactory) {
         return attachmentType(name, _holder -> defaultValueFactory.get());
     }
 
-    @StandardAPI
+    @SyntaxSugar("attachmentType(name, defaultValueFactory).serialize(codec).register().get()")
     public <T> AttachmentType<T> attachmentType(
                                                 @NotNull String name, @NotNull Supplier<T> defaultValueFactory, @NotNull MapCodec<T> codec) {
         return attachmentType(name, defaultValueFactory).serialize(codec).register().get();
     }
 
-    @StandardAPI
+    @SyntaxSugar("attachmentType(name, defaultValueFactory).serialize(codec).register()")
     public <T> AttachmentTypeEntry<T> attachmentTypeEntry(
                                                           @NotNull String name, @NotNull Supplier<T> defaultValueFactory, @NotNull MapCodec<T> codec) {
         return attachmentType(name, defaultValueFactory).serialize(codec).register();
@@ -965,7 +1017,7 @@ public class RegistryCore {
         return WorldgenFeatureBuilder.create(this, parent, name, configuredFeature);
     }
 
-    @StandardAPI
+    @SyntaxSugar("worldgenFeature(parent, name, () -> configuredFeature)")
     public <C extends FeatureConfiguration, P> WorldgenFeatureBuilder<C, P> worldgenFeature(
                                                                                             @NotNull P parent,
                                                                                             @NotNull String name,
@@ -973,13 +1025,13 @@ public class RegistryCore {
         return WorldgenFeatureBuilder.create(this, parent, name, configuredFeature);
     }
 
-    @StandardAPI
+    @SyntaxSugar("worldgenFeature(this, name, configuredFeature)")
     public <C extends FeatureConfiguration> WorldgenFeatureBuilder<C, RegistryCore> worldgenFeature(
                                                                                                     @NotNull String name, @NotNull ConfiguredFeature<C, ?> configuredFeature) {
         return worldgenFeature(this, name, configuredFeature);
     }
 
-    @StandardAPI
+    @SyntaxSugar("worldgenFeature(this, name, configuredFeature)")
     public <C extends FeatureConfiguration> WorldgenFeatureBuilder<C, RegistryCore> worldgenFeature(
                                                                                                     @NotNull String name, @NotNull Supplier<ConfiguredFeature<C, ?>> configuredFeature) {
         return worldgenFeature(this, name, configuredFeature);
@@ -987,6 +1039,7 @@ public class RegistryCore {
 
     // --- Block Entities ---
 
+    @StandardAPI
     public <T extends BlockEntity, P> BlockEntityBuilder<T, P> blockEntity(
                                                                            @NotNull P parent,
                                                                            @NotNull String name,
@@ -994,7 +1047,7 @@ public class RegistryCore {
         return BlockEntityBuilder.create(this, parent, name, factory);
     }
 
-    @StandardAPI("Returns a BlockEntityBuilder for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("blockEntity(this, name, factory)")
     public <T extends BlockEntity> BlockEntityBuilder<T, RegistryCore> blockEntity(
                                                                                    @NotNull String name, @NotNull BlockEntityBuilder.BlockEntityFactory<T> factory) {
         return blockEntity(this, name, factory);
@@ -1008,13 +1061,13 @@ public class RegistryCore {
                 FluidBuilder.create(this, parent, name, FluidType::new, fluidFactory));
     }
 
-    @StandardAPI("Returns a FluidBuilder for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new)")
     public FluidBuilder<BaseFlowingFluid.Flowing, RegistryCore> fluid(
                                                                       @NotNull String name, @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture) {
         return fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new);
     }
 
-    @StandardAPI("Returns a FluidBuilder with custom FluidFactory for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("fluid(this, name, stillTexture, flowingTexture, fluidFactory)")
     public <T extends BaseFlowingFluid> FluidBuilder<T, RegistryCore> fluid(
                                                                             @NotNull String name,
                                                                             @NotNull Identifier stillTexture,
@@ -1061,7 +1114,7 @@ public class RegistryCore {
 
     // --- Recipe Types (Builder) ---
 
-    @StandardAPI("Returns a RecipeTypeBuilder for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("recipeType(this, name)")
     public <T extends Recipe<?>> RecipeTypeBuilder<T, RegistryCore> recipeType(@NotNull String name) {
         return RecipeTypeBuilder.create(this, this, name);
     }
@@ -1085,7 +1138,7 @@ public class RegistryCore {
      * @param id     the recipe path (e.g. {@code "altar/cobblestone_to_stone"})
      * @param recipe the recipe instance
      */
-    @StandardAPI("Adds a recipe instance for datagen.")
+    @SyntaxSugar("addRecipe(id, _reg -> recipe)")
     public void addRecipe(@NotNull String id, @NotNull Recipe<?> recipe) {
         addRecipe(id, _reg -> recipe);
     }
@@ -1099,7 +1152,7 @@ public class RegistryCore {
      * @param id             the recipe path
      * @param recipeSupplier a supplier that provides the recipe instance
      */
-    @StandardAPI("Adds a lazily-created recipe for datagen.")
+    @SyntaxSugar("addRecipe(id, _reg -> recipeSupplier.get())")
     public void addRecipe(@NotNull String id, @NotNull Supplier<? extends Recipe<?>> recipeSupplier) {
         addRecipe(id, _reg -> recipeSupplier.get());
     }
@@ -1142,7 +1195,7 @@ public class RegistryCore {
      * @param codec the MapCodec for serializing / deserializing the custom ingredient
      * @return a {@link RegistryEntry} wrapping the registered type
      */
-    @StandardAPI("Registers a custom IngredientType and returns a RegistryEntry.")
+    @SyntaxSugar("ingredientType(name, codec, ByteBufCodecs.fromCodecWithRegistries(codec.codec()))")
     public <T extends net.neoforged.neoforge.common.crafting.ICustomIngredient> IngredientType<T> ingredientType(@NotNull String name, @NotNull MapCodec<T> codec) {
         return ingredientType(name, codec, ByteBufCodecs.fromCodecWithRegistries(codec.codec()));
     }
@@ -1238,7 +1291,7 @@ public class RegistryCore {
 
     // --- Enchantments (Builder) ---
 
-    @StandardAPI("Returns an EnchantmentBuilder for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("enchantment(this, name)")
     public EnchantmentBuilder<RegistryCore> enchantment(@NotNull String name) {
         return EnchantmentBuilder.create(this, this, name);
     }
@@ -1250,6 +1303,7 @@ public class RegistryCore {
 
     // --- Entities ---
 
+    @StandardAPI
     public <T extends Entity, P> EntityBuilder<T, P> entity(
                                                             @NotNull P parent,
                                                             @NotNull String name,
@@ -1258,7 +1312,7 @@ public class RegistryCore {
         return EntityBuilder.create(this, parent, name, factory, category);
     }
 
-    @StandardAPI("Returns an EntityBuilder for fluent chain configuration. Call .register() to finalise.")
+    @SyntaxSugar("entity(this, name, factory, category)")
     public <T extends Entity> EntityBuilder<T, RegistryCore> entity(
                                                                     @NotNull String name,
                                                                     @NotNull EntityType.EntityFactory<T> factory,
