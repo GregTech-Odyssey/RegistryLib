@@ -89,6 +89,21 @@ REGISTRYLIB.block("layered_storage_block")
 
 Use `TextureRef.mc("block/iron_block")` or `TextureRef.of(id)` for vanilla or third-party cube textures; string overloads resolve inside the current mod namespace.
 
+## Hand-Written Blockstate
+
+Use `.noBlockstate()` when you provide the blockstate JSON yourself and do not want datagen to generate one:
+
+```java
+public static final BlockEntry<Block> SPECIAL_BLOCK = REGISTRYLIB
+        .block("special_block", Block::new)
+        .noBlockstate()
+        .lang("Special Block")
+        .simpleItem()
+        .register();
+```
+
+The block is excluded from NeoForge's blockstate validation so datagen no longer throws. You must supply `assets/<modid>/blockstates/special_block.json` yourself.
+
 ## Common API Lookup
 
 | Method | Purpose |
@@ -100,6 +115,7 @@ Use `TextureRef.mc("block/iron_block")` or `TextureRef.of(id)` for vanilla or th
 | `item(...)` | Customize the BlockItem |
 | `defaultLoot()` | Generate basic self-drop loot table |
 | `loot(...)` | Supply a custom loot table callback |
+| `noBlockstate()` | Skip blockstate datagen for hand-written JSON |
 | `tintedCube(tintIndex)` | Generate a cube block model with face tint indices using the block's own texture path |
 | `tintedCube(texturePath, tintIndex)` | Generate a tinted cube block model referencing a shared texture |
 | `constantTint(RgbColor)` | Register opaque block tint and generate a tinted BlockItem model using the block's own model |

@@ -210,10 +210,18 @@ public class BlockBuilder<T extends Block, P>
         return texture(name, image);
     }
 
+    @StandardAPI("Opts out of blockstate datagen so the block can use hand-written blockstate JSON.")
+    public BlockBuilder<T, P> noBlockstate() {
+        if (!core.doDatagen()) return this;
+        core.excludeBlockFromModelValidation(name);
+        return setData(ProviderType.BLOCKSTATE, FunctionUtil.noOpConsumerStatic());
+    }
+
     @StandardAPI
     public BlockBuilder<T, P> blockstate(
                                          @NotNull Supplier<BiConsumer<T, RegistryLibBlockModelGenerator>> cons) {
         if (!core.doDatagen()) return this;
+        core.includeBlockInModelValidation(name);
         return setData(ProviderType.BLOCKSTATE, p -> cons.get().accept(getValue(), p));
     }
 

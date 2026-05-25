@@ -29,4 +29,5 @@ public class SimpleBlockExample {
                             new Color(146, 146, 146), ImageUtil.SQUARE, new Color(92, 92, 92)))
             .simpleItem()
             .register();
+
 }

@@ -147,6 +147,7 @@ public class RegistryCore {
     private final List<Consumer<ItemBuilder<?, ?>>> itemDefaultCallbacks = new ArrayList<>();
     private final List<Consumer<BlockBuilder<?, ?>>> blockDefaultCallbacks = new ArrayList<>();
     private final List<Consumer<FluidBuilder<?, ?>>> fluidDefaultCallbacks = new ArrayList<>();
+    private final Set<String> blockstateExcludedBlocks = new java.util.HashSet<>();
     private final List<String> generatedNamespaceCleanups = new ArrayList<>();
     private final StateRegistryManager stateRegistryManager = new StateRegistryManager();
 
@@ -256,6 +257,18 @@ public class RegistryCore {
 
     public void addRecipeData(Consumer<RegistryLibRecipeProvider> cons) {
         addDataGenerator(ProviderType.RECIPE, cons);
+    }
+
+    public void excludeBlockFromModelValidation(String blockName) {
+        blockstateExcludedBlocks.add(blockName);
+    }
+
+    public void includeBlockInModelValidation(String blockName) {
+        blockstateExcludedBlocks.remove(blockName);
+    }
+
+    public boolean isBlockExcludedFromModelValidation(String blockName) {
+        return blockstateExcludedBlocks.contains(blockName);
     }
 
     @Nullable
