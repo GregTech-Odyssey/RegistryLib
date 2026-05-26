@@ -108,22 +108,29 @@ public class BlockBuilder<T extends Block, P>
                 false)
                 .setData(ProviderType.LANG, FunctionUtil.noOpConsumer())
                 .model(
-                        () -> (ctx, prov) -> core.getDataProvider(ProviderType.BLOCKSTATE)
-                                .map(g -> g.seenBlockstates.get(getValue()))
-                                .flatMap(BlockStateModelDispatcher::simpleModels)
-                                .map(b -> b.models().get(""))
-                                .map(
-                                        unbaked -> {
-                                            if (unbaked instanceof SingleVariant.Unbaked(Variant variant)) {
-                                                return variant.modelLocation();
-                                            }
-                                            return null;
-                                        })
-                                .ifPresent(model -> prov.createWithExistingModel(ctx, model)));
+                        () -> (ctx, prov) -> {
+                            var model = core.getDataProvider(ProviderType.BLOCKSTATE)
+                                    .map(g -> g.seenBlockstates.get(getValue()))
+                                    .flatMap(BlockStateModelDispatcher::simpleModels)
+                                    .map(b -> b.models().get(""))
+                                    .map(
+                                            unbaked -> {
+                                                if (unbaked instanceof SingleVariant.Unbaked(
+                                                        Variant variant)) {
+                                                    return variant.modelLocation();
+                                                }
+                                                return null;
+                                            });
+                            if (model.isPresent()) {
+                                prov.createWithExistingModel(ctx, model.get());
+                            } else if (core.isBlockExcludedFromModelValidation(name)) {
+                                prov.generateFlatItem(ctx, ModelTemplates.FLAT_ITEM);
+                            }
+                        });
         if (defaultItemTab != null) {
             builder.addTab(defaultItemTab);
         }
-        if (blockItemTintSources != null) {
+        if (blockItemTintSources != null && !core.isBlockExcludedFromModelValidation(name)) {
             builder.model(
                     () -> (ctx, prov) -> prov.generateTintedBlockItem(getValue(), blockItemTintSources));
         }

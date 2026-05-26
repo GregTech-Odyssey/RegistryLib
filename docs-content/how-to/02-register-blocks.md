@@ -102,7 +102,7 @@ public static final BlockEntry<Block> SPECIAL_BLOCK = REGISTRYLIB
         .register();
 ```
 
-The block is excluded from NeoForge's blockstate validation so datagen no longer throws. You must supply `assets/<modid>/blockstates/special_block.json` yourself.
+The block is excluded from NeoForge's blockstate validation so datagen no longer throws. The BlockItem will receive a flat item model by default; override via `.item(b -> b.model(...))` to reference a hand-written block model. You must supply `assets/<modid>/blockstates/special_block.json` yourself.
 
 ## Common API Lookup
 
