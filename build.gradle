@@ -193,32 +193,8 @@ tasks.register('verifyReleaseJarDoesNotContainRegistryLibTest') {
     }
 }
 
-tasks.register('verifyPublicationMetadataDoesNotUseFlatDirFastcollection') {
-    group = 'verification'
-    description = 'Fails the build if published metadata still points at the flatDir fastcollection dependency.'
-    dependsOn(tasks.named('generatePomFileForMavenJavaPublication'))
-    dependsOn(tasks.named('generateMetadataFileForMavenJavaPublication'))
-
-    doLast {
-        def publicationDir = layout.buildDirectory.dir('publications/mavenJava').get().asFile
-        def pomFile = new File(publicationDir, 'pom-default.xml')
-        def moduleFile = new File(publicationDir, 'module.json')
-        def pomText = pomFile.getText('UTF-8')
-        def moduleText = moduleFile.getText('UTF-8')
-
-        def badPom = pomText.contains('<groupId>dev</groupId>') && pomText.contains('<artifactId>fastcollection-1.0</artifactId>')
-        def badModule = moduleText.contains('"module": "fastcollection-1.0"')
-
-        if (badPom || badModule) {
-            throw new GradleException(
-                    'Published metadata still references the flatDir fastcollection dependency.')
-        }
-    }
-}
-
 tasks.named('check') {
     dependsOn(tasks.named('verifyReleaseJarDoesNotContainRegistryLibTest'))
-    dependsOn(tasks.named('verifyPublicationMetadataDoesNotUseFlatDirFastcollection'))
 }
 
 def releasePublishTaskNames = [
@@ -231,7 +207,6 @@ def releasePublishTaskNames = [
 tasks.configureEach {
     if (name in releasePublishTaskNames) {
         dependsOn(tasks.named('verifyReleaseJarDoesNotContainRegistryLibTest'))
-        dependsOn(tasks.named('verifyPublicationMetadataDoesNotUseFlatDirFastcollection'))
     }
 }
 
@@ -240,9 +215,6 @@ repositories {
     maven {
         url = 'https://maven.gtodyssey.com/releases'
     }
-    flatDir {
-        dir "libs"
-    }
     mavenCentral()
 }
 
@@ -250,7 +222,7 @@ dependencies {
     compileOnly("org.projectlombok:lombok:1.18.44")
     annotationProcessor("org.projectlombok:lombok:1.18.44")
 
-    implementation("com.fast.fastcollection:fastcollection-neoforge-26.1:1.0.0")
+    implementation("it.unimi.dsi:fastutil:8.5.18")
 
     testImplementation("org.junit.jupiter:junit-jupiter:6.0.1")
     testImplementation("com.google.guava:guava:33.5.0-jre")
