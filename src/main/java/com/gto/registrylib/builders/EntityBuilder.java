@@ -115,12 +115,26 @@ public class EntityBuilder<T extends Entity, P>
         return this;
     }
 
+    /**
+     * Binds a client-side {@link EntityRendererProvider} to this entity type.
+     *
+     * <p>
+     * The renderer is supplied through <b>two</b> lambda levels
+     * ({@code Supplier<Supplier<...>>}) on purpose so that no client class is resolved on the
+     * dedicated server. The outer {@code Supplier} returns a plain {@code Supplier} (non-client), so
+     * creating it at the call site never makes the JVM resolve {@link EntityRendererProvider}; the
+     * client type only appears inside the inner lambda, whose {@code invokedynamic} is linked
+     * exclusively under {@link Dist#CLIENT}. A single-level
+     * {@code Supplier<EntityRendererProvider>} would crash the server, because the JVM resolves a
+     * lambda's instantiated return type when the lambda is <i>created</i>. Call this as
+     * {@code .renderer(() -> () -> MyRenderer::new)}.
+     */
     @StandardAPI
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    public EntityBuilder<T, P> renderer(@NotNull Supplier<EntityRendererProvider> renderer) {
+    public EntityBuilder<T, P> renderer(@NotNull Supplier<Supplier<EntityRendererProvider>> renderer) {
         Supplier supplier = getValueSupplier();
         DistExecutor.unsafeRunWhenOn(
-                Dist.CLIENT, () -> () -> Client.registerEntityRenderer(supplier, renderer.get()));
+                Dist.CLIENT, () -> () -> Client.registerEntityRenderer(supplier, renderer.get().get()));
         return this;
     }
 

@@ -35,7 +35,7 @@ public static final EntityEntry<MyMob> MY_MOB = REGISTRYLIB
         .sized(0.6F, 1.95F)
         .clientTrackingRange(8)
         .attributes(MyMob::createAttributes)
-        .renderer(() -> MyMobRenderer::new)
+        .renderer(() -> () -> MyMobRenderer::new)
         .spawnEgg()
         .register();
 ```
@@ -470,7 +470,7 @@ public static final EntityEntry<MyMob> MY_MOB = REGISTRYLIB
         .updateInterval(3)            // 同步间隔（tick）
         .fireImmune()                 // 火焰/岩浆免疫
         .attributes(MyMob::createAttributes)
-        .renderer(() -> MyMobRenderer::new)
+        .renderer(() -> () -> MyMobRenderer::new)
         .spawnEgg(egg -> egg.lang("My Mob Spawn Egg"))
         .addTag(EntityTypeTags.FALL_DAMAGE_IMMUNE)
         .loot((tables, entityType) -> tables.add(entityType, LootTable.lootTable()

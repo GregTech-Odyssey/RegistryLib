@@ -75,6 +75,10 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
         generateFlatTintedItem(item, parent.texture(texturePath), tintSources);
     }
 
+    public void generateFlatTintedItem(Item item, TextureRef texture, RgbColor color) {
+        generateFlatTintedItem(item, texture, RegistryLibTintSources.itemConstant(color));
+    }
+
     public void generateFlatTintedItem(Item item, TextureRef texture, ItemTintSource... tintSources) {
         Identifier model = ModelTemplates.FLAT_ITEM.create(
                 item, TextureMapping.layer0(new Material(texture.id())), modelOutput);

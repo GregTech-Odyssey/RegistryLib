@@ -97,8 +97,8 @@ public class FullEntityExample {
             // --- attributes: 注册实体属性（生命值、攻击力、速度等）---
             // 必须在 EntityAttributeCreationEvent 之前调用，否则游戏崩溃
             .attributes(ObsidianGolem::createAttributes)
-            // --- renderer: 客户端渲染器（Supplier 惰性加载，仅在 Dist.CLIENT 执行）---
-            .renderer(() -> ObsidianGolemRenderer::new)
+            // --- renderer: 客户端渲染器（supplier-of-supplier 惰性加载，仅在 Dist.CLIENT 链接/执行）---
+            .renderer(() -> () -> ObsidianGolemRenderer::new)
             // --- spawnEgg: 刷怪蛋（Consumer 可自定义蛋的物品属性/名称）---
             .spawnEgg(
                     egg -> egg.lang("Obsidian Golem Spawn Egg")

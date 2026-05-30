@@ -6,6 +6,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * RegistryLib Tooltip 全局注册表。
@@ -46,9 +47,19 @@ public final class TooltipRegistry {
         rootNodes.put(ref, rootNode);
     }
 
-    /** 注册一个自定义 {@link RootNode} 并返回引用。 */
+    /**
+     * 注册一个自定义 {@link RootNode} 并返回引用。
+     *
+     * <p>
+     * {@code boxRenderer} 用 {@link Supplier} 延迟传入，确保引用了客户端类 {@code GuiGraphicsExtractor} 的
+     * lambda 只在客户端被链接；客户端调用方传 {@code () -> (graphics, x, y, w, h) -> { ... }} 即可。
+     */
     public static RootNodeRef rootNode(
-                                       String id, int priority, boolean separateBox, int padding, RootNode.BoxRenderer boxRenderer) {
+                                       String id,
+                                       int priority,
+                                       boolean separateBox,
+                                       int padding,
+                                       Supplier<RootNode.BoxRenderer> boxRenderer) {
         RootNodeRef ref = new RootNodeRef(id);
         rootNodes.put(ref, new RootNode(id, priority, separateBox, padding, boxRenderer));
         return ref;

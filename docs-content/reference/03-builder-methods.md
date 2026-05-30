@@ -240,12 +240,12 @@ Created via `blockEntity("id", factory)`.
 ```java
 REGISTRYLIB.blockEntity("crusher_be", CrusherBlockEntity::new)
         .validBlocks(CRUSHER_BLOCK, ADVANCED_CRUSHER_BLOCK)
-        .renderer(() -> CrusherRenderer::new)
+        .renderer(() -> () -> CrusherRenderer::new)
         .register();
 ```
 
 :::note
-The renderer supplier is lazy: the factory is only invoked on the client side. This prevents server crashes from referencing client-only classes.
+The renderer uses a two-level (supplier-of-supplier) form so the client-only `BlockEntityRendererProvider`/`EntityRendererProvider` type stays buried in the inner lambda. The outer `Supplier` returns a non-client `Supplier`, so creating it on the dedicated server never resolves the client class (the JVM resolves a lambda's return type when the lambda is *linked*, not when it runs).
 :::
 
 ## EntityBuilder

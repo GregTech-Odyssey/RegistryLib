@@ -164,25 +164,33 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
         return setData(ProviderType.ITEM_MODEL, p -> cons.get().accept(getValue(), p));
     }
 
+    /**
+     * Tints the (flat) item model by a constant color.
+     *
+     * <p>
+     * The client-only {@link ItemTintSource} is <b>not</b> constructed here: this method only records
+     * the (non-client) {@link RgbColor} and defers building the tint source into the datagen
+     * {@link #model} lambda. That lambda is gated behind {@code core.doDatagen()} and only runs in the
+     * data-generation environment (where the client model classes exist), so a dedicated server never
+     * resolves {@code ItemTintSource} / {@code ItemModelUtils}.
+     */
     @StandardAPI
     public ItemBuilder<T, P> constantTint(@NotNull RgbColor color) {
-        tintSource(RegistryLibTintSources.itemConstant(color));
+        itemTintSourceCount = 1;
         knownItemTintColors = new ArgbColor[] { color.opaque() };
-        return this;
+        return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, color));
     }
 
     @StandardAPI
     public ItemBuilder<T, P> constantTint(@NotNull String texturePath, @NotNull RgbColor color) {
-        tintSource(texturePath, RegistryLibTintSources.itemConstant(color));
-        knownItemTintColors = new ArgbColor[] { color.opaque() };
-        return this;
+        return constantTint(core.texture(texturePath), color);
     }
 
     @StandardAPI
     public ItemBuilder<T, P> constantTint(@NotNull TextureRef texture, @NotNull RgbColor color) {
-        tintSource(texture, RegistryLibTintSources.itemConstant(color));
+        itemTintSourceCount = 1;
         knownItemTintColors = new ArgbColor[] { color.opaque() };
-        return this;
+        return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, texture, color));
     }
 
     @StandardAPI

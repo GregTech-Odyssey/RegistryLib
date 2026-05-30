@@ -115,12 +115,12 @@ REGISTRYLIB.item("b", Item::new).lang("B").register();
 
 **Cause:** A `BlockEntityRenderer` or client-only class was referenced eagerly on the dedicated server.
 
-**Fix:** Use lazy loading for renderer registration:
+**Fix:** Use the two-level (supplier-of-supplier) lazy form for renderer registration:
 ```java
-.renderer(() -> MyBlockEntityRenderer::new)
+.renderer(() -> () -> MyBlockEntityRenderer::new)
 ```
 
-The `Supplier` wrapping ensures the renderer class is only loaded on the client. See [Performance & Optimization](/tutorials/performance).
+Two lambda levels are required, not one. The JVM resolves a lambda's *instantiated return type* when the lambda is **created** (linked), not when its body runs — so a single `() -> MyBlockEntityRenderer::new` (whose return type is the client-only `BlockEntityRendererProvider`) would force that class to load on the dedicated server even though the body never executes. The outer `Supplier` returns another `Supplier` (a non-client type), so the client renderer type only appears inside the inner lambda, which is linked exclusively on the client. See [Performance & Optimization](/tutorials/performance).
 
 ### Tooltip box renders at the wrong position
 

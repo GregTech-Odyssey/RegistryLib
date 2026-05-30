@@ -148,7 +148,7 @@ Host block binding is configured during registration via `validBlock()` or `vali
 BlockEntityTypeEntry<MyBlockEntity> MY_BE = REGISTRYLIB
         .blockEntity("my_be", MyBlockEntity::new)
         .validBlock(MY_BLOCK)
-        .renderer(() -> MyBlockEntityRenderer::new)
+        .renderer(() -> () -> MyBlockEntityRenderer::new)
         .register();
 ```
 
@@ -252,7 +252,7 @@ Prefer `chunkState(...)` or `worldState(...)` when the attachment represents gam
 EntityEntry<CrystalGuardian> CRYSTAL_GUARDIAN = REGISTRYLIB
         .<CrystalGuardian>entity("crystal_guardian", CrystalGuardian::new, MobCategory.MONSTER)
         .attributes(CrystalGuardian::createAttributes)
-        .renderer(() -> CrystalGuardianRenderer::new)
+        .renderer(() -> () -> CrystalGuardianRenderer::new)
         .register();
 
 // Later in code

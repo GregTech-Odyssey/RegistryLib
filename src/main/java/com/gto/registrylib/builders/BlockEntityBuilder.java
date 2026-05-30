@@ -62,13 +62,31 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
         return this;
     }
 
+    /**
+     * Binds a client-side {@link BlockEntityRendererProvider} to this block entity type.
+     *
+     * <p>
+     * The renderer is supplied through <b>two</b> lambda levels
+     * ({@code Supplier<Supplier<...>>}) on purpose: the outer {@code Supplier} returns a plain
+     * {@code Supplier} (a non-client type), so creating it at the call site never makes the JVM
+     * resolve {@link BlockEntityRendererProvider}. The client provider type only appears inside the
+     * <i>inner</i> lambda, whose {@code invokedynamic} is linked exclusively on the client (it lives
+     * in the outer lambda's synthetic body, which only runs under {@link Dist#CLIENT}).
+     *
+     * <p>
+     * A single-level {@code Supplier<BlockEntityRendererProvider>} would crash a dedicated server:
+     * the JVM resolves a lambda's instantiated return type when the lambda is <i>created</i>, so
+     * {@code () -> MyRenderer::new} would force {@code BlockEntityRendererProvider} to load on the
+     * server even though the body never executes. Call this as
+     * {@code .renderer(() -> () -> MyRenderer::new)}.
+     */
     @StandardAPI
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public BlockEntityBuilder<BE, P> renderer(
-                                              @NotNull Supplier<? extends BlockEntityRendererProvider> renderer) {
+                                              @NotNull Supplier<Supplier<? extends BlockEntityRendererProvider>> renderer) {
         Supplier supplier = getValueSupplier();
         DistExecutor.unsafeRunWhenOn(
-                Dist.CLIENT, () -> () -> Client.registerBER(supplier, renderer.get()));
+                Dist.CLIENT, () -> () -> Client.registerBER(supplier, renderer.get().get()));
         return this;
     }
 

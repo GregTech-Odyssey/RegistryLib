@@ -2,6 +2,8 @@ package com.gto.registrylib.tooltip;
 
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
+import java.util.function.Supplier;
+
 /**
  * Tooltip 根节点——框容器。
  *
@@ -23,8 +25,17 @@ public class RootNode {
     /** 边框暗边——底部阴影 (ARGB)。 */
     private static final int BORDER_SHADOW = 0x90686870;
 
-    /** 默认框渲染器——深色背景 + 白色亮度渐变边框。 */
-    public static final BoxRenderer DEFAULT_BOX_RENDERER = (graphics, x, y, width, height) -> {
+    /**
+     * 默认框渲染器——深色背景 + 白色亮度渐变边框。
+     *
+     * <p>
+     * 用 {@link Supplier} 包一层：引用了客户端类 {@link GuiGraphicsExtractor} 的内层 lambda 只有在 supplier 被调用时
+     * （即客户端渲染 tooltip 时）才会被链接。如果直接把它写成 {@code BoxRenderer} 静态字段，那么在
+     * {@code RootNode.<clinit>} 初始化该字段时就会解析 {@code GuiGraphicsExtractor} —— 而
+     * {@code TooltipRegistry.<clinit>} 会在普通（双端）物品注册过程中构造一个默认 {@code RootNode}，
+     * 这会让专用服务器直接 {@code NoClassDefFoundError} 崩溃。
+     */
+    public static final Supplier<BoxRenderer> DEFAULT_BOX_RENDERER = () -> (graphics, x, y, width, height) -> {
         int r = x + width;
         int b = y + height;
         // 背景（十字形，留出 4 角像素形成圆角效果）
@@ -40,10 +51,10 @@ public class RootNode {
     private final int priority;
     private final boolean separateBox;
     private final int padding;
-    private final BoxRenderer boxRenderer;
+    private final Supplier<BoxRenderer> boxRenderer;
 
     public RootNode(
-                    String id, int priority, boolean separateBox, int padding, BoxRenderer boxRenderer) {
+                    String id, int priority, boolean separateBox, int padding, Supplier<BoxRenderer> boxRenderer) {
         this.id = id;
         this.priority = priority;
         this.separateBox = separateBox;
@@ -71,8 +82,9 @@ public class RootNode {
         return padding;
     }
 
+    /** 解析框渲染器。仅可在客户端调用（如 tooltip 渲染时）。 */
     public BoxRenderer getBoxRenderer() {
-        return boxRenderer;
+        return boxRenderer.get();
     }
 
     @FunctionalInterface

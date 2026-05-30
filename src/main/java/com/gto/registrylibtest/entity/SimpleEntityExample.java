@@ -93,8 +93,8 @@ public class SimpleEntityExample {
             .sized(0.6F, 1.5F)
             .clientTrackingRange(10)
             .attributes(CrystalGuardian::createAttributes)
-            // --- renderer: MobRenderer 骨骼动画渲染器 ---
-            .renderer(() -> CrystalGuardianRenderer::new)
+            // --- renderer: MobRenderer 骨骼动画渲染器（supplier-of-supplier 惰性绑定，仅客户端加载）---
+            .renderer(() -> () -> CrystalGuardianRenderer::new)
             .spawnEgg(
                     egg -> egg.texture(
                             () -> ImageUtil.generateIcon(

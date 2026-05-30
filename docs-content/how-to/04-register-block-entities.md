@@ -24,12 +24,12 @@ public static final BlockEntityTypeEntry<TimerBlockEntity> TIMER_BLOCK_ENTITY = 
                 FullBlockExample.TIMER_TIER_1,
                 FullBlockExample.TIMER_TIER_2,
                 FullBlockExample.TIMER_TIER_3)
-        .renderer(() -> TimerBlockEntityRenderer::new)
+        .renderer(() -> () -> TimerBlockEntityRenderer::new)
         .register();
 ```
 
 :::warning
-Renderer classes are client-only. Always wrap the renderer factory in a `Supplier` (as shown with `() -> TimerBlockEntityRenderer::new`) to keep client classes from loading on the dedicated server.
+Renderer classes are client-only. Use the **two-level** supplier form `() -> () -> TimerBlockEntityRenderer::new`. One level is not enough: the JVM resolves a lambda's instantiated return type when the lambda is *created*, so `() -> TimerBlockEntityRenderer::new` (return type `BlockEntityRendererProvider`) would load the client class on the dedicated server even though the body never runs. The extra outer `Supplier` returns a non-client `Supplier`, keeping the renderer type buried in the inner lambda that is only linked on the client.
 :::
 
 ## Common API Lookup

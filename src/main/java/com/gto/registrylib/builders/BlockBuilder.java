@@ -74,10 +74,14 @@ public class BlockBuilder<T extends Block, P>
     private Function<BlockBehaviour.Properties, BlockBehaviour.Properties> propertiesCallback = FunctionUtil.identityFn();
     @Nullable
     private ResourceKey<CreativeModeTab> defaultItemTab;
+    /** Raw {@link ItemTintSource} array for the advanced {@link #tintSource} API (datagen/client only). */
     @Nullable
     private ItemTintSource[] blockItemTintSources;
+    /** Constant block-item tint color; the client tint source is built lazily inside datagen. Non-client. */
     @Nullable
-    private BlockTintSource[] blockTintSources;
+    private RgbColor blockItemTintColor;
+    /** Number of block (runtime) tint sources configured. Non-client; only used for tintindex validation. */
+    private int blockTintSourceCount;
     @Nullable
     private ArgbColor[] knownBlockTintColors;
     @Nullable
@@ -130,9 +134,15 @@ public class BlockBuilder<T extends Block, P>
         if (defaultItemTab != null) {
             builder.addTab(defaultItemTab);
         }
-        if (blockItemTintSources != null && !core.isBlockExcludedFromModelValidation(name)) {
-            builder.model(
-                    () -> (ctx, prov) -> prov.generateTintedBlockItem(getValue(), blockItemTintSources));
+        if (!core.isBlockExcludedFromModelValidation(name)) {
+            if (blockItemTintColor != null) {
+                // Constant tint: defer ItemTintSource construction into the datagen model lambda.
+                final RgbColor tintColor = blockItemTintColor;
+                builder.model(() -> (ctx, prov) -> prov.generateTintedBlockItem(getValue(), tintColor));
+            } else if (blockItemTintSources != null) {
+                builder.model(
+                        () -> (ctx, prov) -> prov.generateTintedBlockItem(getValue(), blockItemTintSources));
+            }
         }
         consumer.accept(builder);
         return builder.build();
@@ -257,7 +267,24 @@ public class BlockBuilder<T extends Block, P>
     @StandardAPI
     public BlockBuilder<T, P> constantTint(@NotNull RgbColor color) {
         blockConstantTint(color);
-        return tintSource(RegistryLibTintSources.itemConstant(color));
+        return blockItemConstantTint(color);
+    }
+
+    /**
+     * Records a constant tint color for this block's {@code BlockItem} model and registers the
+     * datagen-only tinted item-model generator. The client-only {@link ItemTintSource} is built
+     * lazily inside the {@code core.doDatagen()}-gated lambda (which runs only in the data-generation
+     * environment), so a dedicated server never resolves it.
+     */
+    private BlockBuilder<T, P> blockItemConstantTint(@NotNull RgbColor color) {
+        blockItemTintColor = color;
+        if (!core.doDatagen()) return this;
+        core.setDataGenerator(
+                name,
+                Registries.ITEM,
+                ProviderType.ITEM_MODEL,
+                p -> p.generateTintedBlockItem(getValue(), color));
+        return this;
     }
 
     @StandardAPI
@@ -282,11 +309,17 @@ public class BlockBuilder<T extends Block, P>
         return this;
     }
 
+    /**
+     * Registers raw client {@link BlockTintSource}s for runtime block colouring. This is an advanced,
+     * client/datagen-only escape hatch: constructing a {@code BlockTintSource} to pass here already
+     * requires the client classes, so it must not be called on a pure dedicated server. Prefer
+     * {@link #blockConstantTint(ArgbColor)}, which defers the client construction.
+     */
     @StandardAPI
     public BlockBuilder<T, P> blockTintSource(@NotNull BlockTintSource... tintSources) {
-        blockTintSources = tintSources.clone();
+        BlockTintSource[] sources = tintSources.clone();
+        blockTintSourceCount = sources.length;
         knownBlockTintColors = null;
-        BlockTintSource[] sources = blockTintSources;
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT, () -> () -> Client.registerBlockTintSources(getValueSupplier(), sources));
         return this;
@@ -305,8 +338,16 @@ public class BlockBuilder<T extends Block, P>
                     name,
                     Integer.toHexString(color.argb()));
         }
-        blockTintSource(RegistryLibTintSources.blockConstant(color));
         knownBlockTintColors = new ArgbColor[] { color };
+        blockTintSourceCount = 1;
+        // Build the client BlockTintSource lazily inside the Dist.CLIENT lambda so the dedicated
+        // server never resolves BlockTintSource / BlockTintSources.
+        final ArgbColor tintColor = color;
+        final Supplier<? extends Block> blockSupplier = getValueSupplier();
+        DistExecutor.unsafeRunWhenOn(
+                Dist.CLIENT,
+                () -> () -> Client.registerBlockTintSources(
+                        blockSupplier, RegistryLibTintSources.blockConstant(tintColor)));
         return this;
     }
 
@@ -353,15 +394,17 @@ public class BlockBuilder<T extends Block, P>
 
     @StandardAPI
     public BlockBuilder<T, P> debugTint() {
-        int tintCount = blockTintSources == null ? 0 : blockTintSources.length;
         int maxTintIndex = maxBlockTintIndex == null ? -1 : maxBlockTintIndex;
+        int itemTintCount = blockItemTintColor != null
+                ? 1
+                : (blockItemTintSources == null ? 0 : blockItemTintSources.length);
         LOGGER.info(
                 "RegistryLib tint debug for block '{}': maxBlockTintIndex={}, blockTintSourceCount={}, blockTintColors={}, blockItemTintSourceCount={}",
                 name,
                 maxTintIndex,
-                tintCount,
+                blockTintSourceCount,
                 describeColors(knownBlockTintColors),
-                blockItemTintSources == null ? 0 : blockItemTintSources.length);
+                itemTintCount);
         validateKnownBlockTintState();
         return this;
     }
@@ -373,13 +416,12 @@ public class BlockBuilder<T extends Block, P>
 
     private void validateKnownBlockTintState() {
         if (maxBlockTintIndex == null) return;
-        int tintSourceCount = blockTintSources == null ? 0 : blockTintSources.length;
-        if (tintSourceCount <= maxBlockTintIndex) {
+        if (blockTintSourceCount <= maxBlockTintIndex) {
             LOGGER.warn(
                     "Block '{}' model uses tintindex {} but only {} block tint source(s) are configured",
                     name,
                     maxBlockTintIndex,
-                    tintSourceCount);
+                    blockTintSourceCount);
         }
     }
 
