@@ -110,7 +110,8 @@ public class RecipeTypeEntry<T extends Recipe<?>>
         return this;
     }
 
-    public static <T extends Recipe<?>> RecipeTypeEntry<T> cast(RegistryEntry<RecipeType<?>, RecipeType<T>> entry) {
+    public static <T extends Recipe<?>> RecipeTypeEntry<T> cast(
+                                                                RegistryEntry<RecipeType<?>, RecipeType<T>> entry) {
         return RegistryEntry.cast(RecipeTypeEntry.class, entry);
     }
 }

@@ -1,6 +1,7 @@
 package com.gto.registrylib.state;
 
 public enum StateScope {
+
     WORLD("world"),
     CHUNK("chunk");
 

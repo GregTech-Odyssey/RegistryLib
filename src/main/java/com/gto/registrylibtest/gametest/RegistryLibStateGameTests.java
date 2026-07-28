@@ -21,7 +21,8 @@ public final class RegistryLibStateGameTests {
 
     private static void registerTests(RegisterGameTestsEvent event) {
         var environment = RegistryLibGameTestSupport.registerDefaultEnvironment(event);
-        RegistryLibGameTestSupport.register(event, environment, "state_attachments", 40, RegistryLibStateGameTests::stateAttachments);
+        RegistryLibGameTestSupport.register(
+                event, environment, "state_attachments", 40, RegistryLibStateGameTests::stateAttachments);
     }
 
     private static void stateAttachments(GameTestHelper helper) {
@@ -48,10 +49,12 @@ public final class RegistryLibStateGameTests {
                 SimpleStateExample.AMBIENT_ESSENCE.getIfLoaded(level, pos).orElse(-1),
                 3,
                 Component.literal("chunk set value"));
-        helper.assertTrue(chunk != null && chunk.isUnsaved(), Component.literal("chunk state marks chunk unsaved"));
+        helper.assertTrue(
+                chunk != null && chunk.isUnsaved(), Component.literal("chunk state marks chunk unsaved"));
 
         SimpleStateExample.AMBIENT_ESSENCE.modify(level, pos, value -> {});
-        SimpleStateExample.AMBIENT_ESSENCE.set(level, pos, SimpleStateExample.AMBIENT_ESSENCE.getOrCreate(level, pos) + 4);
+        SimpleStateExample.AMBIENT_ESSENCE.set(
+                level, pos, SimpleStateExample.AMBIENT_ESSENCE.getOrCreate(level, pos) + 4);
         helper.assertValueEqual(
                 SimpleStateExample.AMBIENT_ESSENCE.getIfLoaded(level, pos).orElse(-1),
                 7,
@@ -64,7 +67,8 @@ public final class RegistryLibStateGameTests {
 
         SimpleStateExample.ESSENCE_EPOCH.set(level, 11);
         SimpleStateExample.ESSENCE_EPOCH.modify(level, value -> {});
-        SimpleStateExample.ESSENCE_EPOCH.set(level, SimpleStateExample.ESSENCE_EPOCH.getOrCreate(level) + 5);
+        SimpleStateExample.ESSENCE_EPOCH.set(
+                level, SimpleStateExample.ESSENCE_EPOCH.getOrCreate(level) + 5);
         helper.assertValueEqual(
                 SimpleStateExample.ESSENCE_EPOCH.getIfPresent(level).orElse(-1),
                 16,

@@ -12,14 +12,13 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
  * 客户端渲染器：一个独立框面板。
  *
  * <p>
- * 与 {@link RegistryLibClientTooltip}（内联节点渲染器）独立。原版
- * {@code GuiGraphicsExtractor.tooltip()} 会用 {@link #getWidth} / {@link #getHeight} 把它当作一个普通组件参与计算
- * tooltip 总尺寸与定位，再依次调用 {@link #extractText}/{@link #extractImage}——这样所有面板的 X 自然落到同一个
- * 已定位的 {@code l}，左对齐由原版保证，无需手算偏移。
+ * 与 {@link RegistryLibClientTooltip}（内联节点渲染器）独立。原版 {@code GuiGraphicsExtractor.tooltip()} 会用
+ * {@link #getWidth} / {@link #getHeight} 把它当作一个普通组件参与计算 tooltip 总尺寸与定位，再依次调用 {@link
+ * #extractText}/{@link #extractImage}——这样所有面板的 X 自然落到同一个 已定位的 {@code l}，左对齐由原版保证，无需手算偏移。
  *
  * <p>
- * 面板背景在 {@code extractText} 内、子节点文字之前绘制；这是因为原版 tooltip 管线里 text pass 排在 image pass
- * 之前，背景写在 extractText 才能落到所有子节点文字之下而不是覆盖它们。
+ * 面板背景在 {@code extractText} 内、子节点文字之前绘制；这是因为原版 tooltip 管线里 text pass 排在 image pass 之前，背景写在
+ * extractText 才能落到所有子节点文字之下而不是覆盖它们。
  */
 public class RegistryLibClientPanelComponent implements ClientTooltipComponent {
 
@@ -65,8 +64,10 @@ public class RegistryLibClientPanelComponent implements ClientTooltipComponent {
     public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
         int cw = contentWidth(font);
         int ch = contentHeight(font);
-        resolved.rootNode().getBoxRenderer().render(
-                graphics, x - INSET, y + TOP_MARGIN, cw + INSET * 2, ch + INSET * 2);
+        resolved
+                .rootNode()
+                .getBoxRenderer()
+                .render(graphics, x - INSET, y + TOP_MARGIN, cw + INSET * 2, ch + INSET * 2);
 
         int contentY = y + TOP_MARGIN + INSET;
         for (SubNode node : resolved.subNodes()) {

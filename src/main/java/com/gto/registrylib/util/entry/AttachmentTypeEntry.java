@@ -8,8 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class AttachmentTypeEntry<T>
-                                   extends RegistryEntry<AttachmentType<?>, AttachmentType<T>> {
+public class AttachmentTypeEntry<T> extends RegistryEntry<AttachmentType<?>, AttachmentType<T>> {
 
     public AttachmentTypeEntry(ResourceKey<AttachmentType<?>> key) {
         super(key);

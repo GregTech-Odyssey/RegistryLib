@@ -14,5 +14,4 @@ public class DistExecutor {
             toRun.get().run();
         }
     }
-
 }

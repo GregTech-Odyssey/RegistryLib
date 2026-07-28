@@ -26,10 +26,11 @@ public class RegistryLibModelProvider extends ModelProvider implements RegistryL
     @Override
     protected Stream<? extends Holder<Block>> getKnownBlocks() {
         return super.getKnownBlocks()
-                .filter(holder -> holder.unwrapKey()
-                        .map(k -> !parent.isBlockExcludedFromModelValidation(
-                                k.identifier().getPath()))
-                        .orElse(true));
+                .filter(
+                        holder -> holder
+                                .unwrapKey()
+                                .map(k -> !parent.isBlockExcludedFromModelValidation(k.identifier().getPath()))
+                                .orElse(true));
     }
 
     @Override

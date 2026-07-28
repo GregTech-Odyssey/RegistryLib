@@ -22,16 +22,14 @@ public class BlockEntry<T extends Block> extends ItemProviderEntry<Block, T> {
 
     public BlockState getDefaultState() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value.defaultBlockState();
     }
 
     public boolean is(BlockState state) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value == state.getBlock();
     }

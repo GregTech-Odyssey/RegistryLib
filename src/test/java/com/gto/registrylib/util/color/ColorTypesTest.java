@@ -85,7 +85,7 @@ final class ColorTypesTest {
     @Test
     void describeColorsSingleOpaqueColor() {
         ArgbColor color = ArgbColor.of(0xFF336699);
-        String result = ArgbColor.describeColors(new ArgbColor[]{color});
+        String result = ArgbColor.describeColors(new ArgbColor[] { color });
 
         assertTrue(result.startsWith("["), "should start with '['");
         assertTrue(result.endsWith("]"), "should end with ']'");
@@ -96,7 +96,7 @@ final class ColorTypesTest {
     @Test
     void describeColorsSingleTransparentColor() {
         ArgbColor color = ArgbColor.of(0x80336699);
-        String result = ArgbColor.describeColors(new ArgbColor[]{color});
+        String result = ArgbColor.describeColors(new ArgbColor[] { color });
 
         assertTrue(result.contains("0x80336699"), "should contain hex representation");
         assertTrue(result.contains("alpha=128"), "partial-alpha color should show alpha value");
@@ -107,7 +107,7 @@ final class ColorTypesTest {
     void describeColorsMultipleColors() {
         ArgbColor opaque = ArgbColor.of(0xFFFF0000);
         ArgbColor partial = ArgbColor.of(0x4000FF00);
-        String result = ArgbColor.describeColors(new ArgbColor[]{opaque, partial});
+        String result = ArgbColor.describeColors(new ArgbColor[] { opaque, partial });
 
         assertTrue(result.startsWith("["), "should start with '['");
         assertTrue(result.endsWith("]"), "should end with ']'");

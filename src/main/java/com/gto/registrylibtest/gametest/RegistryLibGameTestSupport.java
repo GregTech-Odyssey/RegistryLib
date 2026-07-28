@@ -7,8 +7,8 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.gametest.framework.GameTestInstance;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestInstance;
 import net.minecraft.gametest.framework.TestData;
 import net.minecraft.gametest.framework.TestEnvironmentDefinition;
 import net.minecraft.network.chat.Component;
@@ -24,17 +24,18 @@ import java.util.function.Consumer;
 public final class RegistryLibGameTestSupport {
 
     private static final Map<Identifier, Consumer<GameTestHelper>> CALLBACKS = new LinkedHashMap<>();
-    private static final MapCodec<CallbackGameTestInstance> CALLBACK_CODEC = RecordCodecBuilder.mapCodec(instance -> instance
-            .group(
-                    TestData.CODEC.forGetter(CallbackGameTestInstance::callbackInfo),
-                    Identifier.CODEC.fieldOf("callback").forGetter(CallbackGameTestInstance::callbackId))
-            .apply(instance, CallbackGameTestInstance::new));
+    private static final MapCodec<CallbackGameTestInstance> CALLBACK_CODEC = RecordCodecBuilder.mapCodec(
+            instance -> instance
+                    .group(
+                            TestData.CODEC.forGetter(CallbackGameTestInstance::callbackInfo),
+                            Identifier.CODEC
+                                    .fieldOf("callback")
+                                    .forGetter(CallbackGameTestInstance::callbackId))
+                    .apply(instance, CallbackGameTestInstance::new));
 
     @SuppressWarnings("unused")
     private static final MapCodec<CallbackGameTestInstance> CALLBACK_TYPE = RegistryLibTest.REGISTRYLIB.registry(
-            "callback_game_test",
-            CALLBACK_CODEC,
-            Registries.TEST_INSTANCE_TYPE);
+            "callback_game_test", CALLBACK_CODEC, Registries.TEST_INSTANCE_TYPE);
 
     private RegistryLibGameTestSupport() {}
 
@@ -42,11 +43,13 @@ public final class RegistryLibGameTestSupport {
         // Force the custom test instance type registration to be queued during mod init.
     }
 
-    static Holder<TestEnvironmentDefinition<?>> registerDefaultEnvironment(RegisterGameTestsEvent event) {
+    static Holder<TestEnvironmentDefinition<?>> registerDefaultEnvironment(
+                                                                           RegisterGameTestsEvent event) {
         return registerEnvironment(event, "default_environment");
     }
 
-    static Holder<TestEnvironmentDefinition<?>> registerEnvironment(RegisterGameTestsEvent event, String name) {
+    static Holder<TestEnvironmentDefinition<?>> registerEnvironment(
+                                                                    RegisterGameTestsEvent event, String name) {
         return event.registerEnvironment(
                 Identifier.fromNamespaceAndPath(RegistryLibTest.MOD_ID, name),
                 new TestEnvironmentDefinition.AllOf());
@@ -66,8 +69,7 @@ public final class RegistryLibGameTestSupport {
     }
 
     private static TestData<Holder<TestEnvironmentDefinition<?>>> testData(
-                                                                           Holder<TestEnvironmentDefinition<?>> environment,
-                                                                           int maxTicks) {
+                                                                           Holder<TestEnvironmentDefinition<?>> environment, int maxTicks) {
         return new TestData<>(
                 environment,
                 Identifier.withDefaultNamespace("empty"),
@@ -87,8 +89,7 @@ public final class RegistryLibGameTestSupport {
         private final Identifier callbackId;
 
         private CallbackGameTestInstance(
-                                         TestData<Holder<TestEnvironmentDefinition<?>>> info,
-                                         Identifier callbackId) {
+                                         TestData<Holder<TestEnvironmentDefinition<?>>> info, Identifier callbackId) {
             super(info);
             this.callbackId = callbackId;
         }

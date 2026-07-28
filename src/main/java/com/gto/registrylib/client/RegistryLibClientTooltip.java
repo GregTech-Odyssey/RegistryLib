@@ -13,10 +13,9 @@ import java.util.List;
  * 客户端渲染器：内联 SubNode 列表。
  *
  * <p>
- * 只负责绘制原版 tooltip 背景内、紧跟标题之后的若干行内联文字（包括 {@link
- * com.gto.registrylib.tooltip.SeparatorNode} 这种全宽分隔线）。独立框由
- * {@link RegistryLibClientPanelComponent} 处理；分页控件由
- * {@link RegistryLibClientPageControl} 处理；都是同一份原版组件列表里的独立条目。
+ * 只负责绘制原版 tooltip 背景内、紧跟标题之后的若干行内联文字（包括 {@link com.gto.registrylib.tooltip.SeparatorNode}
+ * 这种全宽分隔线）。独立框由 {@link RegistryLibClientPanelComponent} 处理；分页控件由 {@link
+ * RegistryLibClientPageControl} 处理；都是同一份原版组件列表里的独立条目。
  *
  * <p>
  * 注意 {@link #extractImage} 用本组件自己的 {@link #getWidth(Font)} 而不是原版传入的全局 max width 来绘制——

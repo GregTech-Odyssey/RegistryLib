@@ -13,7 +13,6 @@ import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
 import com.gto.registrylib.util.FunctionUtil;
-import com.gto.registrylib.util.RegistryLibTintSources;
 import com.gto.registrylib.util.TextureRef;
 import com.gto.registrylib.util.color.ArgbColor;
 import com.gto.registrylib.util.color.RgbColor;
@@ -168,11 +167,11 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * Tints the (flat) item model by a constant color.
      *
      * <p>
-     * The client-only {@link ItemTintSource} is <b>not</b> constructed here: this method only records
-     * the (non-client) {@link RgbColor} and defers building the tint source into the datagen
-     * {@link #model} lambda. That lambda is gated behind {@code core.doDatagen()} and only runs in the
-     * data-generation environment (where the client model classes exist), so a dedicated server never
-     * resolves {@code ItemTintSource} / {@code ItemModelUtils}.
+     * The client-only {@link ItemTintSource} is <b>not</b> constructed here: this method only
+     * records the (non-client) {@link RgbColor} and defers building the tint source into the datagen
+     * {@link #model} lambda. That lambda is gated behind {@code core.doDatagen()} and only runs in
+     * the data-generation environment (where the client model classes exist), so a dedicated server
+     * never resolves {@code ItemTintSource} / {@code ItemModelUtils}.
      */
     @StandardAPI
     public ItemBuilder<T, P> constantTint(@NotNull RgbColor color) {
@@ -281,11 +280,10 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * Register display names for multiple locales at once.
      *
      * <p>
-     * The {@code "en_us"} entry uses the default lang provider; all other entries use
-     * {@code core.locale(localeCode)}.
+     * The {@code "en_us"} entry uses the default lang provider; all other entries use {@code
+     * core.locale(localeCode)}.
      *
-     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
-     *                     name
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display name
      */
     @StandardAPI
     public ItemBuilder<T, P> lang(@NotNull Map<String, String> localeToName) {

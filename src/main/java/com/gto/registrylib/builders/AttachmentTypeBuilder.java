@@ -7,7 +7,6 @@ import com.gto.registrylib.util.entry.RegistryEntry;
 
 import com.mojang.serialization.MapCodec;
 
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
@@ -21,7 +20,7 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 public class AttachmentTypeBuilder<T, P>
-                                     extends AbstractBuilder<AttachmentType<?>, AttachmentType<T>, P, AttachmentTypeBuilder<T, P>> {
+                                  extends AbstractBuilder<AttachmentType<?>, AttachmentType<T>, P, AttachmentTypeBuilder<T, P>> {
 
     private final Function<IAttachmentHolder, T> defaultValueFactory;
     private UnaryOperator<AttachmentType.Builder<T>> builderCallback = b -> b;
@@ -44,7 +43,8 @@ public class AttachmentTypeBuilder<T, P>
     }
 
     @StandardAPI
-    public AttachmentTypeBuilder<T, P> configure(@NotNull UnaryOperator<AttachmentType.Builder<T>> callback) {
+    public AttachmentTypeBuilder<T, P> configure(
+                                                 @NotNull UnaryOperator<AttachmentType.Builder<T>> callback) {
         UnaryOperator<AttachmentType.Builder<T>> previous = builderCallback;
         builderCallback = builder -> callback.apply(previous.apply(builder));
         return this;

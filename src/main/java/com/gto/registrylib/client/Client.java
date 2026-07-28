@@ -137,7 +137,8 @@ public class Client {
         if (map != null) map.put(type, provider);
     }
 
-    public static void registerBERStatic(Supplier<BlockEntityType<?>> type, BlockEntityRendererProvider provider) {
+    public static void registerBERStatic(
+                                         Supplier<BlockEntityType<?>> type, BlockEntityRendererProvider provider) {
         registerBER(type, provider);
     }
 
@@ -241,10 +242,11 @@ public class Client {
 
     /**
      * 把 {@link TooltipRegistry#resolve} 的结果拆分成多个独立组件追加到原版组件列表里：
+     *
      * <ul>
-     *   <li>非空内联节点 → 一个 {@link RegistryLibTooltipComponent}
-     *   <li>每一个独立框 → 一个 {@link RegistryLibPanelComponent}
-     *   <li>分页时还会追加一个 {@link RegistryLibPageControlComponent}
+     * <li>非空内联节点 → 一个 {@link RegistryLibTooltipComponent}
+     * <li>每一个独立框 → 一个 {@link RegistryLibPanelComponent}
+     * <li>分页时还会追加一个 {@link RegistryLibPageControlComponent}
      * </ul>
      *
      * <p>
@@ -294,7 +296,8 @@ public class Client {
      *
      * <p>
      * gather 阶段没有 event font，因此用 {@link Minecraft#font} 做高度估算；面板间距使用 {@link
-     * #PANEL_GAP_ESTIMATE}（原版 tooltip 组件之间会被 GuiGraphicsExtractor 加 2px 间隙， 加上独立框自身想要的视觉留白后大致与这个常量一致）。
+     * #PANEL_GAP_ESTIMATE}（原版 tooltip 组件之间会被 GuiGraphicsExtractor 加 2px 间隙，
+     * 加上独立框自身想要的视觉留白后大致与这个常量一致）。
      */
     private static List<List<ResolvedRoot>> paginatePanels(
                                                            List<ResolvedRoot> panels, int availableHeight) {
@@ -327,9 +330,7 @@ public class Client {
             if (nh <= 0) nh = DEFAULT_LINE_HEIGHT;
             contentHeight += nh;
         }
-        return RegistryLibClientPanelComponent.TOP_MARGIN
-                + RegistryLibClientPanelComponent.INSET * 2
-                + contentHeight;
+        return RegistryLibClientPanelComponent.TOP_MARGIN + RegistryLibClientPanelComponent.INSET * 2 + contentHeight;
     }
 
     /**
@@ -357,9 +358,7 @@ public class Client {
     private static boolean containsRegistryLibComponent(
                                                         List<net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent> components) {
         for (var c : components) {
-            if (c instanceof RegistryLibClientTooltip
-                    || c instanceof RegistryLibClientPanelComponent
-                    || c instanceof RegistryLibClientPageControl) {
+            if (c instanceof RegistryLibClientTooltip || c instanceof RegistryLibClientPanelComponent || c instanceof RegistryLibClientPageControl) {
                 return true;
             }
         }
@@ -367,8 +366,7 @@ public class Client {
     }
 
     /**
-     * 「内联区域」 = 原版 tooltip 顺序里、第一个独立框/分页控件出现之前的所有组件 （通常就是标题文本 + 可选的 {@link
-     * RegistryLibClientTooltip}）。
+     * 「内联区域」 = 原版 tooltip 顺序里、第一个独立框/分页控件出现之前的所有组件 （通常就是标题文本 + 可选的 {@link RegistryLibClientTooltip}）。
      */
     private static InlineAreaDims measureInlineArea(
                                                     List<net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent> components,
@@ -376,8 +374,7 @@ public class Client {
         int width = 0;
         int height = 0;
         for (var c : components) {
-            if (c instanceof RegistryLibClientPanelComponent
-                    || c instanceof RegistryLibClientPageControl) {
+            if (c instanceof RegistryLibClientPanelComponent || c instanceof RegistryLibClientPageControl) {
                 break;
             }
             width = Math.max(width, c.getWidth(font));
@@ -393,9 +390,7 @@ public class Client {
     }
 
     private void onTooltipKeyPressed(ScreenEvent.KeyPressed.Pre event) {
-        var key = event.getKeyCode() == -1
-                ? InputConstants.Type.SCANCODE.getOrCreate(event.getScanCode())
-                : InputConstants.Type.KEYSYM.getOrCreate(event.getKeyCode());
+        var key = event.getKeyCode() == -1 ? InputConstants.Type.SCANCODE.getOrCreate(event.getScanCode()) : InputConstants.Type.KEYSYM.getOrCreate(event.getKeyCode());
         if (TOOLTIP_PAGE_UP.isActiveAndMatches(key)) {
             if (TooltipPagination.pageUp()) {
                 event.setCanceled(true);

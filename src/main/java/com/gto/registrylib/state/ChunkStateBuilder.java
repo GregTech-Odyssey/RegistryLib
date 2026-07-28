@@ -14,7 +14,8 @@ import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public final class ChunkStateBuilder<T, P> extends AbstractStateBuilder<T, P, ChunkStateBuilder<T, P>> {
+public final class ChunkStateBuilder<T, P>
+                                    extends AbstractStateBuilder<T, P, ChunkStateBuilder<T, P>> {
 
     private boolean syncOnModify;
 
@@ -28,11 +29,7 @@ public final class ChunkStateBuilder<T, P> extends AbstractStateBuilder<T, P, Ch
     }
 
     public static <T, P> ChunkStateBuilder<T, P> create(
-                                                        RegistryCore core,
-                                                        P parent,
-                                                        String name,
-                                                        Codec<T> codec,
-                                                        Supplier<T> defaultValueFactory) {
+                                                        RegistryCore core, P parent, String name, Codec<T> codec, Supplier<T> defaultValueFactory) {
         return new ChunkStateBuilder<>(core, parent, name, codec, _holder -> defaultValueFactory.get());
     }
 

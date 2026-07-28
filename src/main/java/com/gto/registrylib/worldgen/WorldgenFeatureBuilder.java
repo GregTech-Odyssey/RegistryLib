@@ -33,10 +33,7 @@ public final class WorldgenFeatureBuilder<C extends FeatureConfiguration, P> {
     private boolean registered;
 
     public WorldgenFeatureBuilder(
-                                  RegistryCore core,
-                                  P parent,
-                                  String name,
-                                  ConfiguredFeature<C, ?> configuredFeature) {
+                                  RegistryCore core, P parent, String name, ConfiguredFeature<C, ?> configuredFeature) {
         this(core, parent, name, () -> configuredFeature);
     }
 
@@ -52,10 +49,7 @@ public final class WorldgenFeatureBuilder<C extends FeatureConfiguration, P> {
     }
 
     public static <C extends FeatureConfiguration, P> WorldgenFeatureBuilder<C, P> create(
-                                                                                          RegistryCore core,
-                                                                                          P parent,
-                                                                                          String name,
-                                                                                          ConfiguredFeature<C, ?> configuredFeature) {
+                                                                                          RegistryCore core, P parent, String name, ConfiguredFeature<C, ?> configuredFeature) {
         return new WorldgenFeatureBuilder<>(core, parent, name, configuredFeature);
     }
 
@@ -81,8 +75,7 @@ public final class WorldgenFeatureBuilder<C extends FeatureConfiguration, P> {
 
     @StandardAPI
     public WorldgenFeatureBuilder<C, P> addToBiomes(
-                                                    TagKey<Biome> biomeTag,
-                                                    GenerationStep.Decoration decoration) {
+                                                    TagKey<Biome> biomeTag, GenerationStep.Decoration decoration) {
         this.biomeTag = biomeTag;
         this.decoration = decoration;
         return this;
@@ -95,19 +88,21 @@ public final class WorldgenFeatureBuilder<C extends FeatureConfiguration, P> {
         }
         registered = true;
         ResourceKey<ConfiguredFeature<?, ?>> configuredKey = ResourceKey.create(
-                Registries.CONFIGURED_FEATURE,
-                Identifier.fromNamespaceAndPath(core.getModid(), name));
+                Registries.CONFIGURED_FEATURE, Identifier.fromNamespaceAndPath(core.getModid(), name));
         ResourceKey<PlacedFeature> placedKey = ResourceKey.create(
-                Registries.PLACED_FEATURE,
-                Identifier.fromNamespaceAndPath(core.getModid(), name));
+                Registries.PLACED_FEATURE, Identifier.fromNamespaceAndPath(core.getModid(), name));
         core.getDataGenInitializer()
-                .add(Registries.CONFIGURED_FEATURE, ctx -> ctx.register(configuredKey, configuredFeature.get()));
+                .add(
+                        Registries.CONFIGURED_FEATURE,
+                        ctx -> ctx.register(configuredKey, configuredFeature.get()));
         core.getDataGenInitializer()
                 .add(
                         Registries.PLACED_FEATURE,
                         ctx -> ctx.register(
                                 placedKey,
-                                new PlacedFeature(ctx.lookup(Registries.CONFIGURED_FEATURE).getOrThrow(configuredKey), List.copyOf(placements))));
+                                new PlacedFeature(
+                                        ctx.lookup(Registries.CONFIGURED_FEATURE).getOrThrow(configuredKey),
+                                        List.copyOf(placements))));
         if (biomeTag != null) {
             ResourceKey<net.neoforged.neoforge.common.world.BiomeModifier> modifierKey = ResourceKey.create(
                     NeoForgeRegistries.Keys.BIOME_MODIFIERS,
@@ -119,7 +114,8 @@ public final class WorldgenFeatureBuilder<C extends FeatureConfiguration, P> {
                                     modifierKey,
                                     new BiomeModifiers.AddFeaturesBiomeModifier(
                                             ctx.lookup(Registries.BIOME).getOrThrow(biomeTag),
-                                            HolderSet.direct(ctx.lookup(Registries.PLACED_FEATURE).getOrThrow(placedKey)),
+                                            HolderSet.direct(
+                                                    ctx.lookup(Registries.PLACED_FEATURE).getOrThrow(placedKey)),
                                             decoration)));
         }
         return new WorldgenFeatureEntry(configuredKey, placedKey);

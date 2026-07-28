@@ -23,6 +23,5 @@ public final class SimpleStateExample {
             .debug()
             .register();
 
-    private SimpleStateExample() {
-    }
+    private SimpleStateExample() {}
 }

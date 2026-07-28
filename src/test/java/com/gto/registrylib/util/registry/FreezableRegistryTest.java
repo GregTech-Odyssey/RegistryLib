@@ -260,8 +260,7 @@ class FreezableRegistryTest {
                             ready.countDown();
                             go.await();
                             reg.register("key-" + threadId, threadId);
-                        } catch (InterruptedException ignored) {
-                        } catch (Throwable e) {
+                        } catch (InterruptedException ignored) {} catch (Throwable e) {
                             errors.add(e);
                         } finally {
                             done.countDown();
@@ -275,13 +274,11 @@ class FreezableRegistryTest {
         go.countDown();
         done.await();
 
-        assertTrue(errors.isEmpty(),
-                "No errors expected during concurrent registration but got: " + errors);
-        assertEquals(threadCount, reg.size(),
-                "All " + threadCount + " entries must be present");
+        assertTrue(
+                errors.isEmpty(), "No errors expected during concurrent registration but got: " + errors);
+        assertEquals(threadCount, reg.size(), "All " + threadCount + " entries must be present");
         for (int t = 0; t < threadCount; t++) {
-            assertEquals(t, reg.get("key-" + t),
-                    "key-" + t + " must map to " + t);
+            assertEquals(t, reg.get("key-" + t), "key-" + t + " must map to " + t);
         }
     }
 
@@ -315,8 +312,7 @@ class FreezableRegistryTest {
                                     }
                                 }
                             }
-                        } catch (InterruptedException ignored) {
-                        } catch (Throwable e) {
+                        } catch (InterruptedException ignored) {} catch (Throwable e) {
                             errors.add(e);
                         } finally {
                             done.countDown();
@@ -330,8 +326,7 @@ class FreezableRegistryTest {
         go.countDown();
         done.await();
 
-        assertTrue(errors.isEmpty(),
-                "No errors expected during concurrent reads but got: " + errors);
+        assertTrue(errors.isEmpty(), "No errors expected during concurrent reads but got: " + errors);
     }
 
     @Test
@@ -361,8 +356,7 @@ class FreezableRegistryTest {
                             for (int i = 0; i < 10; i++) {
                                 reg.register("w" + writerId + "-" + i, writerId * 10 + i);
                             }
-                        } catch (InterruptedException ignored) {
-                        } catch (Throwable e) {
+                        } catch (InterruptedException ignored) {} catch (Throwable e) {
                             errors.add(e);
                         } finally {
                             done.countDown();
@@ -388,8 +382,7 @@ class FreezableRegistryTest {
                                     }
                                 }
                             }
-                        } catch (InterruptedException ignored) {
-                        } catch (Throwable e) {
+                        } catch (InterruptedException ignored) {} catch (Throwable e) {
                             errors.add(e);
                         } finally {
                             done.countDown();
@@ -403,13 +396,15 @@ class FreezableRegistryTest {
         go.countDown();
         done.await();
 
-        assertTrue(errors.isEmpty(),
-                "No errors expected during concurrent reads/writes but got: " + errors);
+        assertTrue(
+                errors.isEmpty(), "No errors expected during concurrent reads/writes but got: " + errors);
 
         // Verify all writer entries are present
         for (int w = 0; w < writerCount; w++) {
             for (int i = 0; i < 10; i++) {
-                assertEquals(w * 10 + i, reg.get("w" + w + "-" + i),
+                assertEquals(
+                        w * 10 + i,
+                        reg.get("w" + w + "-" + i),
                         "Writer " + w + " entry " + i + " must be present");
             }
         }

@@ -239,8 +239,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     /**
      * Register display names for multiple locales at once.
      *
-     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
-     *                     name
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display name
      */
     @StandardAPI
     public FluidBuilder<T, P> lang(@NotNull Map<String, String> localeToName) {

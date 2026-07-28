@@ -30,10 +30,9 @@ public class RootNode {
      *
      * <p>
      * 用 {@link Supplier} 包一层：引用了客户端类 {@link GuiGraphicsExtractor} 的内层 lambda 只有在 supplier 被调用时
-     * （即客户端渲染 tooltip 时）才会被链接。如果直接把它写成 {@code BoxRenderer} 静态字段，那么在
-     * {@code RootNode.<clinit>} 初始化该字段时就会解析 {@code GuiGraphicsExtractor} —— 而
-     * {@code TooltipRegistry.<clinit>} 会在普通（双端）物品注册过程中构造一个默认 {@code RootNode}，
-     * 这会让专用服务器直接 {@code NoClassDefFoundError} 崩溃。
+     * （即客户端渲染 tooltip 时）才会被链接。如果直接把它写成 {@code BoxRenderer} 静态字段，那么在 {@code RootNode.<clinit>}
+     * 初始化该字段时就会解析 {@code GuiGraphicsExtractor} —— 而 {@code TooltipRegistry.<clinit>}
+     * 会在普通（双端）物品注册过程中构造一个默认 {@code RootNode}， 这会让专用服务器直接 {@code NoClassDefFoundError} 崩溃。
      */
     public static final Supplier<BoxRenderer> DEFAULT_BOX_RENDERER = () -> (graphics, x, y, width, height) -> {
         int r = x + width;
@@ -54,7 +53,11 @@ public class RootNode {
     private final Supplier<BoxRenderer> boxRenderer;
 
     public RootNode(
-                    String id, int priority, boolean separateBox, int padding, Supplier<BoxRenderer> boxRenderer) {
+                    String id,
+                    int priority,
+                    boolean separateBox,
+                    int padding,
+                    Supplier<BoxRenderer> boxRenderer) {
         this.id = id;
         this.priority = priority;
         this.separateBox = separateBox;
