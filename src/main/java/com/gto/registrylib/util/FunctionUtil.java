@@ -65,5 +65,4 @@ public class FunctionUtil {
     public <T, U, R> BiFunction<T, U, R> constantBiFn(R value) {
         return (_, _) -> value;
     }
-
 }

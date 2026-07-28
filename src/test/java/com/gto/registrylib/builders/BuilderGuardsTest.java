@@ -6,7 +6,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -15,8 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Verifies that all builder classes that bypass {@link AbstractBuilder} carry their own
- * {@code registered} double-registration guard.
+ * Verifies that all builder classes that bypass {@link AbstractBuilder} carry their own {@code
+ * registered} double-registration guard.
  *
  * <p>
  * Because the unit-test classpath does not include Minecraft, these tests use reflection to
@@ -26,8 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BuilderGuardsTest {
 
     /**
-     * Builder classes that do NOT extend {@link AbstractBuilder} and therefore must carry their
-     * own {@code registered} field + guard in {@code register()}.
+     * Builder classes that do NOT extend {@link AbstractBuilder} and therefore must carry their own
+     * {@code registered} field + guard in {@code register()}.
      */
     private static final List<String> STANDALONE_BUILDERS = List.of(
             "com.gto.registrylib.builders.EnchantmentBuilder",
@@ -37,43 +36,56 @@ class BuilderGuardsTest {
 
     @TestFactory
     Stream<DynamicTest> allStandaloneBuildersHaveRegisteredField() {
-        return STANDALONE_BUILDERS.stream().map(fqcn -> DynamicTest.dynamicTest(
-                simpleName(fqcn) + " has 'registered' field",
-                () -> {
-                    Class<?> clazz = loadOrSkip(fqcn);
-                    Field field = findDeclaredField(clazz, "registered");
-                    assertNotNull(field,
-                            fqcn + " must declare a 'registered' field for double-registration protection");
-                    assertEquals(boolean.class, field.getType(),
-                            "'registered' field must be of type boolean");
-                }));
+        return STANDALONE_BUILDERS.stream()
+                .map(
+                        fqcn -> DynamicTest.dynamicTest(
+                                simpleName(fqcn) + " has 'registered' field",
+                                () -> {
+                                    Class<?> clazz = loadOrSkip(fqcn);
+                                    Field field = findDeclaredField(clazz, "registered");
+                                    assertNotNull(
+                                            field,
+                                            fqcn + " must declare a 'registered' field for double-registration protection");
+                                    assertEquals(
+                                            boolean.class,
+                                            field.getType(),
+                                            "'registered' field must be of type boolean");
+                                }));
     }
 
     @TestFactory
     Stream<DynamicTest> registeredFieldDefaultsToFalse() {
-        return STANDALONE_BUILDERS.stream().map(fqcn -> DynamicTest.dynamicTest(
-                simpleName(fqcn) + " 'registered' defaults to false",
-                () -> {
-                    Class<?> clazz = loadOrSkip(fqcn);
-                    Field field = findDeclaredField(clazz, "registered");
-                    assertNotNull(field, fqcn + " must declare 'registered'");
-                    // boolean fields default to false in Java, but verify it is not initialized to true
-                    // by inspecting that it has no compile-time constant initializer of true.
-                    // Since the field is an instance field with no explicit = true, the JVM default is false.
-                    assertTrue(field.getType() == boolean.class,
-                            "'registered' should be primitive boolean (defaults to false)");
-                }));
+        return STANDALONE_BUILDERS.stream()
+                .map(
+                        fqcn -> DynamicTest.dynamicTest(
+                                simpleName(fqcn) + " 'registered' defaults to false",
+                                () -> {
+                                    Class<?> clazz = loadOrSkip(fqcn);
+                                    Field field = findDeclaredField(clazz, "registered");
+                                    assertNotNull(field, fqcn + " must declare 'registered'");
+                                    // boolean fields default to false in Java, but verify it is not initialized
+                                    // to true
+                                    // by inspecting that it has no compile-time constant initializer of true.
+                                    // Since the field is an instance field with no explicit = true, the JVM
+                                    // default is false.
+                                    assertTrue(
+                                            field.getType() == boolean.class,
+                                            "'registered' should be primitive boolean (defaults to false)");
+                                }));
     }
 
     @TestFactory
     Stream<DynamicTest> registerMethodExists() {
-        return STANDALONE_BUILDERS.stream().map(fqcn -> DynamicTest.dynamicTest(
-                simpleName(fqcn) + " has register() method",
-                () -> {
-                    Class<?> clazz = loadOrSkip(fqcn);
-                    assertTrue(hasNoArgMethod(clazz, "register"),
-                            fqcn + " must have a no-arg register() method");
-                }));
+        return STANDALONE_BUILDERS.stream()
+                .map(
+                        fqcn -> DynamicTest.dynamicTest(
+                                simpleName(fqcn) + " has register() method",
+                                () -> {
+                                    Class<?> clazz = loadOrSkip(fqcn);
+                                    assertTrue(
+                                            hasNoArgMethod(clazz, "register"),
+                                            fqcn + " must have a no-arg register() method");
+                                }));
     }
 
     @Test

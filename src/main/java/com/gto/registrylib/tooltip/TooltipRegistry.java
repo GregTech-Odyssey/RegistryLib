@@ -51,8 +51,8 @@ public final class TooltipRegistry {
      * 注册一个自定义 {@link RootNode} 并返回引用。
      *
      * <p>
-     * {@code boxRenderer} 用 {@link Supplier} 延迟传入，确保引用了客户端类 {@code GuiGraphicsExtractor} 的
-     * lambda 只在客户端被链接；客户端调用方传 {@code () -> (graphics, x, y, w, h) -> { ... }} 即可。
+     * {@code boxRenderer} 用 {@link Supplier} 延迟传入，确保引用了客户端类 {@code GuiGraphicsExtractor} 的 lambda
+     * 只在客户端被链接；客户端调用方传 {@code () -> (graphics, x, y, w, h) -> { ... }} 即可。
      */
     public static RootNodeRef rootNode(
                                        String id,
@@ -78,9 +78,9 @@ public final class TooltipRegistry {
      * 查询指定 {@link ItemStack} 的 tooltip 节点结构。
      *
      * <p>
-     * 按 {@link RootNodeRef} 分组收集 {@link SubNode}，在每组内按 priority 排序，并根据节点偏好插入分隔符。 返回值是中间结构
-     * {@link ResolvedTooltip}——它会在 gather 阶段被 {@link com.gto.registrylib.client.Client}
-     * 拆分为多个 ClientTooltipComponent（一个内联组件 + 每个独立框一个组件 + 可选分页控件）。
+     * 按 {@link RootNodeRef} 分组收集 {@link SubNode}，在每组内按 priority 排序，并根据节点偏好插入分隔符。 返回值是中间结构 {@link
+     * ResolvedTooltip}——它会在 gather 阶段被 {@link com.gto.registrylib.client.Client} 拆分为多个
+     * ClientTooltipComponent（一个内联组件 + 每个独立框一个组件 + 可选分页控件）。
      */
     public static ResolvedTooltip resolve(ItemStack itemStack) {
         var configs = map.get(itemStack.getItem());

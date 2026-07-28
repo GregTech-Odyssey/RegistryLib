@@ -31,7 +31,8 @@ public final class RegistryLib {
         modEventBus.addListener(RegistryCore::onBuildCreativeModeTabContents);
         modEventBus.addListener(RegistryCore::onEntityAttributeCreation);
         modEventBus.addListener(RegistryCore::onRegisterSpawnPlacements);
-        NeoForge.EVENT_BUS.addListener((RegisterCommandsEvent event) -> StateDebugCommands.register(event));
+        NeoForge.EVENT_BUS.addListener(
+                (RegisterCommandsEvent event) -> StateDebugCommands.register(event));
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> Client.init(modEventBus));
     }
 }

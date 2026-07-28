@@ -41,16 +41,14 @@ public class FluidEntry<T extends BaseFlowingFluid> extends AbstractHolderEntry<
     @SuppressWarnings("unchecked")
     public <S extends BaseFlowingFluid> S getSource() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return (S) value.getSource();
     }
 
     public FluidType getType() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value.getFluidType();
     }
@@ -64,24 +62,21 @@ public class FluidEntry<T extends BaseFlowingFluid> extends AbstractHolderEntry<
     @SuppressWarnings("unchecked")
     public <I extends Item> I getBucket() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return (I) value.getBucket();
     }
 
     public FluidResource asResource() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return FluidResource.of(value);
     }
 
     public FluidResource asResource(DataComponentPatch components) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return FluidResource.of(value, components);
     }
@@ -96,40 +91,35 @@ public class FluidEntry<T extends BaseFlowingFluid> extends AbstractHolderEntry<
 
     public FluidStack asStack() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return new FluidStack(value.builtInRegistryHolder, 1000);
     }
 
     public FluidStack asStack(int amount) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return new FluidStack(value.builtInRegistryHolder, amount);
     }
 
     public FluidStack asStack(int amount, DataComponentPatch components) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return new FluidStack(value.builtInRegistryHolder, amount, components);
     }
 
     public boolean is(FluidStack stack) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value.isSame(stack.getFluid());
     }
 
     public boolean is(Fluid fluid) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value.isSame(fluid);
     }

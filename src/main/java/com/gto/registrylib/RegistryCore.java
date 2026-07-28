@@ -81,10 +81,10 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
@@ -334,8 +334,8 @@ public class RegistryCore {
     }
 
     /**
-     * Register a translation key in both {@code en_us} and {@code zh_cn}. Convenience for mods
-     * that maintain bilingual translations.
+     * Register a translation key in both {@code en_us} and {@code zh_cn}. Convenience for mods that
+     * maintain bilingual translations.
      *
      * @param key  the translation key
      * @param enUs the English display name
@@ -357,8 +357,7 @@ public class RegistryCore {
      * other entries are registered via {@link #locale(String)}.
      *
      * @param key          the translation key
-     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display
-     *                     name
+     * @param localeToName map of locale code (e.g. {@code "en_us"}, {@code "zh_cn"}) to display name
      * @return a translatable {@link MutableComponent} for the key
      */
     @StandardAPI
@@ -484,13 +483,17 @@ public class RegistryCore {
         return TextureRef.of(id);
     }
 
-    /** @deprecated Use {@link #texture(String)} instead. */
+    /**
+     * @deprecated Use {@link #texture(String)} instead.
+     */
     @Deprecated(forRemoval = true)
     public TextureRef textureRef(@NotNull String path) {
         return texture(path);
     }
 
-    /** @deprecated Use {@link #texture(Identifier)} instead. */
+    /**
+     * @deprecated Use {@link #texture(Identifier)} instead.
+     */
     @Deprecated(forRemoval = true)
     public TextureRef textureRef(@NotNull Identifier id) {
         return texture(id);
@@ -626,10 +629,14 @@ public class RegistryCore {
     }
 
     @StandardAPI
-    public FluidTagBatch fluidTags() { return new FluidTagBatch(); }
+    public FluidTagBatch fluidTags() {
+        return new FluidTagBatch();
+    }
 
     @StandardAPI
-    public EntityTagBatch entityTags() { return new EntityTagBatch(); }
+    public EntityTagBatch entityTags() {
+        return new EntityTagBatch();
+    }
 
     public RegistryCore tagExisting(@NotNull TagKey<Item> tag, @NotNull ItemLike... items) {
         itemTags().add(tag, items);
@@ -854,7 +861,10 @@ public class RegistryCore {
     }
 
     public final class FluidTagBatch extends TagBatch<Fluid, FluidTagBatch> {
-        FluidTagBatch() { super(ProviderType.FLUID_TAGS); }
+
+        FluidTagBatch() {
+            super(ProviderType.FLUID_TAGS);
+        }
 
         public FluidTagBatch add(@NotNull TagKey<Fluid> tag, @NotNull Fluid... fluids) {
             Identifier[] keys = new Identifier[fluids.length];
@@ -865,7 +875,8 @@ public class RegistryCore {
         }
 
         @SafeVarargs
-        public final FluidTagBatch addSuppliers(@NotNull TagKey<Fluid> tag, @NotNull Supplier<? extends Fluid>... fluids) {
+        public final FluidTagBatch addSuppliers(
+                                                @NotNull TagKey<Fluid> tag, @NotNull Supplier<? extends Fluid>... fluids) {
             Identifier[] keys = new Identifier[fluids.length];
             for (int i = 0; i < fluids.length; i++) {
                 keys[i] = BuiltInRegistries.FLUID.getKey(fluids[i].get());
@@ -875,10 +886,14 @@ public class RegistryCore {
     }
 
     public final class EntityTagBatch extends TagBatch<EntityType<?>, EntityTagBatch> {
-        EntityTagBatch() { super(ProviderType.ENTITY_TAGS); }
+
+        EntityTagBatch() {
+            super(ProviderType.ENTITY_TAGS);
+        }
 
         @SafeVarargs
-        public final EntityTagBatch add(@NotNull TagKey<EntityType<?>> tag, @NotNull EntityType<?>... entityTypes) {
+        public final EntityTagBatch add(
+                                        @NotNull TagKey<EntityType<?>> tag, @NotNull EntityType<?>... entityTypes) {
             Identifier[] keys = new Identifier[entityTypes.length];
             for (int i = 0; i < entityTypes.length; i++) {
                 keys[i] = BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes[i]);
@@ -887,7 +902,9 @@ public class RegistryCore {
         }
 
         @SafeVarargs
-        public final EntityTagBatch addSuppliers(@NotNull TagKey<EntityType<?>> tag, @NotNull Supplier<? extends EntityType<?>>... entityTypes) {
+        public final EntityTagBatch addSuppliers(
+                                                 @NotNull TagKey<EntityType<?>> tag,
+                                                 @NotNull Supplier<? extends EntityType<?>>... entityTypes) {
             Identifier[] keys = new Identifier[entityTypes.length];
             for (int i = 0; i < entityTypes.length; i++) {
                 keys[i] = BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes[i].get());

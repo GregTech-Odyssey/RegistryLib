@@ -4,7 +4,6 @@ import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 
 import com.google.common.collect.ObjectArrays;
 
-import lombok.Getter;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.criterion.InventoryChangeTrigger;
 import net.minecraft.advancements.criterion.ItemPredicate;
@@ -15,6 +14,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
+
+import lombok.Getter;
 
 import java.util.Arrays;
 import java.util.function.Function;

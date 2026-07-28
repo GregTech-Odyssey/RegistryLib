@@ -23,8 +23,7 @@ public class ItemEntry<T extends Item> extends ItemProviderEntry<Item, T> {
     @Override
     public final boolean is(ItemStack stack) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value == stack.getItem();
     }
@@ -32,8 +31,7 @@ public class ItemEntry<T extends Item> extends ItemProviderEntry<Item, T> {
     @Override
     public final boolean is(Item item) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value == item;
     }

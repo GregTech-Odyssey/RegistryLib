@@ -31,13 +31,16 @@ public final class SimpleWorldgenExample {
             .placement(CountPlacement.of(1))
             .placement(InSquarePlacement.spread())
             .placement(HeightmapPlacement.onHeightmap(Heightmap.Types.WORLD_SURFACE_WG))
-            .placement(BlockPredicateFilter.forPredicate(
-                    BlockPredicate.allOf(
-                            BlockPredicate.replaceable(),
-                            BlockPredicate.noFluid(),
-                            BlockPredicate.matchesBlocks(BlockPos.ZERO.below(), Blocks.GRASS_BLOCK))))
+            .placement(
+                    BlockPredicateFilter.forPredicate(
+                            BlockPredicate.allOf(
+                                    BlockPredicate.replaceable(),
+                                    BlockPredicate.noFluid(),
+                                    BlockPredicate.matchesBlocks(BlockPos.ZERO.below(), Blocks.GRASS_BLOCK))))
             .placement(BiomeFilter.biome())
-            .addToBiomes(BiomeTags.IS_OVERWORLD, net.minecraft.world.level.levelgen.GenerationStep.Decoration.VEGETAL_DECORATION)
+            .addToBiomes(
+                    BiomeTags.IS_OVERWORLD,
+                    net.minecraft.world.level.levelgen.GenerationStep.Decoration.VEGETAL_DECORATION)
             .register();
 
     private SimpleWorldgenExample() {}

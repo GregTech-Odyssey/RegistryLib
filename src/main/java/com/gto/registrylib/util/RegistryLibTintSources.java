@@ -24,5 +24,4 @@ public class RegistryLibTintSources {
     public BlockTintSource blockConstant(ArgbColor color) {
         return BlockTintSources.constant(color.argb());
     }
-
 }

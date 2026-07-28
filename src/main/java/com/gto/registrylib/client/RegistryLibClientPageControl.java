@@ -11,8 +11,8 @@ import net.minecraft.network.chat.Component;
  * 客户端渲染器：分页控件 "< 1 / 3 > [↑↓]"。
  *
  * <p>
- * 仅在独立框需要分页（页数 ≥ 2）时由 {@link Client#onGatherTooltipComponents} 追加到组件列表末尾，作为最后一个独立组件参与原版
- * tooltip 计算与渲染。
+ * 仅在独立框需要分页（页数 ≥ 2）时由 {@link Client#onGatherTooltipComponents} 追加到组件列表末尾，作为最后一个独立组件参与原版 tooltip
+ * 计算与渲染。
  */
 public class RegistryLibClientPageControl implements ClientTooltipComponent {
 
@@ -50,8 +50,7 @@ public class RegistryLibClientPageControl implements ClientTooltipComponent {
 
     @Override
     public int getWidth(Font font) {
-        return Math.max(
-                MIN_WIDTH, font.width(pageText()) + font.width(hintText()) + PADDING_X * 3);
+        return Math.max(MIN_WIDTH, font.width(pageText()) + font.width(hintText()) + PADDING_X * 3);
     }
 
     @Override
@@ -65,8 +64,7 @@ public class RegistryLibClientPageControl implements ClientTooltipComponent {
 
         graphics.fill(bx + 1, by + 1, bx + bw - 1, by + boxHeight - 1, BG_COLOR);
         graphics.fillGradient(bx, by, bx + 1, by + boxHeight, BORDER_TOP, BORDER_BOTTOM);
-        graphics.fillGradient(
-                bx + bw - 1, by, bx + bw, by + boxHeight, BORDER_TOP, BORDER_BOTTOM);
+        graphics.fillGradient(bx + bw - 1, by, bx + bw, by + boxHeight, BORDER_TOP, BORDER_BOTTOM);
         graphics.fill(bx, by, bx + bw, by + 1, BORDER_TOP);
         graphics.fill(bx, by + boxHeight - 1, bx + bw, by + boxHeight, BORDER_BOTTOM);
 
@@ -75,10 +73,6 @@ public class RegistryLibClientPageControl implements ClientTooltipComponent {
 
         Component hint = hintText();
         graphics.text(
-                font,
-                hint,
-                bx + bw - PADDING_X - font.width(hint),
-                by + PADDING_Y,
-                TEXT_COLOR_HINT);
+                font, hint, bx + bw - PADDING_X - font.width(hint), by + PADDING_Y, TEXT_COLOR_HINT);
     }
 }

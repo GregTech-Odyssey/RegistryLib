@@ -142,12 +142,16 @@ public class RegistryLibBlockModelGenerator extends BlockModelGenerators {
             Identifier texture = stageTextures[i].id();
             modelOutput.accept(models[i], () -> createCropStageJson(texture));
         }
-        blockStateOutput.accept(MultiVariantGenerator
-                .dispatch(block)
-                .with(PropertyDispatch.initial(CropBlock.AGE).generate(age -> {
-                    int modelIndex = Math.min(models.length - 1, age * models.length / (block.getMaxAge() + 1));
-                    return plainVariant(models[modelIndex]);
-                })));
+        blockStateOutput.accept(
+                MultiVariantGenerator.dispatch(block)
+                        .with(
+                                PropertyDispatch.initial(CropBlock.AGE)
+                                        .generate(
+                                                age -> {
+                                                    int modelIndex = Math.min(
+                                                            models.length - 1, age * models.length / (block.getMaxAge() + 1));
+                                                    return plainVariant(models[modelIndex]);
+                                                })));
     }
 
     public void generate(Block block, TexturedModel.Provider texture) {

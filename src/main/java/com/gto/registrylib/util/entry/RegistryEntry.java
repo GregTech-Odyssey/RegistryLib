@@ -55,8 +55,7 @@ public class RegistryEntry<T, S extends T> implements Supplier<S> {
     public S get() {
         if (value == null) {
             throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet. "
-                            + "This usually means you're accessing it before registration is complete.");
+                    "Registry entry '" + key + "' has not been bound yet. " + "This usually means you're accessing it before registration is complete.");
         }
         return value;
     }

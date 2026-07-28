@@ -5,5 +5,4 @@ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 public record WorldgenFeatureEntry(
-                                   ResourceKey<ConfiguredFeature<?, ?>> configuredKey,
-                                   ResourceKey<PlacedFeature> placedKey) {}
+                                   ResourceKey<ConfiguredFeature<?, ?>> configuredKey, ResourceKey<PlacedFeature> placedKey) {}

@@ -9,9 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-/**
- * Tests for the {@link StateScope} enum.
- */
+/** Tests for the {@link StateScope} enum. */
 class StateScopeTest {
 
     @Test
@@ -37,10 +35,11 @@ class StateScopeTest {
         Set<String> seen = new HashSet<>();
         for (StateScope scope : StateScope.values()) {
             boolean added = seen.add(scope.id());
-            assertFalse(!added,
-                    "Duplicate id '" + scope.id() + "' found on " + scope.name());
+            assertFalse(!added, "Duplicate id '" + scope.id() + "' found on " + scope.name());
         }
-        assertEquals(StateScope.values().length, seen.size(),
+        assertEquals(
+                StateScope.values().length,
+                seen.size(),
                 "Number of unique ids must equal number of enum values");
     }
 }

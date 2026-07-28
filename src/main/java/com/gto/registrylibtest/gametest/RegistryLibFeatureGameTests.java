@@ -5,6 +5,7 @@ import com.gto.registrylibtest.block.SimpleBlockExample;
 import com.gto.registrylibtest.crop.SimpleCropExample;
 import com.gto.registrylibtest.state.SimpleStateExample;
 import com.gto.registrylibtest.worldgen.SimpleWorldgenExample;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -51,9 +52,16 @@ public final class RegistryLibFeatureGameTests {
 
     private static void registerTests(RegisterGameTestsEvent event) {
         var environment = RegistryLibGameTestSupport.registerEnvironment(event, "feature_environment");
-        RegistryLibGameTestSupport.register(event, environment, "state_debug_commands", 40, RegistryLibFeatureGameTests::stateDebugCommands);
-        RegistryLibGameTestSupport.register(event, environment, "essence_crop", 120, RegistryLibFeatureGameTests::essenceCrop);
-        RegistryLibGameTestSupport.register(event, environment, "essence_worldgen", 80, RegistryLibFeatureGameTests::essenceWorldgen);
+        RegistryLibGameTestSupport.register(
+                event,
+                environment,
+                "state_debug_commands",
+                40,
+                RegistryLibFeatureGameTests::stateDebugCommands);
+        RegistryLibGameTestSupport.register(
+                event, environment, "essence_crop", 120, RegistryLibFeatureGameTests::essenceCrop);
+        RegistryLibGameTestSupport.register(
+                event, environment, "essence_worldgen", 80, RegistryLibFeatureGameTests::essenceWorldgen);
     }
 
     private static void stateDebugCommands(GameTestHelper helper) {
@@ -63,10 +71,16 @@ public final class RegistryLibFeatureGameTests {
         CommandSourceStack admin = source(helper, 4);
 
         assertCommandSucceeds(helper, dispatcher, admin, "registrylib state list");
-        assertCommandSucceeds(helper, dispatcher, admin, "registrylib state debug registrylibtest:essence_epoch");
-        assertCommandSucceeds(helper, dispatcher, admin, "registrylib state debug registrylibtest:ambient_essence " + pos.x() + " " + pos.z());
+        assertCommandSucceeds(
+                helper, dispatcher, admin, "registrylib state debug registrylibtest:essence_epoch");
+        assertCommandSucceeds(
+                helper,
+                dispatcher,
+                admin,
+                "registrylib state debug registrylibtest:ambient_essence " + pos.x() + " " + pos.z());
 
-        assertCommandSucceeds(helper, dispatcher, admin, "registrylib state set registrylibtest:essence_epoch 21");
+        assertCommandSucceeds(
+                helper, dispatcher, admin, "registrylib state set registrylibtest:essence_epoch 21");
         helper.assertValueEqual(
                 SimpleStateExample.ESSENCE_EPOCH.getIfPresent(level).orElse(-1),
                 21,
@@ -82,16 +96,34 @@ public final class RegistryLibFeatureGameTests {
                 9,
                 Component.literal("chunk state command set"));
 
-        assertCommandSucceeds(helper, dispatcher, admin, "registrylib state get registrylibtest:essence_epoch");
-        assertCommandSucceeds(helper, dispatcher, admin, "registrylib state get registrylibtest:ambient_essence " + pos.x() + " " + pos.z());
+        assertCommandSucceeds(
+                helper, dispatcher, admin, "registrylib state get registrylibtest:essence_epoch");
+        assertCommandSucceeds(
+                helper,
+                dispatcher,
+                admin,
+                "registrylib state get registrylibtest:ambient_essence " + pos.x() + " " + pos.z());
 
         assertCommandFails(dispatcher, source(helper, 1), "registrylib state list");
-        assertCommandFails(dispatcher, admin, "registrylib state set registrylibtest:ambient_essence 12");
-        assertCommandFails(dispatcher, admin, "registrylib state set registrylibtest:essence_epoch nope");
-        assertCommandFails(dispatcher, admin, "registrylib state set registrylibtest:essence_epoch \"text\"");
+        assertCommandFails(
+                dispatcher, admin, "registrylib state set registrylibtest:ambient_essence 12");
+        assertCommandFails(
+                dispatcher, admin, "registrylib state set registrylibtest:essence_epoch nope");
+        assertCommandFails(
+                dispatcher, admin, "registrylib state set registrylibtest:essence_epoch \"text\"");
 
-        assertSuggests(helper, dispatcher, admin, "registrylib state get registrylibtest:a", "registrylibtest:ambient_essence");
-        assertSuggests(helper, dispatcher, admin, "registrylib state set registrylibtest:e", "registrylibtest:essence_epoch");
+        assertSuggests(
+                helper,
+                dispatcher,
+                admin,
+                "registrylib state get registrylibtest:a",
+                "registrylibtest:ambient_essence");
+        assertSuggests(
+                helper,
+                dispatcher,
+                admin,
+                "registrylib state set registrylibtest:e",
+                "registrylibtest:essence_epoch");
         helper.succeed();
     }
 
@@ -125,11 +157,15 @@ public final class RegistryLibFeatureGameTests {
                 crop.getAge(helper.getBlockState(cropPos)) > ageBeforeTicks,
                 Component.literal("crop growth reads high ambient essence"));
 
-        crop.performBonemeal(level, RandomSource.create(9L), absoluteCropPos, helper.getBlockState(cropPos));
-        helper.assertTrue(crop.getAge(helper.getBlockState(cropPos)) <= 7, Component.literal("bonemeal does not exceed max age"));
+        crop.performBonemeal(
+                level, RandomSource.create(9L), absoluteCropPos, helper.getBlockState(cropPos));
+        helper.assertTrue(
+                crop.getAge(helper.getBlockState(cropPos)) <= 7,
+                Component.literal("bonemeal does not exceed max age"));
 
         List<net.minecraft.world.item.ItemStack> drops = Block.getDrops(crop.getStateForAge(7), level, absoluteCropPos, null);
-        var seedItem = BuiltInRegistries.ITEM.getValue(Identifier.fromNamespaceAndPath(RegistryLibTest.MOD_ID, "essence_carrot_seeds"));
+        var seedItem = BuiltInRegistries.ITEM.getValue(
+                Identifier.fromNamespaceAndPath(RegistryLibTest.MOD_ID, "essence_carrot_seeds"));
         helper.assertTrue(
                 drops.stream().anyMatch(stack -> stack.is(Items.CARROT)),
                 Component.literal("mature crop loot includes produce"));
@@ -140,11 +176,19 @@ public final class RegistryLibFeatureGameTests {
         SimpleStateExample.ESSENCE_EPOCH.set(level, 30);
         helper.setBlock(cropPos, crop.getStateForAge(7));
         var player = helper.makeMockPlayer(GameType.SURVIVAL);
-        InteractionResult result = helper.getBlockState(cropPos).useWithoutItem(
-                level,
-                player,
-                new net.minecraft.world.phys.BlockHitResult(Vec3.atCenterOf(absoluteCropPos), net.minecraft.core.Direction.UP, absoluteCropPos, true));
-        helper.assertTrue(result.consumesAction(), Component.literal("mature crop right-click harvest consumes action"));
+        InteractionResult result = helper
+                .getBlockState(cropPos)
+                .useWithoutItem(
+                        level,
+                        player,
+                        new net.minecraft.world.phys.BlockHitResult(
+                                Vec3.atCenterOf(absoluteCropPos),
+                                net.minecraft.core.Direction.UP,
+                                absoluteCropPos,
+                                true));
+        helper.assertTrue(
+                result.consumesAction(),
+                Component.literal("mature crop right-click harvest consumes action"));
         helper.assertValueEqual(
                 crop.getAge(helper.getBlockState(cropPos)),
                 0,
@@ -158,54 +202,74 @@ public final class RegistryLibFeatureGameTests {
 
     private static void essenceWorldgen(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
-        var configured = level.registryAccess()
+        var configured = level
+                .registryAccess()
                 .lookupOrThrow(Registries.CONFIGURED_FEATURE)
                 .get(SimpleWorldgenExample.ESSENCE_NODE_PATCH.configuredKey());
-        var placed = level.registryAccess()
+        var placed = level
+                .registryAccess()
                 .lookupOrThrow(Registries.PLACED_FEATURE)
                 .get(SimpleWorldgenExample.ESSENCE_NODE_PATCH.placedKey());
-        var modifier = level.registryAccess()
+        var modifier = level
+                .registryAccess()
                 .lookupOrThrow(NeoForgeRegistries.Keys.BIOME_MODIFIERS)
-                .get(Identifier.fromNamespaceAndPath(RegistryLibTest.MOD_ID, "essence_node_patch_add_feature"));
+                .get(
+                        Identifier.fromNamespaceAndPath(
+                                RegistryLibTest.MOD_ID, "essence_node_patch_add_feature"));
 
-        helper.assertTrue(configured.isPresent(), Component.literal("configured feature is registered"));
+        helper.assertTrue(
+                configured.isPresent(), Component.literal("configured feature is registered"));
         helper.assertTrue(placed.isPresent(), Component.literal("placed feature is registered"));
         helper.assertTrue(modifier.isPresent(), Component.literal("biome modifier is registered"));
         helper.assertTrue(
-                modifier.orElseThrow().value() instanceof BiomeModifiers.AddFeaturesBiomeModifier addFeatures
-                        && addFeatures.step() == GenerationStep.Decoration.VEGETAL_DECORATION,
+                modifier.orElseThrow().value() instanceof BiomeModifiers.AddFeaturesBiomeModifier addFeatures && addFeatures.step() == GenerationStep.Decoration.VEGETAL_DECORATION,
                 Component.literal("biome modifier step"));
         helper.assertTrue(
-                placed.orElseThrow().value().placement().stream().anyMatch(modifierEntry -> modifierEntry.type() == PlacementModifierType.HEIGHTMAP),
+                placed.orElseThrow().value().placement().stream()
+                        .anyMatch(modifierEntry -> modifierEntry.type() == PlacementModifierType.HEIGHTMAP),
                 Component.literal("placed feature uses heightmap placement"));
         helper.assertTrue(
-                placed.orElseThrow().value().placement().stream().anyMatch(modifierEntry -> modifierEntry.type() == PlacementModifierType.BIOME_FILTER),
+                placed.orElseThrow().value().placement().stream()
+                        .anyMatch(modifierEntry -> modifierEntry.type() == PlacementModifierType.BIOME_FILTER),
                 Component.literal("placed feature uses biome filter"));
 
         BlockPos origin = new BlockPos(2, 2, 2);
         prepareWorldgenSurface(helper, origin, Blocks.GRASS_BLOCK.defaultBlockState());
         boolean placedResult = tryPlace(placed.orElseThrow(), level, helper.absolutePos(origin.above()));
-        int generated = countBlocks(helper, origin.offset(-1, -1, -1), origin.offset(18, 8, 18), SimpleBlockExample.DECORATIVE_STONE.get().defaultBlockState());
-        helper.assertTrue(placedResult && generated > 0, Component.literal("placed feature generates on grass"));
+        int generated = countBlocks(
+                helper,
+                origin.offset(-1, -1, -1),
+                origin.offset(18, 8, 18),
+                SimpleBlockExample.DECORATIVE_STONE.get().defaultBlockState());
+        helper.assertTrue(
+                placedResult && generated > 0, Component.literal("placed feature generates on grass"));
 
         BlockPos negativeOrigin = new BlockPos(34, 2, 2);
         prepareWorldgenSurface(helper, negativeOrigin, Blocks.STONE.defaultBlockState());
         boolean negativeResult = tryPlace(placed.orElseThrow(), level, helper.absolutePos(negativeOrigin.above()));
-        int negativeGenerated = countBlocks(helper, negativeOrigin.offset(-1, -1, -1), negativeOrigin.offset(18, 8, 18), SimpleBlockExample.DECORATIVE_STONE.get().defaultBlockState());
-        helper.assertFalse(negativeResult || negativeGenerated > 0, Component.literal("placed feature rejects wrong base"));
+        int negativeGenerated = countBlocks(
+                helper,
+                negativeOrigin.offset(-1, -1, -1),
+                negativeOrigin.offset(18, 8, 18),
+                SimpleBlockExample.DECORATIVE_STONE.get().defaultBlockState());
+        helper.assertFalse(
+                negativeResult || negativeGenerated > 0,
+                Component.literal("placed feature rejects wrong base"));
         helper.succeed();
     }
 
-    private static boolean tryPlace(Holder.Reference<net.minecraft.world.level.levelgen.placement.PlacedFeature> placed, ServerLevel level, BlockPos origin) {
+    private static boolean tryPlace(
+                                    Holder.Reference<net.minecraft.world.level.levelgen.placement.PlacedFeature> placed,
+                                    ServerLevel level,
+                                    BlockPos origin) {
         net.minecraft.world.level.levelgen.placement.PlacedFeature feature = new net.minecraft.world.level.levelgen.placement.PlacedFeature(
                 placed.value().feature(),
-                placed.value()
-                        .placement()
-                        .stream()
+                placed.value().placement().stream()
                         .filter(modifier -> modifier.type() == PlacementModifierType.BLOCK_PREDICATE_FILTER)
                         .toList());
         for (long seed = 0; seed < 64; seed++) {
-            if (feature.place(level, level.getChunkSource().getGenerator(), RandomSource.create(seed), origin)) {
+            if (feature.place(
+                    level, level.getChunkSource().getGenerator(), RandomSource.create(seed), origin)) {
                 return true;
             }
         }
@@ -214,7 +278,8 @@ public final class RegistryLibFeatureGameTests {
 
     private static CommandSourceStack source(GameTestHelper helper, int permission) {
         BlockPos pos = helper.absolutePos(BlockPos.ZERO);
-        return helper.getLevel()
+        return helper
+                .getLevel()
                 .getServer()
                 .createCommandSourceStack()
                 .withLevel(helper.getLevel())
@@ -241,16 +306,18 @@ public final class RegistryLibFeatureGameTests {
                                               CommandSourceStack source,
                                               String command) {
         try {
-            helper.assertTrue(dispatcher.execute(command, source) > 0, Component.literal("command succeeds: " + command));
+            helper.assertTrue(
+                    dispatcher.execute(command, source) > 0,
+                    Component.literal("command succeeds: " + command));
         } catch (CommandSyntaxException exception) {
-            helper.fail(Component.literal("command failed unexpectedly: " + command + " -> " + exception.getMessage()));
+            helper.fail(
+                    Component.literal(
+                            "command failed unexpectedly: " + command + " -> " + exception.getMessage()));
         }
     }
 
     private static void assertCommandFails(
-                                           CommandDispatcher<CommandSourceStack> dispatcher,
-                                           CommandSourceStack source,
-                                           String command) {
+                                           CommandDispatcher<CommandSourceStack> dispatcher, CommandSourceStack source, String command) {
         try {
             dispatcher.execute(command, source);
             throw new AssertionError("command succeeded unexpectedly: " + command);
@@ -267,34 +334,39 @@ public final class RegistryLibFeatureGameTests {
                                        String expected) {
         try {
             ParseResults<CommandSourceStack> parsed = dispatcher.parse(command, source);
-            List<String> suggestions = dispatcher
-                    .getCompletionSuggestions(parsed)
-                    .get()
-                    .getList()
-                    .stream()
+            List<String> suggestions = dispatcher.getCompletionSuggestions(parsed).get().getList().stream()
                     .map(suggestion -> suggestion.getText())
                     .toList();
-            helper.assertTrue(suggestions.contains(expected), Component.literal("suggestions contain " + expected));
+            helper.assertTrue(
+                    suggestions.contains(expected), Component.literal("suggestions contain " + expected));
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             helper.fail(Component.literal("suggestion interrupted: " + command));
         } catch (ExecutionException exception) {
-            helper.fail(Component.literal("suggestion failed: " + command + " -> " + exception.getMessage()));
+            helper.fail(
+                    Component.literal("suggestion failed: " + command + " -> " + exception.getMessage()));
         }
     }
 
-    private static void prepareWorldgenSurface(GameTestHelper helper, BlockPos origin, BlockState base) {
+    private static void prepareWorldgenSurface(
+                                               GameTestHelper helper, BlockPos origin, BlockState base) {
         for (int x = -1; x <= 18; x++) {
             for (int z = -1; z <= 18; z++) {
                 BlockPos floor = origin.offset(x, 0, z);
                 for (int y = -8; y < 0; y++) {
-                    helper.getLevel().setBlock(helper.absolutePos(floor.above(y)), Blocks.STONE.defaultBlockState(), 3);
+                    helper
+                            .getLevel()
+                            .setBlock(helper.absolutePos(floor.above(y)), Blocks.STONE.defaultBlockState(), 3);
                 }
                 helper.getLevel().setBlock(helper.absolutePos(floor), base, 3);
                 for (int y = 1; y <= 8; y++) {
-                    helper.getLevel().setBlock(helper.absolutePos(floor.above(y)), Blocks.AIR.defaultBlockState(), 3);
+                    helper
+                            .getLevel()
+                            .setBlock(helper.absolutePos(floor.above(y)), Blocks.AIR.defaultBlockState(), 3);
                 }
-                helper.getLevel().setBlock(helper.absolutePos(floor.above(9)), Blocks.BARRIER.defaultBlockState(), 3);
+                helper
+                        .getLevel()
+                        .setBlock(helper.absolutePos(floor.above(9)), Blocks.BARRIER.defaultBlockState(), 3);
             }
         }
         net.minecraft.world.level.levelgen.Heightmap.primeHeightmaps(
@@ -305,7 +377,8 @@ public final class RegistryLibFeatureGameTests {
                 EnumSet.of(net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE_WG));
     }
 
-    private static int countBlocks(GameTestHelper helper, BlockPos from, BlockPos to, BlockState state) {
+    private static int countBlocks(
+                                   GameTestHelper helper, BlockPos from, BlockPos to, BlockState state) {
         int count = 0;
         for (BlockPos pos : BlockPos.betweenClosed(from, to)) {
             if (helper.getBlockState(pos).is(state.getBlock())) {

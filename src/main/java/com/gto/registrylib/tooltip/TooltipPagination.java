@@ -83,10 +83,7 @@ public final class TooltipPagination {
         return true;
     }
 
-    /**
-     * 用 (itemId, sorted components) 作为目标指纹：同一物品但 NBT/组件不同时也会被识别为新目标， 这是分页 offset
-     * 是否保留的判定依据。
-     */
+    /** 用 (itemId, sorted components) 作为目标指纹：同一物品但 NBT/组件不同时也会被识别为新目标， 这是分页 offset 是否保留的判定依据。 */
     private record TooltipTarget(String itemId, List<ComponentValue> components) {
 
         private static TooltipTarget from(ItemStack stack) {

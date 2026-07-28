@@ -12,7 +12,8 @@ import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public final class WorldStateBuilder<T, P> extends AbstractStateBuilder<T, P, WorldStateBuilder<T, P>> {
+public final class WorldStateBuilder<T, P>
+                                    extends AbstractStateBuilder<T, P, WorldStateBuilder<T, P>> {
 
     public WorldStateBuilder(
                              RegistryCore core,
@@ -24,11 +25,7 @@ public final class WorldStateBuilder<T, P> extends AbstractStateBuilder<T, P, Wo
     }
 
     public static <T, P> WorldStateBuilder<T, P> create(
-                                                        RegistryCore core,
-                                                        P parent,
-                                                        String name,
-                                                        Codec<T> codec,
-                                                        Supplier<T> defaultValueFactory) {
+                                                        RegistryCore core, P parent, String name, Codec<T> codec, Supplier<T> defaultValueFactory) {
         return new WorldStateBuilder<>(core, parent, name, codec, _holder -> defaultValueFactory.get());
     }
 

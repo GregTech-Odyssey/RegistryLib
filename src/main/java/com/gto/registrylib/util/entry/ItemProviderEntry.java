@@ -7,8 +7,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 
-public abstract class ItemProviderEntry<T extends ItemLike, S extends T> extends AbstractHolderEntry<T, S>
-                              implements ItemLike {
+public abstract class ItemProviderEntry<T extends ItemLike, S extends T>
+                                       extends AbstractHolderEntry<T, S> implements ItemLike {
 
     private ItemStack readOnlyStack;
 
@@ -18,16 +18,14 @@ public abstract class ItemProviderEntry<T extends ItemLike, S extends T> extends
 
     public ItemResource asResource() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return ItemResource.of(value);
     }
 
     public ItemResource asResource(DataComponentPatch components) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return ItemResource.of(value, components);
     }
@@ -42,40 +40,35 @@ public abstract class ItemProviderEntry<T extends ItemLike, S extends T> extends
 
     public ItemStack asStack() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return new ItemStack(value.asItem().builtInRegistryHolder);
     }
 
     public ItemStack asStack(int count) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return new ItemStack(value.asItem().builtInRegistryHolder, count);
     }
 
     public ItemStack asStack(int count, DataComponentPatch components) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return new ItemStack(value.asItem().builtInRegistryHolder, count, components);
     }
 
     public boolean is(ItemStack stack) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value.asItem() == stack.getItem();
     }
 
     public boolean is(Item item) {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value.asItem() == item;
     }
@@ -83,8 +76,7 @@ public abstract class ItemProviderEntry<T extends ItemLike, S extends T> extends
     @Override
     public Item asItem() {
         if (value == null) {
-            throw new IllegalStateException(
-                    "Registry entry '" + key + "' has not been bound yet.");
+            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return value.asItem();
     }

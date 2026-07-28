@@ -51,7 +51,8 @@ public class RegistryLibCropBlock extends CropBlock {
     }
 
     @Override
-    protected void randomTick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
+    protected void randomTick(
+                              BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
         if (growthRoll.shouldGrow(state, level, pos, random)) {
             super.randomTick(state, level, pos, random);
         }
@@ -59,11 +60,7 @@ public class RegistryLibCropBlock extends CropBlock {
 
     @Override
     protected InteractionResult useWithoutItem(
-                                               BlockState state,
-                                               Level level,
-                                               BlockPos pos,
-                                               Player player,
-                                               BlockHitResult hitResult) {
+                                               BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (!rightClickHarvest || !isMaxAge(state)) {
             return super.useWithoutItem(state, level, pos, player, hitResult);
         }

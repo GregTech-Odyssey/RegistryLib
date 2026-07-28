@@ -52,7 +52,10 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
             c -> new RegistryLibEnchantmentTagsProvider(
                     c.parent(), c.type(), c.output(), c.provider()));
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<Block>> BLOCK_TAGS = registerIntrinsicTag(
-            "tags/block", "blocks", Registries.BLOCK, block -> BuiltInRegistries.BLOCK.getResourceKey(block).orElseThrow());
+            "tags/block",
+            "blocks",
+            Registries.BLOCK,
+            block -> BuiltInRegistries.BLOCK.getResourceKey(block).orElseThrow());
     ProviderType<RegistryLibItemTagsProvider> ITEM_TAGS = registerTag(
             "tags/item",
             Registries.ITEM,
@@ -64,7 +67,10 @@ public interface ProviderType<T extends RegistryLibProvider> extends GeneratorTy
                     c.provider(),
                     c.get(BLOCK_TAGS).contentsGetter()));
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<Fluid>> FLUID_TAGS = registerIntrinsicTag(
-            "tags/fluid", "fluids", Registries.FLUID, fluid -> BuiltInRegistries.FLUID.getResourceKey(fluid).orElseThrow());
+            "tags/fluid",
+            "fluids",
+            Registries.FLUID,
+            fluid -> BuiltInRegistries.FLUID.getResourceKey(fluid).orElseThrow());
     ProviderType<RegistryLibTagsProvider.IntrinsicImpl<EntityType<?>>> ENTITY_TAGS = registerIntrinsicTag(
             "tags/entity",
             "entity_types",
