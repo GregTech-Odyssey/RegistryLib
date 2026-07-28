@@ -38,3 +38,6 @@ website/build/
 website/.docusaurus/
 website/package-lock.json
 .github/skills/
+
+
+/secret.properties

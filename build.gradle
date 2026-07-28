@@ -3,7 +3,7 @@ plugins {
     id 'com.diffplug.spotless' version '8.3.0'
     id 'io.freefair.lombok' version '9.2.0'
     id 'maven-publish'
-    id 'com.gto.gtopublishgradleplugin' version '1.0.21'
+    id 'com.gto.gtopublishgradleplugin' version '1.0.24'
 }
 
 version = mod_version
@@ -11,6 +11,18 @@ group = mod_group_id
 
 base {
     archivesName = mod_id
+}
+
+def secretFile = file("secret.properties")
+def secretProp = new Properties()
+if (secretFile.exists()){
+    secretFile.withInputStream { stream ->
+        secretProp.load(stream)
+    }
+    secretProp.each { k,v ->
+        project.ext.set(k as String, v)
+        project.setProperty(k as String, v)
+    }
 }
 
 java {

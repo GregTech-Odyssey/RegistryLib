@@ -309,19 +309,17 @@ public class BlockBuilder<T extends Block, P>
         return this;
     }
 
-    /**
-     * Registers raw client {@link BlockTintSource}s for runtime block colouring. This is an advanced,
-     * client/datagen-only escape hatch: constructing a {@code BlockTintSource} to pass here already
-     * requires the client classes, so it must not be called on a pure dedicated server. Prefer
-     * {@link #blockConstantTint(ArgbColor)}, which defers the client construction.
-     */
     @StandardAPI
-    public BlockBuilder<T, P> blockTintSource(@NotNull BlockTintSource... tintSources) {
-        BlockTintSource[] sources = tintSources.clone();
-        blockTintSourceCount = sources.length;
+    public BlockBuilder<T, P> blockTintSource(@NotNull Supplier<Supplier<BlockTintSource[]>> tintSourcesSupplier) {
         knownBlockTintColors = null;
         DistExecutor.unsafeRunWhenOn(
-                Dist.CLIENT, () -> () -> Client.registerBlockTintSources(getValueSupplier(), sources));
+                Dist.CLIENT,
+                () -> () -> {
+                    BlockTintSource[] sources = tintSourcesSupplier.get().get();
+                    blockTintSourceCount = sources.length;
+                    Client.registerBlockTintSources(getValueSupplier(), sources);
+                }
+        );
         return this;
     }
 

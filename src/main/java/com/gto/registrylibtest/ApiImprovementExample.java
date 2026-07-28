@@ -38,9 +38,9 @@ public final class ApiImprovementExample {
             "api_note",
             (DataComponentType.Builder<String> builder) -> builder.persistent(Codec.STRING));
 
-    private static final TextureRef API_BLOCK_TEMPLATE = RegistryLibTest.REGISTRYLIB.textureRef("block/api_template_block");
+    private static final TextureRef API_BLOCK_TEMPLATE = RegistryLibTest.REGISTRYLIB.texture("block/api_template_block");
 
-    private static final TextureRef API_BLOCK_OVERLAY = RegistryLibTest.REGISTRYLIB.textureRef("block/api_template_overlay");
+    private static final TextureRef API_BLOCK_OVERLAY = RegistryLibTest.REGISTRYLIB.texture("block/api_template_overlay");
 
     public static final ItemEntry<Item> API_TINTED_GEM = RegistryLibTest.REGISTRYLIB
             .item("api_tinted_gem")
