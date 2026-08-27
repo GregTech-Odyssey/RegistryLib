@@ -310,14 +310,17 @@ public class BlockBuilder<T extends Block, P>
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> tintSource(@NotNull ItemTintSource... tintSources) {
-        blockItemTintSources = tintSources.clone();
+    public BlockBuilder<T, P> tintSource(
+            @NotNull Supplier<Supplier<ItemTintSource[]>> tintSources) {
         if (!core.doDatagen()) return this;
         core.setDataGenerator(
                 name,
                 Registries.ITEM,
                 ProviderType.ITEM_MODEL,
-                p -> p.generateTintedBlockItem(getValue(), blockItemTintSources));
+                p -> {
+                    blockItemTintSources = tintSources.get().get();
+                    p.generateTintedBlockItem(getValue(), blockItemTintSources);
+                });
         return this;
     }
 
