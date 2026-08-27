@@ -3,7 +3,7 @@ plugins {
     id 'com.diffplug.spotless' version '8.3.0'
     id 'io.freefair.lombok' version '9.2.0'
     id 'maven-publish'
-    id 'com.gto.gtopublishgradleplugin' version '1.0.24'
+    id 'com.gto.gtopublishgradleplugin' version '1.0.25'
 }
 
 version = mod_version
