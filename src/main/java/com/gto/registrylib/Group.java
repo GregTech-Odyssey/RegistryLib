@@ -10,8 +10,8 @@ import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
 
 import net.minecraft.data.tags.TagsProvider;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
@@ -127,7 +127,7 @@ public class Group {
 
     @StandardAPI("Returns a FluidBuilder with group defaults applied. Call .register() to finalise.")
     public FluidBuilder<BaseFlowingFluid.Flowing, Group> fluid(
-                                                               String name, Identifier stillTexture, Identifier flowingTexture) {
+                                                               String name, ResourceLocation stillTexture, ResourceLocation flowingTexture) {
         return applyFluidDefaults(
                 core.fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new));
     }
@@ -135,8 +135,8 @@ public class Group {
     @StandardAPI("Returns a FluidBuilder with custom FluidFactory and group defaults applied. Call .register() to finalise.")
     public <T extends BaseFlowingFluid> FluidBuilder<T, Group> fluid(
                                                                      String name,
-                                                                     Identifier stillTexture,
-                                                                     Identifier flowingTexture,
+                                                                     ResourceLocation stillTexture,
+                                                                     ResourceLocation flowingTexture,
                                                                      FluidBuilder.FluidFactory<T> fluidFactory) {
         return applyFluidDefaults(core.fluid(this, name, stillTexture, flowingTexture, fluidFactory));
     }
@@ -277,7 +277,7 @@ public class Group {
         public final <R, TP extends TagsProvider<R> & RegistryLibTagsProvider<R>> Builder addTag(
                                                                                                  @NotNull ProviderType<? extends TP> type, boolean isOptional, @NotNull TagKey<R>... tags) {
             if (tagsByType != null) {
-                var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
+                var map = tagsByType.computeIfAbsent(type, object -> new Reference2BooleanOpenHashMap<>());
                 for (TagKey<R> tag : tags) {
                     map.put(tag, isOptional);
                 }

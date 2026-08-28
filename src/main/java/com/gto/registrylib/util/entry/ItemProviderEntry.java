@@ -5,7 +5,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.neoforge.transfer.item.ItemResource;
 
 public abstract class ItemProviderEntry<T extends ItemLike, S extends T>
                                        extends AbstractHolderEntry<T, S> implements ItemLike {
@@ -14,20 +13,6 @@ public abstract class ItemProviderEntry<T extends ItemLike, S extends T>
 
     public ItemProviderEntry(ResourceKey<T> key) {
         super(key);
-    }
-
-    public ItemResource asResource() {
-        if (value == null) {
-            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
-        }
-        return ItemResource.of(value);
-    }
-
-    public ItemResource asResource(DataComponentPatch components) {
-        if (value == null) {
-            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
-        }
-        return ItemResource.of(value, components);
     }
 
     public ItemStack readOnlyStack() {

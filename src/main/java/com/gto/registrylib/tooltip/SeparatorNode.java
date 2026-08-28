@@ -1,7 +1,7 @@
 package com.gto.registrylib.tooltip;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 
 /**
  * 分隔线节点——在同一 {@link RootNode} 内的 {@link SubNode} 之间绘制全宽高光细线。
@@ -33,8 +33,7 @@ public class SeparatorNode extends SubNode {
     }
 
     @Override
-    public void extractImage(
-                             Font font, int x, int y, int width, int height, GuiGraphicsExtractor graphics) {
+    public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics graphics) {
         if (width <= 0) return;
         graphics.fill(x, y + TOP_PADDING, x + width, y + TOP_PADDING + 1, LINE_COLOR);
     }

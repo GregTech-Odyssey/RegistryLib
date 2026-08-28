@@ -13,10 +13,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * Tests for {@link StateRegistryManager}.
  *
  * <p>
- * {@link StateRegistryManager} depends on {@code net.minecraft.resources.Identifier} and {@link
- * StateEntry} (which itself references MC/NeoForge types). When the Minecraft runtime is not on the
- * classpath these classes cannot be loaded, so all tests use {@link Assumptions#assumeTrue} to skip
- * gracefully in a plain unit-test environment.
+ * {@link StateRegistryManager} depends on {@code net.minecraft.resources.ResourceLocation} and
+ * {@link StateEntry} (which itself references MC/NeoForge types). When the Minecraft runtime is not
+ * on the classpath these classes cannot be loaded, so all tests use {@link Assumptions#assumeTrue}
+ * to skip gracefully in a plain unit-test environment.
  */
 class StateRegistryManagerTest {
 
@@ -25,7 +25,7 @@ class StateRegistryManagerTest {
     @BeforeAll
     static void checkMinecraftRuntime() {
         try {
-            Class.forName("net.minecraft.resources.Identifier");
+            Class.forName("net.minecraft.resources.ResourceLocation");
             mcAvailable = true;
         } catch (ClassNotFoundException | NoClassDefFoundError e) {
             mcAvailable = false;
@@ -50,7 +50,7 @@ class StateRegistryManagerTest {
     }
 
     @Test
-    void duplicateIdentifierThrows() {
+    void duplicateResourceLocationThrows() {
         Assumptions.assumeTrue(
                 mcAvailable, "Skipped: StateRegistryManager requires Minecraft runtime classes");
         // If MC is available, registering two entries with the same identifier should throw.
@@ -68,7 +68,7 @@ class StateRegistryManagerTest {
         Assumptions.assumeTrue(
                 mcAvailable, "Skipped: StateRegistryManager requires Minecraft runtime classes");
         // Even without registering anything, get() should return Optional.empty().
-        // Cannot call get() without a valid Identifier instance, so skip if MC unavailable.
+        // Cannot call get() without a valid ResourceLocation instance, so skip if MC unavailable.
     }
 
     @Test

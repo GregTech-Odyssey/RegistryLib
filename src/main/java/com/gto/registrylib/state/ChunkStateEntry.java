@@ -4,7 +4,7 @@ import com.gto.registrylib.util.entry.AttachmentTypeEntry;
 
 import com.mojang.serialization.Codec;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 public final class ChunkStateEntry<T> extends AbstractStateEntry<T> {
 
     public ChunkStateEntry(
-                           Identifier identifier,
+                           ResourceLocation identifier,
                            Codec<T> codec,
                            AttachmentTypeEntry<T> attachment,
                            StateDebugConfig debugConfig,
@@ -30,34 +30,34 @@ public final class ChunkStateEntry<T> extends AbstractStateEntry<T> {
     }
 
     public T getOrCreate(ServerLevel level, ChunkPos pos) {
-        return attachment.getOrCreate(level.getChunk(pos.x(), pos.z()));
+        return attachment.getOrCreate(level.getChunk(pos.x, pos.z));
     }
 
     public Optional<T> getIfLoaded(ServerLevel level, ChunkPos pos) {
-        ChunkAccess chunk = level.getChunk(pos.x(), pos.z(), ChunkStatus.FULL, false);
+        ChunkAccess chunk = level.getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
         if (chunk == null) return Optional.empty();
         return attachment.getIfPresent(chunk);
     }
 
     public void modify(ServerLevel level, ChunkPos pos, Consumer<T> action) {
-        ChunkAccess chunk = level.getChunk(pos.x(), pos.z());
+        ChunkAccess chunk = level.getChunk(pos.x, pos.z);
         action.accept(attachment.getOrCreate(chunk));
-        chunk.markUnsaved();
+        chunk.setUnsaved(true);
         if (syncOnModify) {
             chunk.syncData(attachment.get());
         }
     }
 
     public void set(ServerLevel level, ChunkPos pos, T value) {
-        ChunkAccess chunk = level.getChunk(pos.x(), pos.z());
+        ChunkAccess chunk = level.getChunk(pos.x, pos.z);
         attachment.set(chunk, value);
-        chunk.markUnsaved();
+        chunk.setUnsaved(true);
         if (syncOnModify) {
             chunk.syncData(attachment.get());
         }
     }
 
     public void sync(ServerLevel level, ChunkPos pos) {
-        level.getChunk(pos.x(), pos.z()).syncData(attachment.get());
+        level.getChunk(pos.x, pos.z).syncData(attachment.get());
     }
 }

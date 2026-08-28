@@ -7,7 +7,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.IntrinsicHolderTagsProvider;
-import net.minecraft.data.tags.TagAppender;
 import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagBuilder;
@@ -27,7 +26,7 @@ public interface RegistryLibTagsProvider<T> extends RegistryLibLookupFillerProvi
 
     interface Intrinsic<T> extends RegistryLibTagsProvider<T> {
 
-        TagAppender<T, T> tag(TagKey<T> key);
+        IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> tag(TagKey<T> key);
     }
 
     class IntrinsicImpl<T> extends IntrinsicHolderTagsProvider<T>
@@ -45,7 +44,7 @@ public interface RegistryLibTagsProvider<T> extends RegistryLibLookupFillerProvi
                              ResourceKey<? extends Registry<T>> registryIn,
                              CompletableFuture<HolderLookup.Provider> registriesLookup,
                              Function<T, ResourceKey<T>> keyExtractor) {
-            super(packOutput, registryIn, registriesLookup, keyExtractor, owner.getModid());
+            super(packOutput, registryIn, registriesLookup, keyExtractor, owner.getModid(), null);
 
             this.owner = owner;
             this.type = type;
@@ -73,7 +72,7 @@ public interface RegistryLibTagsProvider<T> extends RegistryLibLookupFillerProvi
         }
 
         @Override
-        public TagAppender<T, T> tag(TagKey<T> key) {
+        public IntrinsicHolderTagsProvider.IntrinsicTagAppender<T> tag(TagKey<T> key) {
             return super.tag(key);
         }
 

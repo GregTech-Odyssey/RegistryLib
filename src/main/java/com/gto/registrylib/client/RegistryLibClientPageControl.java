@@ -2,10 +2,14 @@ package com.gto.registrylib.client;
 
 import com.gto.registrylib.tooltip.RegistryLibPageControlComponent;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
+
+import org.joml.Matrix4f;
 
 /**
  * 客户端渲染器：分页控件 "< 1 / 3 > [↑↓]"。
@@ -44,7 +48,8 @@ public class RegistryLibClientPageControl implements ClientTooltipComponent {
     }
 
     @Override
-    public int getHeight(Font font) {
+    public int getHeight() {
+        Font font = Minecraft.getInstance().font;
         return TOP_MARGIN + PADDING_Y * 2 + font.lineHeight;
     }
 
@@ -54,7 +59,8 @@ public class RegistryLibClientPageControl implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+    public void renderText(
+                           Font font, int x, int y, Matrix4f matrix, MultiBufferSource.BufferSource bufferSource) {
         int contentWidth = getWidth(font);
         int boxHeight = PADDING_Y * 2 + font.lineHeight;
 
@@ -62,17 +68,46 @@ public class RegistryLibClientPageControl implements ClientTooltipComponent {
         int by = y + TOP_MARGIN;
         int bw = contentWidth + INSET * 2;
 
-        graphics.fill(bx + 1, by + 1, bx + bw - 1, by + boxHeight - 1, BG_COLOR);
-        graphics.fillGradient(bx, by, bx + 1, by + boxHeight, BORDER_TOP, BORDER_BOTTOM);
-        graphics.fillGradient(bx + bw - 1, by, bx + bw, by + boxHeight, BORDER_TOP, BORDER_BOTTOM);
-        graphics.fill(bx, by, bx + bw, by + 1, BORDER_TOP);
-        graphics.fill(bx, by + boxHeight - 1, bx + bw, by + boxHeight, BORDER_BOTTOM);
+        // 背景与边框——text pass 中先于文字写入，保证在文字之下。
+        SubNodeQuad.fill(
+                matrix, bufferSource, bx + 1, by + 1, bx + bw - 1, by + boxHeight - 1, BG_COLOR);
+        SubNodeQuad.fillGradient(
+                matrix, bufferSource, bx, by, bx + 1, by + boxHeight, BORDER_TOP, BORDER_BOTTOM);
+        SubNodeQuad.fillGradient(
+                matrix, bufferSource, bx + bw - 1, by, bx + bw, by + boxHeight, BORDER_TOP, BORDER_BOTTOM);
+        SubNodeQuad.fill(matrix, bufferSource, bx, by, bx + bw, by + 1, BORDER_TOP);
+        SubNodeQuad.fill(
+                matrix, bufferSource, bx, by + boxHeight - 1, bx + bw, by + boxHeight, BORDER_BOTTOM);
 
         Component page = pageText();
-        graphics.text(font, page, bx + PADDING_X, by + PADDING_Y, TEXT_COLOR_PAGE);
+        font.drawInBatch(
+                page,
+                (float) (bx + PADDING_X),
+                (float) (by + PADDING_Y),
+                TEXT_COLOR_PAGE,
+                true,
+                matrix,
+                bufferSource,
+                Font.DisplayMode.NORMAL,
+                0,
+                15728880);
 
         Component hint = hintText();
-        graphics.text(
-                font, hint, bx + bw - PADDING_X - font.width(hint), by + PADDING_Y, TEXT_COLOR_HINT);
+        font.drawInBatch(
+                hint,
+                (float) (bx + bw - PADDING_X - font.width(hint)),
+                (float) (by + PADDING_Y),
+                TEXT_COLOR_HINT,
+                true,
+                matrix,
+                bufferSource,
+                Font.DisplayMode.NORMAL,
+                0,
+                15728880);
+    }
+
+    @Override
+    public void renderImage(Font font, int x, int y, GuiGraphics graphics) {
+        // 本组件没有 image-pass 内容。
     }
 }

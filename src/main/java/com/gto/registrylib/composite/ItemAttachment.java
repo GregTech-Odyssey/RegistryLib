@@ -2,11 +2,9 @@ package com.gto.registrylib.composite;
 
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
@@ -122,5 +120,5 @@ public class ItemAttachment<T extends IComponentItem<T>> {
     public void collectTooltipNodes(T item, ItemStack stack, TooltipNodeCollector collector) {}
 
     public void inventoryTick(
-                              T item, ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {}
+                              T item, ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {}
 }

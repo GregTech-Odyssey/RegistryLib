@@ -1,10 +1,9 @@
 package com.gto.registrylib.composite;
 
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -56,12 +55,14 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     }
 
     @Override
-    public InteractionResult use(Level level, Player player, InteractionHand hand) {
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if ((combinedFlags & ItemAttachment.USE) == 0) return super.use(level, player, hand);
         for (var att : attachments) {
             if ((att.getOverrideFlags() & ItemAttachment.USE) == 0) continue;
             var result = att.use(this, level, player, hand);
-            if (result != InteractionResult.PASS) return result;
+            if (result != InteractionResult.PASS) {
+                return new InteractionResultHolder<>(result, player.getItemInHand(hand));
+            }
         }
         return super.use(level, player, hand);
     }
@@ -104,12 +105,13 @@ public class ComponentItem extends Item implements IComponentItem<ComponentItem>
     // ── 累加委托 ──
 
     @Override
-    public void inventoryTick(ItemStack stack, ServerLevel level, Entity entity, EquipmentSlot slot) {
-        super.inventoryTick(stack, level, entity, slot);
+    public void inventoryTick(
+                              ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected);
         if ((combinedFlags & ItemAttachment.INVENTORY_TICK) == 0) return;
         for (var att : attachments) {
             if ((att.getOverrideFlags() & ItemAttachment.INVENTORY_TICK) == 0) continue;
-            att.inventoryTick(this, stack, level, entity, slot);
+            att.inventoryTick(this, stack, level, entity, slotId, isSelected);
         }
     }
 }

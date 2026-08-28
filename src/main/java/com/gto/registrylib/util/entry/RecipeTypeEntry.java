@@ -105,7 +105,7 @@ public class RecipeTypeEntry<T extends Recipe<?>>
     @StandardAPI
     public RecipeTypeEntry<T> addRecipe(
                                         @NotNull String recipeName, @NotNull Function<HolderLookup.Provider, T> recipeFactory) {
-        String typeName = key.identifier().getPath();
+        String typeName = key.location().getPath();
         core.addRecipe(typeName + "/" + recipeName, recipeFactory);
         return this;
     }

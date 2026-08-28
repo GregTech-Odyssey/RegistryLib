@@ -5,8 +5,8 @@ import com.gto.registrylib.annotations.StandardAPI;
 
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.GenerationStep;
@@ -88,9 +88,11 @@ public final class WorldgenFeatureBuilder<C extends FeatureConfiguration, P> {
         }
         registered = true;
         ResourceKey<ConfiguredFeature<?, ?>> configuredKey = ResourceKey.create(
-                Registries.CONFIGURED_FEATURE, Identifier.fromNamespaceAndPath(core.getModid(), name));
+                Registries.CONFIGURED_FEATURE,
+                ResourceLocation.fromNamespaceAndPath(core.getModid(), name));
         ResourceKey<PlacedFeature> placedKey = ResourceKey.create(
-                Registries.PLACED_FEATURE, Identifier.fromNamespaceAndPath(core.getModid(), name));
+                Registries.PLACED_FEATURE,
+                ResourceLocation.fromNamespaceAndPath(core.getModid(), name));
         core.getDataGenInitializer()
                 .add(
                         Registries.CONFIGURED_FEATURE,
@@ -106,7 +108,7 @@ public final class WorldgenFeatureBuilder<C extends FeatureConfiguration, P> {
         if (biomeTag != null) {
             ResourceKey<net.neoforged.neoforge.common.world.BiomeModifier> modifierKey = ResourceKey.create(
                     NeoForgeRegistries.Keys.BIOME_MODIFIERS,
-                    Identifier.fromNamespaceAndPath(core.getModid(), name + "_add_feature"));
+                    ResourceLocation.fromNamespaceAndPath(core.getModid(), name + "_add_feature"));
             core.getDataGenInitializer()
                     .add(
                             NeoForgeRegistries.Keys.BIOME_MODIFIERS,

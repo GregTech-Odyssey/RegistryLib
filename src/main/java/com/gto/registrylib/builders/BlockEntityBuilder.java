@@ -94,8 +94,9 @@ public class BlockEntityBuilder<BE extends BlockEntity, P>
     protected BlockEntityType<BE> createEntry(ResourceKey<BlockEntityType<?>> key) {
         Block[] blocks = validBlocks.stream().map(Supplier::get).toArray(Block[]::new);
         var supplier = getValueSupplier();
-        return new BlockEntityType<>(
-                (pos, state) -> factory.create(supplier.get(), pos, state), blocks);
+        return BlockEntityType.Builder.of(
+                (pos, state) -> factory.create(supplier.get(), pos, state), blocks)
+                .build(null);
     }
 
     @Override

@@ -14,15 +14,14 @@ import com.gto.registrylib.util.entry.RegistryEntry;
 
 import com.google.common.base.Preconditions;
 
-import net.minecraft.client.data.models.model.ItemModelUtils;
-import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
-import net.minecraft.client.data.models.model.TextureSlot;
-import net.minecraft.client.renderer.block.FluidModel;
-import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.Camera;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.data.models.model.ModelTemplates;
+import net.minecraft.data.models.model.TextureMapping;
+import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -35,14 +34,13 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
-import net.neoforged.neoforge.client.fluid.FluidTintSource;
-import net.neoforged.neoforge.client.fluid.FluidTintSources;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.Locale;
 import java.util.Map;
@@ -67,8 +65,8 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         T create(BaseFlowingFluid.Properties properties);
     }
 
-    private static final Identifier BUCKET_FLUID_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "item/bucket_fluid");
-    private static final Identifier BUCKET_BASE_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "item/bucket_base");
+    private static final ResourceLocation BUCKET_FLUID_TEXTURE = ResourceLocation.fromNamespaceAndPath("registrylib", "item/bucket_fluid");
+    private static final ResourceLocation BUCKET_BASE_TEXTURE = ResourceLocation.fromNamespaceAndPath("registrylib", "item/bucket_base");
 
     @StandardAPI
     public FluidBuilder<T, P> clientExtension(
@@ -81,44 +79,24 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     @SyntaxSugar("clientExtension(stillTexture, flowingTexture, -1)")
     public FluidBuilder<T, P> clientExtension(
-                                              @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture) {
+                                              @NotNull ResourceLocation stillTexture, @NotNull ResourceLocation flowingTexture) {
         return clientExtension(stillTexture, flowingTexture, -1);
     }
 
-    @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(tintColor)) + register client fluid model")
+    @SyntaxSugar("clientExtension(() -> () -> new DefaultFluidTypeExtension(tintColor))")
     /**
-     * 同时注册：
-     *
-     * <ul>
-     * <li>用于雾色的 {@link DefaultFluidTypeExtension}（基于 {@code tintColor}）
-     * <li>用于纹理 / 着色的 {@link net.minecraft.client.renderer.block.FluidModel.Unbaked}（NeoForge 26.1+
-     * 的新流体渲染管线）
-     * </ul>
+     * 注册一个同时提供 纹理 / 着色 / 雾色 的 {@link IClientFluidTypeExtensions}（1.21.1 没有 26.x 的 {@code FluidModel}
+     * 管线，纹理与着色由扩展本身提供）。
      */
     public FluidBuilder<T, P> clientExtension(
-                                              @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture, int tintColor) {
+                                              @NotNull ResourceLocation stillTexture,
+                                              @NotNull ResourceLocation flowingTexture,
+                                              int tintColor) {
         this.tintColor = tintColor;
-        this.stillTextureIdentifier = stillTexture;
-        // 1) 雾色扩展
-        clientExtension(() -> () -> new DefaultFluidTypeExtension(tintColor));
-        // 2) 流体模型（纹理 + 可选 tint）
-        DistExecutor.unsafeRunWhenOn(
-                Dist.CLIENT,
-                () -> () -> {
-                    // 延迟到模型注册事件触发时再解析 source，避免在 builder 配置阶段过早捕获 null。
-                    Supplier<? extends Fluid> stillSupplier = () -> {
-                        Supplier<? extends BaseFlowingFluid> sourceSupplier = this.source;
-                        if (sourceSupplier != null) return sourceSupplier.get();
-                        throw new IllegalStateException(
-                                "Cannot register fluid model: source fluid not yet defined for " + sourceName);
-                    };
-                    Supplier<? extends Fluid> flowingSupplier = () -> getValueSupplier().get();
-                    Material still = new Material(stillTexture);
-                    Material flowing = new Material(flowingTexture);
-                    FluidTintSource tint = tintColor != -1 ? FluidTintSources.constant(tintColor) : null;
-                    FluidModel.Unbaked model = new FluidModel.Unbaked(still, flowing, null, tint);
-                    Client.registerFluidModel(this, stillSupplier, flowingSupplier, model);
-                });
+        this.stillTextureResourceLocation = stillTexture;
+        this.flowingTextureResourceLocation = flowingTexture;
+        clientExtension(
+                () -> () -> new DefaultFluidTypeExtension(stillTexture, flowingTexture, tintColor));
         return this;
     }
 
@@ -154,7 +132,9 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
 
     private int tintColor = -1;
     @Nullable
-    private Identifier stillTextureIdentifier;
+    private ResourceLocation stillTextureResourceLocation;
+    @Nullable
+    private ResourceLocation flowingTextureResourceLocation;
 
     private final String sourceName, bucketName;
     private final FluidFactory<T> fluidFactory;
@@ -303,7 +283,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         final Supplier<T> supplier = getValueSupplier();
         final Supplier<Integer> lightLevel = Lazy.of(() -> fluidType.get().getLightLevel());
         final ToIntFunction<BlockState> lightLevelInt = $ -> lightLevel.get();
-        final Identifier particleTexture = this.stillTextureIdentifier;
+        final ResourceLocation particleTexture = this.stillTextureResourceLocation;
         final var block = core.<B, FluidBuilder<T, P>>block(this, sourceName, p -> factory.apply(supplier.get(), p))
                 .properties(p -> BlockBehaviour.Properties.ofFullCopy(Blocks.WATER).noLootTable())
                 .properties(p -> p.lightLevel(lightLevelInt))
@@ -381,18 +361,22 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
                 .model(
                         () -> (ctx, prov) -> {
                             TextureMapping textures = new TextureMapping();
-                            textures.put(TextureSlot.LAYER0, new Material(BUCKET_FLUID_TEXTURE));
-                            textures.put(TextureSlot.LAYER1, new Material(BUCKET_BASE_TEXTURE));
-                            Identifier modelId = ModelTemplates.TWO_LAYERED_ITEM.create(ctx, textures, prov.modelOutput);
-                            if (bucketTintColor != -1) {
-                                prov.itemModelOutput.accept(
-                                        ctx,
-                                        ItemModelUtils.tintedModel(
-                                                modelId, ItemModelUtils.constantTint(bucketTintColor)));
-                            } else {
-                                prov.itemModelOutput.accept(ctx, ItemModelUtils.plainModel(modelId));
-                            }
+                            textures.put(TextureSlot.LAYER0, BUCKET_FLUID_TEXTURE);
+                            textures.put(TextureSlot.LAYER1, BUCKET_BASE_TEXTURE);
+                            ModelTemplates.TWO_LAYERED_ITEM.create(
+                                    net.minecraft.data.models.model.ModelLocationUtils.getModelLocation(ctx),
+                                    textures,
+                                    prov.modelOutput);
                         });
+        if (bucketTintColor != -1) {
+            // 1.21.1：TWO_LAYERED_ITEM 的 layer1 自动带有 tint index 1，着色交给运行时 ItemColor。
+            final int tint = bucketTintColor;
+            DistExecutor.unsafeRunWhenOn(
+                    Dist.CLIENT,
+                    () -> () -> Client.registerItemTintSources(
+                            item.getValueSupplier(),
+                            (stack, tintIndex) -> tintIndex == 1 ? 0xFF000000 | tint : -1));
+        }
         var itemSupplier = item.getValueSupplier();
         this.fluidProperties(p -> p.bucket(itemSupplier));
         if (defaultBucketTab != null) {
@@ -433,7 +417,7 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
         FluidType.Properties properties = FluidType.Properties.create();
         this.typeProperties.accept(properties);
         properties.descriptionId(
-                Identifier.fromNamespaceAndPath(core.getModid(), sourceName).toLanguageKey("fluid"));
+                ResourceLocation.fromNamespaceAndPath(core.getModid(), sourceName).toLanguageKey("fluid"));
         return properties;
     }
 
@@ -478,37 +462,54 @@ public class FluidBuilder<T extends BaseFlowingFluid, P>
     // --- DefaultFluidTypeExtension ---
 
     /**
-     * 默认流体类型扩展。
+     * 默认流体类型扩展（1.21.1）。
      *
      * <p>
-     * NeoForge 26.1+ 中，{@code IClientFluidTypeExtensions} 已不再包含 {@code
-     * getStillTexture/getFlowingTexture/getTintColor} —— 纹理与着色已迁移到 {@link
-     * net.minecraft.client.renderer.block.FluidModel.Unbaked}（通过 {@link
-     * net.neoforged.neoforge.client.event.RegisterFluidModelsEvent} 注册）。 此扩展现在仅负责修改流体雾色 ({@link
-     * #modifyFogColor})。
+     * 在 1.21.1 中，{@link IClientFluidTypeExtensions} 直接提供 静态/流动纹理 ({@link #getStillTexture()} /
+     * {@link #getFlowingTexture()}) 与流体着色 ({@link #getTintColor()})；雾色通过 {@link #modifyFogColor} 修改。
      */
     public static class DefaultFluidTypeExtension implements IClientFluidTypeExtensions {
 
+        private final ResourceLocation stillTexture;
+        private final ResourceLocation flowingTexture;
         private final int tintColor;
 
-        public DefaultFluidTypeExtension(int tintColor) {
+        public DefaultFluidTypeExtension(
+                                         ResourceLocation stillTexture, ResourceLocation flowingTexture, int tintColor) {
+            this.stillTexture = stillTexture;
+            this.flowingTexture = flowingTexture;
             this.tintColor = tintColor;
         }
 
         @Override
-        public void modifyFogColor(
-                                   net.minecraft.client.Camera camera,
-                                   float partialTick,
-                                   net.minecraft.client.multiplayer.ClientLevel level,
-                                   int renderDistance,
-                                   float darkenWorldAmount,
-                                   org.joml.Vector4f fluidFogColor) {
+        public ResourceLocation getStillTexture() {
+            return stillTexture;
+        }
+
+        @Override
+        public ResourceLocation getFlowingTexture() {
+            return flowingTexture;
+        }
+
+        @Override
+        public int getTintColor() {
+            return tintColor == -1 ? 0xFFFFFFFF : 0xFF000000 | tintColor;
+        }
+
+        @Override
+        public Vector3f modifyFogColor(
+                                       Camera camera,
+                                       float partialTick,
+                                       ClientLevel level,
+                                       int renderDistance,
+                                       float darkenWorldAmount,
+                                       Vector3f fluidFogColor) {
             if (tintColor != -1) {
                 fluidFogColor.x = (tintColor >> 16 & 0xFF) / 255.0f;
                 fluidFogColor.y = (tintColor >> 8 & 0xFF) / 255.0f;
                 fluidFogColor.z = (tintColor & 0xFF) / 255.0f;
-                fluidFogColor.w = 1.0f;
             }
+            return fluidFogColor;
         }
     }
 }

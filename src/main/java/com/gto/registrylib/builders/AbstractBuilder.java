@@ -8,13 +8,12 @@ import com.gto.registrylib.datagen.ProviderType;
 import com.gto.registrylib.datagen.provider.RegistryLibLangProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 import com.gto.registrylib.datagen.provider.RegistryLibTagsProvider;
-import com.gto.registrylib.util.FunctionUtil;
 import com.gto.registrylib.util.entry.RegistryEntry;
 
 import net.minecraft.core.Registry;
 import net.minecraft.data.tags.TagsProvider;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
 
@@ -157,7 +156,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     public final <E, TP extends TagsProvider<E> & RegistryLibTagsProvider<E>> S addTag(
                                                                                        @NotNull ProviderType<? extends TP> type, boolean isOptional, @NotNull TagKey<E>... tags) {
         if (tagsByType != null) {
-            var map = tagsByType.computeIfAbsent(type, _ -> new Reference2BooleanOpenHashMap<>());
+            var map = tagsByType.computeIfAbsent(type, object -> new Reference2BooleanOpenHashMap<>());
             for (var tag : tags) {
                 map.put(tag, isOptional);
             }
@@ -166,7 +165,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     }
 
     protected TagEntry asTag(boolean isOptional) {
-        Identifier id = Identifier.fromNamespaceAndPath(core.getModid(), name);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(core.getModid(), name);
         if (isOptional) return TagEntry.optionalElement(id);
         return TagEntry.element(id);
     }
@@ -197,7 +196,7 @@ public abstract class AbstractBuilder<R, T extends R, P, S extends AbstractBuild
     @SyntaxSugar("lang(ProviderType.LANG, langKeyProvider, name)")
     public S lang(@NotNull Function<T, String> langKeyProvider, @NotNull String name) {
         if (core.doDatagen()) {
-            return lang(langKeyProvider, FunctionUtil.constantBiFn(name));
+            return lang(langKeyProvider, (p, t) -> name);
         }
         return (S) this;
     }

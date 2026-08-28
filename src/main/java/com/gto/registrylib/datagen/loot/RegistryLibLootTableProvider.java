@@ -16,9 +16,9 @@ import net.minecraft.data.loot.LootTableSubProvider;
 import net.minecraft.data.loot.packs.VanillaLootTableProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.ProblemReporter;
-import net.minecraft.util.context.ContextKeySet;
 import net.minecraft.world.level.storage.loot.LootTable;
-import net.minecraft.world.level.storage.loot.ValidationContextSource;
+import net.minecraft.world.level.storage.loot.ValidationContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSet;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.fml.LogicalSide;
 
@@ -39,11 +39,11 @@ public class RegistryLibLootTableProvider extends LootTableProvider implements R
 
         T getLootCreator(HolderLookup.Provider provider, RegistryCore parent, Consumer<T> callback);
 
-        ContextKeySet getLootSet();
+        LootContextParamSet getLootSet();
 
         static <T extends RegistryLibLootTables> LootType<T> register(
                                                                       String name,
-                                                                      ContextKeySet set,
+                                                                      LootContextParamSet set,
                                                                       TriFunction<HolderLookup.Provider, RegistryCore, Consumer<T>, T> factory) {
             LootType<T> type = new LootType<T>() {
 
@@ -54,7 +54,7 @@ public class RegistryLibLootTableProvider extends LootTableProvider implements R
                 }
 
                 @Override
-                public ContextKeySet getLootSet() {
+                public LootContextParamSet getLootSet() {
                     return set;
                 }
             };
@@ -70,7 +70,7 @@ public class RegistryLibLootTableProvider extends LootTableProvider implements R
     @SuppressWarnings("rawtypes")
     private final Multimap<LootType<?>, Consumer<? super RegistryLibLootTables>> specialLootActions = HashMultimap.create();
 
-    private final Multimap<ContextKeySet, Consumer<BiConsumer<ResourceKey<LootTable>, LootTable.Builder>>> lootActions = HashMultimap.create();
+    private final Multimap<LootContextParamSet, Consumer<BiConsumer<ResourceKey<LootTable>, LootTable.Builder>>> lootActions = HashMultimap.create();
     private final Set<RegistryLibLootTables> currentLootCreators = new ReferenceOpenHashSet<>();
 
     private final CompletableFuture<HolderLookup.Provider> providerFuture;
@@ -100,7 +100,7 @@ public class RegistryLibLootTableProvider extends LootTableProvider implements R
     @Override
     protected void validate(
                             WritableRegistry<LootTable> writableregistry,
-                            ValidationContextSource validationcontext,
+                            ValidationContext validationcontext,
                             ProblemReporter.Collector collector) {
         currentLootCreators.forEach(c -> c.validate(writableregistry, validationcontext));
     }
@@ -112,7 +112,8 @@ public class RegistryLibLootTableProvider extends LootTableProvider implements R
     }
 
     public void addLootAction(
-                              ContextKeySet set, Consumer<BiConsumer<ResourceKey<LootTable>, LootTable.Builder>> action) {
+                              LootContextParamSet set,
+                              Consumer<BiConsumer<ResourceKey<LootTable>, LootTable.Builder>> action) {
         this.lootActions.put(set, action);
     }
 

@@ -12,7 +12,6 @@ import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
-import net.neoforged.neoforge.transfer.fluid.FluidResource;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -65,20 +64,6 @@ public class FluidEntry<T extends BaseFlowingFluid> extends AbstractHolderEntry<
             throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
         }
         return (I) value.getBucket();
-    }
-
-    public FluidResource asResource() {
-        if (value == null) {
-            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
-        }
-        return FluidResource.of(value);
-    }
-
-    public FluidResource asResource(DataComponentPatch components) {
-        if (value == null) {
-            throw new IllegalStateException("Registry entry '" + key + "' has not been bound yet.");
-        }
-        return FluidResource.of(value, components);
     }
 
     public FluidStack readOnlyStack() {

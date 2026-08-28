@@ -14,9 +14,9 @@ public class FunctionUtil {
 
     public static final UnaryOperator IDENTITY_UNARY_OP = UnaryOperator.identity();
 
-    public static final Consumer NO_OP_CONSUMER = _ -> {};
+    public static final Consumer NO_OP_CONSUMER = object -> {};
 
-    public static final BiConsumer NO_OP_BICONSUMER = (_, _) -> {};
+    public static final BiConsumer NO_OP_BICONSUMER = (object, object2) -> {};
 
     public static final Predicate ALWAYS_TRUE = t -> true;
 
@@ -59,10 +59,10 @@ public class FunctionUtil {
     }
 
     public <T, R> Function<T, R> constantFn(R value) {
-        return _ -> value;
+        return t -> value;
     }
 
     public <T, U, R> BiFunction<T, U, R> constantBiFn(R value) {
-        return (_, _) -> value;
+        return (t, u) -> value;
     }
 }

@@ -17,11 +17,11 @@ import net.minecraft.world.level.storage.loot.predicates.ConditionUserBuilder;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 
-import org.jspecify.annotations.NonNull;
-
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
+import javax.annotation.Nonnull;
 
 public class RegistryLibBlockLootTables extends BlockLootSubProvider
                                         implements RegistryLibLootTables {
@@ -51,7 +51,7 @@ public class RegistryLibBlockLootTables extends BlockLootSubProvider
     }
 
     @Override
-    protected @NonNull Iterable<Block> getKnownBlocks() {
+    protected @Nonnull Iterable<Block> getKnownBlocks() {
         return parent.getAll(Registries.BLOCK).stream().map(Supplier::get).toList();
     }
 

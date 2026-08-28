@@ -8,7 +8,7 @@ import com.mojang.serialization.Codec;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
 
 import java.util.function.Function;
@@ -64,7 +64,7 @@ public abstract class AbstractStateBuilder<T, P, S extends AbstractStateBuilder<
     protected abstract String attachmentPrefix();
 
     protected abstract AbstractStateEntry<T> createEntry(
-                                                         Identifier identifier,
+                                                         ResourceLocation identifier,
                                                          Codec<T> codec,
                                                          AttachmentTypeEntry<T> attachment,
                                                          StateDebugConfig debugConfig,
@@ -87,7 +87,7 @@ public abstract class AbstractStateBuilder<T, P, S extends AbstractStateBuilder<
         }
         AttachmentTypeEntry<T> attachment = attachmentBuilder.register();
         AbstractStateEntry<T> entry = createEntry(
-                Identifier.fromNamespaceAndPath(core.getModid(), name),
+                ResourceLocation.fromNamespaceAndPath(core.getModid(), name),
                 codec,
                 attachment,
                 debugConfig,

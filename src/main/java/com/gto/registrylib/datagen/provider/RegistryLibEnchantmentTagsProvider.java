@@ -6,7 +6,6 @@ import com.gto.registrylib.datagen.ProviderType;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.EnchantmentTagsProvider;
-import net.minecraft.data.tags.TagAppender;
 import net.minecraft.data.tags.TagsProvider;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagBuilder;
@@ -34,7 +33,7 @@ public class RegistryLibEnchantmentTagsProvider extends EnchantmentTagsProvider
                                               ProviderType<RegistryLibEnchantmentTagsProvider> type,
                                               PackOutput output,
                                               CompletableFuture<HolderLookup.Provider> provider) {
-        super(output, provider, owner.getModid());
+        super(output, provider, owner.getModid(), null);
         this.owner = owner;
         this.type = type;
     }
@@ -44,7 +43,7 @@ public class RegistryLibEnchantmentTagsProvider extends EnchantmentTagsProvider
         owner.genData(type, this);
     }
 
-    public TagAppender<ResourceKey<Enchantment>, Enchantment> tag(TagKey<Enchantment> key) {
+    public TagsProvider.TagAppender<Enchantment> tag(TagKey<Enchantment> key) {
         return super.tag(key);
     }
 

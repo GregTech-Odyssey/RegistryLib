@@ -7,7 +7,7 @@ import com.gto.registrylib.util.TextureRef;
 import com.gto.registrylib.util.entry.BlockEntry;
 import com.gto.registrylib.util.entry.ItemEntry;
 
-import net.minecraft.advancements.criterion.StatePropertiesPredicate;
+import net.minecraft.advancements.critereon.StatePropertiesPredicate;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.CropBlock;

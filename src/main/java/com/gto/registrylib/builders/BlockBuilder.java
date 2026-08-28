@@ -20,18 +20,15 @@ import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.visual.BlockModelLayer;
 import com.gto.registrylib.util.visual.BlockVisualPreset;
 
-import net.minecraft.client.color.block.BlockTintSource;
-import net.minecraft.client.color.item.ItemTintSource;
-import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
-import net.minecraft.client.data.models.model.TextureSlot;
-import net.minecraft.client.renderer.block.dispatch.BlockStateModelDispatcher;
-import net.minecraft.client.renderer.block.dispatch.SingleVariant;
-import net.minecraft.client.renderer.block.dispatch.Variant;
-import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.data.models.model.ModelLocationUtils;
+import net.minecraft.data.models.model.ModelTemplates;
+import net.minecraft.data.models.model.TextureMapping;
+import net.minecraft.data.models.model.TextureSlot;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
@@ -75,24 +72,11 @@ public class BlockBuilder<T extends Block, P>
     @Nullable
     private ResourceKey<CreativeModeTab> defaultItemTab;
 
-    /**
-     * Raw {@link ItemTintSource} array for the advanced {@link #tintSource} API (datagen/client
-     * only).
-     */
-    @Nullable
-    private ItemTintSource[] blockItemTintSources;
-
-    /**
-     * Constant block-item tint color; the client tint source is built lazily inside datagen.
-     * Non-client.
-     */
+    /** 方块物品的常量着色——1.21.1 由运行时 {@link ItemColor} 驱动。 */
     @Nullable
     private RgbColor blockItemTintColor;
 
-    /**
-     * Number of block (runtime) tint sources configured. Non-client; only used for tintindex
-     * validation.
-     */
+    /** 方块（运行时）着色器数量。非客户端；仅用于 tintindex 校验。 */
     private int blockTintSourceCount;
 
     @Nullable
@@ -118,43 +102,29 @@ public class BlockBuilder<T extends Block, P>
                                                     @NotNull BiFunction<? super T, Item.Properties, ? extends I> factory,
                                                     @NotNull Consumer<ItemBuilder<I, BlockBuilder<T, P>>> consumer) {
         var supplier = getValueSupplier();
-        var builder = core.<I, BlockBuilder<T, P>>item(
-                this,
-                name,
-                p -> factory.apply(supplier.get(), p.useBlockDescriptionPrefix()),
-                false)
+        var builder = core.<I, BlockBuilder<T, P>>item(this, name, p -> factory.apply(supplier.get(), p), false)
                 .setData(ProviderType.LANG, FunctionUtil.noOpConsumer())
                 .model(
                         () -> (ctx, prov) -> {
-                            var model = core.getDataProvider(ProviderType.BLOCKSTATE)
-                                    .map(g -> g.seenBlockstates.get(getValue()))
-                                    .flatMap(BlockStateModelDispatcher::simpleModels)
-                                    .map(b -> b.models().get(""))
-                                    .map(
-                                            unbaked -> {
-                                                if (unbaked instanceof SingleVariant.Unbaked(Variant variant)) {
-                                                    return variant.modelLocation();
-                                                }
-                                                return null;
-                                            });
-                            if (model.isPresent()) {
-                                prov.createWithExistingModel(ctx, model.get());
-                            } else if (core.isBlockExcludedFromModelValidation(name)) {
-                                prov.generateFlatItem(ctx, ModelTemplates.FLAT_ITEM);
+                            if (!core.isBlockExcludedFromModelValidation(name)) {
+                                // 1.21.1：block item 模型委托给方块模型（方块模型的面自带 tintindex，
+                                // 物品着色由 ItemColors 自动委托给 BlockColors）。
+                                prov.createWithExistingModel(
+                                        ctx, ModelLocationUtils.getModelLocation(getValue()));
+                            } else {
+                                prov.generateFlatItem(ctx, TextureMapping.getBlockTexture(getValue()));
                             }
                         });
         if (defaultItemTab != null) {
             builder.addTab(defaultItemTab);
         }
-        if (!core.isBlockExcludedFromModelValidation(name)) {
-            if (blockItemTintColor != null) {
-                // Constant tint: defer ItemTintSource construction into the datagen model lambda.
-                final RgbColor tintColor = blockItemTintColor;
-                builder.model(() -> (ctx, prov) -> prov.generateTintedBlockItem(getValue(), tintColor));
-            } else if (blockItemTintSources != null) {
-                builder.model(
-                        () -> (ctx, prov) -> prov.generateTintedBlockItem(getValue(), blockItemTintSources));
-            }
+        if (blockItemTintColor != null && !core.isBlockExcludedFromModelValidation(name)) {
+            // 方块物品使用独立于 BlockColors 委托的常量 ItemColor（例如方块本身不着色、物品着色）。
+            final RgbColor tintColor = blockItemTintColor;
+            DistExecutor.unsafeRunWhenOn(
+                    Dist.CLIENT,
+                    () -> () -> Client.registerItemTintSources(
+                            builder.getValueSupplier(), RegistryLibTintSources.itemConstant(tintColor)));
         }
         consumer.accept(builder);
         return builder.build();
@@ -266,7 +236,7 @@ public class BlockBuilder<T extends Block, P>
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> tintedCube(@NotNull Identifier texture, int tintIndex) {
+    public BlockBuilder<T, P> tintedCube(@NotNull ResourceLocation texture, int tintIndex) {
         return tintedCube(TextureRef.of(texture), tintIndex);
     }
 
@@ -282,20 +252,9 @@ public class BlockBuilder<T extends Block, P>
         return blockItemConstantTint(color);
     }
 
-    /**
-     * Records a constant tint color for this block's {@code BlockItem} model and registers the
-     * datagen-only tinted item-model generator. The client-only {@link ItemTintSource} is built
-     * lazily inside the {@code core.doDatagen()}-gated lambda (which runs only in the data-generation
-     * environment), so a dedicated server never resolves it.
-     */
+    /** 记录方块物品的常量着色（运行时注册见 {@link #item(Consumer)} 中的处理）。 */
     private BlockBuilder<T, P> blockItemConstantTint(@NotNull RgbColor color) {
         blockItemTintColor = color;
-        if (!core.doDatagen()) return this;
-        core.setDataGenerator(
-                name,
-                Registries.ITEM,
-                ProviderType.ITEM_MODEL,
-                p -> p.generateTintedBlockItem(getValue(), color));
         return this;
     }
 
@@ -310,28 +269,28 @@ public class BlockBuilder<T extends Block, P>
     }
 
     @StandardAPI
-    public BlockBuilder<T, P> tintSource(
-            @NotNull Supplier<Supplier<ItemTintSource[]>> tintSources) {
+    public BlockBuilder<T, P> tintSource(@NotNull Supplier<Supplier<ItemColor[]>> tintSources) {
         if (!core.doDatagen()) return this;
+        final ItemColor[] sources = tintSources.get().get();
+        final Supplier<? extends Item> itemSupplier = () -> getValue().asItem();
+        DistExecutor.unsafeRunWhenOn(
+                Dist.CLIENT,
+                () -> () -> Client.registerItemTintSources(
+                        itemSupplier,
+                        (stack, tintIndex) -> tintIndex >= 0 && tintIndex < sources.length ? sources[tintIndex].getColor(stack, tintIndex) : -1));
         core.setDataGenerator(
-                name,
-                Registries.ITEM,
-                ProviderType.ITEM_MODEL,
-                p -> {
-                    blockItemTintSources = tintSources.get().get();
-                    p.generateTintedBlockItem(getValue(), blockItemTintSources);
-                });
+                name, Registries.ITEM, ProviderType.ITEM_MODEL, p -> p.generateTintedBlockItem(getValue()));
         return this;
     }
 
     @StandardAPI
     public BlockBuilder<T, P> blockTintSource(
-                                              @NotNull Supplier<Supplier<BlockTintSource[]>> tintSourcesSupplier) {
+                                              @NotNull Supplier<Supplier<BlockColor[]>> tintSourcesSupplier) {
         knownBlockTintColors = null;
         DistExecutor.unsafeRunWhenOn(
                 Dist.CLIENT,
                 () -> () -> {
-                    BlockTintSource[] sources = tintSourcesSupplier.get().get();
+                    BlockColor[] sources = tintSourcesSupplier.get().get();
                     blockTintSourceCount = sources.length;
                     Client.registerBlockTintSources(getValueSupplier(), sources);
                 });
@@ -353,8 +312,8 @@ public class BlockBuilder<T extends Block, P>
         }
         knownBlockTintColors = new ArgbColor[] { color };
         blockTintSourceCount = 1;
-        // Build the client BlockTintSource lazily inside the Dist.CLIENT lambda so the dedicated
-        // server never resolves BlockTintSource / BlockTintSources.
+        // Build the client BlockColor lazily inside the Dist.CLIENT lambda so the dedicated
+        // server never resolves BlockColor.
         final ArgbColor tintColor = color;
         final Supplier<? extends Block> blockSupplier = getValueSupplier();
         DistExecutor.unsafeRunWhenOn(
@@ -396,7 +355,7 @@ public class BlockBuilder<T extends Block, P>
                 () -> (ctx, prov) -> prov.generateWithTemplate(
                         ctx,
                         ModelTemplates.CUBE_ALL,
-                        new TextureMapping().put(TextureSlot.ALL, new Material(texture.id()))));
+                        new TextureMapping().put(TextureSlot.ALL, texture.id())));
     }
 
     @StandardAPI
@@ -408,7 +367,7 @@ public class BlockBuilder<T extends Block, P>
     @StandardAPI
     public BlockBuilder<T, P> debugTint() {
         int maxTintIndex = maxBlockTintIndex == null ? -1 : maxBlockTintIndex;
-        int itemTintCount = blockItemTintColor != null ? 1 : (blockItemTintSources == null ? 0 : blockItemTintSources.length);
+        int itemTintCount = blockItemTintColor != null ? 1 : 0;
         LOGGER.info(
                 "RegistryLib tint debug for block '{}': maxBlockTintIndex={}, blockTintSourceCount={}, blockTintColors={}, blockItemTintSourceCount={}",
                 name,
@@ -477,7 +436,9 @@ public class BlockBuilder<T extends Block, P>
                 prov -> prov.addLootAction(
                         LootType.BLOCK,
                         tb -> {
-                            if (getValue().getLootTable().isPresent()) {
+                            if (!getValue()
+                                    .getLootTable()
+                                    .equals(net.minecraft.world.level.storage.loot.BuiltInLootTables.EMPTY)) {
                                 cons.accept(tb, getValue());
                             }
                         }));
@@ -505,7 +466,7 @@ public class BlockBuilder<T extends Block, P>
             properties = initialProperties.get();
         }
         properties = propertiesCallback.apply(properties);
-        return factory.apply(properties.setId(key));
+        return factory.apply(properties);
     }
 
     @Override

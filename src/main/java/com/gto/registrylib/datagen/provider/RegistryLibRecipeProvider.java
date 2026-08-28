@@ -6,31 +6,31 @@ import com.gto.registrylib.util.DataIngredient;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.Criterion;
-import net.minecraft.advancements.criterion.InventoryChangeTrigger;
-import net.minecraft.advancements.criterion.ItemPredicate;
+import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.data.PackOutput;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeOutput;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.data.recipes.ShapelessRecipeBuilder;
 import net.minecraft.data.recipes.SimpleCookingRecipeBuilder;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.BlastingRecipe;
-import net.minecraft.world.item.crafting.CookingBookCategory;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.SmeltingRecipe;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.common.conditions.ICondition;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 import javax.annotation.Nullable;
@@ -38,17 +38,22 @@ import javax.annotation.Nullable;
 public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeOutput {
 
     private final RegistryLibRecipeRunner runner;
-    private final RecipeOutput outputDelegated;
+    @Nullable
+    private RecipeOutput outputDelegated;
+    private HolderLookup.Provider registriesLookup;
 
     public RegistryLibRecipeProvider(
-                                     RegistryLibRecipeRunner runner, HolderLookup.Provider registries, RecipeOutput output) {
-        super(registries, output);
+                                     PackOutput packOutput,
+                                     CompletableFuture<HolderLookup.Provider> registries,
+                                     RegistryLibRecipeRunner runner) {
+        super(packOutput, registries);
         this.runner = runner;
-        this.outputDelegated = output;
     }
 
     @Override
-    public void buildRecipes() {
+    protected void buildRecipes(RecipeOutput output, HolderLookup.Provider registries) {
+        this.outputDelegated = output;
+        this.registriesLookup = registries;
         runner.provider = this;
         runner.owner.genData(ProviderType.RECIPE, this);
         runner.provider = null;
@@ -57,11 +62,11 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
     // Delegate RecipeOutput methods
     @Override
     public void accept(
-                       ResourceKey<Recipe<?>> key,
+                       ResourceLocation id,
                        Recipe<?> recipe,
                        @Nullable AdvancementHolder advancement,
                        ICondition... conditions) {
-        outputDelegated.accept(key, recipe, advancement, conditions);
+        outputDelegated.accept(id, recipe, advancement, conditions);
     }
 
     @Override
@@ -69,30 +74,26 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
         return outputDelegated.advancement();
     }
 
-    @Override
-    public void includeRootAdvancement() {
-        outputDelegated.includeRootAdvancement();
-    }
-
     public HolderLookup.Provider registries() {
-        return registries;
+        return registriesLookup;
     }
 
-    public Identifier safeId(Identifier id) {
-        return Identifier.fromNamespaceAndPath(runner.owner.getModid(), safeName(id));
+    public ResourceLocation safeId(ResourceLocation id) {
+        return ResourceLocation.fromNamespaceAndPath(runner.owner.getModid(), safeName(id));
     }
 
-    public Identifier safeId(DataIngredient source) {
+    public ResourceLocation safeId(DataIngredient source) {
         return safeId(source.getId());
     }
 
-    public Identifier safeId(ItemLike registryEntry) {
+    public ResourceLocation safeId(ItemLike registryEntry) {
         return safeId(BuiltInRegistries.ITEM.getKey(registryEntry.asItem()));
     }
 
-    public ResourceKey<Recipe<?>> safeKey(Identifier id) {
+    public ResourceKey<Recipe<?>> safeKey(ResourceLocation id) {
         return ResourceKey.create(
-                Registries.RECIPE, Identifier.fromNamespaceAndPath(runner.owner.getModid(), safeName(id)));
+                Registries.RECIPE,
+                ResourceLocation.fromNamespaceAndPath(runner.owner.getModid(), safeName(id)));
     }
 
     public ResourceKey<Recipe<?>> safeKey(DataIngredient source) {
@@ -103,7 +104,7 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
         return safeKey(BuiltInRegistries.ITEM.getKey(registryEntry.asItem()));
     }
 
-    public String safeName(Identifier id) {
+    public String safeName(ResourceLocation id) {
         return id.getPath().replace('/', '_');
     }
 
@@ -123,18 +124,18 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
     public <T extends ItemLike, S extends AbstractCookingRecipe> void cooking(
                                                                               DataIngredient source,
                                                                               RecipeCategory category,
-                                                                              CookingBookCategory cookingCategory,
                                                                               Supplier<? extends T> result,
                                                                               float experience,
                                                                               int cookingTime,
+                                                                              RecipeSerializer<S> serializer,
                                                                               AbstractCookingRecipe.Factory<S> factory) {
         SimpleCookingRecipeBuilder.generic(
                 source.toVanilla(),
                 category,
-                cookingCategory,
                 result.get(),
                 experience,
                 cookingTime,
+                serializer,
                 factory)
                 .unlockedBy("has_" + safeName(source), source.getCriterion(this))
                 .save(this, safeId(result.get()) + "_from_" + safeName(source));
@@ -157,10 +158,10 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
         cooking(
                 source,
                 category,
-                CookingBookCategory.MISC,
                 result,
                 experience,
                 cookingTime,
+                RecipeSerializer.SMELTING_RECIPE,
                 SmeltingRecipe::new);
     }
 
@@ -181,16 +182,16 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
         cooking(
                 source,
                 category,
-                CookingBookCategory.MISC,
                 result,
                 experience,
                 cookingTime,
+                RecipeSerializer.BLASTING_RECIPE,
                 BlastingRecipe::new);
     }
 
     public <T extends ItemLike> void square(
                                             DataIngredient source, RecipeCategory category, Supplier<? extends T> output, boolean small) {
-        ShapedRecipeBuilder builder = shaped(category, output.get()).define('X', source.toVanilla());
+        ShapedRecipeBuilder builder = ShapedRecipeBuilder.shaped(category, output.get()).define('X', source.toVanilla());
         if (small) {
             builder.pattern("XX").pattern("XX");
         } else {
@@ -198,7 +199,7 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
         }
         builder
                 .unlockedBy("has_" + safeName(source), source.getCriterion(this))
-                .save(this, safeKey(output.get()));
+                .save(this, safeId(output.get()));
     }
 
     public <T extends ItemLike> void storage(
@@ -223,7 +224,7 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
                                                                             Supplier<? extends T> result,
                                                                             int required,
                                                                             int amount) {
-        return shapeless(category, result.get(), amount)
+        return ShapelessRecipeBuilder.shapeless(category, result.get(), amount)
                 .requires(source.toVanilla(), required)
                 .unlockedBy("has_" + safeName(source), source.getCriterion(this));
     }
@@ -235,44 +236,17 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
                                                 int required,
                                                 int amount) {
         singleItemUnfinished(source, category, result, required, amount)
-                .save(this, safeKey(result.get()));
+                .save(this, safeId(result.get()));
     }
 
-    // Expose protected methods from RecipeProvider
+    // Expose protected static methods from RecipeProvider
 
-    @Override
-    public ShapedRecipeBuilder shaped(RecipeCategory category, ItemLike result) {
-        return super.shaped(category, result);
+    public static Criterion<InventoryChangeTrigger.TriggerInstance> has(ItemLike itemLike) {
+        return RecipeProvider.has(itemLike);
     }
 
-    @Override
-    public ShapedRecipeBuilder shaped(RecipeCategory category, ItemLike result, int count) {
-        return super.shaped(category, result, count);
-    }
-
-    @Override
-    public ShapelessRecipeBuilder shapeless(RecipeCategory category, ItemStackTemplate result) {
-        return super.shapeless(category, result);
-    }
-
-    @Override
-    public ShapelessRecipeBuilder shapeless(RecipeCategory category, ItemLike result) {
-        return super.shapeless(category, result);
-    }
-
-    @Override
-    public ShapelessRecipeBuilder shapeless(RecipeCategory category, ItemLike result, int count) {
-        return super.shapeless(category, result, count);
-    }
-
-    @Override
-    public Criterion<InventoryChangeTrigger.TriggerInstance> has(ItemLike itemLike) {
-        return super.has(itemLike);
-    }
-
-    @Override
-    public Criterion<InventoryChangeTrigger.TriggerInstance> has(TagKey<Item> tag) {
-        return super.has(tag);
+    public static Criterion<InventoryChangeTrigger.TriggerInstance> has(TagKey<Item> tag) {
+        return RecipeProvider.has(tag);
     }
 
     public static Criterion<InventoryChangeTrigger.TriggerInstance> inventoryTrigger(
@@ -286,10 +260,5 @@ public class RegistryLibRecipeProvider extends RecipeProvider implements RecipeO
 
     public static String getItemName(ItemLike itemLike) {
         return RecipeProvider.getItemName(itemLike);
-    }
-
-    @Override
-    public Ingredient tag(TagKey<Item> tag) {
-        return super.tag(tag);
     }
 }

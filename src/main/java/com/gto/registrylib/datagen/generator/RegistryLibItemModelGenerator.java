@@ -2,22 +2,19 @@ package com.gto.registrylib.datagen.generator;
 
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.datagen.ProviderType;
-import com.gto.registrylib.util.RegistryLibTintSources;
 import com.gto.registrylib.util.TextureRef;
 import com.gto.registrylib.util.color.RgbColor;
 
-import net.minecraft.client.color.item.ItemTintSource;
-import net.minecraft.client.data.models.ItemModelGenerators;
-import net.minecraft.client.data.models.ItemModelOutput;
-import net.minecraft.client.data.models.model.ItemModelUtils;
-import net.minecraft.client.data.models.model.ModelInstance;
-import net.minecraft.client.data.models.model.ModelLocationUtils;
-import net.minecraft.client.data.models.model.ModelTemplate;
-import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.data.models.model.TextureMapping;
-import net.minecraft.client.resources.model.sprite.Material;
+import com.google.gson.JsonElement;
+
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.data.models.ItemModelGenerators;
+import net.minecraft.data.models.model.DelegatedModel;
+import net.minecraft.data.models.model.ModelLocationUtils;
+import net.minecraft.data.models.model.ModelTemplate;
+import net.minecraft.data.models.model.ModelTemplates;
+import net.minecraft.data.models.model.TextureMapping;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
@@ -30,10 +27,12 @@ import java.util.function.UnaryOperator;
 public class RegistryLibItemModelGenerator extends ItemModelGenerators {
 
     private final RegistryCore parent;
+    public final BiConsumer<ResourceLocation, Supplier<JsonElement>> modelOutput;
 
     public RegistryLibItemModelGenerator(
-                                         RegistryCore parent, ItemModelOutput output, BiConsumer<Identifier, ModelInstance> model) {
-        super(output, model);
+                                         RegistryCore parent, BiConsumer<ResourceLocation, Supplier<JsonElement>> model) {
+        super(model);
+        this.modelOutput = model;
         this.parent = parent;
     }
 
@@ -42,57 +41,47 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
         parent.genData(ProviderType.ITEM_MODEL, this);
     }
 
-    public void createWithExistingModel(Item item, Identifier id) {
-        itemModelOutput.accept(item, ItemModelUtils.plainModel(id));
+    public void createWithExistingModel(Item item, ResourceLocation id) {
+        modelOutput.accept(ModelLocationUtils.getModelLocation(item), new DelegatedModel(id));
     }
 
     public void generateWithTemplate(Item item, ModelTemplate template, TextureMapping textures) {
-        itemModelOutput.accept(
-                item, ItemModelUtils.plainModel(template.create(item, textures, modelOutput)));
+        template.create(ModelLocationUtils.getModelLocation(item), textures, modelOutput);
     }
 
-    public void generateFlatItem(Item item, Material layer0) {
+    public void generateFlatItem(Item item, ResourceLocation layer0) {
         generateFlatItem(item, ModelTemplates.FLAT_ITEM, layer0);
     }
 
-    public void generateFlatItem(Item item, ModelTemplate template, Material layer0) {
-        itemModelOutput.accept(
-                item,
-                ItemModelUtils.plainModel(
-                        template.create(item, TextureMapping.layer0(layer0), modelOutput)));
+    /** 使用物品自身的默认纹理生成 flat item 模型。 */
+    public void generateFlatItem(Item item, ModelTemplate template) {
+        template.create(
+                ModelLocationUtils.getModelLocation(item), TextureMapping.layer0(item), modelOutput);
     }
 
+    public void generateFlatItem(Item item, ModelTemplate template, ResourceLocation layer0) {
+        template.create(
+                ModelLocationUtils.getModelLocation(item), TextureMapping.layer0(layer0), modelOutput);
+    }
+
+    /**
+     * 1.21.1 中，生成式物品模型的第 N 层自动带有 tint index N，着色完全由运行时 {@code ItemColor} （通过 {@code
+     * RegisterColorHandlersEvent.Item} 注册）驱动，因此 datagen 只需要生成普通的 flat item 模型。
+     */
     public void generateFlatTintedItem(Item item, RgbColor color) {
-        generateFlatTintedItem(item, RegistryLibTintSources.itemConstant(color));
-    }
-
-    public void generateFlatTintedItem(Item item, ItemTintSource... tintSources) {
-        Identifier model = ModelTemplates.FLAT_ITEM.create(item, TextureMapping.layer0(item), modelOutput);
-        itemModelOutput.accept(item, ItemModelUtils.tintedModel(model, tintSources));
-    }
-
-    public void generateFlatTintedItem(Item item, String texturePath, ItemTintSource... tintSources) {
-        generateFlatTintedItem(item, parent.texture(texturePath), tintSources);
+        ModelTemplates.FLAT_ITEM.create(
+                ModelLocationUtils.getModelLocation(item), TextureMapping.layer0(item), modelOutput);
     }
 
     public void generateFlatTintedItem(Item item, TextureRef texture, RgbColor color) {
-        generateFlatTintedItem(item, texture, RegistryLibTintSources.itemConstant(color));
+        generateFlatItem(item, texture.id());
     }
 
-    public void generateFlatTintedItem(Item item, TextureRef texture, ItemTintSource... tintSources) {
-        Identifier model = ModelTemplates.FLAT_ITEM.create(
-                item, TextureMapping.layer0(new Material(texture.id())), modelOutput);
-        itemModelOutput.accept(item, ItemModelUtils.tintedModel(model, tintSources));
-    }
-
-    public void generateTintedBlockItem(Block block, RgbColor color) {
-        generateTintedBlockItem(block, RegistryLibTintSources.itemConstant(color));
-    }
-
-    public void generateTintedBlockItem(Block block, ItemTintSource... tintSources) {
-        itemModelOutput.accept(
-                block.asItem(),
-                ItemModelUtils.tintedModel(ModelLocationUtils.getModelLocation(block), tintSources));
+    /** 生成 block item 的委托模型——指向方块的模型（方块模型的面自带 tintindex，物品着色由 ItemColors 委托给 BlockColors）。 */
+    public void generateTintedBlockItem(Block block) {
+        modelOutput.accept(
+                ModelLocationUtils.getModelLocation(block.asItem()),
+                new DelegatedModel(ModelLocationUtils.getModelLocation(block)));
     }
 
     public void generateFlatBlockItem(BlockItem item) {
@@ -103,10 +92,10 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
         generateFlatItem(item, TextureMapping.getBlockTexture(item.getBlock(), suffix));
     }
 
-    public void generateBlockItem(BlockItem item, UnaryOperator<Identifier> modelMapper) {
-        itemModelOutput.accept(
-                item,
-                ItemModelUtils.plainModel(
+    public void generateBlockItem(BlockItem item, UnaryOperator<ResourceLocation> modelMapper) {
+        modelOutput.accept(
+                ModelLocationUtils.getModelLocation(item),
+                new DelegatedModel(
                         modelMapper.apply(ModelLocationUtils.getModelLocation(item.getBlock()))));
     }
 
@@ -114,12 +103,12 @@ public class RegistryLibItemModelGenerator extends ItemModelGenerators {
         generateBlockItem(item, model -> model.withSuffix(suffix));
     }
 
-    public Identifier mcLoc(String id) {
-        return Identifier.withDefaultNamespace(id);
+    public ResourceLocation mcLoc(String id) {
+        return ResourceLocation.withDefaultNamespace(id);
     }
 
-    public Identifier modLoc(String id) {
-        return Identifier.fromNamespaceAndPath(parent.getModid(), id);
+    public ResourceLocation modLoc(String id) {
+        return ResourceLocation.fromNamespaceAndPath(parent.getModid(), id);
     }
 
     public String modid(Supplier<? extends ItemLike> item) {

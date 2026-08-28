@@ -80,7 +80,7 @@ Created via `block("id", factory)` or `block("id")`.
 | `loot(configurator)` | `BiConsumer<BlockLootSubProvider, Block>` | Define a custom loot table |
 | `tintedCube(tintIndex)` | `int` | Generate a simple cube block model using the block's own texture path |
 | `tintedCube(texturePath, tintIndex)` | `String, int` | Generate a tinted cube block model referencing a shared texture |
-| `tintedCube(texture, tintIndex)` | `TextureRef/Identifier, int` | Type-safe shared texture variants |
+| `tintedCube(texture, tintIndex)` | `TextureRef/ResourceLocation, int` | Type-safe shared texture variants |
 | `constantTint(color)` | `RgbColor` | Register opaque block tint and generate a tinted BlockItem model using the block model |
 | `constantTint(texturePath, color)` | `String, RgbColor` | Generate a shared-texture tinted cube, register block tint, and generate a tinted BlockItem model |
 | `constantTint(texture, color)` | `TextureRef, RgbColor` | Type-safe variant of the shared texture overload |
@@ -302,8 +302,8 @@ These helpers add datagen entries for objects that were registered outside the c
 
 | Method | Parameters | Description |
 | --- | --- | --- |
-| `existingItem(id)` | `String`, `Identifier`, or `ResourceKey<Item>` | Return an `ItemEntry` bound to an already-registered item |
-| `existingBlock(id)` | `String`, `Identifier`, or `ResourceKey<Block>` | Return a `BlockEntry` bound to an already-registered block |
+| `existingItem(id)` | `String`, `ResourceLocation`, or `ResourceKey<Item>` | Return an `ItemEntry` bound to an already-registered item |
+| `existingBlock(id)` | `String`, `ResourceLocation`, or `ResourceKey<Block>` | Return a `BlockEntry` bound to an already-registered block |
 | `tagExisting(tag, items...)` | `TagKey<Item>, ItemLike...` | Add one item tag to existing items |
 | `tagExistingSuppliers(tag, items...)` | `TagKey<Item>, Supplier<? extends ItemLike>...` | Add one item tag to lazy item suppliers |
 | `tagExisting(tag, blocks...)` | `TagKey<Block>, Block...` | Add one block tag to existing blocks |

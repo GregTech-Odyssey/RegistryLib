@@ -19,10 +19,9 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.ResourceKeyArgument;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.permissions.Permissions;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
@@ -150,7 +149,7 @@ public final class StateDebugCommands {
 
     private static int setState(CommandContext<CommandSourceStack> context)
                                                                             throws CommandSyntaxException {
-        Identifier id = getId(context, "id");
+        ResourceLocation id = getId(context, "id");
         String raw = getRawId(context, "id");
         String tail = StringArgumentType.getString(context, "tail");
         if (canParseChunkSetInput(tail) && findUniqueState(context, StateScope.CHUNK, false).isPresent()) {
@@ -180,7 +179,7 @@ public final class StateDebugCommands {
     }
 
     private static String debug(StateEntry<?> entry, boolean present, ChunkPos pos) {
-        return "State " + entry.identifier() + "\nscope=" + entry.scope().id() + "\npresent=" + present + (pos == null ? "" : "\nchunk=" + pos.x() + "," + pos.z()) + "\ndebugWritable=" + entry.debugConfig().writable() + "\ncodec=" + entry.codec();
+        return "State " + entry.identifier() + "\nscope=" + entry.scope().id() + "\npresent=" + present + (pos == null ? "" : "\nchunk=" + pos.x + "," + pos.z) + "\ndebugWritable=" + entry.debugConfig().writable() + "\ncodec=" + entry.codec();
     }
 
     private static String formatValue(StateEntry<?> entry, Object value) {
@@ -233,10 +232,10 @@ public final class StateDebugCommands {
         } catch (ReflectiveOperationException exception) {
             return switch (permission) {
                 case 0 -> true;
-                case 1 -> source.permissions().hasPermission(Permissions.COMMANDS_MODERATOR);
-                case 2 -> source.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER);
-                case 3 -> source.permissions().hasPermission(Permissions.COMMANDS_ADMIN);
-                default -> source.permissions().hasPermission(Permissions.COMMANDS_OWNER);
+                case 1 -> source.hasPermission(Commands.LEVEL_MODERATORS);
+                case 2 -> source.hasPermission(Commands.LEVEL_GAMEMASTERS);
+                case 3 -> source.hasPermission(Commands.LEVEL_ADMINS);
+                default -> source.hasPermission(Commands.LEVEL_OWNERS);
             };
         }
     }
@@ -250,7 +249,7 @@ public final class StateDebugCommands {
     private static StateEntry<?> requireState(
                                               CommandContext<CommandSourceStack> context, StateScope scope, boolean writable)
                                                                                                                               throws CommandSyntaxException {
-        Identifier id = getId(context, "id");
+        ResourceLocation id = getId(context, "id");
         String raw = getRawId(context, "id");
         Optional<StateEntry<?>> entry = findUniqueState(context, scope, writable);
         if (entry.isEmpty() || entry.get().scope() != scope || (writable && !entry.get().debugConfig().writable())) {
@@ -270,7 +269,7 @@ public final class StateDebugCommands {
     private static Optional<StateEntry<?>> findUniqueState(
                                                            CommandContext<CommandSourceStack> context, StateScope scope, boolean writable)
                                                                                                                                            throws CommandSyntaxException {
-        Identifier id = getId(context, "id");
+        ResourceLocation id = getId(context, "id");
         String raw = getRawId(context, "id");
         List<StateEntry<?>> matches = matchingStates(id, raw, scope, writable);
         if (matches.size() > 1) {
@@ -282,7 +281,7 @@ public final class StateDebugCommands {
     }
 
     private static List<StateEntry<?>> matchingStates(
-                                                      Identifier id, String raw, StateScope scope, boolean writable) {
+                                                      ResourceLocation id, String raw, StateScope scope, boolean writable) {
         return allStates().stream()
                 .filter(e -> e.scope() == scope)
                 .filter(e -> !writable || e.debugConfig().writable())
@@ -325,10 +324,10 @@ public final class StateDebugCommands {
                 .toList();
     }
 
-    private static Identifier getId(CommandContext<CommandSourceStack> context, String name)
-                                                                                             throws CommandSyntaxException {
+    private static ResourceLocation getId(CommandContext<CommandSourceStack> context, String name)
+                                                                                                   throws CommandSyntaxException {
         ResourceKey<?> key = context.getArgument(name, ResourceKey.class);
-        return key.identifier();
+        return key.location();
     }
 
     private static String getRawId(CommandContext<CommandSourceStack> context, String name)
@@ -359,7 +358,7 @@ public final class StateDebugCommands {
                 .filter(e -> !writableOnly || e.debugConfig().writable())
                 .map(StateEntry::identifier)
                 .filter(id -> matchesIdSuggestion(id, remaining))
-                .map(Identifier::toString)
+                .map(ResourceLocation::toString)
                 .forEach(argumentBuilder::suggest);
         return argumentBuilder.buildFuture();
     }
@@ -373,7 +372,7 @@ public final class StateDebugCommands {
         return start;
     }
 
-    private static boolean matchesIdSuggestion(Identifier id, String remaining) {
+    private static boolean matchesIdSuggestion(ResourceLocation id, String remaining) {
         return id.toString().toLowerCase(Locale.ROOT).startsWith(remaining) || id.getPath().toLowerCase(Locale.ROOT).startsWith(remaining);
     }
 

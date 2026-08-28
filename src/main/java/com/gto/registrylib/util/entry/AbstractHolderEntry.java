@@ -4,17 +4,16 @@ import com.mojang.datafixers.util.Either;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderOwner;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
-
-import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import javax.annotation.Nullable;
 
 /**
  * Abstract base for registry entries that act as {@link Holder} delegates.
@@ -60,19 +59,14 @@ public abstract class AbstractHolderEntry<R, T extends R> extends RegistryEntry<
     }
 
     @Override
-    public final boolean areComponentsBound() {
-        return value != null && delegate().areComponentsBound();
-    }
-
-    @Override
     @SuppressWarnings("deprecation")
     public final boolean is(Holder<R> holder) {
         return holder.is(this.key);
     }
 
     @Override
-    public final boolean is(Identifier key) {
-        return this.key.identifier().equals(key);
+    public final boolean is(ResourceLocation key) {
+        return this.key.location().equals(key);
     }
 
     @Override
@@ -93,11 +87,6 @@ public abstract class AbstractHolderEntry<R, T extends R> extends RegistryEntry<
     @Override
     public final Stream<TagKey<R>> tags() {
         return value != null ? delegate().tags() : Stream.empty();
-    }
-
-    @Override
-    public final DataComponentMap components() {
-        return value != null ? delegate().components() : DataComponentMap.EMPTY;
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.gto.registrylib.util.entry.AttachmentTypeEntry;
 
 import com.mojang.serialization.Codec;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.attachment.IAttachmentHolder;
 
 import java.util.function.Function;
@@ -36,7 +36,7 @@ public final class WorldStateBuilder<T, P>
 
     @Override
     protected AbstractStateEntry<T> createEntry(
-                                                Identifier identifier,
+                                                ResourceLocation identifier,
                                                 Codec<T> codec,
                                                 AttachmentTypeEntry<T> attachment,
                                                 StateDebugConfig debugConfig,

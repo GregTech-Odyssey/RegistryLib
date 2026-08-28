@@ -1,21 +1,21 @@
 package com.gto.registrylib.util;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import org.jetbrains.annotations.NotNull;
 
-public record TextureRef(Identifier id) {
+public record TextureRef(ResourceLocation id) {
 
-    public static TextureRef of(@NotNull Identifier id) {
+    public static TextureRef of(@NotNull ResourceLocation id) {
         return new TextureRef(id);
     }
 
     public static TextureRef mod(@NotNull String modid, @NotNull String path) {
-        return new TextureRef(Identifier.fromNamespaceAndPath(modid, normalize(path)));
+        return new TextureRef(ResourceLocation.fromNamespaceAndPath(modid, normalize(path)));
     }
 
     public static TextureRef mc(@NotNull String path) {
-        return new TextureRef(Identifier.withDefaultNamespace(normalize(path)));
+        return new TextureRef(ResourceLocation.withDefaultNamespace(normalize(path)));
     }
 
     public TextureRef withPrefix(@NotNull String prefix) {

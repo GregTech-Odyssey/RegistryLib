@@ -194,8 +194,8 @@ public <T extends Item> ModItemBuilder<T, RegistryCore> item(
 public <T extends BaseFlowingFluid, P> ModFluidBuilder<T, P> fluid(
         P parent,
         String name,
-        Identifier stillTexture,
-        Identifier flowingTexture,
+        ResourceLocation stillTexture,
+        ResourceLocation flowingTexture,
         FluidBuilder.FluidFactory<T> fluidFactory) {
     return (ModFluidBuilder<T, P>) super.fluid(parent, name, stillTexture, flowingTexture, fluidFactory);
 }

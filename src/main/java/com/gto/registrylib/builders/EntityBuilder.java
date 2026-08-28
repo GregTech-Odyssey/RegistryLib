@@ -15,10 +15,9 @@ import com.gto.registrylib.util.entry.RegistryEntry;
 
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.random.Weighted;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -143,7 +142,14 @@ public class EntityBuilder<T extends Entity, P>
                                         @NotNull Consumer<ItemBuilder<SpawnEggItem, EntityBuilder<T, P>>> consumer) {
         var supplier = getValueSupplier();
         var eggBuilder = core.<SpawnEggItem, EntityBuilder<T, P>>item(
-                this, name + "_spawn_egg", p -> new SpawnEggItem(p.spawnEgg(supplier.get())), false);
+                this,
+                name + "_spawn_egg",
+                p -> new SpawnEggItem(
+                        (EntityType<? extends net.minecraft.world.entity.Mob>) supplier.get(),
+                        0xFFFFFF,
+                        0x000000,
+                        p),
+                false);
         consumer.accept(eggBuilder);
         eggBuilder.build();
         return this;
@@ -203,12 +209,11 @@ public class EntityBuilder<T extends Entity, P>
                         NeoForgeRegistries.Keys.BIOME_MODIFIERS,
                         ctx -> {
                             var biomes = ctx.lookup(Registries.BIOME).getOrThrow(capturedTag);
-                            var spawner = new Weighted<>(
-                                    new SpawnerData(getValue(), capturedMin, capturedMax), capturedWeight);
+                            var spawner = new SpawnerData(getValue(), capturedWeight, capturedMin, capturedMax);
                             var modifier = AddSpawnsBiomeModifier.singleSpawn(biomes, spawner);
                             var key = ResourceKey.create(
                                     NeoForgeRegistries.Keys.BIOME_MODIFIERS,
-                                    Identifier.fromNamespaceAndPath(core.getModid(), name + "_spawn"));
+                                    ResourceLocation.fromNamespaceAndPath(core.getModid(), name + "_spawn"));
                             ctx.register(key, modifier);
                         });
         return this;
@@ -265,7 +270,7 @@ public class EntityBuilder<T extends Entity, P>
     protected EntityType<T> createEntry(ResourceKey<EntityType<?>> key) {
         EntityType.Builder<T> builder = EntityType.Builder.of(factory, category);
         builder = builderCallback.apply(builder);
-        return builder.build(key);
+        return builder.build(key.location().toString());
     }
 
     @Override

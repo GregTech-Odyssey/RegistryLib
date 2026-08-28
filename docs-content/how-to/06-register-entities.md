@@ -204,7 +204,7 @@ public class MyMobRenderer extends EntityRenderer<MyMob, EntityRenderState> {
 public class MyMobModel extends EntityModel<LivingEntityRenderState> {
     // 模型层位置——用于注册和 bakeLayer() 查找
     public static final ModelLayerLocation LAYER_LOCATION =
-            new ModelLayerLocation(Identifier.fromNamespaceAndPath(MOD_ID, "my_mob"), "main");
+            new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath(MOD_ID, "my_mob"), "main");
 
     // 骨骼引用（用于动画）
     private final ModelPart head;
@@ -288,7 +288,7 @@ public class MyMobModel extends EntityModel<LivingEntityRenderState> {
 
 ```java
 public class MyMobRenderer extends MobRenderer<MyMob, LivingEntityRenderState, MyMobModel> {
-    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(MOD_ID,
+    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(MOD_ID,
             "textures/entity/my_mob.png");
 
     public MyMobRenderer(EntityRendererProvider.Context context) {
@@ -302,7 +302,7 @@ public class MyMobRenderer extends MobRenderer<MyMob, LivingEntityRenderState, M
     }
 
     @Override
-    public Identifier getTextureLocation(LivingEntityRenderState state) {
+    public ResourceLocation getTextureLocation(LivingEntityRenderState state) {
         return TEXTURE;
     }
 }

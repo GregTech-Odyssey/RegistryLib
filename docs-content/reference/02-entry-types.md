@@ -41,7 +41,7 @@ All `RegistryEntry<R, T>` subclasses inherit these methods:
 | `getOptional()` | `Optional<T>` | Get the registered object wrapped in an `Optional`. Returns `Optional.empty()` if the entry has not been bound yet. Safe to call at any time. |
 | `isBound()` | `boolean` | Returns `true` if the entry has been bound to a registered object. Use this to check whether `get()` is safe to call. |
 | `key()` | `ResourceKey<R>` | The registry key for this entry |
-| `identifier()` | `Identifier` | The resource identifier for this entry |
+| `identifier()` | `ResourceLocation` | The resource identifier for this entry |
 
 :::warning
 `get()` throws `IllegalStateException` when called before registration is complete. If you need to access an entry's value during early initialization or in a context where registration may not have finished, use `getOptional()` or check `isBound()` first.
@@ -200,7 +200,7 @@ Prefer `chunkState(...)` or `worldState(...)` when the attachment represents gam
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `identifier()` | `Identifier` | Logical state id |
+| `identifier()` | `ResourceLocation` | Logical state id |
 | `scope()` | `StateScope` | Always `CHUNK` |
 | `codec()` | `Codec<T>` | Persistent value codec |
 | `attachmentType()` | `AttachmentType<T>` | Underlying attachment type |
@@ -217,7 +217,7 @@ Prefer `chunkState(...)` or `worldState(...)` when the attachment represents gam
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `identifier()` | `Identifier` | Logical state id |
+| `identifier()` | `ResourceLocation` | Logical state id |
 | `scope()` | `StateScope` | Always `WORLD` |
 | `codec()` | `Codec<T>` | Persistent value codec |
 | `attachmentType()` | `AttachmentType<T>` | Underlying attachment type |

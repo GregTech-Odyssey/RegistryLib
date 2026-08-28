@@ -132,7 +132,7 @@ By default, `RecipeTypeBuilder` creates `RecipeType` via `RecipeType.simple(id)`
 
 ### Custom RecipeType Factory
 
-Use `.typeFactory()` to provide a custom `RecipeType` creation function. The function receives the registry `Identifier`.
+Use `.typeFactory()` to provide a custom `RecipeType` creation function. The function receives the registry `ResourceLocation`.
 
 ```java
 public static final RecipeTypeEntry<InfuserRecipe> INFUSER_CUSTOM = REGISTRYLIB
@@ -571,7 +571,7 @@ ALTAR.addRecipe("cobblestone_to_stone",
 |---|---|
 | `recipeType(name)` | Start recipe type builder (returns `RecipeTypeBuilder`) |
 | `.serializer(codec, streamCodec)` | Set the codecs for the `RecipeSerializer` |
-| `.typeFactory(function)` | Custom `RecipeType` creation factory (receives `Identifier`) |
+| `.typeFactory(function)` | Custom `RecipeType` creation factory (receives `ResourceLocation`) |
 | `.register()` | Register and return `RecipeTypeEntry<T>` |
 | `.build()` | Register and return parent (for chaining) |
 

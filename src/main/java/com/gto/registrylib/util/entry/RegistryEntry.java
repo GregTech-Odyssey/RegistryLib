@@ -3,8 +3,8 @@ package com.gto.registrylib.util.entry;
 import com.gto.registrylib.RegistryCore;
 
 import net.minecraft.core.Registry;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 
 import lombok.Getter;
 
@@ -25,7 +25,7 @@ public class RegistryEntry<T, S extends T> implements Supplier<S> {
 
     public <X, Y extends X> RegistryEntry<X, Y> getSibling(
                                                            RegistryCore owner, ResourceKey<? extends Registry<X>> registryType) {
-        return owner.get(key.identifier().getPath(), registryType);
+        return owner.get(key.location().getPath(), registryType);
     }
 
     public <X, Y extends X> RegistryEntry<X, Y> getSibling(RegistryCore owner, Registry<X> registry) {
@@ -47,8 +47,8 @@ public class RegistryEntry<T, S extends T> implements Supplier<S> {
         }
     }
 
-    public Identifier identifier() {
-        return key.identifier();
+    public ResourceLocation identifier() {
+        return key.location();
     }
 
     @Override

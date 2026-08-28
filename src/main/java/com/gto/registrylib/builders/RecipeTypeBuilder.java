@@ -10,7 +10,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
@@ -71,7 +71,7 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
 
     private MapCodec<T> codec;
     private StreamCodec<RegistryFriendlyByteBuf, T> streamCodec;
-    private Function<Identifier, RecipeType<T>> typeFactory;
+    private Function<ResourceLocation, RecipeType<T>> typeFactory;
 
     protected RecipeTypeBuilder(RegistryCore core, P parent, String name) {
         this.core = core;
@@ -105,7 +105,7 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      *
      * <p>
      * Overrides how the {@link RecipeType} is created. By default, {@code RecipeType.simple(id)}
-     * is used. The function receives the registry {@link Identifier} (e.g. {@code modid:name}).
+     * is used. The function receives the registry {@link ResourceLocation} (e.g. {@code modid:name}).
      *
      * <pre>{@code
      * .<MyRecipe>recipeType("my_recipe")
@@ -116,7 +116,7 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
      */
     @StandardAPI
     public RecipeTypeBuilder<T, P> typeFactory(
-                                               @NotNull Function<Identifier, RecipeType<T>> typeFactory) {
+                                               @NotNull Function<ResourceLocation, RecipeType<T>> typeFactory) {
         this.typeFactory = typeFactory;
         return this;
     }
@@ -143,16 +143,27 @@ public class RecipeTypeBuilder<T extends Recipe<?>, P> {
         }
 
         // Register RecipeType (custom factory or default)
-        Function<Identifier, RecipeType<T>> tf = typeFactory != null ? typeFactory : RecipeType::simple;
+        Function<ResourceLocation, RecipeType<T>> tf = typeFactory != null ? typeFactory : RecipeType::simple;
 
-        var serializer = new RecipeSerializer<>(codec, streamCodec);
+        var serializer = new RecipeSerializer<T>() {
+
+            @Override
+            public MapCodec<T> codec() {
+                return codec;
+            }
+
+            @Override
+            public StreamCodec<RegistryFriendlyByteBuf, T> streamCodec() {
+                return streamCodec;
+            }
+        };
 
         core.registry(name, serializer, Registries.RECIPE_SERIALIZER);
 
         return core.registry(
                 name,
                 Registries.RECIPE_TYPE,
-                key -> tf.apply(key.identifier()),
+                key -> tf.apply(key.location()),
                 key -> new RecipeTypeEntry<>(key, core, serializer));
     }
 

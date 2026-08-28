@@ -19,14 +19,14 @@ REGISTRYLIB.addDataGenerator(
                     Items.CRAFTING_TABLE,
                     adv.title(cat, "simple/root", "Getting Started"),
                     adv.desc(cat, "simple/root", "Obtain a crafting table"),
-                    Identifier.withDefaultNamespace(
+                    ResourceLocation.withDefaultNamespace(
                         "textures/gui/advancements/backgrounds/stone.png"),
                     AdvancementType.TASK,
                     false, false, false)
                 .addCriterion(
                     "has_crafting_table",
                     InventoryChangeTrigger.TriggerInstance.hasItems(Items.CRAFTING_TABLE))
-                .save(adv, Identifier.fromNamespaceAndPath(cat, "simple/root"));
+                .save(adv, ResourceLocation.fromNamespaceAndPath(cat, "simple/root"));
 
         Advancement.Builder.advancement()
                 .parent(root)
@@ -40,7 +40,7 @@ REGISTRYLIB.addDataGenerator(
                 .addCriterion(
                     "has_coin",
                     InventoryChangeTrigger.TriggerInstance.hasItems(COPPER_COIN.get()))
-                .save(adv, Identifier.fromNamespaceAndPath(cat, "simple/get_coin"));
+                .save(adv, ResourceLocation.fromNamespaceAndPath(cat, "simple/get_coin"));
     });
 ```
 
@@ -58,14 +58,14 @@ REGISTRYLIB.addDataGenerator(
                     COPPER_COIN.get(),
                     adv.title(cat, "basics/root", "RegistryCore Basics"),
                     adv.desc(cat, "basics/root", "Getting started with RegistryCore"),
-                    Identifier.withDefaultNamespace(
+                    ResourceLocation.withDefaultNamespace(
                         "textures/gui/advancements/backgrounds/stone.png"),
                     AdvancementType.TASK,
                     false, false, false)
                 .addCriterion(
                     "has_crafting_table",
                     InventoryChangeTrigger.TriggerInstance.hasItems(Items.CRAFTING_TABLE))
-                .save(adv, Identifier.fromNamespaceAndPath(cat, "basics/root"));
+                .save(adv, ResourceLocation.fromNamespaceAndPath(cat, "basics/root"));
 
         AdvancementHolder getCoin = Advancement.Builder.advancement()
                 .parent(root)
@@ -79,7 +79,7 @@ REGISTRYLIB.addDataGenerator(
                 .addCriterion(
                     "has_coin",
                     InventoryChangeTrigger.TriggerInstance.hasItems(COPPER_COIN.get()))
-                .save(adv, Identifier.fromNamespaceAndPath(cat, "basics/get_coin"));
+                .save(adv, ResourceLocation.fromNamespaceAndPath(cat, "basics/get_coin"));
 
         Advancement.Builder.advancement()
                 .parent(getCoin)
@@ -93,7 +93,7 @@ REGISTRYLIB.addDataGenerator(
                 .addCriterion(
                     "has_magic_wand",
                     InventoryChangeTrigger.TriggerInstance.hasItems(MAGIC_WAND.get()))
-                .save(adv, Identifier.fromNamespaceAndPath(cat, "basics/get_magic_wand"));
+                .save(adv, ResourceLocation.fromNamespaceAndPath(cat, "basics/get_magic_wand"));
 
         // --- Tab 2: Advanced ---
         AdvancementHolder advRoot = Advancement.Builder.advancement()
@@ -101,14 +101,14 @@ REGISTRYLIB.addDataGenerator(
                     MAGIC_ORE.get().asItem(),
                     adv.title(cat, "advanced/root", "Advanced Crafting"),
                     adv.desc(cat, "advanced/root", "Explore advanced features"),
-                    Identifier.withDefaultNamespace(
+                    ResourceLocation.withDefaultNamespace(
                         "textures/gui/advancements/backgrounds/nether.png"),
                     AdvancementType.TASK,
                     false, false, false)
                 .addCriterion(
                     "has_iron",
                     InventoryChangeTrigger.TriggerInstance.hasItems(Items.IRON_INGOT))
-                .save(adv, Identifier.fromNamespaceAndPath(cat, "advanced/root"));
+                .save(adv, ResourceLocation.fromNamespaceAndPath(cat, "advanced/root"));
 
         Advancement.Builder.advancement()
                 .parent(advRoot)
@@ -122,7 +122,7 @@ REGISTRYLIB.addDataGenerator(
                 .addCriterion(
                     "has_timer_3",
                     InventoryChangeTrigger.TriggerInstance.hasItems(TIMER_TIER_3.get().asItem()))
-                .save(adv, Identifier.fromNamespaceAndPath(cat, "advanced/build_timer"));
+                .save(adv, ResourceLocation.fromNamespaceAndPath(cat, "advanced/build_timer"));
     });
 ```
 

@@ -3,9 +3,13 @@ package com.gto.registrylib.client;
 import com.gto.registrylib.tooltip.RegistryLibTooltipComponent;
 import com.gto.registrylib.tooltip.SubNode;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.renderer.MultiBufferSource;
+
+import org.joml.Matrix4f;
 
 import java.util.List;
 
@@ -18,7 +22,7 @@ import java.util.List;
  * RegistryLibClientPageControl} 处理；都是同一份原版组件列表里的独立条目。
  *
  * <p>
- * 注意 {@link #extractImage} 用本组件自己的 {@link #getWidth(Font)} 而不是原版传入的全局 max width 来绘制——
+ * 注意 {@link #renderImage} 用本组件自己的 {@link #getWidth(Font)} 而不是原版传入的全局 max width 来绘制——
  * 因为分隔线应该跟内联背景一样宽，而不是延伸到独立框那么宽。
  */
 public class RegistryLibClientTooltip implements ClientTooltipComponent {
@@ -30,7 +34,8 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public int getHeight(Font font) {
+    public int getHeight() {
+        Font font = Minecraft.getInstance().font;
         int h = 0;
         for (SubNode node : inlineSubNodes) {
             h += node.getHeight(font);
@@ -48,22 +53,22 @@ public class RegistryLibClientTooltip implements ClientTooltipComponent {
     }
 
     @Override
-    public void extractText(GuiGraphicsExtractor graphics, Font font, int x, int y) {
+    public void renderText(
+                           Font font, int x, int y, Matrix4f matrix, MultiBufferSource.BufferSource bufferSource) {
         int currentY = y;
         for (SubNode node : inlineSubNodes) {
-            node.extractText(graphics, font, x, currentY);
+            node.renderText(font, x, currentY, matrix, bufferSource);
             currentY += node.getHeight(font);
         }
     }
 
     @Override
-    public void extractImage(
-                             Font font, int x, int y, int width, int height, GuiGraphicsExtractor graphics) {
+    public void renderImage(Font font, int x, int y, GuiGraphics graphics) {
         int inlineWidth = getWidth(font);
         int currentY = y;
         for (SubNode node : inlineSubNodes) {
             int nodeHeight = node.getHeight(font);
-            node.extractImage(font, x, currentY, inlineWidth, nodeHeight, graphics);
+            node.renderImage(font, x, currentY, inlineWidth, nodeHeight, graphics);
             currentY += nodeHeight;
         }
     }

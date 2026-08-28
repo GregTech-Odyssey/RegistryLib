@@ -3,19 +3,23 @@ package com.gto.registrylib.datagen.provider;
 import com.gto.registrylib.RegistryCore;
 
 import net.minecraft.core.HolderLookup;
+import net.minecraft.data.CachedOutput;
 import net.minecraft.data.PackOutput;
-import net.minecraft.data.recipes.RecipeOutput;
-import net.minecraft.data.recipes.RecipeProvider;
 import net.neoforged.fml.LogicalSide;
 
 import java.util.concurrent.CompletableFuture;
 
 import javax.annotation.Nullable;
 
-public class RegistryLibRecipeRunner extends RecipeProvider.Runner implements RegistryLibProvider {
+/**
+ * 1.21.1 的 {@code RecipeProvider} 没有 {@code Runner} 内部类；此类作为独立的 datagen provider 注册， 委托给 {@link
+ * RegistryLibRecipeProvider}（其 final {@code run} 会驱动 {@code buildRecipes}）。
+ */
+public class RegistryLibRecipeRunner implements RegistryLibProvider {
 
     final RegistryCore owner;
     private final PackOutput packOutput;
+    private final CompletableFuture<HolderLookup.Provider> registries;
 
     @Nullable
     RegistryLibRecipeProvider provider;
@@ -24,20 +28,19 @@ public class RegistryLibRecipeRunner extends RecipeProvider.Runner implements Re
                                    RegistryCore owner,
                                    PackOutput packOutput,
                                    CompletableFuture<HolderLookup.Provider> provider) {
-        super(packOutput, provider);
         this.owner = owner;
         this.packOutput = packOutput;
+        this.registries = provider;
     }
 
     @Override
-    protected RecipeProvider createRecipeProvider(
-                                                  HolderLookup.Provider registries, RecipeOutput output) {
-        return new RegistryLibRecipeProvider(this, registries, output);
+    public CompletableFuture<?> run(CachedOutput cache) {
+        return new RegistryLibRecipeProvider(packOutput, registries, this).run(cache);
     }
 
     @Override
     public String getName() {
-        return "";
+        return "RegistryLib Recipe Runner for " + owner.getModid();
     }
 
     @Override

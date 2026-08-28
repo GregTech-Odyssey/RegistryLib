@@ -4,19 +4,19 @@ import com.gto.registrylib.util.entry.AttachmentTypeEntry;
 
 import com.mojang.serialization.Codec;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.attachment.AttachmentType;
 
 public abstract class AbstractStateEntry<T> implements StateEntry<T> {
 
-    protected final Identifier identifier;
+    protected final ResourceLocation identifier;
     protected final Codec<T> codec;
     protected final AttachmentTypeEntry<T> attachment;
     protected final StateDebugConfig debugConfig;
     protected final boolean syncOnModify;
 
     protected AbstractStateEntry(
-                                 Identifier identifier,
+                                 ResourceLocation identifier,
                                  Codec<T> codec,
                                  AttachmentTypeEntry<T> attachment,
                                  StateDebugConfig debugConfig,
@@ -29,7 +29,7 @@ public abstract class AbstractStateEntry<T> implements StateEntry<T> {
     }
 
     @Override
-    public Identifier identifier() {
+    public ResourceLocation identifier() {
         return identifier;
     }
 

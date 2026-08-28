@@ -92,7 +92,7 @@ public class RegistryLibLangProvider extends LanguageProvider implements Registr
                                        Supplier<? extends T> sup, ResourceKey<? extends Registry<T>> registry) {
         return toEnglishName(
                 ((Registry<Registry<T>>) BuiltInRegistries.REGISTRY)
-                        .getValue(registry.identifier())
+                        .get(registry.location())
                         .getKey(sup.get())
                         .getPath());
     }

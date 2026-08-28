@@ -1,7 +1,6 @@
 package com.gto.registrylib.util.registry;
 
 import lombok.Getter;
-import org.jspecify.annotations.NonNull;
 
 import java.security.ProtectionDomain;
 import java.util.Iterator;
@@ -9,6 +8,8 @@ import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+
+import javax.annotation.Nonnull;
 
 public abstract class AbstractRegistry<E> implements Iterable<E> {
 
@@ -34,7 +35,7 @@ public abstract class AbstractRegistry<E> implements Iterable<E> {
 
     public abstract void forEach(Consumer<? super E> action);
 
-    public abstract @NonNull Iterator<E> iterator();
+    public abstract @Nonnull Iterator<E> iterator();
 
     public abstract Spliterator<E> spliterator();
 

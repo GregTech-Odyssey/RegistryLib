@@ -52,7 +52,7 @@ The environment API is for attachment-backed state and datapack-backed worldgen.
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `identifier()` | `Identifier` | Logical state id |
+| `identifier()` | `ResourceLocation` | Logical state id |
 | `scope()` | `StateScope` | Always `CHUNK` |
 | `codec()` | `Codec<T>` | Persistent value codec |
 | `attachmentType()` | `AttachmentType<T>` | Underlying attachment type |
@@ -78,7 +78,7 @@ The environment API is for attachment-backed state and datapack-backed worldgen.
 
 | Method | Return type | Description |
 | --- | --- | --- |
-| `identifier()` | `Identifier` | Logical state id |
+| `identifier()` | `ResourceLocation` | Logical state id |
 | `scope()` | `StateScope` | Always `WORLD` |
 | `codec()` | `Codec<T>` | Persistent value codec |
 | `attachmentType()` | `AttachmentType<T>` | Underlying attachment type |

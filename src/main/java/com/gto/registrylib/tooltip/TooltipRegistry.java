@@ -51,7 +51,7 @@ public final class TooltipRegistry {
      * 注册一个自定义 {@link RootNode} 并返回引用。
      *
      * <p>
-     * {@code boxRenderer} 用 {@link Supplier} 延迟传入，确保引用了客户端类 {@code GuiGraphicsExtractor} 的 lambda
+     * {@code boxRenderer} 用 {@link Supplier} 延迟传入，确保引用了客户端类 {@code GuiGraphics} 的 lambda
      * 只在客户端被链接；客户端调用方传 {@code () -> (graphics, x, y, w, h) -> { ... }} 即可。
      */
     public static RootNodeRef rootNode(

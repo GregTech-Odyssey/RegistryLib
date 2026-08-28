@@ -11,8 +11,8 @@ import com.gto.registrylib.util.entry.EnchantmentEntry;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.item.Item;
@@ -411,7 +411,7 @@ public class EnchantmentBuilder<P> {
                     "EnchantmentBuilder for '" + name + "' requires supportedItems() before register()");
         }
 
-        Identifier id = Identifier.fromNamespaceAndPath(core.getModid(), name);
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(core.getModid(), name);
         ResourceKey<Enchantment> key = ResourceKey.create(Registries.ENCHANTMENT, id);
 
         // Register lang
@@ -479,7 +479,7 @@ public class EnchantmentBuilder<P> {
                                     cb.accept(builder);
                                 }
 
-                                ctx.register(key, builder.build(key.identifier()));
+                                ctx.register(key, builder.build(key.location()));
                             });
 
             // Generate tag entries

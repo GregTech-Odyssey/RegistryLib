@@ -1,9 +1,9 @@
 package com.gto.registrylib.util.registry;
 
-import org.jspecify.annotations.NonNull;
-
 import java.util.*;
 import java.util.function.Consumer;
+
+import javax.annotation.Nonnull;
 
 public final class ListRegistry<E> extends AbstractRegistry<E> {
 
@@ -49,7 +49,7 @@ public final class ListRegistry<E> extends AbstractRegistry<E> {
     }
 
     @Override
-    public @NonNull Iterator<E> iterator() {
+    public @Nonnull Iterator<E> iterator() {
         return list.iterator();
     }
 }

@@ -52,7 +52,7 @@ public class AttachmentTypeBuilder<T, P>
 
     @StandardAPI
     public AttachmentTypeBuilder<T, P> serialize(@NotNull MapCodec<T> codec) {
-        return configure(b -> b.serialize(codec));
+        return configure(b -> b.serialize(codec.codec()));
     }
 
     @StandardAPI

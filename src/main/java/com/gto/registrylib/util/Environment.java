@@ -9,11 +9,11 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class Environment {
 
-    public static final Dist dist = FMLEnvironment.getDist();
+    public static final Dist dist = FMLEnvironment.dist;
     public static final boolean isClient = dist.isClient();
     public static final boolean isServer = !isClient;
 
-    public static final boolean isProd = FMLEnvironment.isProduction();
+    public static final boolean isProd = FMLEnvironment.production;
     public static final boolean isDev = !isProd;
     public static final boolean isDatagen = DatagenModLoader.isRunningDataGen();
 

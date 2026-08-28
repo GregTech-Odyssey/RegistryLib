@@ -4,7 +4,7 @@ import com.gto.registrylib.util.entry.AttachmentTypeEntry;
 
 import com.mojang.serialization.Codec;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
 import java.util.Optional;
@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 public final class WorldStateEntry<T> extends AbstractStateEntry<T> {
 
     public WorldStateEntry(
-                           Identifier identifier,
+                           ResourceLocation identifier,
                            Codec<T> codec,
                            AttachmentTypeEntry<T> attachment,
                            StateDebugConfig debugConfig,

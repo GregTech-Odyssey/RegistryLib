@@ -1,6 +1,6 @@
 package com.gto.registrylib.state;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
 import java.util.Comparator;
@@ -28,7 +28,7 @@ public final class StateRegistryManager {
         }
     }
 
-    public Optional<StateEntry<?>> get(StateScope scope, Identifier id) {
+    public Optional<StateEntry<?>> get(StateScope scope, ResourceLocation id) {
         return Optional.ofNullable(entries.get(new Key(scope, id)));
     }
 
@@ -40,5 +40,5 @@ public final class StateRegistryManager {
                 .toList();
     }
 
-    private record Key(StateScope scope, Identifier id) {}
+    private record Key(StateScope scope, ResourceLocation id) {}
 }

@@ -3,6 +3,7 @@ package com.gto.registrylib.builders;
 import com.gto.registrylib.RegistryCore;
 import com.gto.registrylib.annotations.StandardAPI;
 import com.gto.registrylib.annotations.SyntaxSugar;
+import com.gto.registrylib.client.Client;
 import com.gto.registrylib.composite.IComponentItem;
 import com.gto.registrylib.composite.ItemAttachment;
 import com.gto.registrylib.datagen.ProviderType;
@@ -12,7 +13,9 @@ import com.gto.registrylib.tooltip.SubNode;
 import com.gto.registrylib.tooltip.TooltipNodeCollector;
 import com.gto.registrylib.tooltip.TooltipRegistry;
 import com.gto.registrylib.util.CreativeModeTabModifier;
+import com.gto.registrylib.util.DistExecutor;
 import com.gto.registrylib.util.FunctionUtil;
+import com.gto.registrylib.util.RegistryLibTintSources;
 import com.gto.registrylib.util.TextureRef;
 import com.gto.registrylib.util.color.ArgbColor;
 import com.gto.registrylib.util.color.RgbColor;
@@ -20,10 +23,9 @@ import com.gto.registrylib.util.entry.ItemEntry;
 import com.gto.registrylib.util.entry.RegistryEntry;
 import com.gto.registrylib.util.visual.ItemVisualPreset;
 
-import net.minecraft.client.color.item.ItemTintSource;
-import net.minecraft.client.data.models.model.ModelTemplates;
-import net.minecraft.client.resources.model.sprite.Material;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.data.models.model.ModelTemplates;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
@@ -167,16 +169,19 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
      * Tints the (flat) item model by a constant color.
      *
      * <p>
-     * The client-only {@link ItemTintSource} is <b>not</b> constructed here: this method only
-     * records the (non-client) {@link RgbColor} and defers building the tint source into the datagen
-     * {@link #model} lambda. That lambda is gated behind {@code core.doDatagen()} and only runs in
-     * the data-generation environment (where the client model classes exist), so a dedicated server
-     * never resolves {@code ItemTintSource} / {@code ItemModelUtils}.
+     * 1.21.1 中，物品模型的第 N 层自动带有 tint index N，着色完全由运行时 {@link ItemColor} 驱动：这里记录 （非客户端）{@link
+     * RgbColor}，datagen 只生成普通 flat item 模型，运行时通过 {@link RegisterColorHandlersEvent.Item} 注册常量 {@link
+     * ItemColor}。
      */
     @StandardAPI
     public ItemBuilder<T, P> constantTint(@NotNull RgbColor color) {
         itemTintSourceCount = 1;
         knownItemTintColors = new ArgbColor[] { color.opaque() };
+        final RgbColor captured = color;
+        DistExecutor.unsafeRunWhenOn(
+                net.neoforged.api.distmarker.Dist.CLIENT,
+                () -> () -> Client.registerItemTintSources(
+                        getValueSupplier(), RegistryLibTintSources.itemConstant(captured)));
         return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, color));
     }
 
@@ -189,40 +194,57 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
     public ItemBuilder<T, P> constantTint(@NotNull TextureRef texture, @NotNull RgbColor color) {
         itemTintSourceCount = 1;
         knownItemTintColors = new ArgbColor[] { color.opaque() };
+        final RgbColor captured = color;
+        DistExecutor.unsafeRunWhenOn(
+                net.neoforged.api.distmarker.Dist.CLIENT,
+                () -> () -> Client.registerItemTintSources(
+                        getValueSupplier(), RegistryLibTintSources.itemConstant(captured)));
         return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, texture, color));
     }
 
     @StandardAPI
-    public ItemBuilder<T, P> tintSource(@NotNull ItemTintSource... tintSources) {
+    public ItemBuilder<T, P> tintSource(@NotNull ItemColor... tintSources) {
         itemTintSourceCount = tintSources.length;
         knownItemTintColors = null;
-        return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, tintSources));
+        registerItemTintDispatcher(tintSources);
+        return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx, ModelTemplates.FLAT_ITEM));
     }
 
     @StandardAPI
     public ItemBuilder<T, P> tintSource(
-                                        @NotNull String texturePath, @NotNull ItemTintSource... tintSources) {
+                                        @NotNull String texturePath, @NotNull ItemColor... tintSources) {
         return tintSource(core.texture(texturePath), tintSources);
     }
 
     @StandardAPI
     public ItemBuilder<T, P> tintSource(
-                                        @NotNull TextureRef texture, @NotNull ItemTintSource... tintSources) {
+                                        @NotNull TextureRef texture, @NotNull ItemColor... tintSources) {
         return flatTintedModel(texture, tintSources);
     }
 
     @StandardAPI
     public ItemBuilder<T, P> flatTintedModel(
-                                             @NotNull String texturePath, @NotNull ItemTintSource... tintSources) {
+                                             @NotNull String texturePath, @NotNull ItemColor... tintSources) {
         return flatTintedModel(core.texture(texturePath), tintSources);
     }
 
     @StandardAPI
     public ItemBuilder<T, P> flatTintedModel(
-                                             @NotNull TextureRef texture, @NotNull ItemTintSource... tintSources) {
+                                             @NotNull TextureRef texture, @NotNull ItemColor... tintSources) {
         itemTintSourceCount = tintSources.length;
         knownItemTintColors = null;
-        return model(() -> (ctx, prov) -> prov.generateFlatTintedItem(ctx, texture, tintSources));
+        registerItemTintDispatcher(tintSources);
+        return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx, texture.id()));
+    }
+
+    /** 注册一个按 tint index 分派的 {@link ItemColor}：第 N 个 source 负责 tint index N，越界返回 -1（不着色）。 */
+    private void registerItemTintDispatcher(@NotNull ItemColor[] tintSources) {
+        final ItemColor[] captured = tintSources.clone();
+        DistExecutor.unsafeRunWhenOn(
+                net.neoforged.api.distmarker.Dist.CLIENT,
+                () -> () -> Client.registerItemTintSources(
+                        getValueSupplier(),
+                        (stack, tintIndex) -> tintIndex >= 0 && tintIndex < captured.length ? captured[tintIndex].getColor(stack, tintIndex) : -1));
     }
 
     @StandardAPI
@@ -242,7 +264,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     @StandardAPI
     public ItemBuilder<T, P> modelTexture(@NotNull TextureRef texture) {
-        return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx, new Material(texture.id())));
+        return model(() -> (ctx, prov) -> prov.generateFlatItem(ctx, texture.id()));
     }
 
     @StandardAPI
@@ -267,7 +289,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
 
     @SyntaxSugar("lang(Item::getDescriptionId, name)")
     public ItemBuilder<T, P> lang(@NotNull String name) {
-        return lang(Item::getDescriptionId, name);
+        return lang(ProviderType.LANG, t -> t.getDescriptionId(), name);
     }
 
     @SyntaxSugar("lang(type, Item::getDescriptionId, name)")
@@ -342,7 +364,7 @@ public class ItemBuilder<T extends Item, P> extends AbstractBuilder<Item, T, P, 
             properties = initialProperties.get();
         }
         properties = propertiesCallback.apply(properties);
-        var item = factory.apply(properties.setId(key));
+        var item = factory.apply(properties);
         // 注册 tooltip 配置
         if (tooltipConfigs != null) {
             for (var config : tooltipConfigs) {

@@ -5,11 +5,11 @@ import com.gto.registrylib.datagen.provider.RegistryLibRecipeProvider;
 import com.google.common.collect.ObjectArrays;
 
 import net.minecraft.advancements.Criterion;
-import net.minecraft.advancements.criterion.InventoryChangeTrigger;
-import net.minecraft.advancements.criterion.ItemPredicate;
+import net.minecraft.advancements.critereon.InventoryChangeTrigger;
+import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -25,7 +25,7 @@ public final class DataIngredient {
 
     private final Ingredient parent;
     @Getter
-    private final Identifier id;
+    private final ResourceLocation id;
     private final Function<RegistryLibRecipeProvider, Criterion<InventoryChangeTrigger.TriggerInstance>> criteriaFactory;
 
     private DataIngredient(Ingredient parent, ItemLike item) {
@@ -40,7 +40,7 @@ public final class DataIngredient {
         this.criteriaFactory = prov -> prov.has(tag);
     }
 
-    private DataIngredient(Ingredient parent, Identifier id, ItemPredicate... predicates) {
+    private DataIngredient(Ingredient parent, ResourceLocation id, ItemPredicate... predicates) {
         this.parent = parent;
         this.id = id;
         this.criteriaFactory = prov -> RegistryLibRecipeProvider.inventoryTrigger(predicates);
@@ -65,7 +65,7 @@ public final class DataIngredient {
     }
 
     public static DataIngredient tag(HolderSet.Named<Item> tag) {
-        return ingredient(Ingredient.of(tag), tag.key());
+        return ingredient(Ingredient.of(tag.key()), tag.key());
     }
 
     public static DataIngredient ingredient(Ingredient parent, ItemLike required) {
@@ -77,7 +77,7 @@ public final class DataIngredient {
     }
 
     public static DataIngredient ingredient(
-                                            Ingredient parent, Identifier id, ItemPredicate... criteria) {
+                                            Ingredient parent, ResourceLocation id, ItemPredicate... criteria) {
         return new DataIngredient(parent, id, criteria);
     }
 

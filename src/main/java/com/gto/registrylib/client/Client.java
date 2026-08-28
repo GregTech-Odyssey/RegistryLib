@@ -13,19 +13,18 @@ import com.mojang.datafixers.util.Either;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.color.item.ItemColor;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
-import net.minecraft.client.renderer.block.FluidModel;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraft.world.level.material.Fluid;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -33,7 +32,6 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.neoforged.neoforge.client.event.RegisterColorHandlersEvent;
-import net.neoforged.neoforge.client.event.RegisterFluidModelsEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RenderTooltipEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
@@ -60,30 +58,16 @@ public class Client {
 
     private final AtomicReference<ConcurrentHashMap<Supplier<FluidType>, IClientFluidTypeExtensions>> FLUID_TYPE_EXTENSIONS = new AtomicReference<>(new ConcurrentHashMap<>());
 
-    private final ConcurrentHashMap<Supplier<? extends Block>, List<BlockTintSource>> BLOCK_TINT_SOURCES = new ConcurrentHashMap<>();
+    /** 待注册的方块着色器 (1.21.1 使用 {@link BlockColor} + {@link RegisterColorHandlersEvent.Block})。 */
+    private final ConcurrentHashMap<Supplier<? extends Block>, List<BlockColor>> BLOCK_TINT_SOURCES = new ConcurrentHashMap<>();
 
-    /**
-     * 待注册的流体模型 (NeoForge 26.1+)。
-     *
-     * <p>
-     * key = 单个 {@code FluidBuilder} 的稳定注册键，value = 该 builder 当前最终的流体模型配置。 同一个 builder 多次调用 {@code
-     * clientExtension(...)} 时，后一次必须覆盖前一次，而不是在事件中重复注册。
-     *
-     * <p>
-     * 与 {@link RegisterClientExtensionsEvent} 不同，{@link RegisterFluidModelsEvent} 会在模型重新加载时再次触发，
-     * 因此这里不能在首次触发后清空注册表。
-     */
-    private final ConcurrentHashMap<Object, FluidModelRegistration> FLUID_MODELS = new ConcurrentHashMap<>();
-
-    public record FluidModelRegistration(
-                                         Supplier<? extends Fluid> still,
-                                         Supplier<? extends Fluid> flowing,
-                                         FluidModel.Unbaked model) {}
+    /** 待注册的物品着色器 (1.21.1 使用 {@link ItemColor} + {@link RegisterColorHandlersEvent.Item})。 */
+    private final ConcurrentHashMap<Supplier<? extends Item>, List<ItemColor>> ITEM_TINT_SOURCES = new ConcurrentHashMap<>();
 
     private final AtomicReference<ConcurrentHashMap<Supplier<EntityType<?>>, EntityRendererProvider>> ENTITY_RENDERERS = new AtomicReference<>(new ConcurrentHashMap<>());
 
-    @SuppressWarnings("deprecation")
-    private final KeyMapping.Category TOOLTIP_KEY_CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath("registrylib", "tooltip"));
+    /** 1.21.1 中 KeyMapping 的类别是纯字符串（翻译键），没有 {@code KeyMapping.Category} 类。 */
+    private static final String TOOLTIP_KEY_CATEGORY = "key.categories.registrylib";
 
     private final KeyMapping TOOLTIP_PAGE_UP = new KeyMapping(
             "key.registrylib.tooltip_page_up",
@@ -111,19 +95,22 @@ public class Client {
     /** 分页时面板之间预留的间距——面板 getHeight 已包含 TOP_MARGIN，无需额外加值。 */
     private static final int PANEL_GAP_ESTIMATE = 0;
 
-    /** 透明 tooltip 纹理 ID——通过 setTexture 让原版的整块背景在视觉上失效。 */
-    private static final Identifier TRANSPARENT_TEXTURE = Identifier.fromNamespaceAndPath("registrylib", "transparent");
+    /** 原版 tooltip 背景颜色（TooltipRenderUtil 的私有常量，用于在 Color 事件中重画内联区域）。 */
+    private static final int TOOLTIP_BACKGROUND_COLOR = 0xF0100010;
+
+    private static final int TOOLTIP_BORDER_COLOR_TOP = 0x5055FF55;
+    private static final int TOOLTIP_BORDER_COLOR_BOTTOM = 0x5028007F;
 
     public void init(IEventBus modEventBus) {
         modEventBus.addListener(Client::onClientSetup);
         modEventBus.addListener(Client::onRegisterClientExtensions);
-        modEventBus.addListener(Client::onRegisterFluidModels);
         modEventBus.addListener(Client::onRegisterBlockTintSources);
+        modEventBus.addListener(Client::onRegisterItemTintSources);
         modEventBus.addListener(Client::onRegisterTooltipFactories);
         modEventBus.addListener(Client::onRegisterKeyMappings);
         modEventBus.addListener(Client::onRegisterEntityRenderers);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onGatherTooltipComponents);
-        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onRenderTooltipTexture);
+        NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, Client::onRenderTooltipColor);
         NeoForge.EVENT_BUS.addListener(Client::onTooltipKeyPressed);
         NeoForge.EVENT_BUS.addListener(Client::onClientTickPost);
     }
@@ -153,37 +140,22 @@ public class Client {
         registerFluidTypeExtensions(type, extensions);
     }
 
-    /**
-     * 注册一个 {@link FluidModel.Unbaked}，会在 {@link RegisterFluidModelsEvent} 中绑定到给定的源/流动流体上。
-     *
-     * <p>
-     * 替代 NeoForge 26.1 之前的 {@link IClientFluidTypeExtensions#getStillTexture()} / {@code
-     * getFlowingTexture()} / {@code getTintColor()}。
-     */
-    public void registerFluidModel(
-                                   Object registrationKey,
-                                   Supplier<? extends Fluid> still,
-                                   Supplier<? extends Fluid> flowing,
-                                   FluidModel.Unbaked model) {
-        FLUID_MODELS.put(registrationKey, new FluidModelRegistration(still, flowing, model));
-    }
-
-    public static void registerFluidModelStatic(
-                                                Object registrationKey,
-                                                Supplier<? extends Fluid> still,
-                                                Supplier<? extends Fluid> flowing,
-                                                FluidModel.Unbaked model) {
-        registerFluidModel(registrationKey, still, flowing, model);
-    }
-
-    public void registerBlockTintSources(
-                                         Supplier<? extends Block> block, BlockTintSource... tintSources) {
+    public void registerBlockTintSources(Supplier<? extends Block> block, BlockColor... tintSources) {
         BLOCK_TINT_SOURCES.put(block, List.of(tintSources.clone()));
     }
 
     public static void registerBlockTintSourcesStatic(
-                                                      Supplier<? extends Block> block, BlockTintSource... tintSources) {
+                                                      Supplier<? extends Block> block, BlockColor... tintSources) {
         registerBlockTintSources(block, tintSources);
+    }
+
+    public void registerItemTintSources(Supplier<? extends Item> item, ItemColor... tintSources) {
+        ITEM_TINT_SOURCES.put(item, List.of(tintSources.clone()));
+    }
+
+    public static void registerItemTintSourcesStatic(
+                                                     Supplier<? extends Item> item, ItemColor... tintSources) {
+        registerItemTintSources(item, tintSources);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -211,14 +183,24 @@ public class Client {
             map.forEach((type, extensions) -> event.registerFluidType(extensions, type.get()));
     }
 
-    private void onRegisterFluidModels(RegisterFluidModelsEvent event) {
-        FLUID_MODELS.forEach(
-                (registrationKey, registration) -> event.register(
-                        registration.model(), registration.still().get(), registration.flowing().get()));
+    private void onRegisterBlockTintSources(RegisterColorHandlersEvent.Block event) {
+        BLOCK_TINT_SOURCES.forEach(
+                (block, tintSources) -> {
+                    for (BlockColor color : tintSources) {
+                        event.register(color, block.get());
+                    }
+                });
+        BLOCK_TINT_SOURCES.clear();
     }
 
-    private void onRegisterBlockTintSources(RegisterColorHandlersEvent.BlockTintSources event) {
-        BLOCK_TINT_SOURCES.forEach((block, tintSources) -> event.register(tintSources, block.get()));
+    private void onRegisterItemTintSources(RegisterColorHandlersEvent.Item event) {
+        ITEM_TINT_SOURCES.forEach(
+                (item, tintSources) -> {
+                    for (ItemColor color : tintSources) {
+                        event.register(color, item.get());
+                    }
+                });
+        ITEM_TINT_SOURCES.clear();
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -250,8 +232,8 @@ public class Client {
      * </ul>
      *
      * <p>
-     * 这样原版的 {@code GuiGraphicsExtractor.tooltip()} 在计算 tooltip 总宽高、定位与渲染时就能像处理任何普通组件一样
-     * 把它们左对齐到同一个已定位的 x，避免「整块塞进一个 ClientTooltipComponent 然后内部手算偏移」导致的对齐问题。
+     * 这样原版的 tooltip 管线在计算 tooltip 总宽高、定位与渲染时就能像处理任何普通组件一样 把它们左对齐到同一个已定位的 x，避免「整块塞进一个
+     * ClientTooltipComponent 然后内部手算偏移」导致的对齐问题。
      */
     private void onGatherTooltipComponents(RenderTooltipEvent.GatherComponents event) {
         if (event.getItemStack().isEmpty()) return;
@@ -296,8 +278,7 @@ public class Client {
      *
      * <p>
      * gather 阶段没有 event font，因此用 {@link Minecraft#font} 做高度估算；面板间距使用 {@link
-     * #PANEL_GAP_ESTIMATE}（原版 tooltip 组件之间会被 GuiGraphicsExtractor 加 2px 间隙，
-     * 加上独立框自身想要的视觉留白后大致与这个常量一致）。
+     * #PANEL_GAP_ESTIMATE}（原版 tooltip 组件之间会被加 2px 间隙， 加上独立框自身想要的视觉留白后大致与这个常量一致）。
      */
     private static List<List<ResolvedRoot>> paginatePanels(
                                                            List<ResolvedRoot> panels, int availableHeight) {
@@ -334,25 +315,34 @@ public class Client {
     }
 
     /**
-     * 把原版的整块 tooltip 背景换成透明，再手动给「标题 + 内联」这一段画一份原版风格的背景。
-     *
-     * <p>
-     * 独立框面板各自在自己的 extractText 里画背景，所以原版的整块背景对它们来说就是多余的。 透明纹理让原版那一刀不可见，再单独绘制内联那一段保证标题区还是熟悉的紫色边框风格。
+     * 1.21.1 没有 {@code RenderTooltipEvent.Texture}；原版整块背景由 {@link TooltipRenderUtil} 以 {@link
+     * RenderTooltipEvent.Color} 事件提供的颜色绘制。这里把整块背景改成全透明，再手动给「标题 + 内联」这一段 画一份原版风格的背景。独立框面板各自在自己的
+     * renderText 里画背景。
      */
-    private void onRenderTooltipTexture(RenderTooltipEvent.Texture event) {
+    private void onRenderTooltipColor(RenderTooltipEvent.Color event) {
         if (!containsRegistryLibComponent(event.getComponents())) return;
 
+        // 1) 原版整块背景透明化。
+        event.setBackgroundStart(0);
+        event.setBackgroundEnd(0);
+        event.setBorderStart(0);
+        event.setBorderEnd(0);
+
+        // 2) 重画内联区域（标题 + 内联节点）的原版风格背景。
         InlineAreaDims inline = measureInlineArea(event.getComponents(), event.getFont());
         if (inline.width > 0 && inline.height > 0) {
-            TooltipRenderUtil.extractTooltipBackground(
+            TooltipRenderUtil.renderTooltipBackground(
                     event.getGraphics(),
                     event.getX(),
                     event.getY(),
                     inline.width,
                     inline.height,
-                    event.getTexture());
+                    400,
+                    TOOLTIP_BACKGROUND_COLOR,
+                    TOOLTIP_BACKGROUND_COLOR,
+                    TOOLTIP_BORDER_COLOR_TOP,
+                    TOOLTIP_BORDER_COLOR_BOTTOM);
         }
-        event.setTexture(TRANSPARENT_TEXTURE);
     }
 
     private static boolean containsRegistryLibComponent(
@@ -378,7 +368,7 @@ public class Client {
                 break;
             }
             width = Math.max(width, c.getWidth(font));
-            height += c.getHeight(font);
+            height += c.getHeight();
         }
         return new InlineAreaDims(width, height);
     }

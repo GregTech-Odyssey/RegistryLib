@@ -57,8 +57,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagBuilder;
 import net.minecraft.tags.TagEntry;
 import net.minecraft.tags.TagKey;
@@ -283,26 +283,27 @@ public class RegistryCore {
 
     // === Lang ===
 
-    public MutableComponent addLang(String type, Identifier id, String localizedName) {
+    public MutableComponent addLang(String type, ResourceLocation id, String localizedName) {
         return addRawLang(id.toLanguageKey(type), localizedName);
     }
 
     public MutableComponent addLang(
                                     ProviderType<? extends RegistryLibLangProvider> provider,
                                     String type,
-                                    Identifier id,
+                                    ResourceLocation id,
                                     String localizedName) {
         return addRawLang(provider, id.toLanguageKey(type), localizedName);
     }
 
-    public MutableComponent addLang(String type, Identifier id, String suffix, String localizedName) {
+    public MutableComponent addLang(
+                                    String type, ResourceLocation id, String suffix, String localizedName) {
         return addRawLang(id.toLanguageKey(type) + "." + suffix, localizedName);
     }
 
     public MutableComponent addLang(
                                     ProviderType<? extends RegistryLibLangProvider> provider,
                                     String type,
-                                    Identifier id,
+                                    ResourceLocation id,
                                     String suffix,
                                     String localizedName) {
         return addRawLang(provider, id.toLanguageKey(type) + "." + suffix, localizedName);
@@ -479,7 +480,7 @@ public class RegistryCore {
         return TextureRef.mod(modid, path);
     }
 
-    public TextureRef texture(@NotNull Identifier id) {
+    public TextureRef texture(@NotNull ResourceLocation id) {
         return TextureRef.of(id);
     }
 
@@ -492,10 +493,10 @@ public class RegistryCore {
     }
 
     /**
-     * @deprecated Use {@link #texture(Identifier)} instead.
+     * @deprecated Use {@link #texture(ResourceLocation)} instead.
      */
     @Deprecated(forRemoval = true)
-    public TextureRef textureRef(@NotNull Identifier id) {
+    public TextureRef textureRef(@NotNull ResourceLocation id) {
         return texture(id);
     }
 
@@ -554,7 +555,7 @@ public class RegistryCore {
                                                          Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory) {
         var reg = new Registration<>(
                 registryType,
-                Identifier.fromNamespaceAndPath(modid, name),
+                ResourceLocation.fromNamespaceAndPath(modid, name),
                 factory,
                 entryFactory,
                 callbacks);
@@ -589,32 +590,32 @@ public class RegistryCore {
     }
 
     public ItemEntry<Item> existingItem(@NotNull String id) {
-        return existingItem(Identifier.parse(id));
+        return existingItem(ResourceLocation.parse(id));
     }
 
-    public ItemEntry<Item> existingItem(@NotNull Identifier id) {
+    public ItemEntry<Item> existingItem(@NotNull ResourceLocation id) {
         return existingItem(ResourceKey.create(Registries.ITEM, id));
     }
 
     public ItemEntry<Item> existingItem(@NotNull ResourceKey<Item> key) {
-        Item item = BuiltInRegistries.ITEM.getValue(key.identifier());
-        if (item == null) throw new IllegalArgumentException("Unknown item: " + key.identifier());
+        Item item = BuiltInRegistries.ITEM.get(key.location());
+        if (item == null) throw new IllegalArgumentException("Unknown item: " + key.location());
         var entry = new ItemEntry<Item>(key);
         entry.bound(item);
         return entry;
     }
 
     public BlockEntry<Block> existingBlock(@NotNull String id) {
-        return existingBlock(Identifier.parse(id));
+        return existingBlock(ResourceLocation.parse(id));
     }
 
-    public BlockEntry<Block> existingBlock(@NotNull Identifier id) {
+    public BlockEntry<Block> existingBlock(@NotNull ResourceLocation id) {
         return existingBlock(ResourceKey.create(Registries.BLOCK, id));
     }
 
     public BlockEntry<Block> existingBlock(@NotNull ResourceKey<Block> key) {
-        Block block = BuiltInRegistries.BLOCK.getValue(key.identifier());
-        if (block == null) throw new IllegalArgumentException("Unknown block: " + key.identifier());
+        Block block = BuiltInRegistries.BLOCK.get(key.location());
+        if (block == null) throw new IllegalArgumentException("Unknown block: " + key.location());
         var entry = new BlockEntry<Block>(key);
         entry.bound(block);
         return entry;
@@ -779,31 +780,31 @@ public class RegistryCore {
             return self();
         }
 
-        public B addIds(@NotNull TagKey<T> tag, @NotNull Identifier... ids) {
+        public B addIds(@NotNull TagKey<T> tag, @NotNull ResourceLocation... ids) {
             return addTagEntries(
                     tag,
                     builder -> {
-                        for (Identifier id : ids) {
+                        for (ResourceLocation id : ids) {
                             builder.add(TagEntry.element(id));
                         }
                     });
         }
 
-        public B addOptionalIds(@NotNull TagKey<T> tag, @NotNull Identifier... ids) {
+        public B addOptionalIds(@NotNull TagKey<T> tag, @NotNull ResourceLocation... ids) {
             return addTagEntries(
                     tag,
                     builder -> {
-                        for (Identifier id : ids) {
+                        for (ResourceLocation id : ids) {
                             builder.add(TagEntry.optionalElement(id));
                         }
                     });
         }
 
-        protected B addElements(@NotNull TagKey<T> tag, @NotNull Identifier[] keys) {
+        protected B addElements(@NotNull TagKey<T> tag, @NotNull ResourceLocation[] keys) {
             return addTagEntries(
                     tag,
                     builder -> {
-                        for (Identifier key : keys) {
+                        for (ResourceLocation key : keys) {
                             builder.add(TagEntry.element(key));
                         }
                     });
@@ -817,7 +818,7 @@ public class RegistryCore {
         }
 
         public ItemTagBatch add(@NotNull TagKey<Item> tag, @NotNull ItemLike... items) {
-            Identifier[] keys = new Identifier[items.length];
+            ResourceLocation[] keys = new ResourceLocation[items.length];
             for (int i = 0; i < items.length; i++) {
                 keys[i] = BuiltInRegistries.ITEM.getKey(items[i].asItem());
             }
@@ -827,7 +828,7 @@ public class RegistryCore {
         @SafeVarargs
         public final ItemTagBatch addSuppliers(
                                                @NotNull TagKey<Item> tag, @NotNull Supplier<? extends ItemLike>... items) {
-            Identifier[] keys = new Identifier[items.length];
+            ResourceLocation[] keys = new ResourceLocation[items.length];
             for (int i = 0; i < items.length; i++) {
                 keys[i] = BuiltInRegistries.ITEM.getKey(items[i].get().asItem());
             }
@@ -842,7 +843,7 @@ public class RegistryCore {
         }
 
         public BlockTagBatch add(@NotNull TagKey<Block> tag, @NotNull Block... blocks) {
-            Identifier[] keys = new Identifier[blocks.length];
+            ResourceLocation[] keys = new ResourceLocation[blocks.length];
             for (int i = 0; i < blocks.length; i++) {
                 keys[i] = BuiltInRegistries.BLOCK.getKey(blocks[i]);
             }
@@ -852,7 +853,7 @@ public class RegistryCore {
         @SafeVarargs
         public final BlockTagBatch addSuppliers(
                                                 @NotNull TagKey<Block> tag, @NotNull Supplier<? extends Block>... blocks) {
-            Identifier[] keys = new Identifier[blocks.length];
+            ResourceLocation[] keys = new ResourceLocation[blocks.length];
             for (int i = 0; i < blocks.length; i++) {
                 keys[i] = BuiltInRegistries.BLOCK.getKey(blocks[i].get());
             }
@@ -867,7 +868,7 @@ public class RegistryCore {
         }
 
         public FluidTagBatch add(@NotNull TagKey<Fluid> tag, @NotNull Fluid... fluids) {
-            Identifier[] keys = new Identifier[fluids.length];
+            ResourceLocation[] keys = new ResourceLocation[fluids.length];
             for (int i = 0; i < fluids.length; i++) {
                 keys[i] = BuiltInRegistries.FLUID.getKey(fluids[i]);
             }
@@ -877,7 +878,7 @@ public class RegistryCore {
         @SafeVarargs
         public final FluidTagBatch addSuppliers(
                                                 @NotNull TagKey<Fluid> tag, @NotNull Supplier<? extends Fluid>... fluids) {
-            Identifier[] keys = new Identifier[fluids.length];
+            ResourceLocation[] keys = new ResourceLocation[fluids.length];
             for (int i = 0; i < fluids.length; i++) {
                 keys[i] = BuiltInRegistries.FLUID.getKey(fluids[i].get());
             }
@@ -894,7 +895,7 @@ public class RegistryCore {
         @SafeVarargs
         public final EntityTagBatch add(
                                         @NotNull TagKey<EntityType<?>> tag, @NotNull EntityType<?>... entityTypes) {
-            Identifier[] keys = new Identifier[entityTypes.length];
+            ResourceLocation[] keys = new ResourceLocation[entityTypes.length];
             for (int i = 0; i < entityTypes.length; i++) {
                 keys[i] = BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes[i]);
             }
@@ -905,7 +906,7 @@ public class RegistryCore {
         public final EntityTagBatch addSuppliers(
                                                  @NotNull TagKey<EntityType<?>> tag,
                                                  @NotNull Supplier<? extends EntityType<?>>... entityTypes) {
-            Identifier[] keys = new Identifier[entityTypes.length];
+            ResourceLocation[] keys = new ResourceLocation[entityTypes.length];
             for (int i = 0; i < entityTypes.length; i++) {
                 keys[i] = BuiltInRegistries.ENTITY_TYPE.getKey(entityTypes[i].get());
             }
@@ -1093,15 +1094,17 @@ public class RegistryCore {
 
     @SyntaxSugar("fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new)")
     public FluidBuilder<BaseFlowingFluid.Flowing, RegistryCore> fluid(
-                                                                      @NotNull String name, @NotNull Identifier stillTexture, @NotNull Identifier flowingTexture) {
+                                                                      @NotNull String name,
+                                                                      @NotNull ResourceLocation stillTexture,
+                                                                      @NotNull ResourceLocation flowingTexture) {
         return fluid(this, name, stillTexture, flowingTexture, BaseFlowingFluid.Flowing::new);
     }
 
     @SyntaxSugar("fluid(this, name, stillTexture, flowingTexture, fluidFactory)")
     public <T extends BaseFlowingFluid> FluidBuilder<T, RegistryCore> fluid(
                                                                             @NotNull String name,
-                                                                            @NotNull Identifier stillTexture,
-                                                                            @NotNull Identifier flowingTexture,
+                                                                            @NotNull ResourceLocation stillTexture,
+                                                                            @NotNull ResourceLocation flowingTexture,
                                                                             @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
         return fluid(this, name, stillTexture, flowingTexture, fluidFactory);
     }
@@ -1110,8 +1113,8 @@ public class RegistryCore {
     public <T extends BaseFlowingFluid, P> FluidBuilder<T, P> fluid(
                                                                     @NotNull P parent,
                                                                     @NotNull String name,
-                                                                    @NotNull Identifier stillTexture,
-                                                                    @NotNull Identifier flowingTexture,
+                                                                    @NotNull ResourceLocation stillTexture,
+                                                                    @NotNull ResourceLocation flowingTexture,
                                                                     @NotNull FluidBuilder.FluidFactory<T> fluidFactory) {
         return newFluidBuilder(parent, name, fluidFactory)
                 .clientExtension(stillTexture, flowingTexture);
@@ -1130,7 +1133,7 @@ public class RegistryCore {
     public <T extends Recipe<?>> RecipeType<T> simpleRecipeType(@NotNull String name) {
         return registry(
                 name,
-                RecipeType.simple(Identifier.fromNamespaceAndPath(getModid(), name)),
+                RecipeType.simple(ResourceLocation.fromNamespaceAndPath(getModid(), name)),
                 Registries.RECIPE_TYPE);
     }
 
@@ -1139,7 +1142,21 @@ public class RegistryCore {
                                                                             @NotNull String name,
                                                                             MapCodec<T> codec,
                                                                             StreamCodec<RegistryFriendlyByteBuf, T> streamCodec) {
-        return registry(name, new RecipeSerializer<>(codec, streamCodec), Registries.RECIPE_SERIALIZER);
+        return registry(
+                name,
+                new RecipeSerializer<T>() {
+
+                    @Override
+                    public MapCodec<T> codec() {
+                        return codec;
+                    }
+
+                    @Override
+                    public StreamCodec<RegistryFriendlyByteBuf, T> streamCodec() {
+                        return streamCodec;
+                    }
+                },
+                Registries.RECIPE_SERIALIZER);
     }
 
     // --- Recipe Types (Builder) ---
@@ -1205,7 +1222,7 @@ public class RegistryCore {
             addDataGenerator(
                     ProviderType.RECIPE,
                     (RegistryLibRecipeProvider prov) -> prov.accept(
-                            ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(modid, id)),
+                            ResourceLocation.fromNamespaceAndPath(modid, id),
                             recipeFactory.apply(prov.registries()),
                             null));
         }
@@ -1407,7 +1424,7 @@ public class RegistryCore {
                 name,
                 Registries.CREATIVE_MODE_TAB,
                 k -> {
-                    String langKey = k.identifier().toLanguageKey("itemGroup");
+                    String langKey = k.location().toLanguageKey("itemGroup");
                     localeNames.forEach((locale, value) -> addRawLang(locale(locale), langKey, value));
                     var builder = CreativeModeTab.builder()
                             .icon(
@@ -1435,7 +1452,7 @@ public class RegistryCore {
                                     try {
                                         r.register((Registry) type);
                                     } catch (Exception ex) {
-                                        String err = "Unexpected error while registering entry " + r.key.identifier() + " to registry " + key.identifier();
+                                        String err = "Unexpected error while registering entry " + r.key.location() + " to registry " + key.location();
                                         if (core.skipErrors) {
                                             log.error(DebugMarkers.register(), err);
                                         } else {
@@ -1481,7 +1498,7 @@ public class RegistryCore {
         REGISTRY_CORES.forEach(core -> core.spawnPlacements.consume(action -> action.accept(event)));
     }
 
-    private void onGatherData(GatherDataEvent.Client event) {
+    private void onGatherData(GatherDataEvent event) {
         event
                 .getGenerator()
                 .addProvider(true, provider = new RegistryLibDataProvider(this, modid, event));
@@ -1496,7 +1513,7 @@ public class RegistryCore {
 
         private Registration(
                              ResourceKey<? extends Registry<R>> type,
-                             Identifier name,
+                             ResourceLocation name,
                              Function<ResourceKey<R>, ? extends T> creator,
                              Function<ResourceKey<R>, ? extends RegistryEntry<R, T>> entryFactory,
                              List<Consumer<? super T>> callbacks) {
